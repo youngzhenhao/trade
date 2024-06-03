@@ -1,0 +1,57 @@
+gin_config:
+    bind: ""
+    port: ""
+    mode: ""
+gorm_config:
+    mysql:
+        host: ""
+        port: ""
+        username: ""
+        password: ""
+        dbname: ""
+redis:
+    host: ""
+    port: ""
+    username: ""
+    password: ""
+    db: 0
+router_disable:
+    login: false
+    fair_launch: false
+    fee: false
+    custody_account: false
+    ping: false
+api_config:
+    lnd:
+        host: ""
+        port: 0
+        tls_cert_path: ""
+        macaroon_path: ""
+    tapd:
+        host: ""
+        port: 0
+        tls_cert_path: ""
+        macaroon_path: ""
+    litd:
+        host: ""
+        port: 0
+        tls_cert_path: ""
+        macaroon_path: ""
+    bitcoind:
+        host: ""
+        port: 0
+        rpcuser: ""
+        rpcpasswd: ""
+        http_post_mode: false
+        disable_tls: false
+    custody_account:
+        macaroon_dir: ""
+fair_launch_config:
+    estimate_smart_fee_rate_blocks: 0
+    is_auto_update_fee_rate: false
+    max_number_of_mint: 0
+admin_user:
+    username: ""
+    password: ""
+frps_server: ""
+is_auto_migrate: false

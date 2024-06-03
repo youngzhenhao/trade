@@ -1,0 +1,20 @@
+.idea
+# wallet
+*.aar
+*.jar
+*_test.go
+*.zip
+cmd-test
+temp.go
+tls.cert
+tls.key
+*.macaroon
+*.exe
+*.exe~
+*.db
+# environment
+.env
+.env.local
+frpc.ini
+frpc.yaml
+config.yaml
