@@ -14,6 +14,7 @@ func SetupFeeRouter(router *gin.Engine) *gin.Engine {
 		query := fee.Group("/query")
 		{
 			query.GET("/rate", handlers.QueryFeeRate)
+			query.GET("/all", handlers.QueryAllFeeRate)
 		}
 	}
 	return router
