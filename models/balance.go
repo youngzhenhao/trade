@@ -5,6 +5,7 @@ import (
 )
 
 type Balance struct {
+	gorm.Model
 	AccountId   uint         `gorm:"column:account_id;type:bigint unsigned" json:"accountId"` // 正确地将unique和column选项放在同一个gorm标签内
 	BillType    BalanceType  `gorm:"column:bill_type;type:smallint" json:"billType"`
 	Away        BalanceAway  `gorm:"column:away;type:smallint" json:"away"`
@@ -13,7 +14,6 @@ type Balance struct {
 	Invoice     *string      `gorm:"column:invoice;type:varchar(512)" json:"invoice"`
 	PaymentHash *string      `gorm:"column:payment_hash;type:varchar(100)" json:"paymentHash"`
 	State       BalanceState `gorm:"column:State;type:smallint" json:"State"`
-	gorm.Model
 }
 
 func (Balance) TableName() string {

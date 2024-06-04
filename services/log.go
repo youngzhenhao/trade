@@ -27,34 +27,34 @@ func NewLogger(logName string, level LogLevel) *ServicesLogger {
 		level:  level}
 }
 
-func (ml *ServicesLogger) Debug(message string, v ...interface{}) {
+func (ml *ServicesLogger) Debug(format string, v ...interface{}) {
 	if ml.level >= DEBUG {
 		_, callerFile, callerLine, _ := runtime.Caller(1)
-		msg := fmt.Sprintf(message, v...)
+		msg := fmt.Sprintf(format, v...)
 		ml.logger.Printf(" %s：%d [Debug]: %s\n", callerFile, callerLine, msg)
 	}
 }
 
-func (ml *ServicesLogger) Info(message string, v ...any) {
+func (ml *ServicesLogger) Info(format string, v ...any) {
 	if ml.level >= INFO {
 		_, callerFile, callerLine, _ := runtime.Caller(1)
-		msg := fmt.Sprintf(message, v...)
+		msg := fmt.Sprintf(format, v...)
 		ml.logger.Printf(" %s：%d [Log]: %s\n", callerFile, callerLine, msg)
 	}
 }
 
-func (ml *ServicesLogger) Warning(message string, v ...interface{}) {
+func (ml *ServicesLogger) Warning(format string, v ...interface{}) {
 	if ml.level >= WARNING {
 		_, callerFile, callerLine, _ := runtime.Caller(1)
-		msg := fmt.Sprintf(message, v...)
+		msg := fmt.Sprintf(format, v...)
 		ml.logger.Printf(" %s：%d [Warning]: %s\n", callerFile, callerLine, msg)
 	}
 }
 
-func (ml *ServicesLogger) Error(message string, v ...any) {
+func (ml *ServicesLogger) Error(format string, v ...any) {
 	if ml.level >= ERROR {
 		_, callerFile, callerLine, _ := runtime.Caller(1)
-		msg := fmt.Sprintf(message, v...)
+		msg := fmt.Sprintf(format, v...)
 		ml.logger.Printf(" %s：%d [Error]: %s\n", callerFile, callerLine, msg)
 	}
 }
