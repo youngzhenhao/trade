@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"strconv"
 	"trade/api"
 	"trade/config"
 	"trade/middleware"
@@ -349,6 +350,37 @@ func UpdateFeeRateInfoByBitcoind() (err error) {
 	return nil
 }
 
+func UpdateFeeRateInfoByBlock(block int) (err error) {
+	var feeRateInfo *models.FeeRateInfo
+	var f = FeeRateInfoStore{DB: middleware.DB}
+	name := strconv.Itoa(block)
+	feeRateInfo, err = GetFeeRateInfoByName(name)
+	if err != nil {
+		FEE.Info("%s %v %s", "Get FeeRateInfo By Block", block, "Create now.")
+		//	Create FeeRateInfo
+		feeRateInfo = &models.FeeRateInfo{
+			Name: name,
+		}
+		err = f.CreateFeeRateInfo(feeRateInfo)
+		if err != nil {
+			FEE.Error("Create FeeRate Info %v", err)
+			return err
+		}
+		FEE.Info(name, "FeeRateInfo record created.")
+	}
+	feeRateInfo.EstimateSmartFeeRate, err = EstimateSmartFeeRate(block)
+	if err != nil {
+		FEE.Error("Estimate Smart FeeRate %v", err)
+		return err
+	}
+	err = f.UpdateFeeRateInfo(feeRateInfo)
+	if err != nil {
+		FEE.Error("Update FeeRateInfo %v", err)
+		return err
+	}
+	return nil
+}
+
 // @dev: 1.update fee rate or not
 func CheckIfUpdateFeeRateInfo() (err error) {
 	if config.GetLoadConfig().FairLaunchConfig.IsAutoUpdateFeeRate {
@@ -357,6 +389,50 @@ func CheckIfUpdateFeeRateInfo() (err error) {
 			FEE.Error("Update FeeRateInfo By Bitcoind", err)
 			return err
 		}
+	}
+	return nil
+}
+
+func CheckIfUpdateFeeRateInfoByBlockOfWeek() (err error) {
+	if config.GetLoadConfig().FairLaunchConfig.IsAutoUpdateFeeRate {
+		for i := 2; i <= 1008; i++ {
+			block := i
+			err = UpdateFeeRateInfoByBlock(block)
+			if err != nil {
+				FEE.Error("Update FeeRateInfo By", block, err)
+				return err
+			}
+		}
+
+	}
+	return nil
+}
+
+func CheckIfUpdateFeeRateInfoByBlockOfDay() (err error) {
+	if config.GetLoadConfig().FairLaunchConfig.IsAutoUpdateFeeRate {
+		for i := 2; i <= 144; i++ {
+			block := i
+			err = UpdateFeeRateInfoByBlock(block)
+			if err != nil {
+				FEE.Error("Update FeeRateInfo By %v %v", block, err)
+				return err
+			}
+		}
+
+	}
+	return nil
+}
+
+func CheckIfUpdateFeeRateInfoByBlockCustom() (err error) {
+	if config.GetLoadConfig().FairLaunchConfig.IsAutoUpdateFeeRate {
+		for _, block := range []int{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 18, 21, 24, 27, 30, 36, 42, 48, 54, 60, 66, 72, 84, 96, 108, 126, 144, 288, 432, 576, 720, 864, 1008} {
+			err = UpdateFeeRateInfoByBlock(block)
+			if err != nil {
+				FEE.Error("Update FeeRateInfo By %v %v", block, err)
+				return err
+			}
+		}
+
 	}
 	return nil
 }
