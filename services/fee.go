@@ -399,8 +399,8 @@ func CheckIfUpdateFeeRateInfoByBlockOfWeek() (err error) {
 			block := i
 			err = UpdateFeeRateInfoByBlock(block)
 			if err != nil {
-				FEE.Error("Update FeeRateInfo By %v %v", block, err)
-				return err
+				FEE.Info("Update FeeRateInfo By %v %v", block, err)
+				// @dev: do not return
 			}
 		}
 
@@ -468,4 +468,10 @@ func GetFeeRate() (*FeeRateResponse, error) {
 		return nil, err
 	}
 	return &feeRateResponse, nil
+}
+
+func GetAllFeeRateInfos() (*[]models.FeeRateInfo, error) {
+	var feeRateInfos []models.FeeRateInfo
+	err := middleware.DB.Find(&feeRateInfos).Error
+	return &feeRateInfos, err
 }

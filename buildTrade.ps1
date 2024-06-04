@@ -36,8 +36,8 @@ if ($currentFolderName -eq $specificString) {
     Write-Host "    3.Use this fllowing command to stop the Trade:"
     Write-Host "        kill -9 [PID]"
     Write-Host ""
-    Set-Location $tradeMarketPath
 } else {
     Write-Output "Wrong current directory, please run script in trade."
     pause
 }
+Set-Location $tradeMarketPath
