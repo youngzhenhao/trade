@@ -134,7 +134,7 @@ func PayInvoice(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"payment": "支付成功"})
+	c.JSON(http.StatusOK, gin.H{"payment": "success"})
 }
 
 // QueryBalance CustodyAccount查询发票
