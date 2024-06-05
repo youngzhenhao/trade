@@ -50,7 +50,7 @@ func ExecuteWithLock(taskName string) {
 	// Try to get the lock
 	identifier, acquired := middleware.AcquireLock(lockKey, expiration)
 	if !acquired {
-		log.Println("Failed to acquire lock" + lockKey)
+		//log.Println("Failed to acquire lock" + lockKey)
 		return
 	}
 	defer middleware.ReleaseLock(lockKey, identifier) //

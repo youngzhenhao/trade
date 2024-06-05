@@ -118,41 +118,6 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 	return ba.ID, nil
 }
 
-func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, invoice string) (uint, error) {
-	amount := gasFee + serveFee
-	payAccount, err := ReadAccountByUserId(payUserId)
-	if err != nil {
-		CUST.Error("ReadAccountByUserId error:%v", err)
-		return 0, err
-	}
-	outId, err := UpdateCustodyAccount(payAccount, models.AWAY_OUT, amount, invoice)
-	if err != nil {
-		CUST.Error("UpdateCustodyAccount error(payUserId:%v):%v", payUserId, err)
-		return 0, err
-	}
-	remark := fmt.Sprintf("gasFee:%v ,serverFee:%v", gasFee, serveFee)
-	Ext := models.BalanceExt{
-		BalanceId:   outId,
-		BillExtDesc: &remark,
-	}
-	err = CreateBalanceExt(&Ext)
-	if err != nil {
-		CUST.Error("CreateBalanceExt error:%v", err)
-	}
-
-	receiveAccount, err := ReadAccountByUserId(receiveUserId)
-	if err != nil {
-		CUST.Error("ReadAccountByUserId error:%v", err)
-		return 0, err
-	}
-	Id, err := UpdateCustodyAccount(receiveAccount, models.AWAY_IN, amount, invoice)
-	if err != nil {
-		CUST.Error("UpdateCustodyAccount error(receiveUserId:%v):%v", receiveUserId, err)
-		return 0, err
-	}
-	return Id, nil
-}
-
 // QueryCustodyAccount  托管账户查询
 func QueryCustodyAccount(accountCode string) (*litrpc.Account, error) {
 	return servicesrpc.AccountInfo(accountCode)
@@ -459,16 +424,16 @@ func pollPayment() {
 			if temp.Status == lnrpc.Payment_SUCCEEDED {
 				v.State = models.STATE_SUCCESS
 				mutex.Lock()
-				defer mutex.Unlock()
 				err = middleware.DB.Save(&v).Error
+				mutex.Unlock()
 				if err != nil {
 					CUST.Warning(err.Error())
 				}
 			} else if temp.Status == lnrpc.Payment_FAILED {
 				v.State = models.STATE_FAILED
 				mutex.Lock()
-				defer mutex.Unlock()
 				err = middleware.DB.Save(&v).Error
+				mutex.Unlock()
 				if err != nil {
 					CUST.Warning(err.Error())
 				}
@@ -508,8 +473,6 @@ func pollInvoice() {
 			}
 			if int16(temp.State) != v.Status {
 				v.Status = int16(temp.State)
-				mutex.Lock()
-				defer mutex.Unlock()
 				if v.Status == int16(lnrpc.Invoice_SETTLED) {
 					ba := models.Balance{}
 					ba.AccountId = *v.AccountID
@@ -521,16 +484,165 @@ func pollInvoice() {
 					ba.Invoice = &v.Invoice
 					hash := hex.EncodeToString(rHash)
 					ba.PaymentHash = &hash
+					mutex.Lock()
 					err = middleware.DB.Save(&ba).Error
+					mutex.Unlock()
 					if err != nil {
 						CUST.Warning(err.Error())
 					}
 				}
+				mutex.Lock()
 				err = middleware.DB.Save(&v).Error
+				mutex.Unlock()
 				if err != nil {
 					CUST.Warning(err.Error())
 				}
 			}
 		}
 	}
+}
+
+// PayAmountInside 内部转账比特币
+func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, invoice string) (uint, error) {
+	amount := gasFee + serveFee
+	payAccount, err := ReadAccountByUserId(payUserId)
+	if err != nil {
+		CUST.Error("ReadAccountByUserId error:%v", err)
+		return 0, err
+	}
+	outId, err := UpdateCustodyAccount(payAccount, models.AWAY_OUT, amount, invoice)
+	if err != nil {
+		CUST.Error("UpdateCustodyAccount error(payUserId:%v):%v", payUserId, err)
+		return 0, err
+	}
+	remark := fmt.Sprintf("gasFee:%v ,serverFee:%v", gasFee, serveFee)
+	Ext := models.BalanceExt{
+		BalanceId:   outId,
+		BillExtDesc: &remark,
+	}
+	err = CreateBalanceExt(&Ext)
+	if err != nil {
+		CUST.Error("CreateBalanceExt error:%v", err)
+	}
+
+	receiveAccount, err := ReadAccountByUserId(receiveUserId)
+	if err != nil {
+		CUST.Error("ReadAccountByUserId error:%v", err)
+		return 0, err
+	}
+	Id, err := UpdateCustodyAccount(receiveAccount, models.AWAY_IN, amount, invoice)
+	if err != nil {
+		CUST.Error("UpdateCustodyAccount error(receiveUserId:%v):%v", receiveUserId, err)
+		return 0, err
+	}
+	return Id, nil
+}
+
+// CreatePayInsideMission 创建内部转账任务
+func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint64, assetType string, payReq string) (uint, error) {
+	//获取支付账户信息
+	payAccount, err := ReadAccountByUserId(payUserId)
+	if err != nil {
+		CUST.Error("Not find pay account info(UserId=%v):%v", payUserId, err)
+		return 0, fmt.Errorf("not find pay account info")
+	}
+	//获取账户信息
+	acc, err := servicesrpc.AccountInfo(payAccount.UserAccountCode)
+	if err != nil {
+		CUST.Error("AccountInfo error(UserId=%v):%v", payUserId, err)
+		return 0, fmt.Errorf("AccountInfo error")
+	}
+
+	//检查账户余额是否足够
+	if assetType == "00" {
+		if acc.CurrentBalance < int64(gasFee+serveFee) {
+			CUST.Error("Account balance not enough(UserId=%v)", payUserId)
+			return 0, fmt.Errorf("account balance not enough")
+		}
+	} else {
+		return 0, fmt.Errorf("not support assetType")
+	}
+
+	//检测目标账户是否合法
+	var payType models.PayInsideType
+	switch receiveUserId {
+	case adminUserId:
+		payType = models.PayInsideToAdmin
+	default:
+		_, err := ReadAccountByUserId(receiveUserId)
+		if err != nil {
+			CUST.Error("Not find receive account info(UserId=%v):%v", receiveUserId, err)
+			return 0, fmt.Errorf("not find receive account info")
+		}
+		if payReq != "" {
+			payType = models.PayInsidewithNotInvioce
+		} else {
+			payType = models.PayInsideByInvioce
+		}
+	}
+
+	//创建转账任务
+	payInside := models.PayInside{
+		PayUserId:     payUserId,
+		GasFee:        gasFee,
+		ServeFee:      serveFee,
+		ReceiveUserId: receiveUserId,
+		PayType:       payType,
+		AssetType:     assetType,
+		PayReq:        &payReq,
+		Status:        models.PayInsideStatusPending,
+	}
+
+	//写入数据库
+	err = CreatePayInside(&payInside)
+	if err != nil {
+		CUST.Error("CreatePayInside error:%v", err)
+		return 0, err
+	}
+	return payInside.ID, nil
+}
+
+// QueryPayInsideMission 处理内部转账任务
+func pollPayInsideMission() {
+	//获取所有待处理任务
+	params := QueryParams{
+		"Status": models.PayInsideStatusPending,
+	}
+	a, err := GenericQuery(&models.PayInside{}, params)
+	if err != nil {
+		CUST.Error(err.Error())
+		return
+	}
+	//	处理转账任务
+	for _, v := range a {
+		if v.AssetType == "00" {
+			//支付接口调用
+			_, err := PayAmountInside(v.PayUserId, v.ReceiveUserId, v.GasFee, v.ServeFee, *v.PayReq)
+			if err != nil {
+				CUST.Error("pollPayInsideMission:%v", err)
+				continue
+			}
+			//更新数据库状态
+			v.Status = models.PayInsideStatusSuccess
+			mutex.Lock()
+			err = UpdatePayInside(v)
+			mutex.Unlock()
+			if err != nil {
+				CUST.Error("UpdatePayInside database error(id=%v):%v", v.ID, err)
+				continue
+			}
+		}
+	}
+}
+
+// CheckPayInsideStatus 检查内部转账任务状态是否成功
+func CheckPayInsideStatus(id uint) (bool, error) {
+	p, err := ReadPayInside(id)
+	if err != nil {
+		return false, err
+	}
+	if p.Status == models.PayInsideStatusSuccess {
+		return true, nil
+	}
+	return false, nil
 }

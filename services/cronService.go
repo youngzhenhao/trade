@@ -96,6 +96,10 @@ func (sm *CronService) PollInvoiceCron() {
 	pollInvoice()
 }
 
+func (sm *CronService) PollPayInsideMission() {
+	pollPayInsideMission()
+}
+
 func CreatePollPaymentCron() (err error) {
 	return CreateScheduledTask(&models.ScheduledTask{
 		Name:           "PollPaymentCron",
@@ -114,12 +118,25 @@ func CreatePollInvoiceCron() (err error) {
 	})
 }
 
+func CreatePollPayInvoiceMission() (err error) {
+	return CreateScheduledTask(&models.ScheduledTask{
+		Name:           "PollPayInsideMission",
+		CronExpression: "*/25 * * * * *",
+		FunctionName:   "PollPayInsideMission",
+		Package:        "services",
+	})
+}
+
 func CreatePAYTasks() {
 	err := CreatePollPaymentCron()
 	if err != nil {
 		CUST.Error("", err)
 	}
 	err = CreatePollInvoiceCron()
+	if err != nil {
+		CUST.Error("", err)
+	}
+	err = CreatePollPayInvoiceMission()
 	if err != nil {
 		CUST.Error("", err)
 	}
