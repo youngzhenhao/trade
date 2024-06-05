@@ -13,7 +13,7 @@ func setupFairLaunchRouter(router *gin.Engine) *gin.Engine {
 	{
 		fairLaunch.POST("/set", handlers.SetFairLaunchInfo)
 		fairLaunch.POST("/mint", handlers.SetFairLaunchMintedInfo)
-		fairLaunch.POST("/mint_reserved/:id", handlers.MintFairLaunchReserved)
+		fairLaunch.POST("/mint_reserved", handlers.MintFairLaunchReserved)
 		query := fairLaunch.Group("/query")
 		{
 			query.GET("/all", handlers.GetAllFairLaunchInfo)

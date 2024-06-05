@@ -318,20 +318,33 @@ func QueryMintIsAvailable(c *gin.Context) {
 }
 
 func MintFairLaunchReserved(c *gin.Context) {
-	idStr := c.Param("id")
-	addr := c.PostForm("encoded_addr")
-	username := c.MustGet("username").(string)
-	userId, err := services.NameToId(username)
-	id, err := strconv.Atoi(idStr)
+	var mintFairLaunchReservedRequest models.MintFairLaunchReservedRequest
+	err := c.ShouldBindJSON(&mintFairLaunchReservedRequest)
 	if err != nil {
-		utils.LogError("id is not valid int", err)
+		utils.LogError("Should Bind JSON mintFairLaunchReservedRequest.", err)
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
-			Error:   "id is not valid int. " + err.Error(),
+			Error:   "Should Bind JSON mintFairLaunchRequest. " + err.Error(),
 			Data:    "",
 		})
 		return
 	}
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
+	assetId := mintFairLaunchReservedRequest.AssetID
+	addr := mintFairLaunchReservedRequest.EncodedAddr
+
+	fairLaunchInfo, err := services.GetFairLaunchInfoByAssetId(assetId)
+	if err != nil {
+		utils.LogError("Get FairLaunchInfo By AssetId. %v", err)
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   "Get FairLaunchInfo By AssetId. " + err.Error(),
+			Data:    "",
+		})
+		return
+	}
+	id := int(fairLaunchInfo.ID)
 	isTimeRight, err := services.IsFairLaunchMintTimeRight(id)
 	if err != nil {
 		utils.LogError("Is FairLaunch Mint Time Right.", err)
@@ -380,7 +393,8 @@ func MintFairLaunchReserved(c *gin.Context) {
 		})
 		return
 	}
-	err = services.UpdateFairLaunchInfoIsReservedSent(fairLaunch)
+	result := services.ProcessSendFairLaunchReservedResponse(response)
+	err = services.UpdateFairLaunchInfoIsReservedSent(fairLaunch, result)
 	if err != nil {
 		utils.LogError("Update FairLaunchInfo IsReservedSent.", err)
 		c.JSON(http.StatusOK, models.JsonResult{
@@ -390,7 +404,6 @@ func MintFairLaunchReserved(c *gin.Context) {
 		})
 		return
 	}
-	result := services.ProcessSendFairLaunchReservedResponse(response)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   "",

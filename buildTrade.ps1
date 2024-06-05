@@ -40,4 +40,4 @@ if ($currentFolderName -eq $specificString) {
     Write-Output "Wrong current directory, please run script in trade."
     pause
 }
-Set-Location $tradeMarketPath
+

@@ -635,7 +635,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 		if fairLaunchInfo.State == models.FairLaunchStateNoPay {
 			err = ProcessFairLaunchStateNoPayInfoService(&fairLaunchInfo)
 			if err != nil {
-				FairLaunchDebugLogger.Error("Process FairLaunch info Service error. %v", err)
+				FairLaunchDebugLogger.Info("Process FairLaunch info Service error. %v", err)
 				processionResults = append(processionResults, ProcessionResult{
 					id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
@@ -658,7 +658,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 		} else if fairLaunchInfo.State == models.FairLaunchStatePaidPending {
 			err = ProcessFairLaunchStatePaidPendingInfoService(&fairLaunchInfo)
 			if err != nil {
-				FairLaunchDebugLogger.Error("Process FairLaunch info Service error. %v", err)
+				FairLaunchDebugLogger.Info("Process FairLaunch info Service error. %v", err)
 				processionResults = append(processionResults, ProcessionResult{
 					id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
@@ -681,7 +681,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 		} else if fairLaunchInfo.State == models.FairLaunchStatePaidNoIssue {
 			err = ProcessFairLaunchStatePaidNoIssueInfoService(&fairLaunchInfo)
 			if err != nil {
-				FairLaunchDebugLogger.Error("Process FairLaunch info Service error. %v", err)
+				FairLaunchDebugLogger.Info("Process FairLaunch info Service error. %v", err)
 				processionResults = append(processionResults, ProcessionResult{
 					id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
@@ -704,7 +704,30 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 		} else if fairLaunchInfo.State == models.FairLaunchStateIssuedPending {
 			err = ProcessFairLaunchStateIssuedPendingInfoService(&fairLaunchInfo)
 			if err != nil {
-				FairLaunchDebugLogger.Error("Process FairLaunch info Service error. %v", err)
+				FairLaunchDebugLogger.Info("Process FairLaunch info Service error. %v", err)
+				processionResults = append(processionResults, ProcessionResult{
+					id: int(fairLaunchInfo.ID),
+					JsonResult: models.JsonResult{
+						Success: false,
+						Error:   err.Error(),
+						Data:    nil,
+					},
+				})
+				continue
+			} else {
+				processionResults = append(processionResults, ProcessionResult{
+					id: int(fairLaunchInfo.ID),
+					JsonResult: models.JsonResult{
+						Success: true,
+						Error:   "",
+						Data:    nil,
+					},
+				})
+			}
+		} else if fairLaunchInfo.State == models.FairLaunchStateReservedSentPending {
+			err = ProcessFairLaunchStateReservedSentPending(&fairLaunchInfo)
+			if err != nil {
+				FairLaunchDebugLogger.Info("Process FairLaunch info Service error. %v", err)
 				processionResults = append(processionResults, ProcessionResult{
 					id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
@@ -972,6 +995,22 @@ func ProcessFairLaunchStateIssuedPendingInfoService(fairLaunchInfo *models.FairL
 	}
 	// @dev: Transaction has not been Confirmed
 	FairLaunchDebugLogger.Info("%v %v %v %v", "fairLaunchInfo:", fairLaunchInfo.ID, "is in Issued Pending State:", fairLaunchInfo.BatchTxidAnchor)
+	return nil
+}
+
+func ProcessFairLaunchStateReservedSentPending(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+	// @dev: 1.Is Transaction Confirmed
+	if IsTransactionConfirmed(fairLaunchInfo.ReservedSentAnchorOutpointTxid) {
+		// @dev: Change FairLaunchInfo State
+		err = ChangeFairLaunchInfoState(fairLaunchInfo, models.FairLaunchStateReservedSent)
+		if err != nil {
+			FairLaunchDebugLogger.Error("Change FairLaunchInfo State. %v", err)
+			return err
+		}
+		return nil
+	}
+	// @dev: Transaction has not been Confirmed
+	FairLaunchDebugLogger.Info("%v %v %v %v", "fairLaunchInfo:", fairLaunchInfo.ID, "is in Reserved Sent Pending State:", fairLaunchInfo.ReservedSentAnchorOutpointTxid)
 	return nil
 }
 
@@ -1511,8 +1550,10 @@ func ProcessSendFairLaunchReservedResponse(response *taprpc.SendAssetResponse) (
 	return txid
 }
 
-func UpdateFairLaunchInfoIsReservedSent(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func UpdateFairLaunchInfoIsReservedSent(fairLaunchInfo *models.FairLaunchInfo, txid string) (err error) {
 	fairLaunchInfo.IsReservedSent = true
+	fairLaunchInfo.ReservedSentAnchorOutpointTxid = txid
+	fairLaunchInfo.State = models.FairLaunchStateReservedSentPending
 	f := FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
