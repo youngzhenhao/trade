@@ -80,6 +80,10 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 			return 0, fmt.Errorf("away error")
 		}
 
+		if amount < 0 {
+			return 0, errors.New("balance not enough")
+		}
+
 		// Change the escrow account balance
 		_, err = servicesrpc.AccountUpdate(account.UserAccountCode, amount, -1)
 		if err != nil {
