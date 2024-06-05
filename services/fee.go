@@ -15,19 +15,20 @@ type (
 )
 
 var (
-	GasFeeRateOfNumber0    float64         = 1
-	GasFeeRateOfNumber1                    = 1.2
-	GasFeeRateOfNumber2    float64         = 2
-	GasFeeRateOfNumber3    float64         = 3
-	GasFeeRateOfNumber4    float64         = 4
-	GasFeeRateOfNumber5                    = 4.5
-	GasFeeRateOfNumber6    float64         = 5
-	GasFeeRateOfNumber7                    = 5.4
-	GasFeeRateOfNumber8                    = 5.7
-	GasFeeRateOfNumber9    float64         = 6
-	GasFeeRateOfNumber10                   = 6.5
-	GasFeeRateNameBitcoind FeeRateInfoName = "bitcoind"
-	GasFeeRateNameDefault                  = GasFeeRateNameBitcoind
+	GasFeeRateOfNumber0                     float64         = 1
+	GasFeeRateOfNumber1                                     = 1.2
+	GasFeeRateOfNumber2                     float64         = 2
+	GasFeeRateOfNumber3                     float64         = 3
+	GasFeeRateOfNumber4                     float64         = 4
+	GasFeeRateOfNumber5                                     = 4.5
+	GasFeeRateOfNumber6                     float64         = 5
+	GasFeeRateOfNumber7                                     = 5.4
+	GasFeeRateOfNumber8                                     = 5.7
+	GasFeeRateOfNumber9                     float64         = 6
+	GasFeeRateOfNumber10                                    = 6.5
+	GasFeeRateNameMempoolMainnetRecommended FeeRateInfoName = "mempool_mainnet_recommended"
+	GasFeeRateNameBitcoind                  FeeRateInfoName = "bitcoind"
+	GasFeeRateNameDefault                                   = GasFeeRateNameBitcoind
 )
 
 func UpdateAndEstimateSmartFeeRateSatPerKw() (estimatedFeeSatPerKw int, err error) {
@@ -94,12 +95,12 @@ func NumberToGasFeeRate(number int) (gasFeeRate float64, err error) {
 func EstimateSmartFeeRate(blocks int) (gasFeeRate float64, err error) {
 	feeResult, err := api.EstimateSmartFeeAndGetResult(blocks)
 	if err != nil {
-		FEE.Error("Estimate SmartFee And GetResult %v", err)
+		//FEE.Info("Estimate SmartFee And GetResult %v", err)
 		return 0, err
 	}
 	if feeResult.Errors != nil || feeResult.Blocks != int64(blocks) || *feeResult.FeeRate == 0 {
 		err = errors.New("fee result got error or blocks is not same or fee rate is zero")
-		FEE.Error("Invalid fee rate result %v", err)
+		//FEE.Info("Invalid fee rate result %v", err)
 		return 0, err
 	}
 	return *feeResult.FeeRate, nil
@@ -108,7 +109,8 @@ func EstimateSmartFeeRate(blocks int) (gasFeeRate float64, err error) {
 func UpdateFeeRate() {
 	err := CheckIfUpdateFeeRateInfo()
 	if err != nil {
-		FEE.Error("Check If Update FeeRateInfo %v", err)
+		//FEE.Info("Check If Update FeeRateInfo %v", err)
+		return
 	}
 }
 
@@ -120,7 +122,7 @@ func UpdateFeeRate() {
 func EstimateSmartFeeRateSatPerKw() (estimatedFeeSatPerKw int, err error) {
 	estimatedFee, err := GetEstimateSmartFeeRate()
 	if err != nil {
-		FEE.Error("Estimate Smart FeeRate %v", err)
+		//FEE.Info("Estimate Smart FeeRate %v", err)
 		return 0, err
 	}
 	estimatedFeeSatPerKw = FeeRateBtcPerKbToSatPerKw(estimatedFee)
@@ -201,7 +203,7 @@ func CalculateGasFeeRateSatPerKw(number int) (int, error) {
 	feeRateSatPerKw, err := EstimateSmartFeeRateSatPerKw()
 	rate, err := NumberToGasFeeRate(number)
 	if err != nil {
-		FEE.Error("Number To Gas FeeRate %v", err)
+		//FEE.Info("Number To Gas FeeRate %v", err)
 		return 0, err
 	}
 	return int(rate * float64(feeRateSatPerKw)), nil
@@ -213,7 +215,7 @@ func CalculateGasFeeRateSatPerB(number int) (int, error) {
 	feeRateSatPerB, err := EstimateSmartFeeRateSatPerB()
 	rate, err := NumberToGasFeeRate(number)
 	if err != nil {
-		FEE.Error("Number To Gas FeeRate %v", err)
+		//FEE.Info("Number To Gas FeeRate %v", err)
 		return 0, err
 	}
 	return int(rate * float64(feeRateSatPerB)), nil
@@ -225,7 +227,7 @@ func CalculateGasFeeRateBtcPerKb(number int) (float64, error) {
 	feeRateBtcPerKb, err := EstimateSmartFeeRateBtcPerKb()
 	rate, err := NumberToGasFeeRate(number)
 	if err != nil {
-		FEE.Error("Number To Gas FeeRate %v", err)
+		//FEE.Info("Number To Gas FeeRate %v", err)
 		return 0, err
 	}
 	return rate * feeRateBtcPerKb, nil
@@ -240,7 +242,7 @@ func GetTransactionByteSize() int {
 func CalculateGasFee(number int, byteSize int) (int, error) {
 	calculatedGasFeeRateSatPerB, err := CalculateGasFeeRateSatPerB(number)
 	if err != nil {
-		FEE.Error("Calculate GasFeeRate SatPerB %v", err)
+		//FEE.Info("Calculate GasFeeRate SatPerB %v", err)
 		return 0, err
 	}
 	gasFee := byteSize * calculatedGasFeeRateSatPerB
@@ -251,7 +253,7 @@ func GetPayMintFeeState(paidId int) (bool, error) {
 	var balance models.Balance
 	err := middleware.DB.Where("state = ?", models.STATE_SUCCESS).First(&balance, paidId).Error
 	if err != nil {
-		FEE.Error("GetBalance %v", err)
+		//FEE.Info("GetBalance %v", err)
 		return false, err
 	}
 	return true, nil
@@ -260,7 +262,7 @@ func GetPayMintFeeState(paidId int) (bool, error) {
 func IsMintFeePaid(paidId int) bool {
 	state, err := GetPayMintFeeState(paidId)
 	if err != nil {
-		FEE.Error("GetBalance %v", err)
+		//FEE.Info("GetBalance %v", err)
 		return false
 	}
 	return state
@@ -270,7 +272,7 @@ func IsPayIssuanceFeeStatePaid(paidId int) (bool, error) {
 	var balance models.Balance
 	err := middleware.DB.Where("state = ?", models.STATE_SUCCESS).First(&balance, paidId).Error
 	if err != nil {
-		FEE.Error("GetBalance %v", err)
+		//FEE.Info("GetBalance %v", err)
 		return false, err
 	}
 	return true, nil
@@ -279,7 +281,7 @@ func IsPayIssuanceFeeStatePaid(paidId int) (bool, error) {
 func IsIssuanceFeePaid(paidId int) bool {
 	state, err := IsPayIssuanceFeeStatePaid(paidId)
 	if err != nil {
-		FEE.Error("GetBalance %v", err)
+		//FEE.Info("GetBalance %v", err)
 		return false
 	}
 	return state
@@ -304,7 +306,7 @@ func PayGasFee(payUserId int, gasFee int) (int, error) {
 func GetFeeRateInfoByName(name string) (feeRateInfo *models.FeeRateInfo, err error) {
 	err = middleware.DB.Where("name = ?", name).First(&feeRateInfo).Error
 	if err != nil {
-		FEE.Error("Find FeeRateInfo %v", err)
+		//FEE.Info("Find FeeRateInfo %v", err)
 		return nil, err
 	}
 	return feeRateInfo, nil
@@ -314,10 +316,10 @@ func GetFeeRateInfoEstimateSmartFeeRateByName(name string) (estimateSmartFeeRate
 	var feeRateInfo *models.FeeRateInfo
 	feeRateInfo, err = GetFeeRateInfoByName(name)
 	if err != nil {
-		FEE.Error("Get FeeRateInfo By Name %v", err)
+		//FEE.Info("Get FeeRateInfo By Name %v", err)
 		return 0, err
 	}
-	return feeRateInfo.EstimateSmartFeeRate, nil
+	return feeRateInfo.FeeRate, nil
 }
 
 func UpdateFeeRateInfoByBitcoind() (err error) {
@@ -325,26 +327,27 @@ func UpdateFeeRateInfoByBitcoind() (err error) {
 	var f = FeeRateInfoStore{DB: middleware.DB}
 	feeRateInfo, err = GetFeeRateInfoByName(string(GasFeeRateNameBitcoind))
 	if err != nil {
-		FEE.Error("Get FeeRateInfo By Bitcoind, Create now. %v", err)
+		//FEE.Info("Get FeeRateInfo By Bitcoind, Create now. %v", err)
 		//	Create FeeRateInfo
 		feeRateInfo = &models.FeeRateInfo{
 			Name: string(GasFeeRateNameBitcoind),
 		}
 		err = f.CreateFeeRateInfo(feeRateInfo)
 		if err != nil {
-			FEE.Error("Create FeeRate Info %v", err)
+			//FEE.Info("Create FeeRate Info %v", err)
 			return err
 		}
+		//@dev: create new record
 		FEE.Info("Bitcoind FeeRateInfo record created. %v", err)
 	}
-	feeRateInfo.EstimateSmartFeeRate, err = EstimateSmartFeeRate(config.GetLoadConfig().FairLaunchConfig.EstimateSmartFeeRateBlocks)
+	feeRateInfo.FeeRate, err = EstimateSmartFeeRate(config.GetLoadConfig().FairLaunchConfig.EstimateSmartFeeRateBlocks)
 	if err != nil {
-		FEE.Error("Estimate Smart FeeRate %v", err)
+		//FEE.Info("Estimate Smart FeeRate %v", err)
 		return err
 	}
 	err = f.UpdateFeeRateInfo(feeRateInfo)
 	if err != nil {
-		FEE.Error("Update FeeRateInfo %v", err)
+		//FEE.Info("Update FeeRateInfo %v", err)
 		return err
 	}
 	return nil
@@ -356,26 +359,26 @@ func UpdateFeeRateInfoByBlock(block int) (err error) {
 	name := strconv.Itoa(block)
 	feeRateInfo, err = GetFeeRateInfoByName(name)
 	if err != nil {
-		FEE.Info("%s %v %s", "Get FeeRateInfo By Block", block, "Create now.")
+		//FEE.Info("%s %v %s", "Get FeeRateInfo By Block", block, "Create now.")
 		//	Create FeeRateInfo
 		feeRateInfo = &models.FeeRateInfo{
 			Name: name,
 		}
 		err = f.CreateFeeRateInfo(feeRateInfo)
 		if err != nil {
-			FEE.Error("Create FeeRate Info %v", err)
+			//FEE.Info("Create FeeRate Info %v", err)
 			return err
 		}
 		FEE.Info("%s %v", name, "FeeRateInfo record created.")
 	}
-	feeRateInfo.EstimateSmartFeeRate, err = EstimateSmartFeeRate(block)
+	feeRateInfo.FeeRate, err = EstimateSmartFeeRate(block)
 	if err != nil {
-		FEE.Error("Estimate Smart FeeRate %v", err)
+		//FEE.Info("Estimate Smart FeeRate %v", err)
 		return err
 	}
 	err = f.UpdateFeeRateInfo(feeRateInfo)
 	if err != nil {
-		FEE.Error("Update FeeRateInfo %v", err)
+		//FEE.Info("Update FeeRateInfo %v", err)
 		return err
 	}
 	return nil
@@ -386,7 +389,7 @@ func CheckIfUpdateFeeRateInfo() (err error) {
 	if config.GetLoadConfig().FairLaunchConfig.IsAutoUpdateFeeRate {
 		err = UpdateFeeRateInfoByBitcoind()
 		if err != nil {
-			FEE.Error("Update FeeRateInfo By Bitcoind %v", err)
+			//FEE.Info("Update FeeRateInfo By Bitcoind %v", err)
 			return err
 		}
 	}
@@ -399,7 +402,7 @@ func CheckIfUpdateFeeRateInfoByBlockOfWeek() (err error) {
 			block := i
 			err = UpdateFeeRateInfoByBlock(block)
 			if err != nil {
-				FEE.Info("Update FeeRateInfo By %v %v", block, err)
+				//FEE.Info("Update FeeRateInfo By %v %v", block, err)
 				// @dev: do not return
 			}
 		}
@@ -414,7 +417,7 @@ func CheckIfUpdateFeeRateInfoByBlockOfDay() (err error) {
 			block := i
 			err = UpdateFeeRateInfoByBlock(block)
 			if err != nil {
-				FEE.Error("Update FeeRateInfo By %v %v", block, err)
+				//FEE.Info("Update FeeRateInfo By %v %v", block, err)
 				return err
 			}
 		}
@@ -428,7 +431,7 @@ func CheckIfUpdateFeeRateInfoByBlockCustom() (err error) {
 		for _, block := range []int{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 18, 21, 24, 27, 30, 36, 42, 48, 54, 60, 66, 72, 84, 96, 108, 126, 144, 288, 432, 576, 720, 864, 1008} {
 			err = UpdateFeeRateInfoByBlock(block)
 			if err != nil {
-				FEE.Error("Update FeeRateInfo By %v %v", block, err)
+				//FEE.Info("Update FeeRateInfo By %v %v", block, err)
 				return err
 			}
 		}
@@ -454,17 +457,17 @@ func GetFeeRate() (*FeeRateResponse, error) {
 	var err error
 	feeRateResponse.SatPerKw, err = EstimateSmartFeeRateSatPerKw()
 	if err != nil {
-		FEE.Error("Estimate Smart FeeRate SatPerKw %v", err)
+		//FEE.Info("Estimate Smart FeeRate SatPerKw %v", err)
 		return nil, err
 	}
 	feeRateResponse.SatPerB, err = EstimateSmartFeeRateSatPerB()
 	if err != nil {
-		FEE.Error("Estimate Smart FeeRate SatPerB %v", err)
+		//FEE.Info("Estimate Smart FeeRate SatPerB %v", err)
 		return nil, err
 	}
 	feeRateResponse.BtcPerKb, err = EstimateSmartFeeRateBtcPerKb()
 	if err != nil {
-		FEE.Error("Estimate Smart FeeRate BtcPerKb %v", err)
+		//FEE.Info("Estimate Smart FeeRate BtcPerKb %v", err)
 		return nil, err
 	}
 	return &feeRateResponse, nil

@@ -2,7 +2,6 @@ package api
 
 import (
 	"github.com/lightningnetwork/lnd/lnrpc"
-	"trade/utils"
 )
 
 func ListChainTxnsAndGetResponse() (*lnrpc.TransactionDetails, error) {
@@ -12,7 +11,7 @@ func ListChainTxnsAndGetResponse() (*lnrpc.TransactionDetails, error) {
 func GetListChainTransactions() (*[]ChainTransaction, error) {
 	response, err := listChainTxns()
 	if err != nil {
-		utils.LogError("", err)
+		//utils.LogError("", err)
 		return nil, err
 	}
 	result := processChainTransactions(response)

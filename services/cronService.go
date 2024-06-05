@@ -9,22 +9,22 @@ import (
 type CronService struct{}
 
 func (cs *CronService) FairLaunchIssuance() {
-	FairLaunchDebugLogger.Info("start cron job: FairLaunchIssuance")
+	//FairLaunchDebugLogger.Info("start cron job: FairLaunchIssuance")
 	FairLaunchIssuance()
 }
 
 func (cs *CronService) FairLaunchMint() {
-	FairLaunchDebugLogger.Info("start cron job: FairLaunchMint")
+	//FairLaunchDebugLogger.Info("start cron job: FairLaunchMint")
 	FairLaunchMint()
 }
 
 func (cs *CronService) SendFairLaunchAsset() {
-	FairLaunchDebugLogger.Info("start cron job: FairLaunchMint")
+	//FairLaunchDebugLogger.Info("start cron job: FairLaunchMint")
 	SendFairLaunchAsset()
 }
 
 func (cs *CronService) UpdateFeeRateWeek() {
-	FairLaunchDebugLogger.Info("start cron job: UpdateFeeRateWeek")
+	//FairLaunchDebugLogger.Info("start cron job: UpdateFeeRateWeek")
 	_ = CheckIfUpdateFeeRateInfoByBlockOfWeek()
 }
 
@@ -78,10 +78,10 @@ func CreateFairLaunchScheduledTasks() {
 		FairLaunchDebugLogger.Error("", err)
 	}
 	err = CreateSendFairLaunchAsset()
-	if err != nil {
-		FairLaunchDebugLogger.Error("", err)
-	}
-	err = CreateUpdateFeeRateWeek()
+	//if err != nil {
+	//	FairLaunchDebugLogger.Error("", err)
+	//}
+	//err = CreateUpdateFeeRateWeek()
 	if err != nil {
 		FairLaunchDebugLogger.Error("", err)
 	}
