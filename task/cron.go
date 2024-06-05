@@ -23,7 +23,7 @@ type Job struct {
 func LoadJobs() ([]Job, error) {
 	var jobs []Job
 	// Use the GORM method for querying
-	err := middleware.DB.Table("scheduled_tasks").Select("name, cron_expression, function_name, package").Scan(&jobs).Error
+	err := middleware.DB.Table("scheduled_tasks").Where("status = ?", 1).Select("name, cron_expression, function_name, package").Scan(&jobs).Error
 	if err != nil {
 		log.Fatal("Failed to load tasks:", err)
 		return nil, err

@@ -20,9 +20,3 @@ type FeeRateInfo struct {
 	Unit    FeeRateType `json:"unit"`
 	FeeRate float64     `json:"fee_rate"`
 }
-
-type MempoolFeeRateInfo struct {
-	gorm.Model
-	Name                 string  `json:"name" gorm:"type:varchar(255);not null"`
-	EstimateSmartFeeRate float64 `json:"estimate_smart_fee_rate"`
-}
