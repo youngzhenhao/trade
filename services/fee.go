@@ -31,6 +31,40 @@ var (
 	GasFeeRateNameDefault                                   = GasFeeRateNameBitcoind
 )
 
+func UpdateAndGetFeeRateResponseTransformed() (*FeeRateResponseTransformed, error) {
+	UpdateFeeRateByMempool()
+	return GetFeeRateResponseTransformed()
+}
+
+func UpdateAndCalculateGasFeeRateByMempool(number int) (*FeeRateResponseTransformed, error) {
+	UpdateFeeRateByMempool()
+	return CalculateGasFeeRateByMempool(number)
+}
+
+func CalculateGasFeeRateByMempool(number int) (*FeeRateResponseTransformed, error) {
+	feeRate, err := GetFeeRateResponseTransformed()
+	rate, err := NumberToGasFeeRate(number)
+	if err != nil {
+		return nil, err
+	}
+	return &FeeRateResponseTransformed{
+		SatPerB: MempoolFeeRate{
+			FastestFee:  int(float64(feeRate.SatPerB.FastestFee) * rate),
+			HalfHourFee: int(float64(feeRate.SatPerB.HalfHourFee) * rate),
+			HourFee:     int(float64(feeRate.SatPerB.HourFee) * rate),
+			EconomyFee:  int(float64(feeRate.SatPerB.EconomyFee) * rate),
+			MinimumFee:  int(float64(feeRate.SatPerB.MinimumFee) * rate),
+		},
+		SatPerKw: MempoolFeeRate{
+			FastestFee:  int(float64(feeRate.SatPerKw.FastestFee) * rate),
+			HalfHourFee: int(float64(feeRate.SatPerKw.HalfHourFee) * rate),
+			HourFee:     int(float64(feeRate.SatPerKw.HourFee) * rate),
+			EconomyFee:  int(float64(feeRate.SatPerKw.EconomyFee) * rate),
+			MinimumFee:  int(float64(feeRate.SatPerKw.MinimumFee) * rate),
+		},
+	}, nil
+}
+
 func UpdateAndEstimateSmartFeeRateSatPerKw() (estimatedFeeSatPerKw int, err error) {
 	UpdateFeeRate()
 	return EstimateSmartFeeRateSatPerKw()
@@ -451,6 +485,10 @@ type FeeRateResponse struct {
 	BtcPerKb float64 `json:"btc_per_kb"`
 }
 
+func GetMempoolFeeRate() (*FeeRateResponseTransformed, error) {
+	return UpdateAndGetFeeRateResponseTransformed()
+}
+
 func GetFeeRate() (*FeeRateResponse, error) {
 	UpdateFeeRate()
 	var feeRateResponse FeeRateResponse
@@ -477,4 +515,195 @@ func GetAllFeeRateInfos() (*[]models.FeeRateInfo, error) {
 	var feeRateInfos []models.FeeRateInfo
 	err := middleware.DB.Find(&feeRateInfos).Error
 	return &feeRateInfos, err
+}
+
+type MempoolFeeRate struct {
+	FastestFee  int `json:"fastest_fee"`
+	HalfHourFee int `json:"half_hour_fee"`
+	HourFee     int `json:"hour_fee"`
+	EconomyFee  int `json:"economy_fee"`
+	MinimumFee  int `json:"minimum_fee"`
+}
+
+type FeeRateResponseTransformed struct {
+	SatPerB  MempoolFeeRate
+	SatPerKw MempoolFeeRate
+}
+
+func GetFeeRateResponseTransformedByMempool() (*FeeRateResponseTransformed, error) {
+	fees, err := api.MempoolGetRecommendedFees()
+	if err != nil {
+		return nil, err
+	}
+	return &FeeRateResponseTransformed{
+		SatPerB: MempoolFeeRate{
+			FastestFee:  fees.FastestFee,
+			HalfHourFee: fees.HalfHourFee,
+			HourFee:     fees.HourFee,
+			EconomyFee:  fees.EconomyFee,
+			MinimumFee:  fees.MinimumFee,
+		},
+		SatPerKw: MempoolFeeRate{
+			FastestFee:  FeeRateSatPerBToSatPerKw(fees.FastestFee),
+			HalfHourFee: FeeRateSatPerBToSatPerKw(fees.HalfHourFee),
+			HourFee:     FeeRateSatPerBToSatPerKw(fees.HourFee),
+			EconomyFee:  FeeRateSatPerBToSatPerKw(fees.EconomyFee),
+			MinimumFee:  FeeRateSatPerBToSatPerKw(fees.MinimumFee),
+		},
+	}, nil
+}
+
+func UpdateFeeRateByMempool() {
+	err := CheckIfUpdateFeeRateInfoByMempool()
+	if err != nil {
+		return
+	}
+}
+
+func CheckIfUpdateFeeRateInfoByMempool() (err error) {
+	if config.GetLoadConfig().FairLaunchConfig.IsAutoUpdateFeeRate {
+		err = UpdateFeeRateInfoByMempool()
+		if err != nil {
+			//FEE.Info("Update FeeRateInfo By Mempool %v", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func GetFeeRateResponseTransformed() (*FeeRateResponseTransformed, error) {
+	var feeRateInfos []models.FeeRateInfo
+	units := []models.FeeRateType{models.FeeRateTypeSatPerB, models.FeeRateTypeSatPerKw}
+	names := []string{"fastest_fee", "half_hour_fee", "hour_fee", "economy_fee", "minimum_fee"}
+	for _, unit := range units {
+		for _, name := range names {
+			feeRateInfo, err := GetFeeRateInfoByNameAndUnit(name, unit)
+			if err != nil {
+				// @dev: do not return
+			}
+			feeRateInfos = append(feeRateInfos, *feeRateInfo)
+		}
+	}
+	transformed, err := ProcessFeeRateInfosToResponseTransformed(feeRateInfos)
+	if err != nil {
+		return nil, err
+	}
+	return transformed, nil
+}
+
+func ProcessFeeRateInfosToResponseTransformed(feeRateInfos []models.FeeRateInfo) (*FeeRateResponseTransformed, error) {
+	var feeRateResponseTransformed FeeRateResponseTransformed
+	units := []models.FeeRateType{models.FeeRateTypeSatPerB, models.FeeRateTypeSatPerKw}
+	names := []string{"fastest_fee", "half_hour_fee", "hour_fee", "economy_fee", "minimum_fee"}
+	for _, feeRateInfo := range feeRateInfos {
+		if feeRateInfo.Unit == units[0] {
+			if feeRateInfo.Name == names[0] {
+				feeRateResponseTransformed.SatPerB.FastestFee = int(feeRateInfo.FeeRate)
+			} else if feeRateInfo.Name == names[1] {
+				feeRateResponseTransformed.SatPerB.HalfHourFee = int(feeRateInfo.FeeRate)
+			} else if feeRateInfo.Name == names[2] {
+				feeRateResponseTransformed.SatPerB.HourFee = int(feeRateInfo.FeeRate)
+			} else if feeRateInfo.Name == names[3] {
+				feeRateResponseTransformed.SatPerB.EconomyFee = int(feeRateInfo.FeeRate)
+			} else if feeRateInfo.Name == names[4] {
+				feeRateResponseTransformed.SatPerB.MinimumFee = int(feeRateInfo.FeeRate)
+			}
+		} else if feeRateInfo.Unit == units[1] {
+			if feeRateInfo.Name == names[0] {
+				feeRateResponseTransformed.SatPerKw.FastestFee = int(feeRateInfo.FeeRate)
+			} else if feeRateInfo.Name == names[1] {
+				feeRateResponseTransformed.SatPerKw.HalfHourFee = int(feeRateInfo.FeeRate)
+			} else if feeRateInfo.Name == names[2] {
+				feeRateResponseTransformed.SatPerKw.HourFee = int(feeRateInfo.FeeRate)
+			} else if feeRateInfo.Name == names[3] {
+				feeRateResponseTransformed.SatPerKw.EconomyFee = int(feeRateInfo.FeeRate)
+			} else if feeRateInfo.Name == names[4] {
+				feeRateResponseTransformed.SatPerKw.MinimumFee = int(feeRateInfo.FeeRate)
+			}
+		}
+	}
+	return &feeRateResponseTransformed, nil
+}
+
+func GetFeeRateInfoByNameAndUnit(name string, unit models.FeeRateType) (*models.FeeRateInfo, error) {
+	var feeRateInfo models.FeeRateInfo
+	err := middleware.DB.Where("name = ? AND unit = ?", name, unit).First(&feeRateInfo).Error
+	return &feeRateInfo, err
+}
+
+func UpdateFeeRateInfoByNameAndUnitIfNotExistThenCreate(name string, unit models.FeeRateType, feeRate int) error {
+	f := FeeRateInfoStore{DB: middleware.DB}
+	feeRateInfo, err := GetFeeRateInfoByNameAndUnit(name, unit)
+	if err != nil {
+		feeRateInfo = &models.FeeRateInfo{
+			Name:    name,
+			Unit:    unit,
+			FeeRate: float64(feeRate),
+		}
+		err = f.CreateFeeRateInfo(feeRateInfo)
+		if err != nil {
+			return err
+		}
+		FEE.Info("%v %v %v", name, unit, "FeeRateInfo record created.")
+	} else {
+		feeRateInfo.FeeRate = float64(feeRate)
+		err = f.UpdateFeeRateInfo(feeRateInfo)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (feeRate *FeeRateResponseTransformed) GetFeeRateByNameAndUnit(unit models.FeeRateType, name string) (rate int, err error) {
+	units := []models.FeeRateType{models.FeeRateTypeSatPerB, models.FeeRateTypeSatPerKw}
+	names := []string{"fastest_fee", "half_hour_fee", "hour_fee", "economy_fee", "minimum_fee"}
+	if unit == units[0] {
+		if name == names[0] {
+			return feeRate.SatPerB.FastestFee, nil
+		} else if name == names[1] {
+			return feeRate.SatPerB.HalfHourFee, nil
+		} else if name == names[2] {
+			return feeRate.SatPerB.HourFee, nil
+		} else if name == names[3] {
+			return feeRate.SatPerB.EconomyFee, nil
+		} else if name == names[4] {
+			return feeRate.SatPerB.MinimumFee, nil
+		}
+	} else if unit == units[1] {
+		if name == names[0] {
+			return feeRate.SatPerKw.FastestFee, nil
+		} else if name == names[1] {
+			return feeRate.SatPerKw.HalfHourFee, nil
+		} else if name == names[2] {
+			return feeRate.SatPerKw.HourFee, nil
+		} else if name == names[3] {
+			return feeRate.SatPerKw.EconomyFee, nil
+		} else if name == names[4] {
+			return feeRate.SatPerKw.MinimumFee, nil
+		}
+	}
+	err = errors.New("can't get fee rate info by match name and unit")
+	return 0, err
+}
+
+func UpdateFeeRateInfoByMempool() error {
+	//var feeRateInfos []models.FeeRateInfo
+	feeRateResponse, err := GetFeeRateResponseTransformedByMempool()
+	if err != nil {
+		return err
+	}
+	units := []models.FeeRateType{models.FeeRateTypeSatPerB, models.FeeRateTypeSatPerKw}
+	names := []string{"fastest_fee", "half_hour_fee", "hour_fee", "economy_fee", "minimum_fee"}
+	for _, unit := range units {
+		for _, name := range names {
+			var feeRate int
+			feeRate, err = feeRateResponse.GetFeeRateByNameAndUnit(unit, name)
+			err = UpdateFeeRateInfoByNameAndUnitIfNotExistThenCreate(name, unit, feeRate)
+			if err != nil {
+				//@dev: do not return
+			}
+		}
+	}
+	return nil
 }

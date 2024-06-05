@@ -5,13 +5,12 @@ import (
 	"net/http"
 	"trade/models"
 	"trade/services"
-	"trade/utils"
 )
 
 func QueryFeeRate(c *gin.Context) {
-	feeRate, err := services.GetFeeRate()
+	feeRate, err := services.GetMempoolFeeRate()
 	if err != nil {
-		utils.LogError("Get FeeRate.", err)
+		//utils.LogError("Get FeeRate.", err)
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get FeeRate. " + err.Error(),
@@ -19,17 +18,24 @@ func QueryFeeRate(c *gin.Context) {
 		})
 		return
 	}
+	satPerKw := feeRate.SatPerKw.FastestFee
+	satPerB := feeRate.SatPerB.FastestFee
+	btcPerKb := services.FeeRateSatPerBToBtcPerKb(feeRate.SatPerB.FastestFee)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   "",
-		Data:    feeRate,
+		Data: services.FeeRateResponse{
+			SatPerKw: satPerKw,
+			SatPerB:  satPerB,
+			BtcPerKb: btcPerKb,
+		},
 	})
 }
 
 func QueryAllFeeRate(c *gin.Context) {
 	allFeeRate, err := services.GetAllFeeRateInfos()
 	if err != nil {
-		utils.LogError("Get FeeRate.", err)
+		//utils.LogError("Get FeeRate.", err)
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get FeeRate. " + err.Error(),
@@ -41,5 +47,23 @@ func QueryAllFeeRate(c *gin.Context) {
 		Success: true,
 		Error:   "",
 		Data:    allFeeRate,
+	})
+}
+
+func QueryRecommendedFeeRate(c *gin.Context) {
+	feeRate, err := services.GetMempoolFeeRate()
+	if err != nil {
+		//utils.LogError("Get FeeRate.", err)
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   "Get FeeRate. " + err.Error(),
+			Data:    "",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Data:    feeRate,
 	})
 }

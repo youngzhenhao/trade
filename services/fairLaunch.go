@@ -49,7 +49,7 @@ func FairLaunchMint() {
 func SendFairLaunchAsset() {
 	err := SendFairLaunchMintedAssetLocked()
 	if err != nil {
-		FairLaunchDebugLogger.Info("%v", err)
+		//FairLaunchDebugLogger.Info("%v", err)
 		return
 	}
 }
@@ -112,12 +112,14 @@ func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount 
 	}
 	var fairLaunchInfo models.FairLaunchInfo
 	//@dev: setting fee rate need to bigger equal than fee rate now
-	estimatedFeeRateSatPerKw, err := UpdateAndEstimateSmartFeeRateSatPerKw()
+	feeRateResponse, err := UpdateAndGetFeeRateResponseTransformed()
+	feeRateSatPerKw := feeRateResponse.SatPerKw.FastestFee
+	//estimatedFeeRateSatPerKw, err := UpdateAndEstimateSmartFeeRateSatPerKw()
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Update And Estimate Smart FeeRate SatPerKw %v", err)
 		return nil, err
 	}
-	if feeRate < estimatedFeeRateSatPerKw {
+	if feeRate < feeRateSatPerKw {
 		err = errors.New("setting fee rate need to bigger equal than fee rate now")
 		//FairLaunchDebugLogger.Info("Insufficient fee rate %v", err)
 		return nil, err
@@ -180,11 +182,14 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 		return nil, err
 	}
 	//@dev: setting fee rate need to bigger equal than calculated fee rate now
-	calculateFeeRateSatPerKw, err := UpdateAndCalculateGasFeeRateSatPerKw(mintedNumber)
+	feeRate, err := UpdateAndCalculateGasFeeRateByMempool(mintedNumber)
+	//calculateFeeRateSatPerKw, err := UpdateAndCalculateGasFeeRateSatPerKw(mintedNumber)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Update And Calculate Smart FeeRate SatPerKw %v", err)
 		return nil, err
 	}
+	// TODO: change comparison param
+	calculateFeeRateSatPerKw := feeRate.SatPerKw.FastestFee
 	if mintedFeeRateSatPerKw < calculateFeeRateSatPerKw {
 		err = errors.New("setting minted FeeRate SatPerKw need to bigger equal than calculated fee rate now")
 		//FairLaunchDebugLogger.Info("Insufficient minted feeRate SatPerKw %v", err)
@@ -1308,8 +1313,9 @@ func SendFairLaunchMintedAssetLocked() (err error) {
 	for _, fairLaunchMintedInfo := range *unsentFairLaunchMintedInfos {
 		addrSlice = append(addrSlice, fairLaunchMintedInfo.EncodedAddr)
 	}
-	UpdateFeeRate()
-	feeRateSatPerKw, err := EstimateSmartFeeRateSatPerKw()
+	feeRate, err := UpdateAndGetFeeRateResponseTransformed()
+	feeRateSatPerKw := feeRate.SatPerKw.FastestFee
+	//feeRateSatPerKw, err := UpdateAndEstimateSmartFeeRateSatPerKw()
 	if err != nil {
 		return err
 	}
@@ -1520,12 +1526,13 @@ func SendFairLaunchReserved(fairLaunchInfo *models.FairLaunchInfo, addr string) 
 	}
 	// send
 	addrSlice := []string{addr}
-	UpdateFeeRate()
-	feeRateSatPerKw, err := EstimateSmartFeeRateSatPerKw()
+	feeRate, err := UpdateAndGetFeeRateResponseTransformed()
+	//feeRateSatPerKw, err := UpdateAndEstimateSmartFeeRateSatPerKw()
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Estimate Smart FeeRate SatPerKw %v", err)
 		return nil, err
 	}
+	feeRateSatPerKw := feeRate.SatPerKw.FastestFee
 	response, err = api.SendAssetAddrSliceAndGetResponse(addrSlice, feeRateSatPerKw)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Send Asset AddrSlice And Get Response %v", err)
