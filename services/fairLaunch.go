@@ -105,6 +105,10 @@ func SetFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) 
 // @return *models.FairLaunchInfo
 // @return error
 func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount int, reserved int, mintQuantity int, startTime int, endTime int, description string, feeRate int, userId int) (*models.FairLaunchInfo, error) {
+	err := ValidateStartAndEndTime(startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
 	calculateSeparateAmount, err := AmountReservedAndMintQuantityToReservedTotalAndMintTotal(amount, reserved, mintQuantity)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Calculate separate amount %v", err)
@@ -112,16 +116,8 @@ func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount 
 	}
 	var fairLaunchInfo models.FairLaunchInfo
 	//@dev: setting fee rate need to bigger equal than fee rate now
-	feeRateResponse, err := UpdateAndGetFeeRateResponseTransformed()
-	feeRateSatPerKw := feeRateResponse.SatPerKw.FastestFee
-	//estimatedFeeRateSatPerKw, err := UpdateAndEstimateSmartFeeRateSatPerKw()
+	err = ValidateFeeRate(feeRate)
 	if err != nil {
-		//FairLaunchDebugLogger.Info("Update And Estimate Smart FeeRate SatPerKw %v", err)
-		return nil, err
-	}
-	if feeRate < feeRateSatPerKw {
-		err = errors.New("setting fee rate need to bigger equal than fee rate now")
-		//FairLaunchDebugLogger.Info("Insufficient fee rate %v", err)
 		return nil, err
 	}
 	fairLaunchInfo = models.FairLaunchInfo{
@@ -135,6 +131,7 @@ func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount 
 		EndTime:                endTime,
 		Description:            description,
 		FeeRate:                feeRate,
+		SetGasFee:              GetTransactionFee(feeRate),
 		SetTime:                utils.GetTimestamp(),
 		ActualReserved:         calculateSeparateAmount.ActualReserved,
 		ReserveTotal:           calculateSeparateAmount.ReserveTotal,
@@ -148,6 +145,36 @@ func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount 
 		State:                  models.FairLaunchStateNoPay,
 	}
 	return &fairLaunchInfo, nil
+}
+
+func ValidateFeeRate(feeRate int) (err error) {
+	feeRateResponse, err := UpdateAndGetFeeRateResponseTransformed()
+	if err != nil {
+		//FairLaunchDebugLogger.Info("Update And Estimate Smart FeeRate SatPerKw %v", err)
+		return err
+	}
+	feeRateSatPerKw := feeRateResponse.SatPerKw.FastestFee
+	//estimatedFeeRateSatPerKw, err := UpdateAndEstimateSmartFeeRateSatPerKw()
+	if !(feeRate >= feeRateSatPerKw) {
+		err = errors.New("setting fee rate need to bigger equal than mempool's recommended fastest fee rate now")
+		//FairLaunchDebugLogger.Info("Insufficient fee rate %v", err)
+		return err
+	}
+	return nil
+}
+
+func ValidateStartAndEndTime(startTime int, endTime int) error {
+	now := utils.GetTimestamp()
+	if !(startTime >= now) {
+		return errors.New("start time must be greater than the current time")
+	}
+	if !(endTime >= startTime+3600*2) {
+		return errors.New("end time should be at least two hour after the start time")
+	}
+	if !(endTime <= now+3600*24*365) {
+		return errors.New("end time cannot be more than one year from the current time")
+	}
+	return nil
 }
 
 // ProcessFairLaunchMintedInfo
@@ -183,15 +210,15 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 	}
 	//@dev: setting fee rate need to bigger equal than calculated fee rate now
 	feeRate, err := UpdateAndCalculateGasFeeRateByMempool(mintedNumber)
-	//calculateFeeRateSatPerKw, err := UpdateAndCalculateGasFeeRateSatPerKw(mintedNumber)
+	//calculatedFeeRateSatPerKw, err := UpdateAndCalculateGasFeeRateSatPerKw(mintedNumber)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Update And Calculate Smart FeeRate SatPerKw %v", err)
 		return nil, err
 	}
-	// TODO: change comparison param
-	calculateFeeRateSatPerKw := feeRate.SatPerKw.FastestFee
-	if mintedFeeRateSatPerKw < calculateFeeRateSatPerKw {
-		err = errors.New("setting minted FeeRate SatPerKw need to bigger equal than calculated fee rate now")
+	// TODO: maybe need to change comparison param
+	calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee
+	if mintedFeeRateSatPerKw < calculatedFeeRateSatPerKw {
+		err = errors.New("setting minted calculated FeeRate SatPerKw need to bigger equal than calculated fee rate by mempool's recommended fastest fee rate now")
 		//FairLaunchDebugLogger.Info("Insufficient minted feeRate SatPerKw %v", err)
 		return nil, err
 	}
@@ -199,7 +226,7 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 		FairLaunchInfoID:      fairLaunchInfoID,
 		MintedNumber:          mintedNumber,
 		MintedFeeRateSatPerKw: mintedFeeRateSatPerKw,
-		MintedGasFee:          CalculateGasFeeByMintedFeeRateSatPerKw(mintedFeeRateSatPerKw),
+		MintedGasFee:          GetMintedTransactionGasFee(mintedFeeRateSatPerKw),
 		EncodedAddr:           addr,
 		UserID:                userId,
 		AssetID:               hex.EncodeToString(decodedAddrInfo.AssetId),
@@ -214,12 +241,6 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 		State:                 models.FairLaunchMintedStateNoPay,
 	}
 	return &fairLaunchMintedInfo, nil
-}
-
-func CalculateGasFeeByMintedFeeRateSatPerKw(feeRateSatPerKw int) int {
-	feeRate := FeeRateSatPerKwToSatPerB(feeRateSatPerKw)
-	size := GetTransactionByteSize()
-	return feeRate * size
 }
 
 type CalculateSeparateAmount struct {
@@ -827,6 +848,7 @@ func FairLaunchTapdMint(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 }
 
 func FairLaunchTapdMintFinalize(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+	//TODO: FeeRate maybe need to choose
 	finalizeResponse, err := api.FinalizeBatchAndGetResponse(fairLaunchInfo.FeeRate)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Tapd Mint finalize. %v", err)
@@ -1526,13 +1548,15 @@ func SendFairLaunchReserved(fairLaunchInfo *models.FairLaunchInfo, addr string) 
 	}
 	// send
 	addrSlice := []string{addr}
-	feeRate, err := UpdateAndGetFeeRateResponseTransformed()
 	//feeRateSatPerKw, err := UpdateAndEstimateSmartFeeRateSatPerKw()
-	if err != nil {
-		//FairLaunchDebugLogger.Info("Estimate Smart FeeRate SatPerKw %v", err)
-		return nil, err
-	}
-	feeRateSatPerKw := feeRate.SatPerKw.FastestFee
+	//feeRate, err := UpdateAndGetFeeRateResponseTransformed()
+	//if err != nil {
+	//	//FairLaunchDebugLogger.Info("Estimate Smart FeeRate SatPerKw %v", err)
+	//	return nil, err
+	//}
+	//feeRateSatPerKw := feeRate.SatPerKw.FastestFee
+	//@dev: Use same fee rate of issuance instead
+	feeRateSatPerKw := fairLaunchInfo.FeeRate
 	response, err = api.SendAssetAddrSliceAndGetResponse(addrSlice, feeRateSatPerKw)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Send Asset AddrSlice And Get Response %v", err)
@@ -1544,7 +1568,7 @@ func SendFairLaunchReserved(fairLaunchInfo *models.FairLaunchInfo, addr string) 
 func GetIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
 	//@dev: add more condition
-	err := middleware.DB.Where("status = ? AND state = ? AND is_mint_all = ?", models.StatusNormal, models.FairLaunchStateIssued, false).Find(&fairLaunchInfos).Error
+	err := middleware.DB.Where("status = ? AND is_mint_all = ? AND state >= ?", models.StatusNormal, false, models.FairLaunchStateIssued).Find(&fairLaunchInfos).Error
 	return &fairLaunchInfos, err
 }
 

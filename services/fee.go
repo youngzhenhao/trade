@@ -268,9 +268,32 @@ func CalculateGasFeeRateBtcPerKb(number int) (float64, error) {
 }
 
 // @dev: not actual value
-func GetTransactionByteSize() int {
+func GetIssuanceTransactionByteSize() int {
+	// TODO: need to complete
+	return GetTapdMintAssetAndFinalizeTransactionByteSize() + GetTapdSendReservedAssetTransactionByteSize()
+}
+
+func GetTapdMintAssetAndFinalizeTransactionByteSize() int {
 	// TODO: need to complete
 	return 170
+}
+
+func GetTapdSendReservedAssetTransactionByteSize() int {
+	// TODO: need to complete
+	return 170
+}
+
+func GetTransactionFee(feeRateSatPerKw int) int {
+	return FeeRateSatPerKwToSatPerB(feeRateSatPerKw) * GetIssuanceTransactionByteSize()
+}
+
+func GetMintTransactionByteSize() int {
+	// TODO: need to complete
+	return 170
+}
+
+func GetMintedTransactionGasFee(feeRateSatPerKw int) int {
+	return FeeRateSatPerKwToSatPerB(feeRateSatPerKw) * GetMintTransactionByteSize()
 }
 
 func CalculateGasFee(number int, byteSize int) (int, error) {
@@ -302,13 +325,12 @@ func IsIssuanceFeePaid(paidId int) bool {
 }
 
 func PayMintFee(userId int, feeRateSatPerKw int) (mintFeePaidId int, err error) {
-	fee := FeeRateSatPerKwToSatPerB(feeRateSatPerKw) * GetTransactionByteSize()
+	fee := GetMintedTransactionGasFee(feeRateSatPerKw)
 	return PayGasFee(userId, fee)
 }
 
 func PayIssuanceFee(userId int, feeRateSatPerKw int) (IssuanceFeePaidId int, err error) {
-	// TODO: User need to pay more fee
-	fee := FeeRateSatPerKwToSatPerB(feeRateSatPerKw) * GetTransactionByteSize()
+	fee := GetTransactionFee(feeRateSatPerKw)
 	return PayGasFee(userId, fee)
 }
 

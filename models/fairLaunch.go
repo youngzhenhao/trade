@@ -34,6 +34,7 @@ var (
 	FairLaunchInventoryStateMinted     FairLaunchInventoryState = 2
 )
 
+// FairLaunchInfo TODO: param FeeRate maybe need to rename
 type FairLaunchInfo struct {
 	gorm.Model
 	ImageData                      string           `json:"image_data"`
@@ -46,6 +47,7 @@ type FairLaunchInfo struct {
 	EndTime                        int              `json:"end_time"`
 	Description                    string           `json:"description"`
 	FeeRate                        int              `json:"fee_rate"`
+	SetGasFee                      int              `json:"set_gas_fee"`
 	SetTime                        int              `json:"set_time"`
 	ActualReserved                 float64          `json:"actual_reserved"`
 	ReserveTotal                   int              `json:"reserve_total"`
