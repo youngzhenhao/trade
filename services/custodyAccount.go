@@ -640,7 +640,7 @@ func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint
 	//检测目标账户是否合法
 	var payType models.PayInsideType
 	switch receiveUserId {
-	case adminUserId:
+	case AdminUserId:
 		payType = models.PayInsideToAdmin
 	default:
 		_, err := ReadAccountByUserId(receiveUserId)

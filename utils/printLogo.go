@@ -43,5 +43,4 @@ func PrintAsciiShadowLogo() {
 	fmt.Println("      ██║   ██╔══██╗██╔══██║██║  ██║██╔══╝  ")
 	fmt.Println("      ██║   ██║  ██║██║  ██║██████╔╝███████╗")
 	fmt.Println("      ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝")
-	//fmt.Println("")
 }

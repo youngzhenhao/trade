@@ -1370,13 +1370,8 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 		if err != nil {
 			return utils.AppendErrorInfo(err, "CreateFairLaunchMintedUserInfo")
 		}
-		var account *models.Account
-		account, err = ReadAccountByUserId(uint(fairLaunchMintedInfo.UserID))
-		if err != nil {
-			return utils.AppendErrorInfo(err, "ReadAccountByUserId")
-		}
 		err = CreateBalance(&models.Balance{
-			AccountId:   account.ID,
+			AccountId:   AdminAccountId,
 			BillType:    models.BILL_TYPE_ASSET_MINTED_SEND,
 			Away:        models.AWAY_OUT,
 			Amount:      float64(fairLaunchMintedInfo.AddrAmount),
