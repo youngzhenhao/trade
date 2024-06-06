@@ -17,7 +17,7 @@ import (
 	"trade/services/servicesrpc"
 )
 
-var mutex sync.Mutex
+var CMutex sync.Mutex
 
 // CreateCustodyAccount 创建托管账户并保持马卡龙文件
 func CreateCustodyAccount(user *models.User) (*models.Account, error) {
@@ -51,8 +51,8 @@ func CreateCustodyAccount(user *models.User) (*models.Account, error) {
 	accountModel.Label = &account.Label
 	accountModel.Status = 1
 	// Write to the database
-	mutex.Lock()
-	defer mutex.Unlock()
+	CMutex.Lock()
+	defer CMutex.Unlock()
 	err = CreateAccount(&accountModel)
 	if err != nil {
 		CUST.Error(err.Error())
@@ -108,9 +108,10 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 		}
 	}
 	// Update the database
-	mutex.Lock()
-	defer mutex.Unlock()
+	CMutex.Lock()
+	defer CMutex.Unlock()
 	err = middleware.DB.Create(&ba).Error
+
 	if err != nil {
 		CUST.Error(err.Error())
 		return 0, err
@@ -179,9 +180,10 @@ func ApplyInvoice(user *models.User, account *models.Account, applyRequest *Appl
 	invoiceModel.Expiry = &expiry
 
 	//写入数据库
-	mutex.Lock()
-	defer mutex.Unlock()
+	CMutex.Lock()
+	defer CMutex.Unlock()
 	err = middleware.DB.Create(&invoiceModel).Error
+
 	if err != nil {
 		CUST.Error(err.Error())
 		return invoice, err
@@ -292,9 +294,11 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 	} else {
 		balanceModel.State = models.STATE_UNKNOW
 	}
-	mutex.Lock()
-	defer mutex.Unlock()
+
+	CMutex.Lock()
+	defer CMutex.Unlock()
 	err = middleware.DB.Create(&balanceModel).Error
+
 	if err != nil {
 		CUST.Error(err.Error())
 		return false, err
@@ -377,9 +381,54 @@ func QueryInvoiceByUserId(userId uint, assetId string) ([]InvoiceResponce, error
 
 }
 
-// QueryPaymentByUserId 查询用户支付记录
-func QueryPaymentByUserId(userId uint, assetId string) {
+type PaymentRequest struct {
+	AssetId string `json:"asset_id"`
+}
 
+type PaymentResponse struct {
+	Timestamp int64               `json:"timestamp"`
+	BillType  models.BalanceType  `json:"bill_type"`
+	Away      models.BalanceAway  `json:"away"`
+	Invoice   *string             `json:"invoice"`
+	Amount    float64             `json:"amount"`
+	AssetId   *string             `json:"asset_id"`
+	State     models.BalanceState `json:"state"`
+}
+
+// QueryPaymentByUserId 查询用户支付记录
+func QueryPaymentByUserId(userId uint, assetId string) ([]PaymentResponse, error) {
+	accountId, err := ReadAccountByUserId(userId)
+	if err != nil {
+		return nil, fmt.Errorf("not find account info")
+	}
+	params := QueryParams{
+		"AccountId": accountId.ID,
+	}
+	if assetId != "00" {
+		return nil, fmt.Errorf("not find assetId")
+	}
+	a, err := GenericQuery(&models.Balance{}, params)
+	if err != nil {
+		CUST.Error(err.Error())
+		return nil, fmt.Errorf("query payment error")
+	}
+	var results []PaymentResponse
+	if len(a) > 0 {
+		for i := len(a) - 1; i >= 0; i-- {
+			v := a[i]
+			r := PaymentResponse{}
+			r.Timestamp = v.CreatedAt.Unix()
+			r.BillType = v.BillType
+			r.Away = v.Away
+			r.Invoice = v.Invoice
+			r.Amount = v.Amount
+			btcAssetId := "00"
+			r.AssetId = &btcAssetId
+			r.State = v.State
+			results = append(results, r)
+		}
+	}
+	return results, nil
 }
 
 // DecodeInvoice  解析发票信息
@@ -424,8 +473,13 @@ func saveMacaroon(macaroon []byte, macaroonFile string) error {
 	return nil
 }
 
+var PaymentMutex sync.Mutex
+
 // PollPayment 遍历所有未确认的发票，轮询支付状态
 func pollPayment() {
+
+	PaymentMutex.Lock()
+	defer PaymentMutex.Unlock()
 	//查询数据库，获取所有未确认的支付
 	params := QueryParams{
 		"State": models.STATE_UNKNOW,
@@ -447,17 +501,13 @@ func pollPayment() {
 			}
 			if temp.Status == lnrpc.Payment_SUCCEEDED {
 				v.State = models.STATE_SUCCESS
-				mutex.Lock()
 				err = middleware.DB.Save(&v).Error
-				mutex.Unlock()
 				if err != nil {
 					CUST.Warning(err.Error())
 				}
 			} else if temp.Status == lnrpc.Payment_FAILED {
 				v.State = models.STATE_FAILED
-				mutex.Lock()
 				err = middleware.DB.Save(&v).Error
-				mutex.Unlock()
 				if err != nil {
 					CUST.Warning(err.Error())
 				}
@@ -467,8 +517,12 @@ func pollPayment() {
 	}
 }
 
+var InvoiceMutex sync.Mutex
+
 // PollInvoice 遍历所有未支付的发票，轮询发票状态
 func pollInvoice() {
+	InvoiceMutex.Lock()
+	defer InvoiceMutex.Unlock()
 	//查询数据库，获取所有未支付的发票
 	params := QueryParams{
 		"Status": lnrpc.Invoice_OPEN,
@@ -508,16 +562,12 @@ func pollInvoice() {
 					ba.Invoice = &v.Invoice
 					hash := hex.EncodeToString(rHash)
 					ba.PaymentHash = &hash
-					mutex.Lock()
 					err = middleware.DB.Save(&ba).Error
-					mutex.Unlock()
 					if err != nil {
 						CUST.Warning(err.Error())
 					}
 				}
-				mutex.Lock()
 				err = middleware.DB.Save(&v).Error
-				mutex.Unlock()
 				if err != nil {
 					CUST.Warning(err.Error())
 				}
@@ -626,8 +676,12 @@ func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint
 	return payInside.ID, nil
 }
 
+var PayInsideMutex sync.Mutex
+
 // QueryPayInsideMission 处理内部转账任务
 func pollPayInsideMission() {
+	PayInsideMutex.Lock()
+	defer PayInsideMutex.Unlock()
 	//获取所有待处理任务
 	params := QueryParams{
 		"Status": models.PayInsideStatusPending,
@@ -648,9 +702,7 @@ func pollPayInsideMission() {
 			}
 			//更新数据库状态
 			v.Status = models.PayInsideStatusSuccess
-			mutex.Lock()
 			err = UpdatePayInside(v)
-			mutex.Unlock()
 			if err != nil {
 				CUST.Error("UpdatePayInside database error(id=%v):%v", v.ID, err)
 				continue

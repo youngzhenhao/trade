@@ -154,3 +154,28 @@ func QueryBalance(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"balance": balance})
 }
+
+// QueryPayment  查询支付记录
+func QueryPayment(c *gin.Context) {
+	// 获取登录用户信息
+	userName := c.MustGet("username").(string)
+	user, err := services.ReadUserByUsername(userName)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在"})
+		return
+	}
+
+	//获取交易查询请求
+	query := services.PaymentRequest{}
+	if err := c.ShouldBindJSON(&query); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+	}
+
+	// 查询交易记录
+	payments, err := services.QueryPaymentByUserId(user.ID, query.AssetId)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK, gin.H{"payments": payments})
+
+}
