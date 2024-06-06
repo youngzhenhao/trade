@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/joho/godotenv"
 	"github.com/lightninglabs/taproot-assets/taprpc"
@@ -215,4 +216,8 @@ func ValueJsonString(value any) string {
 		return ""
 	}
 	return string(resultJSON)
+}
+
+func AppendErrorInfo(err error, info string) error {
+	return errors.New(err.Error() + ";" + info)
 }

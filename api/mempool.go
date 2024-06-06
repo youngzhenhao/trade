@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"trade/utils"
 )
 
 type MempoolGetRecommendedFeesResponse struct {
@@ -21,11 +22,11 @@ func MempoolGetRecommendedFees() (*MempoolGetRecommendedFeesResponse, error) {
 	var jsonData []byte
 	request, err := http.NewRequest("GET", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "NewRequest")
 	}
 	response, err := client.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "client.Do")
 	}
 	defer func(Body io.ReadCloser) {
 		err = Body.Close()
@@ -35,11 +36,11 @@ func MempoolGetRecommendedFees() (*MempoolGetRecommendedFeesResponse, error) {
 	}(response.Body)
 	bodyBytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "ReadAll")
 	}
 	var mempoolGetRecommendedFeesResponse MempoolGetRecommendedFeesResponse
 	if err = json.Unmarshal(bodyBytes, &mempoolGetRecommendedFeesResponse); err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "Unmarshal")
 	}
 	return &mempoolGetRecommendedFeesResponse, nil
 }

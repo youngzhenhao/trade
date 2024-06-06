@@ -55,7 +55,7 @@ func ValidateUserAndGenerateToken(creds models.User) (string, error) {
 	return token, nil
 }
 
-func (sm *CronService) FiveSecondTask() {
+func (cs *CronService) FiveSecondTask() {
 	fmt.Println("5 secs runs")
 	log.Println("5 secs runs")
 }

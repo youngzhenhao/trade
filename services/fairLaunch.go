@@ -115,18 +115,18 @@ func SetFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) 
 func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount int, reserved int, mintQuantity int, startTime int, endTime int, description string, feeRate int, userId int) (*models.FairLaunchInfo, error) {
 	err := ValidateStartAndEndTime(startTime, endTime)
 	if err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "ValidateStartAndEndTime")
 	}
 	calculateSeparateAmount, err := AmountReservedAndMintQuantityToReservedTotalAndMintTotal(amount, reserved, mintQuantity)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Calculate separate amount %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "AmountReservedAndMintQuantityToReservedTotalAndMintTotal")
 	}
 	var fairLaunchInfo models.FairLaunchInfo
 	//@dev: setting fee rate need to bigger equal than fee rate now
 	err = ValidateFeeRate(feeRate)
 	if err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "ValidateFeeRate")
 	}
 	setGasFee := GetTransactionFee(feeRate)
 	if !IsAccountBalanceEnoughByUserId(uint(userId), uint64(setGasFee)) {
@@ -163,7 +163,7 @@ func ValidateFeeRate(feeRate int) (err error) {
 	feeRateResponse, err := UpdateAndGetFeeRateResponseTransformed()
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Update And Estimate Smart FeeRate SatPerKw %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "UpdateAndGetFeeRateResponseTransformed")
 	}
 	feeRateSatPerKw := feeRateResponse.SatPerKw.FastestFee
 	//estimatedFeeRateSatPerKw, err := UpdateAndEstimateSmartFeeRateSatPerKw()
@@ -200,7 +200,7 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 	var fairLaunchMintedInfo models.FairLaunchMintedInfo
 	isFairLaunchMintTimeRight, err := IsFairLaunchMintTimeRight(fairLaunchInfoID)
 	if err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "IsFairLaunchMintTimeRight")
 	}
 	if !isFairLaunchMintTimeRight {
 		err = errors.New("not valid mint time")
@@ -208,12 +208,12 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 	}
 	decodedAddrInfo, err := api.GetDecodedAddrInfo(addr)
 	if err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "GetDecodedAddrInfo")
 	}
 	var fairLaunchInfo *models.FairLaunchInfo
 	fairLaunchInfo, err = GetFairLaunchInfo(fairLaunchInfoID)
 	if err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "GetFairLaunchInfo")
 	}
 	decodedAddrAssetId := hex.EncodeToString(decodedAddrInfo.AssetId)
 	if fairLaunchInfo.AssetID != decodedAddrAssetId {
@@ -225,7 +225,7 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 	//calculatedFeeRateSatPerKw, err := UpdateAndCalculateGasFeeRateSatPerKw(mintedNumber)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Update And Calculate Smart FeeRate SatPerKw %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "UpdateAndCalculateGasFeeRateByMempool")
 	}
 	// TODO: maybe need to change comparison param
 	calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee
@@ -333,7 +333,7 @@ func AmountReservedAndMintQuantityToReservedTotalAndMintTotal(amount int, reserv
 	calculatedSeparateAmount.CalculationExpression, err = CalculationExpressionBySeparateAmount(&calculatedSeparateAmount)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("CalculationExpressionBySeparateAmount error. %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "CalculationExpressionBySeparateAmount")
 	}
 	return &calculatedSeparateAmount, nil
 }
@@ -402,9 +402,9 @@ func GetAllInventoryInfoByFairLaunchInfoId(fairLaunchInfoId int) (*[]models.Fair
 	err := middleware.DB.Where("fair_launch_info_id = ? AND status = ?", fairLaunchInfoId, models.StatusNormal).Find(&fairLaunchInventoryInfos).Error
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get all inventory info by fair launch id. %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInventoryInfos")
 	}
-	return &fairLaunchInventoryInfos, err
+	return &fairLaunchInventoryInfos, nil
 }
 
 // GetInventoryCouldBeMintedByFairLaunchInfoId
@@ -417,9 +417,9 @@ func GetInventoryCouldBeMintedByFairLaunchInfoId(fairLaunchInfoId int) (*[]model
 	err := middleware.DB.Where("fair_launch_info_id = ? AND status = ? AND is_minted = ? AND state = ?", fairLaunchInfoId, models.StatusNormal, false, models.FairLaunchInventoryStateOpen).Find(&fairLaunchInventoryInfos).Error
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get all inventory info could be minted by fair launch id. %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInventoryInfos")
 	}
-	return &fairLaunchInventoryInfos, err
+	return &fairLaunchInventoryInfos, nil
 }
 
 func CalculateInventoryAmount(fairLaunchInventoryInfos *[]models.FairLaunchInventoryInfo) (amount int) {
@@ -446,7 +446,7 @@ func GetNumberAndAmountOfInventoryCouldBeMinted(fairLaunchInfoId int) (*Inventor
 	fairLaunchInventoryInfos, err := GetInventoryCouldBeMintedByFairLaunchInfoId(fairLaunchInfoId)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("%v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "GetInventoryCouldBeMintedByFairLaunchInfoId")
 	}
 	amount := CalculateInventoryAmount(fairLaunchInventoryInfos)
 	return &InventoryNumberAndAmount{
@@ -459,7 +459,7 @@ func GetAmountOfInventoryCouldBeMintedByMintedNumber(fairLaunchInfoId int, minte
 	fairLaunchInventoryInfos, err := GetInventoryCouldBeMintedByFairLaunchInfoId(fairLaunchInfoId)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("%v", err)
-		return 0, err
+		return 0, utils.AppendErrorInfo(err, "GetInventoryCouldBeMintedByFairLaunchInfoId")
 	}
 	if mintedNumber > len(*fairLaunchInventoryInfos) {
 		err = errors.New("not enough inventory could be minted")
@@ -467,7 +467,7 @@ func GetAmountOfInventoryCouldBeMintedByMintedNumber(fairLaunchInfoId int, minte
 	}
 	fairLaunchInventoryInfoSlice := (*fairLaunchInventoryInfos)[0:mintedNumber]
 	amount := CalculateInventoryAmount(&fairLaunchInventoryInfoSlice)
-	return amount, err
+	return amount, nil
 }
 
 // IsMintAvailable
@@ -504,7 +504,7 @@ func GetMintAmountByFairLaunchMintNumber(fairLaunchInfoId int, number int) (amou
 	fairLaunchInventoryInfos, err := GetInventoryCouldBeMintedByFairLaunchInfoId(fairLaunchInfoId)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("%v", err)
-		return 0, err
+		return 0, utils.AppendErrorInfo(err, "GetInventoryCouldBeMintedByFairLaunchInfoId")
 	}
 	allNum := len(*fairLaunchInventoryInfos)
 	if allNum < number {
@@ -516,7 +516,7 @@ func GetMintAmountByFairLaunchMintNumber(fairLaunchInfoId int, number int) (amou
 	for _, inventory := range mintInventoryInfos {
 		amount += inventory.Quantity
 	}
-	return amount, err
+	return amount, nil
 }
 
 // LockInventoryByFairLaunchMintedIdAndMintNumber
@@ -534,12 +534,12 @@ func LockInventoryByFairLaunchMintedIdAndMintNumber(fairLaunchMintedInfoId int, 
 	fairLaunchMintedInfo, err := GetFairLaunchMintedInfo(fairLaunchMintedInfoId)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get FairLaunchMintedInfo %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "GetFairLaunchMintedInfo")
 	}
 	fairLaunchInventoryInfos, err := GetInventoryCouldBeMintedByFairLaunchInfoId(fairLaunchMintedInfo.FairLaunchInfoID)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get Inventory Could Be Minted By FairLaunchInfoId %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "GetInventoryCouldBeMintedByFairLaunchInfoId")
 	}
 	allNum := len(*fairLaunchInventoryInfos)
 	if allNum < number {
@@ -552,7 +552,10 @@ func LockInventoryByFairLaunchMintedIdAndMintNumber(fairLaunchMintedInfoId int, 
 	//	inventory.Status = models.StatusPending
 	//}
 	err = middleware.DB.Model(&mintInventoryInfos).Updates(map[string]any{"state": models.FairLaunchInventoryStateLocked, "fair_launch_minted_info_id": fairLaunchMintedInfoId}).Error
-	return &mintInventoryInfos, err
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "Updates mintInventoryInfos")
+	}
+	return &mintInventoryInfos, nil
 }
 
 // CalculateMintAmountByFairLaunchInventoryInfos
@@ -593,7 +596,7 @@ func IsFairLaunchMintTimeRight(fairLaunchInfoId int) (bool, error) {
 	fairLaunchInfo, err := GetFairLaunchInfo(fairLaunchInfoId)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("%v", err)
-		return false, err
+		return false, utils.AppendErrorInfo(err, "GetFairLaunchInfo")
 	}
 	return IsFairLaunchInfoMintTimeValid(fairLaunchInfo), nil
 }
@@ -615,11 +618,11 @@ func AmountAndQuantityToNumber(amount int, quantity int) int {
 func CreateInventoryAndAssetIssuanceInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	err = CreateInventoryInfoByFairLaunchInfo(fairLaunchInfo)
 	if err != nil {
-		return err
+		return utils.AppendErrorInfo(err, "CreateInventoryInfoByFairLaunchInfo")
 	}
 	err = CreateAssetIssuanceInfoByFairLaunchInfo(fairLaunchInfo)
 	if err != nil {
-		return err
+		return utils.AppendErrorInfo(err, "CreateAssetIssuanceInfoByFairLaunchInfo")
 	}
 	return nil
 }
@@ -632,9 +635,9 @@ func GetAllFairLaunchInfoByState(state models.FairLaunchState) (fairLaunchInfos 
 	err = middleware.DB.Where("status = ? AND state = ?", models.StatusNormal, state).Find(fairLaunchInfos).Error
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get all fairLaunch info by state. ", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
 	}
-	return fairLaunchInfos, err
+	return fairLaunchInfos, nil
 }
 
 func GetAllFairLaunchStateNoPayInfos() (fairLaunchInfos *[]models.FairLaunchInfo, err error) {
@@ -663,9 +666,9 @@ func GetAllValidFairLaunchInfos() (fairLaunchInfos *[]models.FairLaunchInfo, err
 	err = middleware.DB.Where("status = ?", models.StatusNormal).Find(fairLaunchInfos).Error
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get all fairLaunch infos error. %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
 	}
-	return fairLaunchInfos, err
+	return fairLaunchInfos, nil
 }
 
 type ProcessionResult struct {
@@ -678,7 +681,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 	allFairLaunchInfos, err := GetAllValidFairLaunchInfos()
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get all fairLaunch infos error. %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "GetAllValidFairLaunchInfos")
 	}
 	for _, fairLaunchInfo := range *allFairLaunchInfos {
 		if fairLaunchInfo.State == models.FairLaunchStateNoPay {
@@ -850,7 +853,7 @@ func FairLaunchTapdMint(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	mintResponse, err := api.MintAssetAndGetResponse(fairLaunchInfo.Name, isCollectible, newMeta, fairLaunchInfo.Amount, false)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Tapd Mint Asset. %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "MintAssetAndGetResponse")
 	}
 	// @dev: 2.update batchKey and batchState
 	batchKey := hex.EncodeToString(mintResponse.GetPendingBatch().GetBatchKey())
@@ -858,7 +861,7 @@ func FairLaunchTapdMint(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	err = UpdateFairLaunchInfoBatchKeyAndBatchState(fairLaunchInfo, batchKey, batchState)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Update FairLaunchInfo BatchKey And BatchState %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoBatchKeyAndBatchState")
 	}
 	return nil
 }
@@ -868,7 +871,7 @@ func FairLaunchTapdMintFinalize(fairLaunchInfo *models.FairLaunchInfo) (err erro
 	finalizeResponse, err := api.FinalizeBatchAndGetResponse(fairLaunchInfo.FeeRate)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Tapd Mint finalize. %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "FinalizeBatchAndGetResponse")
 	}
 	if hex.EncodeToString(finalizeResponse.GetBatch().GetBatchKey()) != fairLaunchInfo.BatchKey {
 		err = errors.New("finalize batch key is not equal mint batch key")
@@ -880,12 +883,12 @@ func FairLaunchTapdMintFinalize(fairLaunchInfo *models.FairLaunchInfo) (err erro
 	assetId, err := api.BatchTxidAnchorToAssetId(batchTxidAnchor)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Batch Anchor Txid To AssetId. %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "BatchTxidAnchorToAssetId")
 	}
 	err = UpdateFairLaunchInfoBatchTxidAndAssetId(fairLaunchInfo, batchTxidAnchor, batchState, assetId)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Update FairLaunchInfo BatchTxid And AssetId. %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoBatchTxidAndAssetId")
 	}
 	return nil
 }
@@ -894,7 +897,7 @@ func GetTransactionConfirmedNumber(txid string) (mumConfirmations int, err error
 	response, err := api.GetListChainTransactions()
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get List ChainTransactions %v", err)
-		return 0, err
+		return 0, utils.AppendErrorInfo(err, "GetListChainTransactions")
 	}
 	for _, transaction := range *response {
 		if txid == transaction.TxHash {
@@ -931,7 +934,7 @@ func GetFairLaunchInfoState(fairLaunchId int) (fairLaunchState models.FairLaunch
 	fairLaunchInfo, err = GetFairLaunchInfo(fairLaunchId)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get FairLaunchInfo %v", err)
-		return 0, err
+		return 0, utils.AppendErrorInfo(err, "GetFairLaunchInfo")
 	}
 	return fairLaunchInfo.State, nil
 }
@@ -959,19 +962,19 @@ func ProcessFairLaunchStateNoPayInfoService(fairLaunchInfo *models.FairLaunchInf
 	paidId, err := PayIssuanceFee(fairLaunchInfo.UserID, fairLaunchInfo.FeeRate)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Pay Mint Fee. %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "PayIssuanceFee")
 	}
 	// @dev: 2.Store paidId
 	err = UpdateFairLaunchInfoPaidId(fairLaunchInfo, paidId)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Update FairLaunchInfo PaidId %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoPaidId")
 	}
 	// @dev: 3.Change state
 	err = ChangeFairLaunchInfoState(fairLaunchInfo, models.FairLaunchStatePaidPending)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Change FairLaunchInfo State. %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "ChangeFairLaunchInfoState")
 	}
 	return nil
 }
@@ -983,7 +986,7 @@ func ProcessFairLaunchStatePaidPendingInfoService(fairLaunchInfo *models.FairLau
 		err = ChangeFairLaunchInfoStateAndUpdatePaidSuccessTime(fairLaunchInfo)
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Change FairLaunchInfo State. %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "ChangeFairLaunchInfoStateAndUpdatePaidSuccessTime")
 		}
 		return nil
 	}
@@ -997,13 +1000,13 @@ func ProcessFairLaunchStatePaidNoIssueInfoService(fairLaunchInfo *models.FairLau
 	err = FairLaunchTapdMint(fairLaunchInfo)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("%v", err)
-		return err
+		return utils.AppendErrorInfo(err, "FairLaunchTapdMint")
 	}
 	// @dev: Consider whether to use scheduled task to finalize
 	err = FairLaunchTapdMintFinalize(fairLaunchInfo)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("%v", err)
-		return err
+		return utils.AppendErrorInfo(err, "FairLaunchTapdMintFinalize")
 	}
 	// @dev: 2.Update asset issuance table
 	err = CreateAssetIssuanceInfoByFairLaunchInfo(fairLaunchInfo)
@@ -1013,7 +1016,7 @@ func ProcessFairLaunchStatePaidNoIssueInfoService(fairLaunchInfo *models.FairLau
 	err = UpdateFairLaunchInfoStateAndIssuanceTime(fairLaunchInfo)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Change FairLaunchInfo State. %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoStateAndIssuanceTime")
 	}
 	return nil
 }
@@ -1025,7 +1028,7 @@ func ProcessFairLaunchStateIssuedPendingInfoService(fairLaunchInfo *models.FairL
 		err = UpdateFairLaunchInfoReservedCouldMintAndState(fairLaunchInfo)
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Update FairLaunchInfo ReservedCouldMint And Change State. %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoReservedCouldMintAndState")
 		}
 		// @dev: Update Asset Issuance
 		var a = AssetIssuanceStore{DB: middleware.DB}
@@ -1033,13 +1036,13 @@ func ProcessFairLaunchStateIssuedPendingInfoService(fairLaunchInfo *models.FairL
 		assetIssuance, err = a.ReadAssetIssuanceByFairLaunchId(fairLaunchInfo.ID)
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Read AssetIssuance By FairLaunchId. %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "ReadAssetIssuanceByFairLaunchId")
 		}
 		assetIssuance.State = models.AssetIssuanceStateIssued
 		err = a.UpdateAssetIssuance(assetIssuance)
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Update AssetIssuance. %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "UpdateAssetIssuance")
 		}
 		return nil
 	}
@@ -1055,7 +1058,7 @@ func ProcessFairLaunchStateReservedSentPending(fairLaunchInfo *models.FairLaunch
 		err = ChangeFairLaunchInfoState(fairLaunchInfo, models.FairLaunchStateReservedSent)
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Change FairLaunchInfo State. %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "ChangeFairLaunchInfoState")
 		}
 		return nil
 	}
@@ -1072,9 +1075,9 @@ func GetAllFairLaunchMintedInfoByState(state models.FairLaunchMintedState) (fair
 	err = middleware.DB.Where("status = ? AND state = ?", models.StatusNormal, state).Find(fairLaunchMintedInfos).Error
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get all fairLaunch minted info by state. ", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchMintedInfos")
 	}
-	return fairLaunchMintedInfos, err
+	return fairLaunchMintedInfos, nil
 }
 
 func GetAllFairLaunchMintedStateNoPayInfo() (fairLaunchMintedInfos *[]models.FairLaunchMintedInfo, err error) {
@@ -1103,9 +1106,9 @@ func GetAllValidFairLaunchMintedInfos() (fairLaunchMintedInfos *[]models.FairLau
 	err = middleware.DB.Order("minted_set_time").Order("paid_success_time").Where("status = ?", models.StatusNormal).Find(fairLaunchMintedInfos).Error
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get all fairLaunch minted infos error. %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchMintedInfos")
 	}
-	return fairLaunchMintedInfos, err
+	return fairLaunchMintedInfos, nil
 }
 
 func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
@@ -1113,7 +1116,7 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 	allFairLaunchMintedInfos, err := GetAllValidFairLaunchMintedInfos()
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get all fairLaunch minted infos error. %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "GetAllValidFairLaunchMintedInfos")
 	}
 	for _, fairLaunchMintedInfo := range *allFairLaunchMintedInfos {
 		if fairLaunchMintedInfo.State == models.FairLaunchMintedStateNoPay {
@@ -1243,7 +1246,7 @@ func LockInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunch
 	lockedInventory, err = LockInventoryByFairLaunchMintedIdAndMintNumber(int(fairLaunchMintedInfo.ID), fairLaunchMintedInfo.MintedNumber)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Lock Inventory By FairLaunchId And MintNumber %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "LockInventoryByFairLaunchMintedIdAndMintNumber")
 	}
 	return lockedInventory, nil
 }
@@ -1254,9 +1257,9 @@ func GetAllUnsentFairLaunchMintedInfos() (fairLaunchMintedInfos *[]models.FairLa
 	err = middleware.DB.Where("status = ? AND state = ? AND is_addr_sent = ?", models.StatusNormal, models.FairLaunchMintedStateSentPending, false).Find(fairLaunchMintedInfos).Error
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get all fairLaunch minted infos error. %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchMintedInfos")
 	}
-	return fairLaunchMintedInfos, err
+	return fairLaunchMintedInfos, nil
 }
 
 // UpdateFairLaunchMintedInfosIsAddrSent
@@ -1288,13 +1291,13 @@ func GetListChainTransactionsOutpointAddress(outpoint string) (address string, e
 	response, err := api.GetListChainTransactions()
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get List ChainTransactions %v", err)
-		return "", err
+		return "", utils.AppendErrorInfo(err, "GetListChainTransactions")
 	}
 	tx, indexStr := GetTransactionAndIndexByOutpoint(outpoint)
 	index, err := strconv.Atoi(indexStr)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("strconv.Atoi(indexStr) %v", err)
-		return "", err
+		return "", utils.AppendErrorInfo(err, "GetTransactionAndIndexByOutpoint")
 	}
 	for _, transaction := range *response {
 		if transaction.TxHash == tx {
@@ -1318,7 +1321,7 @@ func UpdateFairLaunchMintedInfosBySendAssetResponse(fairLaunchMintedInfos *[]mod
 		outpoint, err = SendAssetResponseScriptKeyAndInternalKeyToOutpoint(sendAssetResponse, scriptKey, internalKey)
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Send Asset Response ScriptKey And InternalKey To Outpoint %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "SendAssetResponseScriptKeyAndInternalKeyToOutpoint")
 		}
 		fairLaunchMintedInfo.OutpointTxHash, _ = GetTransactionAndIndexByOutpoint(outpoint)
 		// @dev: Update outpoint and isAddrSent
@@ -1328,7 +1331,7 @@ func UpdateFairLaunchMintedInfosBySendAssetResponse(fairLaunchMintedInfos *[]mod
 		address, err = GetListChainTransactionsOutpointAddress(outpoint)
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Get List Chain Transactions Outpoint Address %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "GetListChainTransactionsOutpointAddress")
 		}
 		fairLaunchMintedInfo.Address = address
 		fairLaunchMintedInfo.SendAssetTime = utils.GetTimestamp()
@@ -1344,7 +1347,7 @@ func SendFairLaunchMintedAssetLocked() (err error) {
 	unsentFairLaunchMintedInfos, err := GetAllUnsentFairLaunchMintedInfos()
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get All Unsent FairLaunchMintedInfos %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "GetAllUnsentFairLaunchMintedInfos")
 	}
 	// @dev: addr Slice
 	var addrSlice []string
@@ -1352,11 +1355,11 @@ func SendFairLaunchMintedAssetLocked() (err error) {
 		addrSlice = append(addrSlice, fairLaunchMintedInfo.EncodedAddr)
 	}
 	feeRate, err := UpdateAndGetFeeRateResponseTransformed()
+	if err != nil {
+		return utils.AppendErrorInfo(err, "UpdateAndGetFeeRateResponseTransformed")
+	}
 	feeRateSatPerKw := feeRate.SatPerKw.FastestFee
 	//feeRateSatPerKw, err := UpdateAndEstimateSmartFeeRateSatPerKw()
-	if err != nil {
-		return err
-	}
 	if len(addrSlice) == 0 {
 		err = errors.New("length of addr slice is zero, can't send assets and update")
 		//FairLaunchDebugLogger.Info("%v", err)
@@ -1366,13 +1369,13 @@ func SendFairLaunchMintedAssetLocked() (err error) {
 	response, err := api.SendAssetAddrSliceAndGetResponse(addrSlice, feeRateSatPerKw)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Send Asset AddrSlice And Get Response %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "SendAssetAddrSliceAndGetResponse")
 	}
 	// @dev: Update minted info
 	err = UpdateFairLaunchMintedInfosBySendAssetResponse(unsentFairLaunchMintedInfos, response)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Update By FairLaunchMintedInfos And SendAssetResponse %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "UpdateFairLaunchMintedInfosBySendAssetResponse")
 	}
 	return nil
 }
@@ -1382,7 +1385,7 @@ func GetAllLockedInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo *models.Fa
 	err := middleware.DB.Where("status = ? AND state = ? AND fair_launch_minted_info_id = ?", models.StatusNormal, models.FairLaunchInventoryStateLocked, fairLaunchMintedInfo.ID).Find(&fairLaunchInventoryInfos).Error
 	if err != nil {
 		//FairLaunchDebugLogger.Info("DB Find by state AND fair_launch_minted_info_id %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInventoryInfos")
 	}
 	return &fairLaunchInventoryInfos, nil
 }
@@ -1391,13 +1394,13 @@ func UpdateLockedInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo *models.Fa
 	fairLaunchMintedInfos, err := GetAllLockedInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get All Locked Inventory By FairLaunchMintedInfo %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "GetAllLockedInventoryByFairLaunchMintedInfo")
 	}
 	// @dev: Update
 	err = middleware.DB.Model(&fairLaunchMintedInfos).Updates(map[string]any{"is_minted": true, "state": models.FairLaunchInventoryStateMinted}).Error
 	if err != nil {
 		//FairLaunchDebugLogger.Info("DB Updates is_minted, state %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "Updates fairLaunchMintedInfos")
 	}
 	return nil
 }
@@ -1407,7 +1410,7 @@ func UpdateMintedNumberAndIsMintAllOfFairLaunchInfoByFairLaunchMintedInfo(fairLa
 	fairLaunchInfo, err := GetFairLaunchInfo(fairLaunchInfoId)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get FairLaunchInfo %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "GetFairLaunchInfo")
 	}
 	var isMintAll bool
 	if fairLaunchInfo.MintedNumber+fairLaunchMintedInfo.MintedNumber >= fairLaunchInfo.MintNumber {
@@ -1431,13 +1434,13 @@ func ProcessFairLaunchMintedStateNoPayInfo(fairLaunchMintedInfo *models.FairLaun
 	err = UpdateFairLaunchMintedInfoPaidId(fairLaunchMintedInfo, paidId)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Update FairLaunchMintedInfo PaidId %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "UpdateFairLaunchMintedInfoPaidId")
 	}
 	// @dev: 3.Change state
 	err = ChangeFairLaunchMintedInfoState(fairLaunchMintedInfo, models.FairLaunchMintedStatePaidPending)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Change FairLaunchMintedInfo State. %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "ChangeFairLaunchMintedInfoState")
 	}
 	return nil
 }
@@ -1449,7 +1452,7 @@ func ProcessFairLaunchMintedStatePaidPendingInfo(fairLaunchMintedInfo *models.Fa
 		err = ChangeFairLaunchMintedInfoStateAndUpdatePaidSuccessTime(fairLaunchMintedInfo)
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Change FairLaunchMintedInfo State. %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "ChangeFairLaunchMintedInfoStateAndUpdatePaidSuccessTime")
 		}
 		return nil
 	}
@@ -1463,7 +1466,7 @@ func ProcessFairLaunchMintedStatePaidNoSendInfo(fairLaunchMintedInfo *models.Fai
 	lockedInventory, err := LockInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Lock Inventory By FairLaunchMintedInfo %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "LockInventoryByFairLaunchMintedInfo")
 	}
 	// @dev: Calculate mint amount
 	calculatedMintAmount := CalculateMintAmountByFairLaunchInventoryInfos(lockedInventory)
@@ -1476,7 +1479,7 @@ func ProcessFairLaunchMintedStatePaidNoSendInfo(fairLaunchMintedInfo *models.Fai
 	err = ChangeFairLaunchMintedInfoState(fairLaunchMintedInfo, models.FairLaunchMintedStateSentPending)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Change FairLaunchMintedInfo State. %v", err)
-		return err
+		return utils.AppendErrorInfo(err, "ChangeFairLaunchMintedInfoState")
 	}
 	return nil
 }
@@ -1493,19 +1496,19 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 		err = ChangeFairLaunchMintedInfoState(fairLaunchMintedInfo, models.FairLaunchMintedStateSent)
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Change FairLaunchMintedInfo State. %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "ChangeFairLaunchMintedInfoState")
 		}
 		// @dev: Update MintedNumber and IsMintAll
 		err = UpdateMintedNumberAndIsMintAllOfFairLaunchInfoByFairLaunchMintedInfo(fairLaunchMintedInfo)
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Update MintedNumber And IsMintAll Of FairLaunchInfo By FairLaunchMintedInfo %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "UpdateMintedNumberAndIsMintAllOfFairLaunchInfoByFairLaunchMintedInfo")
 		}
 		// Update Inventory
 		err = UpdateLockedInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo)
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Update Locked Inventory By FairLaunchMintedInfo %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "UpdateLockedInventoryByFairLaunchMintedInfo")
 		}
 		// Update minted user
 		f := FairLaunchStore{DB: middleware.DB}
@@ -1517,13 +1520,13 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 		})
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Create FairLaunch Minted UserInfo %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "CreateFairLaunchMintedUserInfo")
 		}
 		var account *models.Account
 		account, err = ReadAccountByUserId(uint(fairLaunchMintedInfo.UserID))
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Read Account By UserId %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "ReadAccountByUserId")
 		}
 		err = CreateBalance(&models.Balance{
 			AccountId:   account.ID,
@@ -1537,7 +1540,7 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 		})
 		if err != nil {
 			//FairLaunchDebugLogger.Info("Create Balance %v", err)
-			return err
+			return utils.AppendErrorInfo(err, "CreateBalance")
 		}
 		return nil
 	}
@@ -1555,7 +1558,7 @@ func SendFairLaunchReserved(fairLaunchInfo *models.FairLaunchInfo, addr string) 
 	decodedAddrInfo, err := api.GetDecodedAddrInfo(addr)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get Decoded Addr Info %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "GetDecodedAddrInfo")
 	}
 	if int(decodedAddrInfo.Amount) != fairLaunchInfo.ReserveTotal {
 		err = errors.New("wrong addr amount value")
@@ -1576,7 +1579,7 @@ func SendFairLaunchReserved(fairLaunchInfo *models.FairLaunchInfo, addr string) 
 	response, err = api.SendAssetAddrSliceAndGetResponse(addrSlice, feeRateSatPerKw)
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Send Asset AddrSlice And Get Response %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "SendAssetAddrSliceAndGetResponse")
 	}
 	return response, nil
 }
@@ -1585,19 +1588,28 @@ func GetIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
 	//@dev: add more condition
 	err := middleware.DB.Where("status = ? AND is_mint_all = ? AND state >= ?", models.StatusNormal, false, models.FairLaunchStateIssued).Find(&fairLaunchInfos).Error
-	return &fairLaunchInfos, err
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
+	}
+	return &fairLaunchInfos, nil
 }
 
 func GetOwnFairLaunchInfosByUserId(id int) (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
 	err := middleware.DB.Where("status = ? AND user_id = ?", models.StatusNormal, id).Find(&fairLaunchInfos).Error
-	return &fairLaunchInfos, err
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
+	}
+	return &fairLaunchInfos, nil
 }
 
 func GetOwnFairLaunchMintedInfosByUserId(id int) (*[]models.FairLaunchMintedInfo, error) {
 	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
 	err := middleware.DB.Where("status = ? AND user_id = ?", models.StatusNormal, id).Find(&fairLaunchMintedInfos).Error
-	return &fairLaunchMintedInfos, err
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchMintedInfos")
+	}
+	return &fairLaunchMintedInfos, nil
 }
 
 func ProcessSendFairLaunchReservedResponse(response *taprpc.SendAssetResponse) (txid string) {
@@ -1618,7 +1630,7 @@ func GetFairLaunchInfoByAssetId(assetId string) (*models.FairLaunchInfo, error) 
 	err := middleware.DB.Where("asset_id = ?", assetId).First(&fairLaunchInfo).Error
 	if err != nil {
 		//FairLaunchDebugLogger.Info("Get FairLaunchInfo By AssetId %v", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "First fairLaunchInfo")
 	}
-	return &fairLaunchInfo, err
+	return &fairLaunchInfo, nil
 }

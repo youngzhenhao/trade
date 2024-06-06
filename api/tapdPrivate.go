@@ -35,7 +35,10 @@ func assetLeaves(isGroup bool, id string, proofType universerpc.ProofType) (*uni
 	}
 	client := universerpc.NewUniverseClient(conn)
 	response, err := client.AssetLeaves(context.Background(), request)
-	return response, err
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "AssetLeaves")
+	}
+	return response, nil
 }
 
 func assetLeavesSpecified(id string, proofType string) *universerpc.AssetLeafResponse {
@@ -137,7 +140,7 @@ func mintAsset(assetVersionIsV1 bool, assetTypeIsCollectible bool, name string, 
 	response, err := client.MintAsset(context.Background(), request)
 	if err != nil {
 		//utils.LogError("mintrpc MintAsset Error", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "MintAsset")
 	}
 	return response, nil
 }
@@ -156,7 +159,7 @@ func finalizeBatch(shortResponse bool, feeRate int) (*mintrpc.FinalizeBatchRespo
 	response, err := client.FinalizeBatch(context.Background(), request)
 	if err != nil {
 		//utils.LogError("mintrpc FinalizeBatch Error", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "FinalizeBatch")
 	}
 	return response, nil
 }
@@ -179,7 +182,10 @@ func fetchAssetMeta(isHash bool, data string) (*taprpc.AssetMeta, error) {
 		}
 	}
 	response, err := client.FetchAssetMeta(context.Background(), request)
-	return response, err
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "FetchAssetMeta")
+	}
+	return response, nil
 }
 
 func newAddr(assetId string, amt int) (*taprpc.Addr, error) {
@@ -197,7 +203,7 @@ func newAddr(assetId string, amt int) (*taprpc.Addr, error) {
 	response, err := client.NewAddr(context.Background(), request)
 	if err != nil {
 		//utils.LogError("taprpc NewAddr Error", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "NewAddr")
 	}
 	return response, nil
 }
@@ -217,7 +223,7 @@ func sendAsset(tapAddrs string, feeRate int) (*taprpc.SendAssetResponse, error) 
 	response, err := client.SendAsset(context.Background(), request)
 	if err != nil {
 		//utils.LogError("taprpc SendAsset Error", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "SendAsset")
 	}
 	return response, nil
 }
@@ -236,7 +242,7 @@ func sendAssetAddrSlice(addrSlice []string, feeRate int) (*taprpc.SendAssetRespo
 	response, err := client.SendAsset(context.Background(), request)
 	if err != nil {
 		//utils.LogError("taprpc SendAsset Error", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "SendAsset")
 	}
 	return response, nil
 }
@@ -254,7 +260,7 @@ func decodeAddr(addr string) (*taprpc.Addr, error) {
 	response, err := client.DecodeAddr(context.Background(), request)
 	if err != nil {
 		//utils.LogError("taprpc DecodeAddr Error", err)
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "DecodeAddr")
 	}
 	return response, nil
 }
@@ -272,5 +278,8 @@ func listAssets(withWitness, includeSpent, includeLeased bool) (*taprpc.ListAsse
 		IncludeLeased: includeLeased,
 	}
 	response, err := client.ListAssets(context.Background(), request)
-	return response, err
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "ListAssets")
+	}
+	return response, nil
 }

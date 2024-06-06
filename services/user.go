@@ -56,7 +56,7 @@ func DeleteUser(id uint) error {
 	return middleware.DB.Delete(&user, id).Error
 }
 
-func (sm *CronService) SixSecondTask() {
+func (cs *CronService) SixSecondTask() {
 	fmt.Println("6 secs runs")
 	log.Println("6 secs runs")
 }

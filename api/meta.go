@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/vincent-petithory/dataurl"
 	"os"
 	"trade/utils"
@@ -26,8 +25,8 @@ func (m *Meta) LoadImage(file string) (bool, error) {
 	if file != "" {
 		image, err := os.ReadFile(file)
 		if err != nil {
-			fmt.Println("open image file is error:", err)
-			return false, err
+			//fmt.Println("open image file is error:", err)
+			return false, utils.AppendErrorInfo(err, "ReadFile")
 		}
 		imageStr := dataurl.EncodeBytes(image)
 		m.ImageData = imageStr

@@ -1,5 +1,5 @@
 .idea
-# wallet
+# trade
 *.aar
 *.jar
 *_test.go

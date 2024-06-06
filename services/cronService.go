@@ -36,7 +36,7 @@ func CreateScheduledTask(scheduledTask *models.ScheduledTask) (err error) {
 func CreateFairLaunchIssuance() (err error) {
 	return CreateScheduledTask(&models.ScheduledTask{
 		Name:           "FairLaunchIssuance",
-		CronExpression: "* */1 * * * *",
+		CronExpression: "*/30 */1 * * * *",
 		FunctionName:   "FairLaunchIssuance",
 		Package:        "services",
 	})
@@ -45,7 +45,7 @@ func CreateFairLaunchIssuance() (err error) {
 func CreateFairLaunchMint() (err error) {
 	return CreateScheduledTask(&models.ScheduledTask{
 		Name:           "FairLaunchMint",
-		CronExpression: "* */1 * * * *",
+		CronExpression: "*/30 */1 * * * *",
 		FunctionName:   "FairLaunchMint",
 		Package:        "services",
 	})
@@ -54,16 +54,8 @@ func CreateFairLaunchMint() (err error) {
 func CreateSendFairLaunchAsset() (err error) {
 	return CreateScheduledTask(&models.ScheduledTask{
 		Name:           "SendFairLaunchAsset",
-		CronExpression: "* */1 * * * *",
+		CronExpression: "*/30 */1 * * * *",
 		FunctionName:   "SendFairLaunchAsset",
-		Package:        "services",
-	})
-}
-func CreateUpdateFeeRateWeek() (err error) {
-	return CreateScheduledTask(&models.ScheduledTask{
-		Name:           "UpdateFeeRateWeek",
-		CronExpression: "* */20 * * * *",
-		FunctionName:   "UpdateFeeRateWeek",
 		Package:        "services",
 	})
 }
@@ -78,25 +70,21 @@ func CreateFairLaunchScheduledTasks() {
 		FairLaunchDebugLogger.Error("", err)
 	}
 	err = CreateSendFairLaunchAsset()
-	//if err != nil {
-	//	FairLaunchDebugLogger.Error("", err)
-	//}
-	//err = CreateUpdateFeeRateWeek()
 	if err != nil {
 		FairLaunchDebugLogger.Error("", err)
 	}
 	fmt.Println("Create FairLaunch ScheduledTasks Procession finished!")
 }
 
-func (sm *CronService) PollPaymentCron() {
+func (cs *CronService) PollPaymentCron() {
 	pollPayment()
 }
 
-func (sm *CronService) PollInvoiceCron() {
+func (cs *CronService) PollInvoiceCron() {
 	pollInvoice()
 }
 
-func (sm *CronService) PollPayInsideMission() {
+func (cs *CronService) PollPayInsideMission() {
 	pollPayInsideMission()
 }
 

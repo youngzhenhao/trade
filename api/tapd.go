@@ -60,7 +60,7 @@ func SendAsset(addr string, feeRate int) string {
 func SendAssetBool(addr string, feeRate int) (bool, error) {
 	_, err := sendAsset(addr, feeRate)
 	if err != nil {
-		return false, err
+		return false, utils.AppendErrorInfo(err, "sendAsset")
 	}
 	return true, nil
 }
