@@ -129,7 +129,7 @@ func SetFairLaunchInfo(c *gin.Context) {
 		//utils.LogError("Process fair launch info.", err)
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
-			Error:   "Process fair launch info." + err.Error(),
+			Error:   "Process fair launch info. " + err.Error(),
 			Data:    "",
 		})
 		return
