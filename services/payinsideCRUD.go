@@ -27,8 +27,3 @@ func DeletePayInside(id uint) error {
 	var payInside models.PayInside
 	return middleware.DB.Delete(&payInside, id).Error
 }
-
-//TODO: 测试建表，CRUD  1
-//TODO: 支付行为生成
-//TODO: 处理交支付 定时
-//TODO: 查询接口

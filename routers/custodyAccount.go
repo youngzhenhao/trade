@@ -20,6 +20,7 @@ func SetupCustodyAccountRouter(router *gin.Engine) *gin.Engine {
 			Invoice.POST("/pay", handlers.PayInvoice)
 			Invoice.POST("/querybalance", handlers.QueryBalance)
 			Invoice.POST("/queryinvoice", handlers.QueryInvoice)
+			Invoice.POST("/querypayment", handlers.QueryPayment)
 		}
 	}
 	return router
