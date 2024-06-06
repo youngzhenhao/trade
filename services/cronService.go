@@ -9,23 +9,15 @@ import (
 type CronService struct{}
 
 func (cs *CronService) FairLaunchIssuance() {
-	//FairLaunchDebugLogger.Info("start cron job: FairLaunchIssuance")
 	FairLaunchIssuance()
 }
 
 func (cs *CronService) FairLaunchMint() {
-	//FairLaunchDebugLogger.Info("start cron job: FairLaunchMint")
 	FairLaunchMint()
 }
 
 func (cs *CronService) SendFairLaunchAsset() {
-	//FairLaunchDebugLogger.Info("start cron job: FairLaunchMint")
 	SendFairLaunchAsset()
-}
-
-func (cs *CronService) UpdateFeeRateWeek() {
-	//FairLaunchDebugLogger.Info("start cron job: UpdateFeeRateWeek")
-	_ = CheckIfUpdateFeeRateInfoByBlockOfWeek()
 }
 
 func CreateScheduledTask(scheduledTask *models.ScheduledTask) (err error) {

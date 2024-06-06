@@ -115,7 +115,6 @@ func BatchTxidAnchorToAssetId(batchTxidAnchor string) (string, error) {
 		}
 	}
 	err := errors.New("no asset found for batch txid")
-	//utils.LogError("", err)
 	return "", err
 }
 

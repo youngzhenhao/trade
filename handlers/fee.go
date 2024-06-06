@@ -10,7 +10,6 @@ import (
 func QueryFeeRate(c *gin.Context) {
 	feeRate, err := services.GetMempoolFeeRate()
 	if err != nil {
-		//utils.LogError("Get FeeRate.", err)
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get FeeRate. " + err.Error(),
@@ -35,7 +34,6 @@ func QueryFeeRate(c *gin.Context) {
 func QueryAllFeeRate(c *gin.Context) {
 	allFeeRate, err := services.GetAllFeeRateInfos()
 	if err != nil {
-		//utils.LogError("Get FeeRate.", err)
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get FeeRate. " + err.Error(),
@@ -53,7 +51,6 @@ func QueryAllFeeRate(c *gin.Context) {
 func QueryRecommendedFeeRate(c *gin.Context) {
 	feeRate, err := services.GetMempoolFeeRate()
 	if err != nil {
-		//utils.LogError("Get FeeRate.", err)
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get FeeRate. " + err.Error(),
