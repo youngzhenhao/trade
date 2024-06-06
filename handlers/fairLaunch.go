@@ -429,11 +429,22 @@ func GetIssuedFairLaunchInfo(c *gin.Context) {
 		})
 		return
 	}
+	fairLaunchInfos = ProcessIssuedFairLaunchInfos(fairLaunchInfos)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   "",
 		Data:    fairLaunchInfos,
 	})
+}
+
+func ProcessIssuedFairLaunchInfos(fairLaunchInfos *[]models.FairLaunchInfo) *[]models.FairLaunchInfo {
+	var result []models.FairLaunchInfo
+	for _, fairLaunchInfo := range *fairLaunchInfos {
+		if services.IsFairLaunchInfoMintTimeValid(&fairLaunchInfo) {
+			result = append(result, fairLaunchInfo)
+		}
+	}
+	return &result
 }
 
 func GetOwnFairLaunchInfo(c *gin.Context) {

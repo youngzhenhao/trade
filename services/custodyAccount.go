@@ -319,6 +319,30 @@ func QueryAccountBalanceByUserId(userId uint) (uint64, error) {
 	return uint64(userBalance.CurrentBalance), nil
 }
 
+func QueryAccountBalanceByUsername(username string) (uint64, error) {
+	user, err := ReadUserByUsername(username)
+	if err != nil {
+		return 0, err
+	}
+	return QueryAccountBalanceByUserId(user.ID)
+}
+
+func IsAccountBalanceEnoughByUserId(userId uint, value uint64) bool {
+	balance, err := QueryAccountBalanceByUserId(userId)
+	if err != nil {
+		return false
+	}
+	return balance >= value
+}
+
+func IsAccountBalanceEnoughByUsername(username string, value uint64) bool {
+	balance, err := QueryAccountBalanceByUsername(username)
+	if err != nil {
+		return false
+	}
+	return balance >= value
+}
+
 type InvoiceResponce struct {
 	Invoice string `json:"invoice"`
 	AssetId string `json:"asset_id"`

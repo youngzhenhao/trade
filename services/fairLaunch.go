@@ -16,6 +16,14 @@ import (
 	"trade/utils"
 )
 
+func PrintProcessionResult(processionResult *[]ProcessionResult) {
+	for _, result := range *processionResult {
+		if !result.Success {
+			FairLaunchDebugLogger.Info("%v", utils.ValueJsonString(result.Error))
+		}
+	}
+}
+
 // FairLaunchIssuance
 // @Description: Scheduled Task
 func FairLaunchIssuance() {
@@ -27,7 +35,7 @@ func FairLaunchIssuance() {
 	if processionResult == nil || len(*processionResult) == 0 {
 		return
 	}
-	FairLaunchDebugLogger.Info("%v", utils.ValueJsonString(processionResult))
+	PrintProcessionResult(processionResult)
 }
 
 // FairLaunchMint
@@ -41,7 +49,7 @@ func FairLaunchMint() {
 	if processionResult == nil || len(*processionResult) == 0 {
 		return
 	}
-	FairLaunchDebugLogger.Info("%v", utils.ValueJsonString(processionResult))
+	PrintProcessionResult(processionResult)
 }
 
 // SendFairLaunchAsset
@@ -120,6 +128,10 @@ func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount 
 	if err != nil {
 		return nil, err
 	}
+	setGasFee := GetTransactionFee(feeRate)
+	if !IsAccountBalanceEnoughByUserId(uint(userId), uint64(setGasFee)) {
+		return nil, errors.New("account balance not enough to pay issuance gas fee")
+	}
 	fairLaunchInfo = models.FairLaunchInfo{
 		ImageData:              imageData,
 		Name:                   name,
@@ -131,7 +143,7 @@ func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount 
 		EndTime:                endTime,
 		Description:            description,
 		FeeRate:                feeRate,
-		SetGasFee:              GetTransactionFee(feeRate),
+		SetGasFee:              setGasFee,
 		SetTime:                utils.GetTimestamp(),
 		ActualReserved:         calculateSeparateAmount.ActualReserved,
 		ReserveTotal:           calculateSeparateAmount.ReserveTotal,
@@ -222,11 +234,15 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 		//FairLaunchDebugLogger.Info("Insufficient minted feeRate SatPerKw %v", err)
 		return nil, err
 	}
+	mintedGasFee := GetMintedTransactionGasFee(mintedFeeRateSatPerKw)
+	if !IsAccountBalanceEnoughByUserId(uint(userId), uint64(mintedGasFee)) {
+		return nil, errors.New("account balance not enough to pay minted gas fee")
+	}
 	fairLaunchMintedInfo = models.FairLaunchMintedInfo{
 		FairLaunchInfoID:      fairLaunchInfoID,
 		MintedNumber:          mintedNumber,
 		MintedFeeRateSatPerKw: mintedFeeRateSatPerKw,
-		MintedGasFee:          GetMintedTransactionGasFee(mintedFeeRateSatPerKw),
+		MintedGasFee:          mintedGasFee,
 		EncodedAddr:           addr,
 		UserID:                userId,
 		AssetID:               hex.EncodeToString(decodedAddrInfo.AssetId),

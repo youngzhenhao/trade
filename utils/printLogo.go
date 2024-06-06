@@ -9,6 +9,14 @@ func PrintAsciiLogoAndInfo() {
 	fmt.Println("")
 }
 
+func PrintTitle(newline bool, title string) {
+	if newline {
+		fmt.Println("")
+	}
+	fmt.Println(title)
+	fmt.Println("==================")
+}
+
 func PrintVersion() {
 	fmt.Println("   " + GetVersion())
 }

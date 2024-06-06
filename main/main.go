@@ -25,8 +25,7 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 	utils.PrintAsciiLogoAndInfo()
-	fmt.Println("Initialize")
-	fmt.Println("==================")
+	utils.PrintTitle(false, "Initialize")
 	mode := loadConfig.GinConfig.Mode
 	if !(mode == gin.DebugMode || mode == gin.ReleaseMode || mode == gin.TestMode) {
 		mode = gin.DebugMode
@@ -46,9 +45,7 @@ func main() {
 		utils.LogError("AutoMigrate error", err)
 		return
 	}
-	fmt.Println("")
-	fmt.Println("Check Start")
-	fmt.Println("==================")
+	utils.PrintTitle(true, "Check Start")
 	if !checkStart() {
 		return
 	}
@@ -70,9 +67,7 @@ func main() {
 	c.Start()
 	defer c.Stop() // Ensure cron scheduler is stopped on shutdown
 	// Setup HTTP server
-	fmt.Println("")
-	fmt.Println("Setup Router")
-	fmt.Println("==================")
+	utils.PrintTitle(true, "Setup Router")
 	r := routers.SetupRouter()
 	/**
 	for _, routeInfo := range r.Routes() {
@@ -84,9 +79,7 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	fmt.Println("")
-	fmt.Println("Run Router")
-	fmt.Println("==================")
+	utils.PrintTitle(true, "Run Router")
 	err = r.Run(fmt.Sprintf("%s:%s", bind, port))
 	if err != nil {
 		return
