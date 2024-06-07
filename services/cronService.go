@@ -69,7 +69,7 @@ func CreateScheduledTask(scheduledTask *models.ScheduledTask) (err error) {
 func CreateFairLaunchIssuance() (err error) {
 	return CreateScheduledTask(&models.ScheduledTask{
 		Name:           "FairLaunchIssuance",
-		CronExpression: "*/30 */1 * * * *",
+		CronExpression: "0 */1 * * * *",
 		FunctionName:   "FairLaunchIssuance",
 		Package:        "services",
 	})
@@ -78,7 +78,7 @@ func CreateFairLaunchIssuance() (err error) {
 func CreateFairLaunchMint() (err error) {
 	return CreateScheduledTask(&models.ScheduledTask{
 		Name:           "FairLaunchMint",
-		CronExpression: "*/30 */1 * * * *",
+		CronExpression: "0 */1 * * * *",
 		FunctionName:   "FairLaunchMint",
 		Package:        "services",
 	})
@@ -87,7 +87,7 @@ func CreateFairLaunchMint() (err error) {
 func CreateSendFairLaunchAsset() (err error) {
 	return CreateScheduledTask(&models.ScheduledTask{
 		Name:           "SendFairLaunchAsset",
-		CronExpression: "* */5 * * * *",
+		CronExpression: "0 */5 * * * *",
 		FunctionName:   "SendFairLaunchAsset",
 		Package:        "services",
 	})
