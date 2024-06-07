@@ -2,22 +2,63 @@ package services
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
 	"trade/middleware"
 	"trade/models"
+	"trade/utils"
 )
 
 type CronService struct{}
 
+func TaskCountRecordByRedis(name string) error {
+	var record string
+	var count int
+	var err error
+	record, err = middleware.RedisGet(name)
+	if err != nil {
+		// @dev: no value has been set
+		err = middleware.RedisSet(name, "1"+","+utils.GetTimeNow(), time.Hour)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	split := strings.Split(record, ",")
+	count, err = strconv.Atoi(split[0])
+	if err != nil {
+		return err
+	}
+	err = middleware.RedisSet(name, strconv.Itoa(count+1)+","+utils.GetTimeNow(), time.Hour)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (cs *CronService) FairLaunchIssuance() {
 	FairLaunchIssuance()
+	err := TaskCountRecordByRedis("FairLaunchIssuance")
+	if err != nil {
+		return
+	}
 }
 
 func (cs *CronService) FairLaunchMint() {
 	FairLaunchMint()
+	err := TaskCountRecordByRedis("FairLaunchMint")
+	if err != nil {
+		return
+	}
 }
 
 func (cs *CronService) SendFairLaunchAsset() {
 	SendFairLaunchAsset()
+	err := TaskCountRecordByRedis("SendFairLaunchAsset")
+	if err != nil {
+		return
+	}
 }
 
 func CreateScheduledTask(scheduledTask *models.ScheduledTask) (err error) {
