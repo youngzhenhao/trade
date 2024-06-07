@@ -151,7 +151,7 @@ func ValidateFeeRate(feeRate int) (err error) {
 	//estimatedFeeRateSatPerKw, err := UpdateAndEstimateSmartFeeRateSatPerKw()
 	if !(feeRate >= feeRateSatPerKw) {
 		err = errors.New("setting fee rate need to bigger equal than mempool's recommended fastest fee rate now")
-		return err
+		return utils.AppendErrorInfo(err, "got: "+strconv.Itoa(feeRate)+", expected: >="+strconv.Itoa(feeRateSatPerKw))
 	}
 	return nil
 }
@@ -203,9 +203,9 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 	}
 	// TODO: maybe need to change comparison param
 	calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee
-	if mintedFeeRateSatPerKw < calculatedFeeRateSatPerKw {
+	if !(mintedFeeRateSatPerKw >= calculatedFeeRateSatPerKw) {
 		err = errors.New("setting minted calculated FeeRate SatPerKw need to bigger equal than calculated fee rate by mempool's recommended fastest fee rate now")
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "got: "+strconv.Itoa(mintedFeeRateSatPerKw)+", expected: >="+strconv.Itoa(calculatedFeeRateSatPerKw))
 	}
 	mintedGasFee := GetMintedTransactionGasFee(mintedFeeRateSatPerKw)
 	if !IsAccountBalanceEnoughByUserId(uint(userId), uint64(mintedGasFee)) {
