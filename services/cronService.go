@@ -19,7 +19,7 @@ func TaskCountRecordByRedis(name string) error {
 	record, err = middleware.RedisGet(name)
 	if err != nil {
 		// @dev: no value has been set
-		err = middleware.RedisSet(name, "1"+","+utils.GetTimeNow(), time.Hour)
+		err = middleware.RedisSet(name, "1"+","+utils.GetTimeNow(), 6*time.Minute)
 		if err != nil {
 			return err
 		}
@@ -30,7 +30,7 @@ func TaskCountRecordByRedis(name string) error {
 	if err != nil {
 		return err
 	}
-	err = middleware.RedisSet(name, strconv.Itoa(count+1)+","+utils.GetTimeNow(), time.Hour)
+	err = middleware.RedisSet(name, strconv.Itoa(count+1)+","+utils.GetTimeNow(), 6*time.Minute)
 	if err != nil {
 		return err
 	}
