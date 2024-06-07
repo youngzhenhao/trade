@@ -143,7 +143,7 @@ type ApplyRequest struct {
 }
 
 // ApplyInvoice 使用指定账户申请一张发票
-func ApplyInvoice(user *models.User, account *models.Account, applyRequest *ApplyRequest) (*lnrpc.AddInvoiceResponse, error) {
+func ApplyInvoice(userId uint, account *models.Account, applyRequest *ApplyRequest) (*lnrpc.AddInvoiceResponse, error) {
 	//获取马卡龙路径
 	var macaroonFile string
 	macaroonDir := config.GetConfig().ApiConfig.CustodyAccount.MacaroonDir
@@ -168,7 +168,7 @@ func ApplyInvoice(user *models.User, account *models.Account, applyRequest *Appl
 
 	//构建invoice对象
 	var invoiceModel models.Invoice
-	invoiceModel.UserID = user.ID
+	invoiceModel.UserID = userId
 	invoiceModel.Invoice = invoice.PaymentRequest
 	invoiceModel.AccountID = &account.ID
 	invoiceModel.Amount = float64(info.Value)
@@ -247,7 +247,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 			CUST.Error("转账失败")
 			return false, fmt.Errorf("转账失败")
 		}
-		i.Status = models.InvoiceStatusSuccess
+		i.Status = models.InvoiceStatusLocal
 		err = UpdateInvoice(middleware.DB, i)
 		if err != nil {
 			CUST.Error("更新发票状态失败, invoice_id:%v", i.ID)
@@ -403,9 +403,7 @@ func QueryPaymentByUserId(userId uint, assetId string) ([]PaymentResponse, error
 	}
 	params := QueryParams{
 		"AccountId": accountId.ID,
-	}
-	if assetId != "00" {
-		return nil, fmt.Errorf("not find assetId")
+		"AssetId":   assetId,
 	}
 	a, err := GenericQuery(&models.Balance{}, params)
 	if err != nil {
@@ -589,16 +587,19 @@ func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, inv
 		CUST.Error("UpdateCustodyAccount error(payUserId:%v):%v", payUserId, err)
 		return 0, err
 	}
-	remark := fmt.Sprintf("gasFee:%v ,serverFee:%v", gasFee, serveFee)
-	Ext := models.BalanceExt{
-		BalanceId:   outId,
-		BillExtDesc: &remark,
-	}
-	err = CreateBalanceExt(&Ext)
-	if err != nil {
-		CUST.Error("CreateBalanceExt error:%v", err)
-	}
 
+	mark := func(Id uint, gasFee, serveFee uint64) {
+		remark := fmt.Sprintf("gasFee:%v ,serverFee:%v ,local: true", gasFee, serveFee)
+		Ext := models.BalanceExt{
+			BalanceId:   outId,
+			BillExtDesc: &remark,
+		}
+		err = CreateBalanceExt(&Ext)
+		if err != nil {
+			CUST.Error("CreateBalanceExt error:%v", err)
+		}
+	}
+	mark(outId, gasFee, serveFee)
 	receiveAccount, err := ReadAccountByUserId(receiveUserId)
 	if err != nil {
 		CUST.Error("ReadAccountByUserId error:%v", err)
@@ -609,11 +610,13 @@ func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, inv
 		CUST.Error("UpdateCustodyAccount error(receiveUserId:%v):%v", receiveUserId, err)
 		return 0, err
 	}
+	mark(Id, gasFee, serveFee)
+
 	return Id, nil
 }
 
 // CreatePayInsideMission 创建内部转账任务
-func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint64, assetType string, payReq string) (uint, error) {
+func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint64, assetType string) (uint, error) {
 	//获取支付账户信息
 	payAccount, err := ReadAccountByUserId(payUserId)
 	if err != nil {
@@ -637,26 +640,38 @@ func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint
 		return 0, fmt.Errorf("not support assetType")
 	}
 
+	//创建支付请求
+	var (
+		payReq         string
+		payType        models.PayInsideType
+		receiveAccount *models.Account
+	)
+	apply := ApplyRequest{
+		Amount: int64(gasFee + serveFee),
+		Memo:   SetMemoSign(),
+	}
+
 	//检测目标账户是否合法
-	var payType models.PayInsideType
 	switch receiveUserId {
 	case AdminUserId:
+		// 获取管理员账户信息
+		receiveAccount = AdminAccount
 		payType = models.PayInsideToAdmin
 	default:
-		_, err := ReadAccountByUserId(receiveUserId)
+		//获取非管理员账户信息
+		receiveAccount, err = ReadAccountByUserId(receiveUserId)
 		if err != nil {
 			CUST.Error("Not find receive account info(UserId=%v):%v", receiveUserId, err)
 			return 0, fmt.Errorf("not find receive account info")
 		}
-		if payReq != "" {
-			payType = models.PayInsidewithNotInvioce
-		} else {
-			payType = models.PayInsideByInvioce
-		}
+		payType = models.PayInsideByInvioce
 	}
-
-	//TODO：创建发票
-
+	//创建发票
+	invoice, err := ApplyInvoice(receiveUserId, receiveAccount, &apply)
+	if err != nil {
+		return 0, fmt.Errorf("apply userid = %v invoice error:%v", receiveUserId, err)
+	}
+	payReq = invoice.PaymentRequest
 	//创建转账任务
 	payInside := models.PayInside{
 		PayUserId:     payUserId,
@@ -668,7 +683,6 @@ func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint
 		PayReq:        &payReq,
 		Status:        models.PayInsideStatusPending,
 	}
-
 	//写入数据库
 	err = CreatePayInside(&payInside)
 	if err != nil {
@@ -696,8 +710,19 @@ func pollPayInsideMission() {
 	//	处理转账任务
 	for _, v := range a {
 		if v.AssetType == "00" {
+			//获取支付账户信息
+			payAccount, err := ReadAccountByUserId(v.PayUserId)
+			if err != nil {
+				CUST.Error("pollPayInsideMission find pay account error:%v", err)
+				continue
+			}
+			//构建支付请求
+			payReq := PayInvoiceRequest{
+				Invoice:  *v.PayReq,
+				FeeLimit: 0,
+			}
 			//支付接口调用
-			_, err := PayAmountInside(v.PayUserId, v.ReceiveUserId, v.GasFee, v.ServeFee, *v.PayReq)
+			_, err = PayInvoice(payAccount, &payReq)
 			if err != nil {
 				CUST.Error("pollPayInsideMission:%v", err)
 				continue
@@ -723,4 +748,8 @@ func CheckPayInsideStatus(id uint) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func SetMemoSign() string {
+	return "internal transfer"
 }

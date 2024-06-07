@@ -3,10 +3,12 @@ package services
 import (
 	"errors"
 	"gorm.io/gorm"
+	"trade/models"
 )
 
 var (
 	AdminUserId    uint = 1
+	AdminAccount   *models.Account
 	AdminAccountId uint = 1
 )
 
@@ -16,7 +18,7 @@ func NewRecharge() {
 
 // 托管账户划扣费用
 func PayAmountToAdmin(payUserId uint, gasFee, serveFee uint64) (uint, error) {
-	id, err := CreatePayInsideMission(payUserId, AdminUserId, gasFee, serveFee, "00", "")
+	id, err := CreatePayInsideMission(payUserId, AdminUserId, gasFee, serveFee, "00")
 	if err != nil {
 		CUST.Error("PayAmountToAdmin failed:%s", err)
 		return 0, err
@@ -62,6 +64,7 @@ func CheckAdminAccount() bool {
 	}
 	AdminUserId = adminUser.ID
 	AdminAccountId = adminAccount.ID
+	AdminAccount = adminAccount
 	CUST.Info("admin user id:%d", AdminUserId)
 	return true
 }

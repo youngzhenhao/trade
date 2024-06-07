@@ -11,6 +11,7 @@ type Balance struct {
 	Away        BalanceAway  `gorm:"column:away;type:smallint" json:"away"`
 	Amount      float64      `gorm:"column:amount;type:decimal(10,2)" json:"amount"`
 	Unit        BalanceUnit  `gorm:"column:Unit;type:smallint" json:"unit"`
+	AssetId     *string      `gorm:"column:asset_id;type:varchar(512);default:'00'" json:"assetId"`
 	Invoice     *string      `gorm:"column:invoice;type:varchar(512)" json:"invoice"`
 	PaymentHash *string      `gorm:"column:payment_hash;type:varchar(100)" json:"paymentHash"`
 	State       BalanceState `gorm:"column:State;type:smallint" json:"State"`

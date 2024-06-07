@@ -68,7 +68,7 @@ func ApplyInvoice(c *gin.Context) {
 		return
 	}
 	//生成一张发票
-	invoiceRequest, err := services.ApplyInvoice(user, account, &apply)
+	invoiceRequest, err := services.ApplyInvoice(user.ID, account, &apply)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
