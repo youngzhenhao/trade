@@ -55,6 +55,7 @@ func FairLaunchMint() {
 func SendFairLaunchAsset() {
 	err := SendFairLaunchMintedAssetLocked()
 	if err != nil {
+		FairLaunchDebugLogger.Info("%v", err)
 		return
 	}
 }
@@ -844,7 +845,7 @@ func IsFairLaunchIssued(fairLaunchId int) bool {
 	if err != nil {
 		return false
 	}
-	return state == models.FairLaunchStateIssued
+	return state >= models.FairLaunchStateIssued
 }
 
 func UpdateFairLaunchInfoStateAndIssuanceTime(fairLaunchInfo *models.FairLaunchInfo) (err error) {
@@ -1212,35 +1213,44 @@ func UpdateFairLaunchMintedInfosBySendAssetResponse(fairLaunchMintedInfos *[]mod
 
 // SendFairLaunchMintedAssetLocked
 // @dev: Trigger after ProcessFairLaunchMintedStatePaidNoSendInfo
-func SendFairLaunchMintedAssetLocked() (err error) {
+func SendFairLaunchMintedAssetLocked() error {
 	// @dev: all unsent
 	unsentFairLaunchMintedInfos, err := GetAllUnsentFairLaunchMintedInfos()
 	if err != nil {
 		return utils.AppendErrorInfo(err, "GetAllUnsentFairLaunchMintedInfos")
 	}
+	assetIdToAddrs := make(map[string][]string)
 	// @dev: addr Slice
-	var addrSlice []string
 	for _, fairLaunchMintedInfo := range *unsentFairLaunchMintedInfos {
-		addrSlice = append(addrSlice, fairLaunchMintedInfo.EncodedAddr)
+		assetId := fairLaunchMintedInfo.AssetID
+		if assetIdToAddrs[assetId] == nil || len(assetIdToAddrs[assetId]) == 0 {
+			assetIdToAddrs[assetId] = make([]string, 0)
+		}
+		assetIdToAddrs[assetId] = append(assetIdToAddrs[assetId], fairLaunchMintedInfo.EncodedAddr)
 	}
-	feeRate, err := UpdateAndGetFeeRateResponseTransformed()
-	if err != nil {
-		return utils.AppendErrorInfo(err, "UpdateAndGetFeeRateResponseTransformed")
-	}
-	feeRateSatPerKw := feeRate.SatPerKw.FastestFee
-	if len(addrSlice) == 0 {
-		err = errors.New("length of addr slice is zero, can't send assets and update")
-		return err
-	}
-	// @dev: Send Asset
-	response, err := api.SendAssetAddrSliceAndGetResponse(addrSlice, feeRateSatPerKw)
-	if err != nil {
-		return utils.AppendErrorInfo(err, "SendAssetAddrSliceAndGetResponse")
-	}
-	// @dev: Update minted info
-	err = UpdateFairLaunchMintedInfosBySendAssetResponse(unsentFairLaunchMintedInfos, response)
-	if err != nil {
-		return utils.AppendErrorInfo(err, "UpdateFairLaunchMintedInfosBySendAssetResponse")
+	var feeRate *FeeRateResponseTransformed
+	var response *taprpc.SendAssetResponse
+	for _, addrs := range assetIdToAddrs {
+		feeRate, err = UpdateAndGetFeeRateResponseTransformed()
+		if err != nil {
+			return utils.AppendErrorInfo(err, "UpdateAndGetFeeRateResponseTransformed")
+		}
+		feeRateSatPerKw := feeRate.SatPerKw.FastestFee
+		if len(addrs) == 0 {
+			//err = errors.New("length of addrs slice is zero, can't send assets and update")
+			//return err
+			continue
+		}
+		// @dev: Send Asset
+		response, err = api.SendAssetAddrSliceAndGetResponse(addrs, feeRateSatPerKw)
+		if err != nil {
+			return utils.AppendErrorInfo(err, "SendAssetAddrSliceAndGetResponse")
+		}
+		// @dev: Update minted info
+		err = UpdateFairLaunchMintedInfosBySendAssetResponse(unsentFairLaunchMintedInfos, response)
+		if err != nil {
+			return utils.AppendErrorInfo(err, "UpdateFairLaunchMintedInfosBySendAssetResponse")
+		}
 	}
 	return nil
 }
