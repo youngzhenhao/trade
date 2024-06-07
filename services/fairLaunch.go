@@ -158,8 +158,8 @@ func ValidateFeeRate(feeRate int) (err error) {
 
 func ValidateStartAndEndTime(startTime int, endTime int) error {
 	now := utils.GetTimestamp()
-	if !(startTime >= now) {
-		return errors.New("start time must be greater than the current time")
+	if !(startTime >= now-600) {
+		return errors.New("start time must be greater than the current time(max time delay 600 seconds.)")
 	}
 	if !(endTime >= startTime+3600*2) {
 		return errors.New("end time should be at least two hour after the start time")

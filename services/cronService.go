@@ -46,7 +46,7 @@ func CreateFairLaunchMint() (err error) {
 func CreateSendFairLaunchAsset() (err error) {
 	return CreateScheduledTask(&models.ScheduledTask{
 		Name:           "SendFairLaunchAsset",
-		CronExpression: "*/30 */1 * * * *",
+		CronExpression: "* */5 * * * *",
 		FunctionName:   "SendFairLaunchAsset",
 		Package:        "services",
 	})
