@@ -1221,9 +1221,11 @@ func SendFairLaunchMintedAssetLocked() error {
 	}
 	assetIdToAddrs := make(map[string][]string)
 	// @dev: addr Slice
-	var addrSlice []string
 	for _, fairLaunchMintedInfo := range *unsentFairLaunchMintedInfos {
 		assetId := fairLaunchMintedInfo.AssetID
+		if assetIdToAddrs[assetId] == nil || len(assetIdToAddrs[assetId]) == 0 {
+			assetIdToAddrs[assetId] = make([]string, 0)
+		}
 		assetIdToAddrs[assetId] = append(assetIdToAddrs[assetId], fairLaunchMintedInfo.EncodedAddr)
 	}
 	var feeRate *FeeRateResponseTransformed
@@ -1234,9 +1236,10 @@ func SendFairLaunchMintedAssetLocked() error {
 			return utils.AppendErrorInfo(err, "UpdateAndGetFeeRateResponseTransformed")
 		}
 		feeRateSatPerKw := feeRate.SatPerKw.FastestFee
-		if len(addrSlice) == 0 {
-			err = errors.New("length of addr slice is zero, can't send assets and update")
-			return err
+		if len(addrs) == 0 {
+			//err = errors.New("length of addrs slice is zero, can't send assets and update")
+			//return err
+			continue
 		}
 		// @dev: Send Asset
 		response, err = api.SendAssetAddrSliceAndGetResponse(addrs, feeRateSatPerKw)
