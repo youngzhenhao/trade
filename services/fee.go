@@ -318,7 +318,10 @@ func PayIssuanceFee(userId int, feeRateSatPerKw int) (IssuanceFeePaidId int, err
 
 func PayGasFee(payUserId int, gasFee int) (int, error) {
 	id, err := PayAmountToAdmin(uint(payUserId), uint64(gasFee), 0)
-	return int(id), utils.AppendErrorInfo(err, "PayAmountToAdmin")
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "PayAmountToAdmin")
+	}
+	return int(id), nil
 }
 
 func GetFeeRateInfoByName(name string) (feeRateInfo *models.FeeRateInfo, err error) {

@@ -219,5 +219,8 @@ func ValueJsonString(value any) string {
 }
 
 func AppendErrorInfo(err error, info string) error {
+	if err == nil {
+		err = errors.New("[nil err]")
+	}
 	return errors.New(err.Error() + ";" + info)
 }

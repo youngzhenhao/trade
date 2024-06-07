@@ -53,7 +53,10 @@ func listChainTxns() (*lnrpc.TransactionDetails, error) {
 		//Account:     "",
 	}
 	response, err := client.GetTransactions(context.Background(), request)
-	return response, utils.AppendErrorInfo(err, "GetTransactions")
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "GetTransactions")
+	}
+	return response, nil
 }
 
 type ChainTransaction struct {

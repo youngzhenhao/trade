@@ -19,7 +19,7 @@ func QueryFeeRate(c *gin.Context) {
 	}
 	satPerKw := feeRate.SatPerKw.FastestFee
 	satPerB := feeRate.SatPerB.FastestFee
-	btcPerKb := services.FeeRateSatPerBToBtcPerKb(feeRate.SatPerB.FastestFee)
+	btcPerKb := services.FeeRateSatPerBToBtcPerKb(satPerB)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   "",
