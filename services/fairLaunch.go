@@ -844,7 +844,7 @@ func IsFairLaunchIssued(fairLaunchId int) bool {
 	if err != nil {
 		return false
 	}
-	return state == models.FairLaunchStateIssued
+	return state >= models.FairLaunchStateIssued
 }
 
 func UpdateFairLaunchInfoStateAndIssuanceTime(fairLaunchInfo *models.FairLaunchInfo) (err error) {
