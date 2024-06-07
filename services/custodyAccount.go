@@ -173,7 +173,7 @@ func ApplyInvoice(user *models.User, account *models.Account, applyRequest *Appl
 	invoiceModel.AccountID = &account.ID
 	invoiceModel.Amount = float64(info.Value)
 
-	invoiceModel.Status = int16(info.State)
+	invoiceModel.Status = models.InvoiceStatus(info.State)
 	template := time.Unix(info.CreationDate, 0)
 	invoiceModel.CreateDate = &template
 	expiry := int(info.Expiry)
@@ -247,7 +247,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 			CUST.Error("转账失败")
 			return false, fmt.Errorf("转账失败")
 		}
-		i.Status = 1
+		i.Status = models.InvoiceStatusSuccess
 		err = UpdateInvoice(middleware.DB, i)
 		if err != nil {
 			CUST.Error("更新发票状态失败, invoice_id:%v", i.ID)
@@ -348,10 +348,10 @@ func IsAccountBalanceEnoughByUsername(username string, value uint64) bool {
 }
 
 type InvoiceResponce struct {
-	Invoice string `json:"invoice"`
-	AssetId string `json:"asset_id"`
-	Amount  int64  `json:"amount"`
-	Status  int16  `json:"status"`
+	Invoice string               `json:"invoice"`
+	AssetId string               `json:"asset_id"`
+	Amount  int64                `json:"amount"`
+	Status  models.InvoiceStatus `json:"status"`
 }
 
 // QueryInvoiceByUserId 查询用户发票
@@ -525,7 +525,7 @@ func pollInvoice() {
 	defer InvoiceMutex.Unlock()
 	//查询数据库，获取所有未支付的发票
 	params := QueryParams{
-		"Status": lnrpc.Invoice_OPEN,
+		"Status": models.InvoiceStatusPending,
 	}
 	a, err := GenericQuery(&models.Invoice{}, params)
 	if err != nil {
@@ -549,12 +549,12 @@ func pollInvoice() {
 				CUST.Warning(err.Error())
 				continue
 			}
-			if int16(temp.State) != v.Status {
-				v.Status = int16(temp.State)
-				if v.Status == int16(lnrpc.Invoice_SETTLED) {
+			if int16(temp.State) != int16(v.Status) {
+				v.Status = models.InvoiceStatus(temp.State)
+				if v.Status == models.InvoiceStatusSuccess {
 					ba := models.Balance{}
 					ba.AccountId = *v.AccountID
-					ba.Amount = float64(v.Amount)
+					ba.Amount = v.Amount
 					ba.Unit = models.UNIT_SATOSHIS
 					ba.BillType = models.BILL_TYPE_RECHARGE
 					ba.Away = models.AWAY_IN
@@ -654,6 +654,8 @@ func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint
 			payType = models.PayInsideByInvioce
 		}
 	}
+
+	//TODO：创建发票
 
 	//创建转账任务
 	payInside := models.PayInside{
