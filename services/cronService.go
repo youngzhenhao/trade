@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +16,11 @@ type CronService struct{}
 func CheckIfAutoUpdateScheduledTask() {
 	if config.GetLoadConfig().IsAutoUpdateScheduledTask {
 		err := CreateFairLaunchProcessions()
+		if err != nil {
+			ScheduledTask.Info("%v", err)
+		}
+
+		err = CreateCustodyAccountProcessions()
 		if err != nil {
 			ScheduledTask.Info("%v", err)
 		}
@@ -155,48 +159,25 @@ func (cs *CronService) SendFairLaunchAsset() {
 	}
 }
 
-func CreateFairLaunchIssuance() (err error) {
-	return CreateScheduledTask(&models.ScheduledTask{
-		Name:           "FairLaunchIssuance",
-		CronExpression: "0 */1 * * * *",
-		FunctionName:   "FairLaunchIssuance",
-		Package:        "services",
+func CreateCustodyAccountProcessions() (err error) {
+	return CreateOrUpdateScheduledTasks(&[]models.ScheduledTask{
+		{
+			Name:           "PollPaymentCron",
+			CronExpression: "*/25 * * * * *",
+			FunctionName:   "PollPaymentCron",
+			Package:        "services",
+		}, {
+			Name:           "PollInvoiceCron",
+			CronExpression: "*/25 * * * * *",
+			FunctionName:   "PollInvoiceCron",
+			Package:        "services",
+		}, {
+			Name:           "PollPayInsideMission",
+			CronExpression: "*/25 * * * * *",
+			FunctionName:   "PollPayInsideMission",
+			Package:        "services",
+		},
 	})
-}
-
-func CreateFairLaunchMint() (err error) {
-	return CreateScheduledTask(&models.ScheduledTask{
-		Name:           "FairLaunchMint",
-		CronExpression: "*/20 * * * * *",
-		FunctionName:   "FairLaunchMint",
-		Package:        "services",
-	})
-}
-
-func CreateSendFairLaunchAsset() (err error) {
-	return CreateScheduledTask(&models.ScheduledTask{
-		Name:           "SendFairLaunchAsset",
-		CronExpression: "0 */5 * * * *",
-		FunctionName:   "SendFairLaunchAsset",
-		Package:        "services",
-	})
-}
-
-// Deprecated: Use CreateFairLaunchProcessions instead
-func CreateFairLaunchScheduledTasks() {
-	err := CreateFairLaunchProcessions()
-	if err != nil {
-		FairLaunchDebugLogger.Error("", err)
-	}
-	err = CreateFairLaunchMint()
-	if err != nil {
-		FairLaunchDebugLogger.Error("", err)
-	}
-	err = CreateSendFairLaunchAsset()
-	if err != nil {
-		FairLaunchDebugLogger.Error("", err)
-	}
-	fmt.Println("Create FairLaunch ScheduledTasks Procession finished!")
 }
 
 func (cs *CronService) PollPaymentCron() {
@@ -209,47 +190,4 @@ func (cs *CronService) PollInvoiceCron() {
 
 func (cs *CronService) PollPayInsideMission() {
 	pollPayInsideMission()
-}
-
-func CreatePollPaymentCron() (err error) {
-	return CreateScheduledTask(&models.ScheduledTask{
-		Name:           "PollPaymentCron",
-		CronExpression: "*/25 * * * * *",
-		FunctionName:   "PollPaymentCron",
-		Package:        "services",
-	})
-}
-
-func CreatePollInvoiceCron() (err error) {
-	return CreateScheduledTask(&models.ScheduledTask{
-		Name:           "PollInvoiceCron",
-		CronExpression: "*/25 * * * * *",
-		FunctionName:   "PollInvoiceCron",
-		Package:        "services",
-	})
-}
-
-func CreatePollPayInvoiceMission() (err error) {
-	return CreateScheduledTask(&models.ScheduledTask{
-		Name:           "PollPayInsideMission",
-		CronExpression: "*/25 * * * * *",
-		FunctionName:   "PollPayInsideMission",
-		Package:        "services",
-	})
-}
-
-func CreatePAYTasks() {
-	err := CreatePollPaymentCron()
-	if err != nil {
-		CUST.Error("", err)
-	}
-	err = CreatePollInvoiceCron()
-	if err != nil {
-		CUST.Error("", err)
-	}
-	err = CreatePollPayInvoiceMission()
-	if err != nil {
-		CUST.Error("", err)
-	}
-	fmt.Println("Create FairLaunch ScheduledTasks Procession finished!")
 }
