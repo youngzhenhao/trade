@@ -228,11 +228,11 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 	userBalance, err := QueryCustodyAccount(account.UserAccountCode)
 	if err != nil {
 		//CUST.Error("查询账户余额失败")
-		return false, fmt.Errorf("查询账户余额失败（accountID=%d）", account.UserId)
+		return false, fmt.Errorf("查询账户余额失败（UserId=%d）", account.UserId)
 	}
 	if info.NumSatoshis > userBalance.CurrentBalance {
 		//CUST.Info("账户余额不足")
-		return false, fmt.Errorf("账户余额不足（accountID=%d）", account.UserId)
+		return false, fmt.Errorf("账户余额不足（UserId=%d）", account.UserId)
 	}
 
 	//判断是否为节点内部转账
