@@ -50,6 +50,7 @@ func main() {
 		return
 	}
 	// Setup cron jobs
+	services.CheckIfAutoUpdateScheduledTask()
 	jobs, err := task.LoadJobs()
 	if err != nil {
 		log.Fatal(err)

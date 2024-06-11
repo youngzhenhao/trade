@@ -59,6 +59,19 @@ func listChainTxns() (*lnrpc.TransactionDetails, error) {
 	return response, nil
 }
 
+func walletBalance() (*lnrpc.WalletBalanceResponse, error) {
+	connConfiguration := GetConnConfiguration(ClientTypeLnd)
+	conn, connClose := utils.GetConn(connConfiguration.GrpcHost, connConfiguration.TlsCertPath, connConfiguration.MacaroonPath)
+	defer connClose()
+	client := lnrpc.NewLightningClient(conn)
+	request := &lnrpc.WalletBalanceRequest{}
+	response, err := client.WalletBalance(context.Background(), request)
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "WalletBalance")
+	}
+	return response, nil
+}
+
 type ChainTransaction struct {
 	TxHash            string             `json:"tx_hash"`
 	Amount            int                `json:"amount"`
