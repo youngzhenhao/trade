@@ -221,18 +221,18 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 	// 判断账户余额是否足够
 	info, err := DecodeInvoice(PayInvoiceRequest.Invoice)
 	if err != nil {
-		CUST.Error("发票解析失败")
-		return false, fmt.Errorf("发票解析失败")
+		//CUST.Error("发票解析失败")
+		return false, fmt.Errorf("发票解析失败(pay_request=%s)", PayInvoiceRequest.Invoice)
 	}
 
 	userBalance, err := QueryCustodyAccount(account.UserAccountCode)
 	if err != nil {
-		CUST.Error("查询账户余额失败")
-		return false, fmt.Errorf("查询账户余额失败")
+		//CUST.Error("查询账户余额失败")
+		return false, fmt.Errorf("查询账户余额失败（accountID=%d）", account.UserId)
 	}
 	if info.NumSatoshis > userBalance.CurrentBalance {
-		CUST.Info("账户余额不足")
-		return false, fmt.Errorf("账户余额不足")
+		//CUST.Info("账户余额不足")
+		return false, fmt.Errorf("账户余额不足（accountID=%d）", account.UserId)
 	}
 
 	//判断是否为节点内部转账
