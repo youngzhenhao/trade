@@ -5,18 +5,18 @@ currentPath=$(pwd)
 currentFolderName="${currentPath##*/}"
 specificString="trade"
 configName="config.yaml"
-tradeMarketPath="/root/tradeMarket"
+tradeMarketPath="/root/trade"
 binaryName="Trade"
 
 if [ "$currentFolderName" = "$specificString" ]; then
     echo ""
     echo "Build Trade is in progress, please wait..."
-    if [ -d "$tradeMarketPath" ]; then
-        echo "$tradeMarketPath already exists."
-    else
-        echo "$tradeMarketPath does not exist, new folder will be created."
-        mkdir -p $tradeMarketPath
-    fi
+#    if [ -d "$tradeMarketPath" ]; then
+#        echo "$tradeMarketPath already exists."
+#    else
+#        echo "$tradeMarketPath does not exist, new folder will be created."
+#        mkdir -p $tradeMarketPath
+#    fi
     go build -o $tradeMarketPath/$binaryName ./main/main.go
     if [ -f "$tradeMarketPath/$configName" ]; then
         echo "$tradeMarketPath/$configName already exists."

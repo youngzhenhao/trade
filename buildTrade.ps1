@@ -3,17 +3,17 @@ $currentPath = Get-Location
 $currentFolderName = Split-Path -Path $currentPath -Leaf
 $specificString = "trade"
 $configName = "config.yaml"
-$tradeMarketPath = "/root/tradeMarket"
+$tradeMarketPath = "/root/trade"
 $binaryName = "Trade"
 if ($currentFolderName -eq $specificString) {
     Write-Host ""
     Write-Host "Build Trade is in progress, please wait..."
-    if (Test-Path $tradeMarketPath) {
-        Write-Host "$tradeMarketPath already exists."
-    } else {
-        Write-Host "$tradeMarketPath does not exist, new folder will be created."
-        mkdir $tradeMarketPath
-    }
+#    if (Test-Path $tradeMarketPath) {
+#        Write-Host "$tradeMarketPath already exists."
+#    } else {
+#        Write-Host "$tradeMarketPath does not exist, new folder will be created."
+#        mkdir $tradeMarketPath
+#    }
     go build -o $tradeMarketPath/$binaryName ./main/main.go
     if (Test-Path $tradeMarketPath/$configName) {
         Write-Host "$tradeMarketPath/$configName already exists."
