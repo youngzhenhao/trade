@@ -126,6 +126,7 @@ func PayInvoice(c *gin.Context) {
 	pay := services.PayInvoiceRequest{}
 	if err := c.ShouldBindJSON(&pay); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
 	}
 
 	// 支付发票
