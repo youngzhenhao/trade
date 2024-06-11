@@ -5,12 +5,66 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"trade/config"
 	"trade/middleware"
 	"trade/models"
 	"trade/utils"
 )
 
 type CronService struct{}
+
+// @dev: Auto
+func CheckIfAutoUpdateScheduledTask() {
+	if config.GetLoadConfig().IsAutoUpdateScheduledTask {
+		err := CreateFairLaunchProcessions()
+		if err != nil {
+			ScheduledTask.Info("%v", err)
+		}
+	}
+}
+
+// CreateFairLaunchProcessions
+// @dev: Use this to update scheduled task table
+func CreateFairLaunchProcessions() (err error) {
+	return CreateOrUpdateScheduledTasks(&[]models.ScheduledTask{
+		{
+			Name:           "ProcessFairLaunchNoPay",
+			CronExpression: "*/20 * * * * *",
+			FunctionName:   "ProcessFairLaunchNoPay",
+			Package:        "services",
+		}, {
+			Name:           "ProcessFairLaunchPaidPending",
+			CronExpression: "*/20 * * * * *",
+			FunctionName:   "ProcessFairLaunchPaidPending",
+			Package:        "services",
+		}, {
+			Name:           "ProcessFairLaunchPaidNoIssue",
+			CronExpression: "0 */2 * * * *",
+			FunctionName:   "ProcessFairLaunchPaidNoIssue",
+			Package:        "services",
+		}, {
+			Name:           "ProcessFairLaunchIssuedPending",
+			CronExpression: "*/20 * * * * *",
+			FunctionName:   "ProcessFairLaunchIssuedPending",
+			Package:        "services",
+		}, {
+			Name:           "ProcessFairLaunchReservedSentPending",
+			CronExpression: "*/20 * * * * *",
+			FunctionName:   "ProcessFairLaunchReservedSentPending",
+			Package:        "services",
+		}, {
+			Name:           "FairLaunchMint",
+			CronExpression: "*/20 * * * * *",
+			FunctionName:   "FairLaunchMint",
+			Package:        "services",
+		}, {
+			Name:           "SendFairLaunchAsset",
+			CronExpression: "0 */5 * * * *",
+			FunctionName:   "SendFairLaunchAsset",
+			Package:        "services",
+		},
+	})
+}
 
 func TaskCountRecordByRedis(name string) error {
 	var record string
@@ -45,6 +99,46 @@ func (cs *CronService) FairLaunchIssuance() {
 	}
 }
 
+func (cs *CronService) ProcessFairLaunchNoPay() {
+	ProcessFairLaunchNoPay()
+	err := TaskCountRecordByRedis("ProcessFairLaunchNoPay")
+	if err != nil {
+		return
+	}
+}
+
+func (cs *CronService) ProcessFairLaunchPaidPending() {
+	ProcessFairLaunchPaidPending()
+	err := TaskCountRecordByRedis("ProcessFairLaunchPaidPending")
+	if err != nil {
+		return
+	}
+}
+
+func (cs *CronService) ProcessFairLaunchPaidNoIssue() {
+	ProcessFairLaunchPaidNoIssue()
+	err := TaskCountRecordByRedis("ProcessFairLaunchPaidNoIssue")
+	if err != nil {
+		return
+	}
+}
+
+func (cs *CronService) ProcessFairLaunchIssuedPending() {
+	ProcessFairLaunchIssuedPending()
+	err := TaskCountRecordByRedis("ProcessFairLaunchIssuedPending")
+	if err != nil {
+		return
+	}
+}
+
+func (cs *CronService) ProcessFairLaunchReservedSentPending() {
+	ProcessFairLaunchReservedSentPending()
+	err := TaskCountRecordByRedis("ProcessFairLaunchReservedSentPending")
+	if err != nil {
+		return
+	}
+}
+
 func (cs *CronService) FairLaunchMint() {
 	FairLaunchMint()
 	err := TaskCountRecordByRedis("FairLaunchMint")
@@ -61,11 +155,6 @@ func (cs *CronService) SendFairLaunchAsset() {
 	}
 }
 
-func CreateScheduledTask(scheduledTask *models.ScheduledTask) (err error) {
-	s := ScheduledTaskStore{DB: middleware.DB}
-	return s.CreateScheduledTask(scheduledTask)
-}
-
 func CreateFairLaunchIssuance() (err error) {
 	return CreateScheduledTask(&models.ScheduledTask{
 		Name:           "FairLaunchIssuance",
@@ -78,7 +167,7 @@ func CreateFairLaunchIssuance() (err error) {
 func CreateFairLaunchMint() (err error) {
 	return CreateScheduledTask(&models.ScheduledTask{
 		Name:           "FairLaunchMint",
-		CronExpression: "0 */1 * * * *",
+		CronExpression: "*/20 * * * * *",
 		FunctionName:   "FairLaunchMint",
 		Package:        "services",
 	})
@@ -93,8 +182,9 @@ func CreateSendFairLaunchAsset() (err error) {
 	})
 }
 
+// Deprecated: Use CreateFairLaunchProcessions instead
 func CreateFairLaunchScheduledTasks() {
-	err := CreateFairLaunchIssuance()
+	err := CreateFairLaunchProcessions()
 	if err != nil {
 		FairLaunchDebugLogger.Error("", err)
 	}

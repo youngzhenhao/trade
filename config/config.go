@@ -71,9 +71,10 @@ type Config struct {
 		IsAutoUpdateFeeRate        bool `yaml:"is_auto_update_fee_rate" json:"is_auto_update_fee_rate"`
 		MaxNumberOfMint            int  `yaml:"max_number_of_mint" json:"max_number_of_mint"`
 	} `yaml:"fair_launch_config" json:"fair_launch_config"`
-	AdminUser     BasicAuth `yaml:"admin_user" json:"admin_user"`
-	FrpsServer    string    `yaml:"frps_server" json:"frps_server"`
-	IsAutoMigrate bool      `yaml:"is_auto_migrate" json:"is_auto_migrate"`
+	AdminUser                 BasicAuth `yaml:"admin_user" json:"admin_user"`
+	FrpsServer                string    `yaml:"frps_server" json:"frps_server"`
+	IsAutoMigrate             bool      `yaml:"is_auto_migrate" json:"is_auto_migrate"`
+	IsAutoUpdateScheduledTask bool      `yaml:"is_auto_update_scheduled_task" json:"is_auto_update_scheduled_task"`
 }
 
 type BasicAuth struct {

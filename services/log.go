@@ -63,4 +63,5 @@ var (
 	CUST                  = NewLogger("CUST", ERROR)
 	FairLaunchDebugLogger = NewLogger("FLDL", ERROR)
 	FEE                   = NewLogger("FEE", ERROR)
+	ScheduledTask         = NewLogger("CRON", ERROR)
 )

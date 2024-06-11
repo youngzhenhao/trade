@@ -17,3 +17,7 @@ func GetListChainTransactions() (*[]ChainTransaction, error) {
 	result := processChainTransactions(response)
 	return result, nil
 }
+
+func WalletBalanceAndGetResponse() (*lnrpc.WalletBalanceResponse, error) {
+	return walletBalance()
+}

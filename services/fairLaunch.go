@@ -37,6 +37,73 @@ func FairLaunchIssuance() {
 	PrintProcessionResult(processionResult)
 }
 
+// @dev: Process by state
+
+// ProcessFairLaunchNoPay
+// @Description: Scheduled Task
+func ProcessFairLaunchNoPay() {
+	processionResult, err := ProcessAllFairLaunchStateNoPayInfoService()
+	if err != nil {
+		return
+	}
+	if processionResult == nil || len(*processionResult) == 0 {
+		return
+	}
+	PrintProcessionResult(processionResult)
+}
+
+// ProcessFairLaunchPaidPending
+// @Description: Scheduled Task
+func ProcessFairLaunchPaidPending() {
+	processionResult, err := ProcessAllFairLaunchStatePaidPendingInfoService()
+	if err != nil {
+		return
+	}
+	if processionResult == nil || len(*processionResult) == 0 {
+		return
+	}
+	PrintProcessionResult(processionResult)
+}
+
+// ProcessFairLaunchPaidNoIssue
+// @Description: Scheduled Task
+func ProcessFairLaunchPaidNoIssue() {
+	processionResult, err := ProcessAllFairLaunchStatePaidNoIssueInfoService()
+	if err != nil {
+		return
+	}
+	if processionResult == nil || len(*processionResult) == 0 {
+		return
+	}
+	PrintProcessionResult(processionResult)
+}
+
+// ProcessFairLaunchIssuedPending
+// @Description: Scheduled Task
+func ProcessFairLaunchIssuedPending() {
+	processionResult, err := ProcessAllFairLaunchStateIssuedPendingInfoService()
+	if err != nil {
+		return
+	}
+	if processionResult == nil || len(*processionResult) == 0 {
+		return
+	}
+	PrintProcessionResult(processionResult)
+}
+
+// ProcessFairLaunchReservedSentPending
+// @Description: Scheduled Task
+func ProcessFairLaunchReservedSentPending() {
+	processionResult, err := ProcessAllFairLaunchStateReservedSentPending()
+	if err != nil {
+		return
+	}
+	if processionResult == nil || len(*processionResult) == 0 {
+		return
+	}
+	PrintProcessionResult(processionResult)
+}
+
 // FairLaunchMint
 // @Description: Scheduled Task
 func FairLaunchMint() {
@@ -108,11 +175,12 @@ func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount 
 	}
 	var fairLaunchInfo models.FairLaunchInfo
 	// @dev: Setting fee rate need to bigger equal than fee rate now
-	err = ValidateFeeRate(feeRate)
-	if err != nil {
-		return nil, utils.AppendErrorInfo(err, "ValidateFeeRate")
-	}
-	setGasFee := GetTransactionFee(feeRate)
+	// @notice: sever do not need to check
+	//err = ValidateFeeRate(feeRate)
+	//if err != nil {
+	//	return nil, utils.AppendErrorInfo(err, "ValidateFeeRate")
+	//}
+	setGasFee := GetIssuanceTransactionGasFee(feeRate)
 	if !IsAccountBalanceEnoughByUserId(uint(userId), uint64(setGasFee)) {
 		return nil, errors.New("account balance not enough to pay issuance gas fee")
 	}
@@ -152,7 +220,21 @@ func ValidateFeeRate(feeRate int) (err error) {
 	//estimatedFeeRateSatPerKw, err := UpdateAndEstimateSmartFeeRateSatPerKw()
 	if !(feeRate >= feeRateSatPerKw) {
 		err = errors.New("setting fee rate need to bigger equal than mempool's recommended fastest fee rate now")
-		return utils.AppendErrorInfo(err, "got: "+strconv.Itoa(feeRate)+", expected: >="+strconv.Itoa(feeRateSatPerKw))
+		return utils.AppendErrorInfo(err, "Got: "+strconv.Itoa(feeRate)+", Expected bigger equal than: "+strconv.Itoa(feeRateSatPerKw))
+	}
+	return nil
+}
+
+func ValidateMintedFeeRate(mintedNumber int, mintedFeeRateSatPerKw int) (err error) {
+	feeRate, err := UpdateAndCalculateGasFeeRateByMempool(mintedNumber)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "UpdateAndCalculateGasFeeRateByMempool")
+	}
+	// @dev: maybe need to change comparison param
+	calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee
+	if !(mintedFeeRateSatPerKw >= calculatedFeeRateSatPerKw) {
+		err = errors.New("setting minted calculated FeeRate SatPerKw need to bigger equal than calculated fee rate by mempool's recommended fastest fee rate now")
+		return utils.AppendErrorInfo(err, "Got: "+strconv.Itoa(mintedFeeRateSatPerKw)+", Expected bigger equal than: "+strconv.Itoa(calculatedFeeRateSatPerKw))
 	}
 	return nil
 }
@@ -198,16 +280,11 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 		return nil, err
 	}
 	// @dev: Setting fee rate need to bigger equal than calculated fee rate now
-	feeRate, err := UpdateAndCalculateGasFeeRateByMempool(mintedNumber)
-	if err != nil {
-		return nil, utils.AppendErrorInfo(err, "UpdateAndCalculateGasFeeRateByMempool")
-	}
-	// TODO: maybe need to change comparison param
-	calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee
-	if !(mintedFeeRateSatPerKw >= calculatedFeeRateSatPerKw) {
-		err = errors.New("setting minted calculated FeeRate SatPerKw need to bigger equal than calculated fee rate by mempool's recommended fastest fee rate now")
-		return nil, utils.AppendErrorInfo(err, "got: "+strconv.Itoa(mintedFeeRateSatPerKw)+", expected: >="+strconv.Itoa(calculatedFeeRateSatPerKw))
-	}
+	// @notice: sever do not need to check
+	//err = ValidateMintedFeeRate(mintedNumber,mintedFeeRateSatPerKw)
+	//if err != nil {
+	//	return nil, utils.AppendErrorInfo(err, "ValidateMintedFeeRate")
+	//}
 	mintedGasFee := GetMintedTransactionGasFee(mintedFeeRateSatPerKw)
 	if !IsAccountBalanceEnoughByUserId(uint(userId), uint64(mintedGasFee)) {
 		return nil, errors.New("account balance not enough to pay minted gas fee")
@@ -719,6 +796,208 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 	return &processionResults, nil
 }
 
+// FairLaunchInfos Procession by state
+
+// ProcessAllFairLaunchStateNoPayInfoService
+// @dev: Short time intervals
+func ProcessAllFairLaunchStateNoPayInfoService() (*[]ProcessionResult, error) {
+	var processionResults []ProcessionResult
+	fairLaunchInfos, err := GetAllFairLaunchStateNoPayInfos()
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "GetAllFairLaunchStateNoPayInfos")
+	}
+	for _, fairLaunchInfo := range *fairLaunchInfos {
+		{
+			err = ProcessFairLaunchStateNoPayInfoService(&fairLaunchInfo)
+			if err != nil {
+				processionResults = append(processionResults, ProcessionResult{
+					id: int(fairLaunchInfo.ID),
+					JsonResult: models.JsonResult{
+						Success: false,
+						Error:   err.Error(),
+						Data:    nil,
+					},
+				})
+				continue
+			} else {
+				processionResults = append(processionResults, ProcessionResult{
+					id: int(fairLaunchInfo.ID),
+					JsonResult: models.JsonResult{
+						Success: true,
+						Error:   "",
+						Data:    nil,
+					},
+				})
+			}
+		}
+	}
+	if processionResults == nil || len(processionResults) == 0 {
+		err = errors.New("procession results null")
+		return nil, err
+	}
+	return &processionResults, nil
+}
+
+// ProcessAllFairLaunchStatePaidPendingInfoService
+// @dev: Short time intervals
+func ProcessAllFairLaunchStatePaidPendingInfoService() (*[]ProcessionResult, error) {
+	var processionResults []ProcessionResult
+	fairLaunchInfos, err := GetAllFairLaunchStatePaidPendingInfos()
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "GetAllFairLaunchStatePaidPendingInfos")
+	}
+	for _, fairLaunchInfo := range *fairLaunchInfos {
+		{
+			err = ProcessFairLaunchStatePaidPendingInfoService(&fairLaunchInfo)
+			if err != nil {
+				processionResults = append(processionResults, ProcessionResult{
+					id: int(fairLaunchInfo.ID),
+					JsonResult: models.JsonResult{
+						Success: false,
+						Error:   err.Error(),
+						Data:    nil,
+					},
+				})
+				continue
+			} else {
+				processionResults = append(processionResults, ProcessionResult{
+					id: int(fairLaunchInfo.ID),
+					JsonResult: models.JsonResult{
+						Success: true,
+						Error:   "",
+						Data:    nil,
+					},
+				})
+			}
+		}
+	}
+	if processionResults == nil || len(processionResults) == 0 {
+		err = errors.New("procession results null")
+		return nil, err
+	}
+	return &processionResults, nil
+}
+
+// ProcessAllFairLaunchStatePaidNoIssueInfoService
+// @notice: This spends utxos，need to update
+func ProcessAllFairLaunchStatePaidNoIssueInfoService() (*[]ProcessionResult, error) {
+	var processionResults []ProcessionResult
+	fairLaunchInfos, err := GetAllFairLaunchStatePaidNoIssueInfos()
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "GetAllFairLaunchStatePaidNoIssueInfos")
+	}
+	for _, fairLaunchInfo := range *fairLaunchInfos {
+		{
+			err = ProcessFairLaunchStatePaidNoIssueInfoService(&fairLaunchInfo)
+			if err != nil {
+				processionResults = append(processionResults, ProcessionResult{
+					id: int(fairLaunchInfo.ID),
+					JsonResult: models.JsonResult{
+						Success: false,
+						Error:   err.Error(),
+						Data:    nil,
+					},
+				})
+				continue
+			} else {
+				processionResults = append(processionResults, ProcessionResult{
+					id: int(fairLaunchInfo.ID),
+					JsonResult: models.JsonResult{
+						Success: true,
+						Error:   "",
+						Data:    nil,
+					},
+				})
+			}
+		}
+	}
+	if processionResults == nil || len(processionResults) == 0 {
+		err = errors.New("procession results null")
+		return nil, err
+	}
+	return &processionResults, nil
+}
+
+// ProcessAllFairLaunchStateIssuedPendingInfoService
+// @dev: Short time intervals
+func ProcessAllFairLaunchStateIssuedPendingInfoService() (*[]ProcessionResult, error) {
+	var processionResults []ProcessionResult
+	fairLaunchInfos, err := GetAllFairLaunchStateIssuedPendingInfos()
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "GetAllFairLaunchStateIssuedPendingInfos")
+	}
+	for _, fairLaunchInfo := range *fairLaunchInfos {
+		{
+			err = ProcessFairLaunchStateIssuedPendingInfoService(&fairLaunchInfo)
+			if err != nil {
+				processionResults = append(processionResults, ProcessionResult{
+					id: int(fairLaunchInfo.ID),
+					JsonResult: models.JsonResult{
+						Success: false,
+						Error:   err.Error(),
+						Data:    nil,
+					},
+				})
+				continue
+			} else {
+				processionResults = append(processionResults, ProcessionResult{
+					id: int(fairLaunchInfo.ID),
+					JsonResult: models.JsonResult{
+						Success: true,
+						Error:   "",
+						Data:    nil,
+					},
+				})
+			}
+		}
+	}
+	if processionResults == nil || len(processionResults) == 0 {
+		err = errors.New("procession results null")
+		return nil, err
+	}
+	return &processionResults, nil
+}
+
+// ProcessAllFairLaunchStateReservedSentPending
+// @dev: Short time intervals
+func ProcessAllFairLaunchStateReservedSentPending() (*[]ProcessionResult, error) {
+	var processionResults []ProcessionResult
+	fairLaunchInfos, err := GetAllFairLaunchStateReservedSentPending()
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "GetAllFairLaunchStateReservedSentPending")
+	}
+	for _, fairLaunchInfo := range *fairLaunchInfos {
+		{
+			err = ProcessFairLaunchStateReservedSentPending(&fairLaunchInfo)
+			if err != nil {
+				processionResults = append(processionResults, ProcessionResult{
+					id: int(fairLaunchInfo.ID),
+					JsonResult: models.JsonResult{
+						Success: false,
+						Error:   err.Error(),
+						Data:    nil,
+					},
+				})
+				continue
+			} else {
+				processionResults = append(processionResults, ProcessionResult{
+					id: int(fairLaunchInfo.ID),
+					JsonResult: models.JsonResult{
+						Success: true,
+						Error:   "",
+						Data:    nil,
+					},
+				})
+			}
+		}
+	}
+	if processionResults == nil || len(processionResults) == 0 {
+		err = errors.New("procession results null")
+		return nil, err
+	}
+	return &processionResults, nil
+}
+
 func UpdateFairLaunchInfoPaidId(fairLaunchInfo *models.FairLaunchInfo, paidId int) (err error) {
 	fairLaunchInfo.IssuanceFeePaidID = paidId
 	fairLaunchInfo.PayMethod = models.FeePaymentMethodCustodyAccount
@@ -776,7 +1055,7 @@ func FairLaunchTapdMint(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 }
 
 func FairLaunchTapdMintFinalize(fairLaunchInfo *models.FairLaunchInfo) (err error) {
-	//TODO: FeeRate maybe need to choose
+	// @dev: FeeRate maybe need to choose
 	finalizeResponse, err := api.FinalizeBatchAndGetResponse(fairLaunchInfo.FeeRate)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "FinalizeBatchAndGetResponse")
@@ -855,6 +1134,28 @@ func UpdateFairLaunchInfoStateAndIssuanceTime(fairLaunchInfo *models.FairLaunchI
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
 
+func IsWalletBalanceEnough(value int) bool {
+	response, err := api.WalletBalanceAndGetResponse()
+	if err != nil {
+		return false
+	}
+	return response.ConfirmedBalance >= int64(value)
+}
+
+func IsAssetBalanceEnough(assetId string, amount int) bool {
+	response, err := api.ListBalancesAndGetResponse(true)
+	if err != nil {
+		return false
+	}
+	for k, v := range (*response).AssetBalances {
+		if k == assetId {
+			return v.Balance >= uint64(amount)
+		}
+	}
+	// @dev: No asset id
+	return false
+}
+
 // FairLaunchInfos Procession
 
 func ProcessFairLaunchStateNoPayInfoService(fairLaunchInfo *models.FairLaunchInfo) (err error) {
@@ -891,12 +1192,18 @@ func ProcessFairLaunchStatePaidPendingInfoService(fairLaunchInfo *models.FairLau
 }
 
 func ProcessFairLaunchStatePaidNoIssueInfoService(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+	// @dev: Check if confirmed balance enough
+	if !IsWalletBalanceEnough(fairLaunchInfo.SetGasFee) {
+		err = errors.New("lnd wallet balance is not enough")
+		return err
+	}
 	// @dev: 1.tapd mint, add to batch, finalize
 	err = FairLaunchTapdMint(fairLaunchInfo)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "FairLaunchTapdMint")
 	}
 	// @dev: Consider whether to use scheduled task to finalize
+	// @dev: Do not mint assets in one batch, which will anchor all assets to one utxo
 	err = FairLaunchTapdMintFinalize(fairLaunchInfo)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "FairLaunchTapdMintFinalize")
@@ -1220,6 +1527,8 @@ func SendFairLaunchMintedAssetLocked() error {
 		return utils.AppendErrorInfo(err, "GetAllUnsentFairLaunchMintedInfos")
 	}
 	assetIdToAddrs := make(map[string][]string)
+	assetIdToAmount := make(map[string]int)
+	assetIdToGasFeeTotal := make(map[string]int)
 	// @dev: addr Slice
 	for _, fairLaunchMintedInfo := range *unsentFairLaunchMintedInfos {
 		assetId := fairLaunchMintedInfo.AssetID
@@ -1227,10 +1536,22 @@ func SendFairLaunchMintedAssetLocked() error {
 			assetIdToAddrs[assetId] = make([]string, 0)
 		}
 		assetIdToAddrs[assetId] = append(assetIdToAddrs[assetId], fairLaunchMintedInfo.EncodedAddr)
+		assetIdToAmount[assetId] += fairLaunchMintedInfo.AddrAmount
+		assetIdToGasFeeTotal[assetId] += fairLaunchMintedInfo.MintedGasFee
 	}
 	var feeRate *FeeRateResponseTransformed
 	var response *taprpc.SendAssetResponse
-	for _, addrs := range assetIdToAddrs {
+	for assetId, addrs := range assetIdToAddrs {
+		// @dev: Check if confirmed balance enough
+		if !IsWalletBalanceEnough(assetIdToGasFeeTotal[assetId]) {
+			err = errors.New("lnd wallet balance is not enough")
+			return err
+		}
+		// @dev: Check if asset balance enough
+		if !IsAssetBalanceEnough(assetId, assetIdToAmount[assetId]) {
+			err = errors.New("tapd asset balance is not enough")
+			return err
+		}
 		feeRate, err = UpdateAndGetFeeRateResponseTransformed()
 		if err != nil {
 			return utils.AppendErrorInfo(err, "UpdateAndGetFeeRateResponseTransformed")
@@ -1386,6 +1707,7 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 			Away:        models.AWAY_OUT,
 			Amount:      float64(fairLaunchMintedInfo.AddrAmount),
 			Unit:        models.UNIT_ASSET_NORMAL,
+			AssetId:     &(fairLaunchMintedInfo.AssetID),
 			Invoice:     &(fairLaunchMintedInfo.EncodedAddr),
 			PaymentHash: &(fairLaunchMintedInfo.OutpointTxHash),
 			State:       models.STATE_SUCCESS,

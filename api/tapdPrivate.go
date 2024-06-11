@@ -275,3 +275,27 @@ func listAssets(withWitness, includeSpent, includeLeased bool) (*taprpc.ListAsse
 	}
 	return response, nil
 }
+
+func listBalances(isGroupByAssetIdOrGroupKey bool) (*taprpc.ListBalancesResponse, error) {
+	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
+	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
+	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	client := taprpc.NewTaprootAssetsClient(conn)
+	var request *taprpc.ListBalancesRequest
+	if isGroupByAssetIdOrGroupKey {
+		request = &taprpc.ListBalancesRequest{
+			GroupBy: &taprpc.ListBalancesRequest_AssetId{AssetId: true},
+		}
+	} else {
+		request = &taprpc.ListBalancesRequest{
+			GroupBy: &taprpc.ListBalancesRequest_GroupKey{GroupKey: true},
+		}
+	}
+	response, err := client.ListBalances(context.Background(), request)
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "ListBalances")
+	}
+	return response, nil
+}

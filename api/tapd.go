@@ -126,3 +126,7 @@ func QueryAssetType(assetType int) (string, error) {
 	}
 	return "", errors.New("not a valid asset type code")
 }
+
+func ListBalancesAndGetResponse(isGroupByAssetIdOrGroupKey bool) (*taprpc.ListBalancesResponse, error) {
+	return listBalances(isGroupByAssetIdOrGroupKey)
+}

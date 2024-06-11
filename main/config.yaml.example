@@ -55,3 +55,4 @@ admin_user:
     password: ""
 frps_server: ""
 is_auto_migrate: false
+is_auto_update_scheduled_task: false

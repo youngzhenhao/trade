@@ -15,6 +15,10 @@ func (s *ScheduledTaskStore) CreateScheduledTask(scheduledTask *models.Scheduled
 	return s.DB.Create(scheduledTask).Error
 }
 
+func (s *ScheduledTaskStore) CreateScheduledTasks(scheduledTasks *[]models.ScheduledTask) error {
+	return s.DB.Create(scheduledTasks).Error
+}
+
 func (s *ScheduledTaskStore) ReadScheduledTask(id uint) (*models.ScheduledTask, error) {
 	var scheduledTask models.ScheduledTask
 	err := s.DB.First(&scheduledTask, id).Error

@@ -260,15 +260,17 @@ func GetIssuanceTransactionByteSize() int {
 
 func GetTapdMintAssetAndFinalizeTransactionByteSize() int {
 	// TODO: need to complete
-	return 170
+	byteSize := 170 * (1 + 0.25)
+	return int(byteSize)
 }
 
 func GetTapdSendReservedAssetTransactionByteSize() int {
 	// TODO: need to complete
-	return 170
+	byteSize := 170 * (1 + 0.25)
+	return int(byteSize)
 }
 
-func GetTransactionFee(feeRateSatPerKw int) int {
+func GetIssuanceTransactionGasFee(feeRateSatPerKw int) int {
 	return FeeRateSatPerKwToSatPerB(feeRateSatPerKw) * GetIssuanceTransactionByteSize()
 }
 
@@ -312,7 +314,7 @@ func PayMintFee(userId int, feeRateSatPerKw int) (mintFeePaidId int, err error) 
 }
 
 func PayIssuanceFee(userId int, feeRateSatPerKw int) (IssuanceFeePaidId int, err error) {
-	fee := GetTransactionFee(feeRateSatPerKw)
+	fee := GetIssuanceTransactionGasFee(feeRateSatPerKw)
 	return PayGasFee(userId, fee)
 }
 
