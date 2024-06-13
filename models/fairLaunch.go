@@ -73,6 +73,7 @@ type FairLaunchInfo struct {
 	IsMintAll                      bool             `json:"is_mint_all"`
 	Status                         int              `json:"status" default:"1" gorm:"default:1"`
 	State                          FairLaunchState  `json:"state"`
+	ProcessNumber                  int              `json:"process_number"`
 }
 
 type SetFairLaunchInfoRequest struct {
@@ -115,6 +116,7 @@ type FairLaunchMintedInfo struct {
 	Address               string                `json:"address" gorm:"type:varchar(255)"`
 	Status                int                   `json:"status" gorm:"default:1"`
 	State                 FairLaunchMintedState `json:"state"`
+	ProcessNumber         int                   `json:"process_number"`
 }
 
 type MintFairLaunchRequest struct {

@@ -808,6 +808,10 @@ func ProcessAllFairLaunchStateNoPayInfoService() (*[]ProcessionResult, error) {
 	}
 	for _, fairLaunchInfo := range *fairLaunchInfos {
 		{
+			err = IncreaseFairLaunchInfoProcessNumber(&fairLaunchInfo)
+			if err != nil {
+				// @dev: Do nothing
+			}
 			err = ProcessFairLaunchStateNoPayInfoService(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
@@ -848,6 +852,10 @@ func ProcessAllFairLaunchStatePaidPendingInfoService() (*[]ProcessionResult, err
 	}
 	for _, fairLaunchInfo := range *fairLaunchInfos {
 		{
+			err = IncreaseFairLaunchInfoProcessNumber(&fairLaunchInfo)
+			if err != nil {
+				// @dev: Do nothing
+			}
 			err = ProcessFairLaunchStatePaidPendingInfoService(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
@@ -888,6 +896,10 @@ func ProcessAllFairLaunchStatePaidNoIssueInfoService() (*[]ProcessionResult, err
 	}
 	for _, fairLaunchInfo := range *fairLaunchInfos {
 		{
+			err = IncreaseFairLaunchInfoProcessNumber(&fairLaunchInfo)
+			if err != nil {
+				// @dev: Do nothing
+			}
 			err = ProcessFairLaunchStatePaidNoIssueInfoService(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
@@ -928,6 +940,10 @@ func ProcessAllFairLaunchStateIssuedPendingInfoService() (*[]ProcessionResult, e
 	}
 	for _, fairLaunchInfo := range *fairLaunchInfos {
 		{
+			err = IncreaseFairLaunchInfoProcessNumber(&fairLaunchInfo)
+			if err != nil {
+				// @dev: Do nothing
+			}
 			err = ProcessFairLaunchStateIssuedPendingInfoService(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
@@ -968,6 +984,10 @@ func ProcessAllFairLaunchStateReservedSentPending() (*[]ProcessionResult, error)
 	}
 	for _, fairLaunchInfo := range *fairLaunchInfos {
 		{
+			err = IncreaseFairLaunchInfoProcessNumber(&fairLaunchInfo)
+			if err != nil {
+				// @dev: Do nothing
+			}
 			err = ProcessFairLaunchStateReservedSentPending(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
@@ -1007,6 +1027,18 @@ func UpdateFairLaunchInfoPaidId(fairLaunchInfo *models.FairLaunchInfo, paidId in
 
 func ChangeFairLaunchInfoState(fairLaunchInfo *models.FairLaunchInfo, state models.FairLaunchState) (err error) {
 	fairLaunchInfo.State = state
+	f := FairLaunchStore{DB: middleware.DB}
+	return f.UpdateFairLaunchInfo(fairLaunchInfo)
+}
+
+func ClearFairLaunchInfoProcessNumber(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+	fairLaunchInfo.ProcessNumber = 0
+	f := FairLaunchStore{DB: middleware.DB}
+	return f.UpdateFairLaunchInfo(fairLaunchInfo)
+}
+
+func IncreaseFairLaunchInfoProcessNumber(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+	fairLaunchInfo.ProcessNumber += 1
 	f := FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
@@ -1174,6 +1206,10 @@ func ProcessFairLaunchStateNoPayInfoService(fairLaunchInfo *models.FairLaunchInf
 	if err != nil {
 		return utils.AppendErrorInfo(err, "ChangeFairLaunchInfoState")
 	}
+	err = ClearFairLaunchInfoProcessNumber(fairLaunchInfo)
+	if err != nil {
+		// @dev: Do nothing
+	}
 	return nil
 }
 
@@ -1188,6 +1224,10 @@ func ProcessFairLaunchStatePaidPendingInfoService(fairLaunchInfo *models.FairLau
 		return nil
 	}
 	// @dev: fee has not been paid
+	err = ClearFairLaunchInfoProcessNumber(fairLaunchInfo)
+	if err != nil {
+		// @dev: Do nothing
+	}
 	return nil
 }
 
@@ -1217,6 +1257,10 @@ func ProcessFairLaunchStatePaidNoIssueInfoService(fairLaunchInfo *models.FairLau
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoStateAndIssuanceTime")
 	}
+	err = ClearFairLaunchInfoProcessNumber(fairLaunchInfo)
+	if err != nil {
+		// @dev: Do nothing
+	}
 	return nil
 }
 
@@ -1243,6 +1287,10 @@ func ProcessFairLaunchStateIssuedPendingInfoService(fairLaunchInfo *models.FairL
 		return nil
 	}
 	// @dev: Transaction has not been Confirmed
+	err = ClearFairLaunchInfoProcessNumber(fairLaunchInfo)
+	if err != nil {
+		// @dev: Do nothing
+	}
 	return nil
 }
 
@@ -1257,6 +1305,10 @@ func ProcessFairLaunchStateReservedSentPending(fairLaunchInfo *models.FairLaunch
 		return nil
 	}
 	// @dev: Transaction has not been Confirmed
+	err = ClearFairLaunchInfoProcessNumber(fairLaunchInfo)
+	if err != nil {
+		// @dev: Do nothing
+	}
 	return nil
 }
 
@@ -1310,6 +1362,10 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 	}
 	for _, fairLaunchMintedInfo := range *allFairLaunchMintedInfos {
 		if fairLaunchMintedInfo.State == models.FairLaunchMintedStateNoPay {
+			err = IncreaseFairLaunchMintedInfoProcessNumber(&fairLaunchMintedInfo)
+			if err != nil {
+				// @dev: Do nothing
+			}
 			err = ProcessFairLaunchMintedStateNoPayInfo(&fairLaunchMintedInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
@@ -1332,6 +1388,10 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 				})
 			}
 		} else if fairLaunchMintedInfo.State == models.FairLaunchMintedStatePaidPending {
+			err = IncreaseFairLaunchMintedInfoProcessNumber(&fairLaunchMintedInfo)
+			if err != nil {
+				// @dev: Do nothing
+			}
 			err = ProcessFairLaunchMintedStatePaidPendingInfo(&fairLaunchMintedInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
@@ -1354,6 +1414,10 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 				})
 			}
 		} else if fairLaunchMintedInfo.State == models.FairLaunchMintedStatePaidNoSend {
+			err = IncreaseFairLaunchMintedInfoProcessNumber(&fairLaunchMintedInfo)
+			if err != nil {
+				// @dev: Do nothing
+			}
 			err = ProcessFairLaunchMintedStatePaidNoSendInfo(&fairLaunchMintedInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
@@ -1376,6 +1440,10 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 				})
 			}
 		} else if fairLaunchMintedInfo.State == models.FairLaunchMintedStateSentPending {
+			err = IncreaseFairLaunchMintedInfoProcessNumber(&fairLaunchMintedInfo)
+			if err != nil {
+				// @dev: Do nothing
+			}
 			err = ProcessFairLaunchMintedStateSentPendingInfo(&fairLaunchMintedInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
@@ -1613,6 +1681,18 @@ func UpdateMintedNumberAndIsMintAllOfFairLaunchInfoByFairLaunchMintedInfo(fairLa
 	return middleware.DB.Save(fairLaunchInfo).Error
 }
 
+func ClearFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+	fairLaunchMintedInfo.ProcessNumber = 0
+	f := FairLaunchStore{DB: middleware.DB}
+	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
+}
+
+func IncreaseFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+	fairLaunchMintedInfo.ProcessNumber += 1
+	f := FairLaunchStore{DB: middleware.DB}
+	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
+}
+
 // FairLaunchMintedInfos Procession
 
 func ProcessFairLaunchMintedStateNoPayInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
@@ -1631,6 +1711,10 @@ func ProcessFairLaunchMintedStateNoPayInfo(fairLaunchMintedInfo *models.FairLaun
 	if err != nil {
 		return utils.AppendErrorInfo(err, "ChangeFairLaunchMintedInfoState")
 	}
+	err = ClearFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo)
+	if err != nil {
+		// @dev: Do nothing
+	}
 	return nil
 }
 
@@ -1645,6 +1729,10 @@ func ProcessFairLaunchMintedStatePaidPendingInfo(fairLaunchMintedInfo *models.Fa
 		return nil
 	}
 	// @dev: fee has not been paid
+	err = ClearFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo)
+	if err != nil {
+		// @dev: Do nothing
+	}
 	return nil
 }
 
@@ -1664,6 +1752,10 @@ func ProcessFairLaunchMintedStatePaidNoSendInfo(fairLaunchMintedInfo *models.Fai
 	err = ChangeFairLaunchMintedInfoState(fairLaunchMintedInfo, models.FairLaunchMintedStateSentPending)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "ChangeFairLaunchMintedInfoState")
+	}
+	err = ClearFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo)
+	if err != nil {
+		// @dev: Do nothing
 	}
 	return nil
 }
@@ -1718,6 +1810,10 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 		return nil
 	}
 	// @dev: Transaction has not been Confirmed
+	err = ClearFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo)
+	if err != nil {
+		// @dev: Do nothing
+	}
 	return nil
 }
 
