@@ -1,3 +1,2 @@
 #!/bin/bash
-binaryName="Trade"
-pgrep -f $binaryName
+pgrep -f Trade
