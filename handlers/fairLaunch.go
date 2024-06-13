@@ -468,8 +468,8 @@ func GetOwnFairLaunchMintedInfo(c *gin.Context) {
 }
 
 func GetFairLaunchInfoByAssetId(c *gin.Context) {
-	id := c.Param("id")
-	fairLaunch, err := services.GetFairLaunchInfoByAssetId(id)
+	assetId := c.Param("asset_id")
+	fairLaunch, err := services.GetFairLaunchInfoByAssetId(assetId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -482,5 +482,32 @@ func GetFairLaunchInfoByAssetId(c *gin.Context) {
 		Success: true,
 		Error:   "",
 		Data:    fairLaunch,
+	})
+}
+
+func GetFairLaunchInventoryMintNumberAssetId(c *gin.Context) {
+	assetId := c.Param("asset_id")
+	fairLaunch, err := services.GetFairLaunchInfoByAssetId(assetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   "Can not get fair launch info By AssetId. " + err.Error(),
+			Data:    "",
+		})
+		return
+	}
+	inventoryNumberAndAmount, err := services.GetNumberAndAmountOfInventoryCouldBeMinted(int(fairLaunch.ID))
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   "Get Number And Amount Of Inventory Could Be Minted. " + err.Error(),
+			Data:    "",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Data:    inventoryNumberAndAmount,
 	})
 }

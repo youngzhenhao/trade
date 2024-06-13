@@ -24,7 +24,8 @@ func setupFairLaunchRouter(router *gin.Engine) *gin.Engine {
 			query.GET("/minted/:id", handlers.GetMintedInfo)
 			query.GET("/inventory/:id", handlers.QueryInventory)
 			query.POST("/mint", handlers.QueryMintIsAvailable)
-			query.GET("/asset/:id", handlers.GetFairLaunchInfoByAssetId)
+			query.GET("/asset/:asset_id", handlers.GetFairLaunchInfoByAssetId)
+			query.GET("/inventory_mint_number/:asset_id", handlers.GetFairLaunchInventoryMintNumberAssetId)
 		}
 	}
 	return router
