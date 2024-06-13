@@ -6,7 +6,6 @@ if [ -z "$pid" ]; then
   nohup /root/trade/Trade >> /root/trade/nohup.log 2>&1 &
 else
   kill $pid
-  sleep 2
   nohup /root/trade/Trade >> /root/trade/nohup.log 2>&1 &
   echo "process '$binaryName' was restarted."
 fi
