@@ -6,9 +6,9 @@ if [ -z "$pid" ]; then
   nohup /root/trade/Trade >> /root/trade/nohup.log 2>&1 &
   newPid=$(pgrep -f $binaryName)
   echo "Trade's new PID is $newPid."
-  exit 1
 else
-  kill -9 $pid
+  kill $pid
+  sleep 2
   nohup /root/trade/Trade >> /root/trade/nohup.log 2>&1 &
   echo "process '$binaryName' was restarted."
   newPid=$(pgrep -f $binaryName)
