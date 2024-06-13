@@ -280,6 +280,15 @@ func QueryMintIsAvailable(c *gin.Context) {
 	calculatedFeeRateSatPerB := feeRate.SatPerB.FastestFee
 	inventoryAmount, err := services.GetAmountOfInventoryCouldBeMintedByMintedNumber(fairLaunchInfoID, mintedNumber)
 	isMintAvailable := inventoryAmount > 0
+	inventoryNumberAndAmount, err := services.GetNumberAndAmountOfInventoryCouldBeMinted(fairLaunchInfoID)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   "Get Number And Amount Of Inventory Could Be Minted. " + err.Error(),
+			Data:    "",
+		})
+		return
+	}
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   "",
@@ -288,6 +297,7 @@ func QueryMintIsAvailable(c *gin.Context) {
 			"inventory_amount":               inventoryAmount,
 			"calculated_fee_rate_sat_per_kw": calculatedFeeRateSatPerKw,
 			"calculated_fee_rate_sat_per_b":  calculatedFeeRateSatPerB,
+			"available_number":               inventoryNumberAndAmount.Number,
 		},
 	})
 }
