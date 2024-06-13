@@ -1,3 +1,3 @@
 git pull
-sudo bash ./buildTrade.sh
-sudo bash ./restartTrade.sh
+bash buildTrade.sh
+bash restartTrade.sh
