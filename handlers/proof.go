@@ -8,20 +8,9 @@ import (
 )
 
 func DownloadProof(c *gin.Context) {
-	var proofRequest struct {
-		AssetId   string `json:"asset_id"`
-		ProofName string `json:"proof_name"`
-	}
-	err := c.BindJSON(&proofRequest)
-	if err != nil {
-		c.JSON(http.StatusOK, models.JsonResult{
-			Success: false,
-			Error:   "Should Bind JSON with asset_id and proof_name. " + err.Error(),
-			Data:    "",
-		})
-		return
-	}
-	path, err := services.ValidateAndGetProofFilePath(proofRequest.AssetId, proofRequest.ProofName)
+	AssetId := c.Param("asset_id")
+	ProofName := c.Param("proof_name")
+	path, err := services.ValidateAndGetProofFilePath(AssetId, ProofName)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,

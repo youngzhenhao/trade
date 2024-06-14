@@ -10,7 +10,7 @@ func SetupProofRouter(router *gin.Engine) *gin.Engine {
 	proof := router.Group("/proof")
 	proof.Use(middleware.AuthMiddleware())
 	{
-		proof.POST("/download", handlers.DownloadProof)
+		proof.GET("/download/:asset_id/:proof_name", handlers.DownloadProof)
 	}
 	return router
 }
