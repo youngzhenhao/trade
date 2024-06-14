@@ -130,3 +130,7 @@ func QueryAssetType(assetType int) (string, error) {
 func ListBalancesAndGetResponse(isGroupByAssetIdOrGroupKey bool) (*taprpc.ListBalancesResponse, error) {
 	return listBalances(isGroupByAssetIdOrGroupKey)
 }
+
+func ListTransfersAndGetResponse() (*taprpc.ListTransfersResponse, error) {
+	return listTransfers()
+}

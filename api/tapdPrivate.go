@@ -299,3 +299,18 @@ func listBalances(isGroupByAssetIdOrGroupKey bool) (*taprpc.ListBalancesResponse
 	}
 	return response, nil
 }
+
+func listTransfers() (*taprpc.ListTransfersResponse, error) {
+	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
+	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
+	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	client := taprpc.NewTaprootAssetsClient(conn)
+	request := &taprpc.ListTransfersRequest{}
+	response, err := client.ListTransfers(context.Background(), request)
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "ListTransfers")
+	}
+	return response, nil
+}

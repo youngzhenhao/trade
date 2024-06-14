@@ -11,6 +11,7 @@ func SetupProofRouter(router *gin.Engine) *gin.Engine {
 	proof.Use(middleware.AuthMiddleware())
 	{
 		proof.GET("/download/:asset_id/:proof_name", handlers.DownloadProof)
+		proof.GET("/download2/:asset_id/:proof_name", handlers.DownloadProof2)
 	}
 	return router
 }

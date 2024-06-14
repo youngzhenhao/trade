@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"io"
 	"net/http"
+	"os"
 	"trade/models"
 	"trade/services"
 )
@@ -27,4 +29,28 @@ func DownloadProof(c *gin.Context) {
 	c.Header("Cache-Control", "no-cache")
 	c.File(path)
 	return
+}
+
+func DownloadProof2(c *gin.Context) {
+	AssetId := c.Param("asset_id")
+	ProofName := c.Param("proof_name")
+	path, err := services.ValidateAndGetProofFilePath(AssetId, ProofName)
+	file, err := os.Open(path)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "File not found"})
+		return
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			return
+		}
+	}(file)
+	c.Writer.Header().Set("Content-Disposition", "attachment; filename="+ProofName)
+	c.Writer.Header().Set("Content-Type", "application/octet-stream")
+	c.Writer.WriteHeader(http.StatusOK)
+	_, err = io.Copy(c.Writer, file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
 }
