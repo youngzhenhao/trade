@@ -20,8 +20,8 @@ func DownloadProof(c *gin.Context) {
 		return
 	}
 	c.Header("Content-Type", "application/octet-stream")
-	c.Header("Content-Disposition", "attachment; filename="+path)
-	c.Header("Content-Disposition", "inline;filename="+path)
+	c.Header("Content-Disposition", "attachment; filename="+ProofName)
+	c.Header("Content-Disposition", "inline;filename="+ProofName)
 	c.Header("Content-Transfer-Encoding", "binary")
 	c.Header("Cache-Control", "no-cache")
 	c.File(path)
