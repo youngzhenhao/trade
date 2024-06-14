@@ -20,5 +20,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.CustodyAccount {
 		SetupCustodyAccountRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.Proof {
+		SetupProofRouter(r)
+	}
 	return r
 }

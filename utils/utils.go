@@ -224,3 +224,19 @@ func AppendErrorInfo(err error, info string) error {
 	}
 	return errors.New(err.Error() + ";" + info)
 }
+
+func IsPathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func IsHexString(s string) bool {
+	_, err := hex.DecodeString(s)
+	return err == nil
+}

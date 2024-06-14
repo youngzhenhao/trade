@@ -25,16 +25,19 @@ api_config:
     lnd:
         host: ""
         port: 0
+        dir: ""
         tls_cert_path: ""
         macaroon_path: ""
     tapd:
         host: ""
         port: 0
+        dir: ""
         tls_cert_path: ""
         macaroon_path: ""
     litd:
         host: ""
         port: 0
+        dir: ""
         tls_cert_path: ""
         macaroon_path: ""
     bitcoind:

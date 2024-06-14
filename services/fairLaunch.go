@@ -1845,7 +1845,7 @@ func SendFairLaunchReserved(fairLaunchInfo *models.FairLaunchInfo, addr string) 
 func GetIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
 	// @dev: Add more condition
-	err := middleware.DB.Where("status = ? AND is_mint_all = ? AND state >= ?", models.StatusNormal, false, models.FairLaunchStateIssued).Find(&fairLaunchInfos).Error
+	err := middleware.DB.Where("status = ? AND is_mint_all = ? AND state >= ?", models.StatusNormal, false, models.FairLaunchStateIssued).Order("set_time").Find(&fairLaunchInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
 	}
@@ -1854,7 +1854,7 @@ func GetIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 
 func GetOwnFairLaunchInfosByUserId(id int) (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
-	err := middleware.DB.Where("status = ? AND user_id = ?", models.StatusNormal, id).Find(&fairLaunchInfos).Error
+	err := middleware.DB.Where("status = ? AND user_id = ?", models.StatusNormal, id).Order("set_time").Find(&fairLaunchInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
 	}
@@ -1863,7 +1863,7 @@ func GetOwnFairLaunchInfosByUserId(id int) (*[]models.FairLaunchInfo, error) {
 
 func GetOwnFairLaunchMintedInfosByUserId(id int) (*[]models.FairLaunchMintedInfo, error) {
 	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
-	err := middleware.DB.Where("status = ? AND user_id = ?", models.StatusNormal, id).Find(&fairLaunchMintedInfos).Error
+	err := middleware.DB.Where("status = ? AND user_id = ?", models.StatusNormal, id).Order("minted_set_time").Find(&fairLaunchMintedInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchMintedInfos")
 	}
