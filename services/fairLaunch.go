@@ -1693,6 +1693,41 @@ func IncreaseFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo *models.Fair
 	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
 }
 
+// ProcessSentButNotUpdatedMintedInfo
+// @Description: If procession was interrupted, attempt to continue processing
+func ProcessSentButNotUpdatedMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+	var transfer *taprpc.AssetTransfer
+	scriptKey := fairLaunchMintedInfo.ScriptKey
+	if scriptKey == "" {
+		err = errors.New("scriptKey is empty")
+		return err
+	}
+	transfer, err = GetAssetTransferByScriptKey(fairLaunchMintedInfo.ScriptKey)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "Get Asset Transfer By ScriptKey")
+	}
+	var outpoint string
+	outpoint, err = GetOutpointByTransferAndScriptKey(transfer, scriptKey)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "Get Outpoint By Transfer And ScriptKey")
+	}
+	var txHash string
+	var address string
+	// @dev: get tx and address
+	txHash, _ = GetTransactionAndIndexByOutpoint(outpoint)
+	address, err = GetListChainTransactionsOutpointAddress(outpoint)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "Get ListChainTransactions Outpoint Address")
+	}
+	// @dev: Update db and return
+	fairLaunchMintedInfo.OutpointTxHash = txHash
+	fairLaunchMintedInfo.Outpoint = outpoint
+	fairLaunchMintedInfo.IsAddrSent = true
+	fairLaunchMintedInfo.Address = address
+	fairLaunchMintedInfo.SendAssetTime = int(transfer.TransferTimestamp)
+	return middleware.DB.Save(&fairLaunchMintedInfo).Error
+}
+
 // FairLaunchMintedInfos Procession
 
 func ProcessFairLaunchMintedStateNoPayInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
@@ -1761,6 +1796,11 @@ func ProcessFairLaunchMintedStatePaidNoSendInfo(fairLaunchMintedInfo *models.Fai
 }
 
 func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+	//@ dev: Process sent but not updated
+	err = ProcessSentButNotUpdatedMintedInfo(fairLaunchMintedInfo)
+	if err != nil {
+		// @dev: Do not return
+	}
 	if fairLaunchMintedInfo.OutpointTxHash == "" {
 		err = errors.New("no outpoint of transaction hash generated, asset may has not been sent")
 		return err
@@ -1890,4 +1930,30 @@ func GetFairLaunchInfoByAssetId(assetId string) (*models.FairLaunchInfo, error) 
 		return nil, utils.AppendErrorInfo(err, "First fairLaunchInfo")
 	}
 	return &fairLaunchInfo, nil
+}
+
+func GetAssetTransferByScriptKey(scriptKey string) (*taprpc.AssetTransfer, error) {
+	response, err := api.ListTransfersAndGetResponse()
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "List Transfers And Get Response")
+	}
+	for _, transfer := range response.Transfers {
+		for _, output := range transfer.Outputs {
+			if scriptKey == hex.EncodeToString(output.ScriptKey) {
+				return transfer, nil
+			}
+		}
+	}
+	err = errors.New("scriptKey not found")
+	return nil, err
+}
+
+func GetOutpointByTransferAndScriptKey(transfer *taprpc.AssetTransfer, scriptKey string) (string, error) {
+	for _, output := range transfer.Outputs {
+		if scriptKey == hex.EncodeToString(output.ScriptKey) {
+			return output.Anchor.Outpoint, nil
+		}
+	}
+	err := errors.New("scriptKey not found")
+	return "", err
 }
