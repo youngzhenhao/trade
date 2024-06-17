@@ -12,23 +12,35 @@ import (
 
 type (
 	FeeRateInfoName string
+	GasFeeRate      float64
+	ByteSize        float64
 )
 
-var (
-	GasFeeRateOfNumber0          float64         = 1
-	GasFeeRateOfNumber1                          = 1.2
-	GasFeeRateOfNumber2          float64         = 2
-	GasFeeRateOfNumber3          float64         = 3
-	GasFeeRateOfNumber4          float64         = 4
-	GasFeeRateOfNumber5                          = 4.5
-	GasFeeRateOfNumber6          float64         = 5
-	GasFeeRateOfNumber7                          = 5.4
-	GasFeeRateOfNumber8                          = 5.7
-	GasFeeRateOfNumber9          float64         = 6
-	GasFeeRateOfNumber10                         = 6.5
+const (
+	GasFeeRateOfNumber0  GasFeeRate = 1
+	GasFeeRateOfNumber1  GasFeeRate = 1.2
+	GasFeeRateOfNumber2  GasFeeRate = 2
+	GasFeeRateOfNumber3  GasFeeRate = 3
+	GasFeeRateOfNumber4  GasFeeRate = 4
+	GasFeeRateOfNumber5  GasFeeRate = 4.5
+	GasFeeRateOfNumber6  GasFeeRate = 5
+	GasFeeRateOfNumber7  GasFeeRate = 5.4
+	GasFeeRateOfNumber8  GasFeeRate = 5.7
+	GasFeeRateOfNumber9  GasFeeRate = 6
+	GasFeeRateOfNumber10 GasFeeRate = 6.5
+)
+
+const (
 	GasFeeRateNameMempoolMainnet FeeRateInfoName = "mempool_mainnet"
-	GasFeeRateNameBitcoind       FeeRateInfoName = "bitcoind"
-	GasFeeRateNameDefault                        = GasFeeRateNameBitcoind
+)
+
+const (
+	GasFeeRateNameBitcoind FeeRateInfoName = "bitcoind"
+	GasFeeRateNameDefault
+)
+
+const (
+	BaseTransactionByteSize = 170
 )
 
 func UpdateAndGetFeeRateResponseTransformed() (*FeeRateResponseTransformed, error) {
@@ -99,32 +111,33 @@ func NumberToGasFeeRate(number int) (gasFeeRate float64, err error) {
 	if number < 0 || number > 10 {
 		err = errors.New("number out of range")
 		// Max rate
-		return GasFeeRateOfNumber10, err
+		return float64(GasFeeRateOfNumber10), err
 	} else if number == 1 {
-		return GasFeeRateOfNumber1, nil
+		return float64(GasFeeRateOfNumber1), nil
 	} else if number == 2 {
-		return GasFeeRateOfNumber2, nil
+		return float64(GasFeeRateOfNumber2), nil
 	} else if number == 3 {
-		return GasFeeRateOfNumber3, nil
+		return float64(GasFeeRateOfNumber3), nil
 	} else if number == 4 {
-		return GasFeeRateOfNumber4, nil
+		return float64(GasFeeRateOfNumber4), nil
 	} else if number == 5 {
-		return GasFeeRateOfNumber5, nil
+		return float64(GasFeeRateOfNumber5), nil
 	} else if number == 6 {
-		return GasFeeRateOfNumber6, nil
+		return float64(GasFeeRateOfNumber6), nil
 	} else if number == 7 {
-		return GasFeeRateOfNumber7, nil
+		return float64(GasFeeRateOfNumber7), nil
 	} else if number == 8 {
-		return GasFeeRateOfNumber8, nil
+		return float64(GasFeeRateOfNumber8), nil
 	} else if number == 9 {
-		return GasFeeRateOfNumber9, nil
+		return float64(GasFeeRateOfNumber9), nil
 	} else if number == 10 {
-		return GasFeeRateOfNumber10, nil
+		return float64(GasFeeRateOfNumber10), nil
 	} else {
-		return GasFeeRateOfNumber0, nil
+		return float64(GasFeeRateOfNumber0), nil
 	}
 }
 
+// EstimateSmartFeeRate
 // BTC/kB
 func EstimateSmartFeeRate(blocks int) (gasFeeRate float64, err error) {
 	feeResult, err := api.EstimateSmartFeeAndGetResult(blocks)
@@ -157,6 +170,7 @@ func EstimateSmartFeeRateSatPerKw() (estimatedFeeSatPerKw int, err error) {
 	return estimatedFeeSatPerKw, nil
 }
 
+// EstimateSmartFeeRateSatPerB
 // Need UpdateFeeRate first
 func EstimateSmartFeeRateSatPerB() (estimatedFeeSatPerB int, err error) {
 	var estimatedFeeBtcPerKb float64
@@ -168,6 +182,7 @@ func EstimateSmartFeeRateSatPerB() (estimatedFeeSatPerB int, err error) {
 	return estimatedFeeSatPerB, nil
 }
 
+// EstimateSmartFeeRateBtcPerKb
 // Need UpdateFeeRate first
 func EstimateSmartFeeRateBtcPerKb() (estimatedFeeBtcPerKb float64, err error) {
 	return GetEstimateSmartFeeRate()
@@ -255,32 +270,33 @@ func CalculateGasFeeRateBtcPerKb(number int) (float64, error) {
 // @dev: Not actual value
 func GetIssuanceTransactionByteSize() int {
 	// TODO: need to complete
-	return GetTapdMintAssetAndFinalizeTransactionByteSize() + GetTapdSendReservedAssetTransactionByteSize()
+	return int(GetTapdMintAssetAndFinalizeTransactionByteSize() + GetTapdSendReservedAssetTransactionByteSize())
 }
 
-func GetTapdMintAssetAndFinalizeTransactionByteSize() int {
+func GetTapdMintAssetAndFinalizeTransactionByteSize() ByteSize {
 	// TODO: need to complete
-	byteSize := 170 * (1 + 0.25)
-	return int(byteSize)
+	byteSize := BaseTransactionByteSize * (1 + 0x1p-2)
+	return ByteSize(byteSize)
 }
 
-func GetTapdSendReservedAssetTransactionByteSize() int {
+func GetTapdSendReservedAssetTransactionByteSize() ByteSize {
 	// TODO: need to complete
-	byteSize := 170 * (1 + 0.25)
-	return int(byteSize)
+	byteSize := BaseTransactionByteSize * (1 + 0x1p-2)
+	return ByteSize(byteSize)
 }
 
 func GetIssuanceTransactionGasFee(feeRateSatPerKw int) int {
 	return FeeRateSatPerKwToSatPerB(feeRateSatPerKw) * GetIssuanceTransactionByteSize()
 }
 
-func GetMintTransactionByteSize() int {
+func GetMintTransactionByteSize() ByteSize {
 	// TODO: need to complete
-	return 170
+	byteSize := BaseTransactionByteSize * (1 + 0e0)
+	return ByteSize(byteSize)
 }
 
 func GetMintedTransactionGasFee(feeRateSatPerKw int) int {
-	return FeeRateSatPerKwToSatPerB(feeRateSatPerKw) * GetMintTransactionByteSize()
+	return int(float64(FeeRateSatPerKwToSatPerB(feeRateSatPerKw)) * float64(GetMintTransactionByteSize()))
 }
 
 func CalculateGasFee(number int, byteSize int) (int, error) {

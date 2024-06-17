@@ -9,32 +9,46 @@ type (
 	FairLaunchState          int
 	FairLaunchMintedState    int
 	FairLaunchInventoryState int
+	FairLaunchStatus         int
 )
 
-var (
-	MintMaxNumber                                               = 10
-	StatusDeprecated                                            = 0
-	StatusNormal                                                = 1
-	StatusPending                                               = 2
-	StatusUnknown                                               = 4
-	FairLaunchStateNoPay               FairLaunchState          = 0
-	FairLaunchStatePaidPending         FairLaunchState          = 1
-	FairLaunchStatePaidNoIssue         FairLaunchState          = 2
-	FairLaunchStateIssuedPending       FairLaunchState          = 3
-	FairLaunchStateIssued              FairLaunchState          = 4
-	FairLaunchStateReservedSentPending FairLaunchState          = 5
-	FairLaunchStateReservedSent        FairLaunchState          = 6
-	FairLaunchMintedStateNoPay         FairLaunchMintedState    = 0
-	FairLaunchMintedStatePaidPending   FairLaunchMintedState    = 1
-	FairLaunchMintedStatePaidNoSend    FairLaunchMintedState    = 2
-	FairLaunchMintedStateSentPending   FairLaunchMintedState    = 3
-	FairLaunchMintedStateSent          FairLaunchMintedState    = 4
-	FairLaunchInventoryStateOpen       FairLaunchInventoryState = 0
-	FairLaunchInventoryStateLocked     FairLaunchInventoryState = 1
-	FairLaunchInventoryStateMinted     FairLaunchInventoryState = 2
+const (
+	FairLaunchStateNoPay FairLaunchState = iota
+	FairLaunchStatePaidPending
+	FairLaunchStatePaidNoIssue
+	FairLaunchStateIssuedPending
+	FairLaunchStateIssued
+	FairLaunchStateReservedSentPending
+	FairLaunchStateReservedSent
 )
 
-// FairLaunchInfo TODO: param FeeRate maybe need to rename
+const (
+	FairLaunchMintedStateNoPay FairLaunchMintedState = iota
+	FairLaunchMintedStatePaidPending
+	FairLaunchMintedStatePaidNoSend
+	FairLaunchMintedStateSentPending
+	FairLaunchMintedStateSent
+)
+
+const (
+	FairLaunchInventoryStateOpen FairLaunchInventoryState = iota
+	FairLaunchInventoryStateLocked
+	FairLaunchInventoryStateMinted
+)
+
+const (
+	MintMaxNumber = 10
+)
+
+const (
+	StatusDeprecated FairLaunchStatus = iota
+	StatusNormal
+	StatusPending
+	StatusUnknown
+)
+
+// FairLaunchInfo
+// TODO: param FeeRate maybe need to rename
 type FairLaunchInfo struct {
 	gorm.Model
 	ImageData                      string           `json:"image_data"`
@@ -71,7 +85,7 @@ type FairLaunchInfo struct {
 	ReservedSentAnchorOutpointTxid string           `json:"reserved_sent_anchor_outpoint_txid" gorm:"type:varchar(255)"`
 	MintedNumber                   int              `json:"minted_number"`
 	IsMintAll                      bool             `json:"is_mint_all"`
-	Status                         int              `json:"status" default:"1" gorm:"default:1"`
+	Status                         FairLaunchStatus `json:"status" default:"1" gorm:"default:1"`
 	State                          FairLaunchState  `json:"state"`
 	ProcessNumber                  int              `json:"process_number"`
 }
@@ -114,7 +128,7 @@ type FairLaunchMintedInfo struct {
 	OutpointTxHash        string                `json:"outpoint_tx_hash" gorm:"type:varchar(255)"`
 	Outpoint              string                `json:"outpoint" gorm:"type:varchar(255)"`
 	Address               string                `json:"address" gorm:"type:varchar(255)"`
-	Status                int                   `json:"status" gorm:"default:1"`
+	Status                FairLaunchStatus      `json:"status" gorm:"default:1"`
 	State                 FairLaunchMintedState `json:"state"`
 	ProcessNumber         int                   `json:"process_number"`
 }
@@ -133,11 +147,11 @@ type MintFairLaunchReservedRequest struct {
 
 type FairLaunchMintedUserInfo struct {
 	gorm.Model
-	UserID                 int `json:"user_id" gorm:"not null"`
-	FairLaunchMintedInfoID int `json:"fair_launch_minted_info_id"`
-	FairLaunchInfoID       int `json:"fair_launch_info_id"`
-	MintedNumber           int `json:"minted_number"`
-	Status                 int `json:"status" default:"1" gorm:"default:1"`
+	UserID                 int              `json:"user_id" gorm:"not null"`
+	FairLaunchMintedInfoID int              `json:"fair_launch_minted_info_id"`
+	FairLaunchInfoID       int              `json:"fair_launch_info_id"`
+	MintedNumber           int              `json:"minted_number"`
+	Status                 FairLaunchStatus `json:"status" default:"1" gorm:"default:1"`
 }
 
 type FairLaunchInventoryInfo struct {
@@ -146,6 +160,6 @@ type FairLaunchInventoryInfo struct {
 	Quantity               int                      `json:"quantity"`
 	IsMinted               bool                     `json:"is_minted"`
 	FairLaunchMintedInfoID int                      `json:"fair_launch_minted_info_id"`
-	Status                 int                      `json:"status" gorm:"default:1"`
+	Status                 FairLaunchStatus         `json:"status" gorm:"default:1"`
 	State                  FairLaunchInventoryState `json:"state"`
 }

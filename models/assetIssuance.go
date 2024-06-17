@@ -9,9 +9,9 @@ type (
 	AssetIssuanceState int
 )
 
-var (
-	AssetIssuanceStatePending AssetIssuanceState = 0
-	AssetIssuanceStateIssued  AssetIssuanceState = 1
+const (
+	AssetIssuanceStatePending AssetIssuanceState = iota
+	AssetIssuanceStateIssued
 )
 
 type AssetIssuance struct {

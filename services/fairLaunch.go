@@ -1932,8 +1932,8 @@ func IsMintedNumberValid(userId int, fairLaunchInfoId int, mintedNumber int) (bo
 	if err != nil {
 		return false, utils.AppendErrorInfo(err, "Get Own Fair Launch Minted Number By UserId And FairLaunchId")
 	}
-	if recordNumber+mintedNumber > 10 {
-		err = errors.New("Reach max mint number, available: " + strconv.Itoa(10-recordNumber))
+	if recordNumber+mintedNumber > models.MintMaxNumber {
+		err = errors.New("Reach max mint number, available: " + strconv.Itoa(models.MintMaxNumber-recordNumber))
 		return false, err
 	}
 	return true, nil

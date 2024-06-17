@@ -7,11 +7,14 @@ type (
 	FeeRateType      int
 )
 
-var (
-	FeePaymentMethodCustodyAccount FeePaymentMethod = 0
-	FeeRateTypeBtcPerKb            FeeRateType      = 0
-	FeeRateTypeSatPerB             FeeRateType      = 1
-	FeeRateTypeSatPerKw            FeeRateType      = 2
+const (
+	FeePaymentMethodCustodyAccount FeePaymentMethod = iota
+)
+
+const (
+	FeeRateTypeBtcPerKb FeeRateType = iota
+	FeeRateTypeSatPerB
+	FeeRateTypeSatPerKw
 )
 
 type FeeRateInfo struct {
