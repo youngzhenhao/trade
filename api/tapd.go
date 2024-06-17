@@ -134,3 +134,25 @@ func ListBalancesAndGetResponse(isGroupByAssetIdOrGroupKey bool) (*taprpc.ListBa
 func ListTransfersAndGetResponse() (*taprpc.ListTransfersResponse, error) {
 	return listTransfers()
 }
+
+type ListBalancesShortResponse struct {
+	Name    string `json:"name"`
+	AssetId string `json:"assetId"`
+	Balance int    `json:"balance"`
+}
+
+func ListBalancesAndGetShortResponse() (*[]ListBalancesShortResponse, error) {
+	var listBalancesShortResponses []ListBalancesShortResponse
+	response, err := listBalances(true)
+	if err != nil {
+		return nil, err
+	}
+	for _, balance := range (*response).AssetBalances {
+		listBalancesShortResponses = append(listBalancesShortResponses, ListBalancesShortResponse{
+			Name:    balance.AssetGenesis.Name,
+			AssetId: hex.EncodeToString(balance.AssetGenesis.AssetId),
+			Balance: int(balance.Balance),
+		})
+	}
+	return &listBalancesShortResponses, nil
+}
