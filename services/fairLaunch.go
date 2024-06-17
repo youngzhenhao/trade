@@ -285,6 +285,10 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 	//if err != nil {
 	//	return nil, utils.AppendErrorInfo(err, "ValidateMintedFeeRate")
 	//}
+	isValid, err := IsMintedNumberValid(userId, fairLaunchInfoID, mintedNumber)
+	if err != nil || !isValid {
+		return nil, utils.AppendErrorInfo(err, "Is Minted Number Valid")
+	}
 	mintedGasFee := GetMintedTransactionGasFee(mintedFeeRateSatPerKw)
 	if !IsAccountBalanceEnoughByUserId(uint(userId), uint64(mintedGasFee)) {
 		return nil, errors.New("account balance not enough to pay minted gas fee")
@@ -1908,6 +1912,31 @@ func GetOwnFairLaunchMintedInfosByUserId(id int) (*[]models.FairLaunchMintedInfo
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchMintedInfos")
 	}
 	return &fairLaunchMintedInfos, nil
+}
+
+func GetOwnFairLaunchMintedNumberByUserIdAndFairLaunchId(userId int, fairLaunchId int) (int, error) {
+	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
+	err := middleware.DB.Where("status = ? AND user_id = ? AND fair_launch_info_id = ?", models.StatusNormal, userId, fairLaunchId).Order("minted_set_time").Find(&fairLaunchMintedInfos).Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "Find fairLaunchMintedInfos")
+	}
+	var result int
+	for _, fairLaunchMintedInfo := range fairLaunchMintedInfos {
+		result += fairLaunchMintedInfo.MintedNumber
+	}
+	return result, nil
+}
+
+func IsMintedNumberValid(userId int, fairLaunchInfoId int, mintedNumber int) (bool, error) {
+	recordNumber, err := GetOwnFairLaunchMintedNumberByUserIdAndFairLaunchId(userId, fairLaunchInfoId)
+	if err != nil {
+		return false, utils.AppendErrorInfo(err, "Get Own Fair Launch Minted Number By UserId And FairLaunchId")
+	}
+	if recordNumber+mintedNumber > 10 {
+		err = errors.New("Reach max mint number, available: " + strconv.Itoa(10-recordNumber))
+		return false, err
+	}
+	return true, nil
 }
 
 func ProcessSendFairLaunchReservedResponse(response *taprpc.SendAssetResponse) (txid string) {
