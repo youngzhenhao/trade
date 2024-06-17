@@ -240,3 +240,15 @@ func IsHexString(s string) bool {
 	_, err := hex.DecodeString(s)
 	return err == nil
 }
+
+func SwapValue[T any](a *T, b *T) {
+	temp := *a
+	*a = *b
+	*b = temp
+}
+
+func SwapInt(a *int, b *int) {
+	*a ^= *b
+	*b ^= *a
+	*a ^= *b
+}
