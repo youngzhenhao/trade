@@ -127,6 +127,16 @@ func SendFairLaunchAsset() {
 	}
 }
 
+// RemoveMintedInventories
+// @Description: Scheduled Task
+func RemoveMintedInventories() {
+	err := RemoveFairLaunchInventoryStateMintedInfos()
+	if err != nil {
+		FairLaunchDebugLogger.Info("%v", err)
+		return
+	}
+}
+
 func GetAllFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 	f := FairLaunchStore{DB: middleware.DB}
 	var fairLaunchInfos []models.FairLaunchInfo
@@ -1985,4 +1995,12 @@ func GetOutpointByTransferAndScriptKey(transfer *taprpc.AssetTransfer, scriptKey
 	}
 	err := errors.New("scriptKey not found")
 	return "", err
+}
+
+func DeleteFairLaunchInventoryInfosByState(fairLaunchInventoryState models.FairLaunchInventoryState) error {
+	return middleware.DB.Where("state = ?", fairLaunchInventoryState).Delete(&models.FairLaunchInventoryInfo{}).Error
+}
+
+func RemoveFairLaunchInventoryStateMintedInfos() error {
+	return DeleteFairLaunchInventoryInfosByState(models.FairLaunchInventoryStateMinted)
 }

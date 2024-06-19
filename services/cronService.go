@@ -67,6 +67,12 @@ func CreateFairLaunchProcessions() (err error) {
 			FunctionName:   "SendFairLaunchAsset",
 			Package:        "services",
 		},
+		{
+			Name:           "RemoveMintedInventories",
+			CronExpression: "*/20 * * * * *",
+			FunctionName:   "RemoveMintedInventories",
+			Package:        "services",
+		},
 	})
 }
 
@@ -154,6 +160,14 @@ func (cs *CronService) FairLaunchMint() {
 func (cs *CronService) SendFairLaunchAsset() {
 	SendFairLaunchAsset()
 	err := TaskCountRecordByRedis("SendFairLaunchAsset")
+	if err != nil {
+		return
+	}
+}
+
+func (cs *CronService) RemoveMintedInventories() {
+	RemoveMintedInventories()
+	err := TaskCountRecordByRedis("RemoveMintedInventories")
 	if err != nil {
 		return
 	}
