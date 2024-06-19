@@ -21,6 +21,8 @@ router_disable:
     fee: false
     custody_account: false
     ping: false
+    proof: false
+    ido: false
 api_config:
     lnd:
         host: ""
@@ -34,6 +36,7 @@ api_config:
         dir: ""
         tls_cert_path: ""
         macaroon_path: ""
+        universe_host: ""
     litd:
         host: ""
         port: 0

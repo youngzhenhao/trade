@@ -35,6 +35,7 @@ type Config struct {
 		CustodyAccount bool `yaml:"custody_account" json:"custody_account"`
 		Ping           bool `yaml:"ping" json:"ping"`
 		Proof          bool `yaml:"proof" json:"proof"`
+		Ido            bool `yaml:"ido" json:"ido"`
 		Snapshot       bool `yaml:"snapshot" json:"snapshot"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
@@ -51,6 +52,7 @@ type Config struct {
 			Dir          string `yaml:"dir" json:"dir"`
 			TlsCertPath  string `yaml:"tls_cert_path" json:"tlsCertPath"`
 			MacaroonPath string `yaml:"macaroon_path" json:"macaroonPath"`
+			UniverseHost string `yaml:"universe_host" json:"universe_host"`
 		} `yaml:"tapd" json:"tapd"`
 		Litd struct {
 			Host         string `yaml:"host" json:"host"`

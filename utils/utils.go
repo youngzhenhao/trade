@@ -19,6 +19,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 	"trade/models"
 )
@@ -225,6 +226,70 @@ func AppendErrorInfo(err error, info string) error {
 	return errors.New(err.Error() + ";" + info)
 }
 
+func AppendError(e error) func(error) error {
+	return func(err error) error {
+		if e == nil {
+			e = errors.New("")
+		}
+		if err == nil {
+			return e
+		}
+		if e.Error() == "" {
+			e = err
+			return e
+		}
+		e = errors.New(e.Error() + "; " + err.Error())
+		return e
+	}
+}
+
+func AppendInfo(s string) func(string) string {
+	return func(info string) string {
+		if info == "" {
+			return s
+		}
+		if s == "" {
+			s = info
+			return s
+		}
+		s = s + "; " + info
+		return s
+	}
+}
+
+func InfoAppendError(i string) func(error) error {
+	e := errors.New(i)
+	return func(err error) error {
+		if err == nil {
+			return e
+		}
+		if e.Error() == "" {
+			e = err
+			return e
+		}
+		e = errors.New(e.Error() + "; " + err.Error())
+		return e
+	}
+}
+
+func ErrorAppendInfo(e error) func(string) error {
+	return func(info string) error {
+		if e == nil {
+			e = errors.New("")
+		}
+		if info == "" {
+			return e
+		}
+		if e.Error() == "" {
+			e = errors.New(info)
+			return e
+		}
+		info = e.Error() + "; " + info
+		e = errors.New(info)
+		return e
+	}
+}
+
 func IsPathExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -251,4 +316,18 @@ func SwapInt(a *int, b *int) {
 	*a ^= *b
 	*b ^= *a
 	*a ^= *b
+}
+
+func ToLowerWords(s string) string {
+	var result strings.Builder
+	for i, char := range s {
+		if i > 0 && char >= 'A' && char <= 'Z' {
+			temp := result.String()
+			if len(temp) > 0 && temp[len(temp)-1] != ' ' {
+				result.WriteRune(' ')
+			}
+		}
+		result.WriteRune(char)
+	}
+	return strings.ToLower(result.String())
 }

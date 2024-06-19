@@ -41,7 +41,7 @@ func assetLeaves(isGroup bool, id string, proofType universerpc.ProofType) (*uni
 	return response, nil
 }
 
-func assetLeavesSpecified(id string, proofType string) *universerpc.AssetLeafResponse {
+func assetLeavesSpecified(id string, proofType string) (*universerpc.AssetLeafResponse, error) {
 	var _proofType universerpc.ProofType
 	if proofType == "issuance" || proofType == "ISSUANCE" || proofType == "PROOF_TYPE_ISSUANCE" {
 		_proofType = universerpc.ProofType_PROOF_TYPE_ISSUANCE
@@ -50,11 +50,7 @@ func assetLeavesSpecified(id string, proofType string) *universerpc.AssetLeafRes
 	} else {
 		_proofType = universerpc.ProofType_PROOF_TYPE_UNSPECIFIED
 	}
-	response, err := assetLeaves(false, id, _proofType)
-	if err != nil {
-		return nil
-	}
-	return response
+	return assetLeaves(false, id, _proofType)
 }
 
 func processAssetIssuanceLeaf(response *universerpc.AssetLeafResponse) *models.AssetIssuanceLeaf {
@@ -67,7 +63,7 @@ func processAssetIssuanceLeaf(response *universerpc.AssetLeafResponse) *models.A
 		Name:               response.Leaves[0].Asset.AssetGenesis.Name,
 		MetaHash:           hex.EncodeToString(response.Leaves[0].Asset.AssetGenesis.MetaHash),
 		AssetID:            hex.EncodeToString(response.Leaves[0].Asset.AssetGenesis.AssetId),
-		AssetType:          response.Leaves[0].Asset.AssetGenesis.AssetType.String(),
+		AssetType:          response.Leaves[0].Asset.AssetGenesis.AssetType,
 		GenesisOutputIndex: int(response.Leaves[0].Asset.AssetGenesis.OutputIndex),
 		Amount:             int(response.Leaves[0].Asset.Amount),
 		LockTime:           int(response.Leaves[0].Asset.LockTime),
@@ -83,12 +79,12 @@ func processAssetIssuanceLeaf(response *universerpc.AssetLeafResponse) *models.A
 	}
 }
 
-func assetLeafIssuanceInfo(id string) *models.AssetIssuanceLeaf {
-	response := assetLeavesSpecified(id, universerpc.ProofType_PROOF_TYPE_ISSUANCE.String())
+func assetLeafIssuanceInfo(id string) (*models.AssetIssuanceLeaf, error) {
+	response, err := assetLeavesSpecified(id, universerpc.ProofType_PROOF_TYPE_ISSUANCE.String())
 	if response == nil {
-		return nil
+		return nil, err
 	}
-	return processAssetIssuanceLeaf(response)
+	return processAssetIssuanceLeaf(response), nil
 }
 
 func mintAsset(assetVersionIsV1 bool, assetTypeIsCollectible bool, name string, assetMetaData string, AssetMetaTypeIsJsonNotOpaque bool, amount int, newGroupedAsset bool, groupedAsset bool, groupKey string, groupAnchor string, shortResponse bool) (*mintrpc.MintAssetResponse, error) {
@@ -313,4 +309,20 @@ func listTransfers() (*taprpc.ListTransfersResponse, error) {
 		return nil, utils.AppendErrorInfo(err, "ListTransfers")
 	}
 	return response, nil
+}
+
+func syncUniverse(universeHost string, syncTargets []*universerpc.SyncTarget, syncMode universerpc.UniverseSyncMode) (*universerpc.SyncResponse, error) {
+	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
+	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
+	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	request := &universerpc.SyncRequest{
+		UniverseHost: universeHost,
+		SyncMode:     syncMode,
+		SyncTargets:  syncTargets,
+	}
+	client := universerpc.NewUniverseClient(conn)
+	response, err := client.SyncUniverse(context.Background(), request)
+	return response, err
 }

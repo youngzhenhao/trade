@@ -12,8 +12,26 @@ type JsonResult struct {
 type ErrCode int
 
 const (
-	DefaultErr ErrCode = -1
-	SUCCESS    ErrCode = 200
+	SUCCESS     ErrCode = 200
+	DefaultErr  ErrCode = -1
+	NameToIdErr ErrCode = iota
+	IdAtoiErr
+	ShouldBindJsonErr
+	SyncAssetIssuanceErr
+	GetAssetInfoErr
+	IsIdoParticipateTimeRightErr
+	IsNotRightTime
+	IdoIsNotPublished
+	GetAllIdoPublishInfosErr
+	GetOwnIdoPublishInfoErr
+	GetOwnIdoParticipateInfoErr
+	GetIdoParticipateInfoErr
+	GetIdoParticipateInfosByAssetIdErr
+	GetIdoPublishedInfosErr
+	ProcessIdoPublishInfoErr
+	ProcessIdoParticipateInfoErr
+	SetIdoPublishInfoErr
+	SetIdoParticipateInfoErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

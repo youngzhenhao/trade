@@ -19,8 +19,11 @@ func CheckIfAutoUpdateScheduledTask() {
 		if err != nil {
 			ScheduledTask.Info("%v", err)
 		}
-
 		err = CreateCustodyAccountProcessions()
+		if err != nil {
+			ScheduledTask.Info("%v", err)
+		}
+		err = CreateSnapshotProcessions()
 		if err != nil {
 			ScheduledTask.Info("%v", err)
 		}
@@ -218,4 +221,15 @@ func (cs *CronService) PollInvoiceCron() {
 
 func (cs *CronService) PollPayInsideMission() {
 	pollPayInsideMission()
+}
+
+func CreateSnapshotProcessions() (err error) {
+	return CreateOrUpdateScheduledTasks(&[]models.ScheduledTask{
+		{
+			Name:           "SnapshotToZipLast",
+			CronExpression: "0 0 */12 * * *",
+			FunctionName:   "SnapshotToZipLast",
+			Package:        "services",
+		},
+	})
 }

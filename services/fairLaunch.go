@@ -1202,6 +1202,16 @@ func IsAssetBalanceEnough(assetId string, amount int) bool {
 	return false
 }
 
+func ProcessIssuedFairLaunchInfos(fairLaunchInfos *[]models.FairLaunchInfo) *[]models.FairLaunchInfo {
+	var result []models.FairLaunchInfo
+	for _, fairLaunchInfo := range *fairLaunchInfos {
+		if IsFairLaunchInfoMintTimeValid(&fairLaunchInfo) {
+			result = append(result, fairLaunchInfo)
+		}
+	}
+	return &result
+}
+
 // FairLaunchInfos Procession
 
 func ProcessFairLaunchStateNoPayInfoService(fairLaunchInfo *models.FairLaunchInfo) (err error) {

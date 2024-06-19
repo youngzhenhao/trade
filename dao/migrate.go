@@ -46,5 +46,14 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.PayInside{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.IdoPublishInfo{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&models.IdoParticipateInfo{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&models.ParticipateIdoUserInfo{}); err != nil {
+		return err
+	}
 	return err
 }

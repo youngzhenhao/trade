@@ -308,6 +308,26 @@ func CalculateGasFee(number int, byteSize int) (int, error) {
 	return gasFee, nil
 }
 
+func GetIdoPublishTransactionGasFee(feeRateSatPerKw int) int {
+	return int(float64(FeeRateSatPerKwToSatPerB(feeRateSatPerKw)) * float64(GetIdoPublishTransactionByteSize()))
+}
+
+func GetIdoPublishTransactionByteSize() ByteSize {
+	// TODO: need to complete
+	byteSize := BaseTransactionByteSize * (1 + 0e0)
+	return ByteSize(byteSize)
+}
+
+func GetIdoParticipateTransactionGasFee(feeRateSatPerKw int) int {
+	return int(float64(FeeRateSatPerKwToSatPerB(feeRateSatPerKw)) * float64(GetIdoParticipateTransactionByteSize()))
+}
+
+func GetIdoParticipateTransactionByteSize() ByteSize {
+	// TODO: need to complete
+	byteSize := BaseTransactionByteSize * (1 + 0e0)
+	return ByteSize(byteSize)
+}
+
 func IsMintFeePaid(paidId int) bool {
 	state, err := CheckPayInsideStatus(uint(paidId))
 	if err != nil {

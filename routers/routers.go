@@ -12,7 +12,7 @@ func SetupRouter() *gin.Engine {
 		SetupLoginRouter(r)
 	}
 	if !config.GetLoadConfig().RouterDisable.FairLaunch {
-		setupFairLaunchRouter(r)
+		SetupFairLaunchRouter(r)
 	}
 	if !config.GetLoadConfig().RouterDisable.Fee {
 		SetupFeeRouter(r)
@@ -22,6 +22,9 @@ func SetupRouter() *gin.Engine {
 	}
 	if !config.GetLoadConfig().RouterDisable.Proof {
 		SetupProofRouter(r)
+	}
+	if !config.GetLoadConfig().RouterDisable.Ido {
+		SetupIdoRouter(r)
 	}
 	if !config.GetLoadConfig().RouterDisable.Snapshot {
 		SetupSnapshotRouter(r)

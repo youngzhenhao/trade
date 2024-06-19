@@ -6,7 +6,7 @@ import (
 	"trade/middleware"
 )
 
-func setupFairLaunchRouter(router *gin.Engine) *gin.Engine {
+func SetupFairLaunchRouter(router *gin.Engine) *gin.Engine {
 	version := router.Group("/v1")
 	fairLaunch := version.Group("/fair_launch")
 	fairLaunch.Use(middleware.AuthMiddleware())

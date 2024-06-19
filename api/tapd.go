@@ -5,13 +5,15 @@ import (
 	"errors"
 	"github.com/lightninglabs/taproot-assets/taprpc"
 	"github.com/lightninglabs/taproot-assets/taprpc/mintrpc"
+	"github.com/lightninglabs/taproot-assets/taprpc/universerpc"
 	"strconv"
 	"strings"
+	"trade/config"
 	"trade/models"
 	"trade/utils"
 )
 
-func GetAssetInfo(id string) *models.AssetIssuanceLeaf {
+func GetAssetInfo(id string) (*models.AssetIssuanceLeaf, error) {
 	return assetLeafIssuanceInfo(id)
 }
 
@@ -155,4 +157,33 @@ func ListBalancesAndGetShortResponse() (*[]ListBalancesShortResponse, error) {
 		})
 	}
 	return &listBalancesShortResponses, nil
+}
+
+func SyncAssetIssuanceAndGetResponse(universeHost string, assetId string) (*universerpc.SyncResponse, error) {
+	//universeHost := "mainnet.universe.lightning.finance:10029"
+	if universeHost == "" {
+		return nil, errors.New("universe host is empty")
+	}
+	_proofType := universerpc.ProofType_PROOF_TYPE_ISSUANCE
+	var targets []*universerpc.SyncTarget
+	universeID := &universerpc.ID{
+		Id: &universerpc.ID_AssetIdStr{
+			AssetIdStr: assetId,
+		},
+		ProofType: _proofType,
+	}
+	targets = append(targets, &universerpc.SyncTarget{
+		Id: universeID,
+	})
+	response, err := syncUniverse(universeHost, targets, universerpc.UniverseSyncMode_SYNC_FULL)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func SyncAssetIssuance(assetId string) error {
+	universeHost := config.GetLoadConfig().ApiConfig.Tapd.UniverseHost
+	_, err := SyncAssetIssuanceAndGetResponse(universeHost, assetId)
+	return err
 }
