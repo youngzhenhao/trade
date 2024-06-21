@@ -23,5 +23,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.Proof {
 		SetupProofRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.Snapshot {
+		SetupSnapshotRouter(r)
+	}
 	return r
 }

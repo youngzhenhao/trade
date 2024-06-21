@@ -35,6 +35,7 @@ type Config struct {
 		CustodyAccount bool `yaml:"custody_account" json:"custody_account"`
 		Ping           bool `yaml:"ping" json:"ping"`
 		Proof          bool `yaml:"proof" json:"proof"`
+		Snapshot       bool `yaml:"snapshot" json:"snapshot"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {
