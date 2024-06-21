@@ -73,6 +73,12 @@ func CreateFairLaunchProcessions() (err error) {
 			FunctionName:   "RemoveMintedInventories",
 			Package:        "services",
 		},
+		{
+			Name:           "SnapshotToZipLast",
+			CronExpression: "0 */5 * * * *",
+			FunctionName:   "SnapshotToZipLast",
+			Package:        "services",
+		},
 	})
 }
 
