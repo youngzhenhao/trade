@@ -109,6 +109,14 @@ func (cs *CronService) FairLaunchIssuance() {
 	}
 }
 
+func (cs *CronService) SnapshotToZipLast() {
+	SnapshotToZipLast()
+	err := TaskCountRecordByRedis("SnapshotToZipLast")
+	if err != nil {
+		return
+	}
+}
+
 func (cs *CronService) ProcessFairLaunchNoPay() {
 	ProcessFairLaunchNoPay()
 	err := TaskCountRecordByRedis("ProcessFairLaunchNoPay")
