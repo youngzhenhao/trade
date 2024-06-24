@@ -1,7 +1,10 @@
 package api
 
 import (
+	"errors"
 	"github.com/lightningnetwork/lnd/lnrpc"
+	"strconv"
+	"strings"
 	"trade/utils"
 )
 
@@ -20,4 +23,30 @@ func GetListChainTransactions() (*[]ChainTransaction, error) {
 
 func WalletBalanceAndGetResponse() (*lnrpc.WalletBalanceResponse, error) {
 	return walletBalance()
+}
+
+// GetTransactionAndIndexByOutpoint
+// @dev: Split outpoint
+func GetTransactionAndIndexByOutpoint(outpoint string) (transaction string, index string) {
+	result := strings.Split(outpoint, ":")
+	return result[0], result[1]
+}
+
+func GetListChainTransactionsOutpointAddress(outpoint string) (address string, err error) {
+	response, err := GetListChainTransactions()
+	if err != nil {
+		return "", utils.AppendErrorInfo(err, "GetListChainTransactions")
+	}
+	tx, indexStr := GetTransactionAndIndexByOutpoint(outpoint)
+	index, err := strconv.Atoi(indexStr)
+	if err != nil {
+		return "", utils.AppendErrorInfo(err, "GetTransactionAndIndexByOutpoint")
+	}
+	for _, transaction := range *response {
+		if transaction.TxHash == tx {
+			return transaction.DestAddresses[index], nil
+		}
+	}
+	err = errors.New("did not match transaction outpoint")
+	return "", err
 }

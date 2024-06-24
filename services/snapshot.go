@@ -8,13 +8,17 @@ import (
 	"path/filepath"
 )
 
+const (
+	LndMainnetDataPath = "/root/mainnet-lit/.lnd/data"
+)
+
 func SnapshotToZipLast() {
 	// lnd snapshot path
 	filePaths := []string{
-		"/root/mainnet-lnd/data/chain/bitcoin/mainnet/block_headers.bin",
-		"/root/mainnet-lnd/data/chain/bitcoin/mainnet/neutrino.db",
-		"/root/mainnet-lnd/data/chain/bitcoin/mainnet/reg_filter_headers.bin",
-		"/root/mainnet-lnd/data/graph/mainnet/channel.db",
+		LndMainnetDataPath + "/chain/bitcoin/mainnet/block_headers.bin",
+		LndMainnetDataPath + "/chain/bitcoin/mainnet/neutrino.db",
+		LndMainnetDataPath + "/chain/bitcoin/mainnet/reg_filter_headers.bin",
+		LndMainnetDataPath + "/graph/mainnet/channel.db",
 	}
 
 	// zip path

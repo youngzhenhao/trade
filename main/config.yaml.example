@@ -23,6 +23,7 @@ router_disable:
     ping: false
     proof: false
     ido: false
+    snapshot: false
 api_config:
     lnd:
         host: ""

@@ -9,11 +9,11 @@ import (
 //TODO: need to test
 
 func SetupIdoRouter(router *gin.Engine) *gin.Engine {
-	version := router.Group("/v1")
-	ido := version.Group("/ido")
-	ido.Use(middleware.AuthMiddleware())
+	ido := router.Group("/ido")
+	version := ido.Group("/v1")
+	version.Use(middleware.AuthMiddleware())
 	{
-		query := ido.Group("/query")
+		query := version.Group("/query")
 		{
 			query.GET("/all_publish", handlers.GetAllIdoPublishInfo)
 			query.GET("/published", handlers.GetIdoPublishedInfo)
@@ -24,8 +24,8 @@ func SetupIdoRouter(router *gin.Engine) *gin.Engine {
 			query.GET("/participate/:id", handlers.GetIdoParticipateInfo)
 			query.POST("/participate", handlers.QueryIdoParticipateIsAvailable)
 		}
-		ido.POST("/publish", handlers.SetIdoPublishInfo)
-		ido.POST("/participate", handlers.SetIdoParticipateInfo)
+		version.POST("/publish", handlers.SetIdoPublishInfo)
+		version.POST("/participate", handlers.SetIdoParticipateInfo)
 	}
 	return router
 }

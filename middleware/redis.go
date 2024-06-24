@@ -27,7 +27,6 @@ func RedisConnect() error {
 		Password: loadConfig.Redis.Password,
 		DB:       loadConfig.Redis.DB,
 	})
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 检查连接是否成功

@@ -8,7 +8,6 @@ import (
 	"math"
 	"reflect"
 	"strconv"
-	"strings"
 	"time"
 	"trade/api"
 	"trade/middleware"
@@ -1554,32 +1553,6 @@ func SendAssetResponseScriptKeyAndInternalKeyToOutpoint(sendAssetResponse *taprp
 	return "", err
 }
 
-// GetTransactionAndIndexByOutpoint
-// @dev: Split outpoint
-func GetTransactionAndIndexByOutpoint(outpoint string) (transaction string, index string) {
-	result := strings.Split(outpoint, ":")
-	return result[0], result[1]
-}
-
-func GetListChainTransactionsOutpointAddress(outpoint string) (address string, err error) {
-	response, err := api.GetListChainTransactions()
-	if err != nil {
-		return "", utils.AppendErrorInfo(err, "GetListChainTransactions")
-	}
-	tx, indexStr := GetTransactionAndIndexByOutpoint(outpoint)
-	index, err := strconv.Atoi(indexStr)
-	if err != nil {
-		return "", utils.AppendErrorInfo(err, "GetTransactionAndIndexByOutpoint")
-	}
-	for _, transaction := range *response {
-		if transaction.TxHash == tx {
-			return transaction.DestAddresses[index], nil
-		}
-	}
-	err = errors.New("did not match transaction outpoint")
-	return "", err
-}
-
 // UpdateFairLaunchMintedInfosBySendAssetResponse
 // @dev: Updated outpoint and is_addr_sent
 func UpdateFairLaunchMintedInfosBySendAssetResponse(fairLaunchMintedInfos *[]models.FairLaunchMintedInfo, sendAssetResponse *taprpc.SendAssetResponse) (err error) {
@@ -1594,12 +1567,12 @@ func UpdateFairLaunchMintedInfosBySendAssetResponse(fairLaunchMintedInfos *[]mod
 		if err != nil {
 			return utils.AppendErrorInfo(err, "SendAssetResponseScriptKeyAndInternalKeyToOutpoint")
 		}
-		fairLaunchMintedInfo.OutpointTxHash, _ = GetTransactionAndIndexByOutpoint(outpoint)
+		fairLaunchMintedInfo.OutpointTxHash, _ = api.GetTransactionAndIndexByOutpoint(outpoint)
 		// @dev: Update outpoint and isAddrSent
 		fairLaunchMintedInfo.Outpoint = outpoint
 		fairLaunchMintedInfo.IsAddrSent = true
 		var address string
-		address, err = GetListChainTransactionsOutpointAddress(outpoint)
+		address, err = api.GetListChainTransactionsOutpointAddress(outpoint)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "GetListChainTransactionsOutpointAddress")
 		}
@@ -1738,8 +1711,8 @@ func ProcessSentButNotUpdatedMintedInfo(fairLaunchMintedInfo *models.FairLaunchM
 	var txHash string
 	var address string
 	// @dev: get tx and address
-	txHash, _ = GetTransactionAndIndexByOutpoint(outpoint)
-	address, err = GetListChainTransactionsOutpointAddress(outpoint)
+	txHash, _ = api.GetTransactionAndIndexByOutpoint(outpoint)
+	address, err = api.GetListChainTransactionsOutpointAddress(outpoint)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "Get ListChainTransactions Outpoint Address")
 	}
@@ -1960,7 +1933,7 @@ func IsMintedNumberValid(userId int, fairLaunchInfoId int, mintedNumber int) (bo
 }
 
 func ProcessSendFairLaunchReservedResponse(response *taprpc.SendAssetResponse) (txid string) {
-	txid, _ = GetTransactionAndIndexByOutpoint(response.Transfer.Outputs[0].Anchor.Outpoint)
+	txid, _ = api.GetTransactionAndIndexByOutpoint(response.Transfer.Outputs[0].Anchor.Outpoint)
 	return txid
 }
 
