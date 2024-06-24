@@ -52,7 +52,7 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.IdoParticipateInfo{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&models.ParticipateIdoUserInfo{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&models.IdoParticipateUserInfo{}); err != nil {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&models.BtcBalance{}); err != nil {

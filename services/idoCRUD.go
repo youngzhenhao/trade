@@ -93,43 +93,43 @@ func DeleteIdoParticipateInfo(id uint) error {
 	return middleware.DB.Delete(&idoParticipateInfo, id).Error
 }
 
-// ParticipateIdoUserInfo
+// IdoParticipateUserInfo
 
-func CreateParticipateIdoUserInfo(participateIdoUserInfo *models.ParticipateIdoUserInfo) error {
+func CreateParticipateIdoUserInfo(participateIdoUserInfo *models.IdoParticipateUserInfo) error {
 	return middleware.DB.Create(participateIdoUserInfo).Error
 }
 
-func CreateParticipateIdoUserInfos(participateIdoUserInfos *[]models.ParticipateIdoUserInfo) error {
+func CreateParticipateIdoUserInfos(participateIdoUserInfos *[]models.IdoParticipateUserInfo) error {
 	return middleware.DB.Create(participateIdoUserInfos).Error
 }
 
-func ReadParticipateIdoUserInfo(id uint) (*models.ParticipateIdoUserInfo, error) {
-	var participateIdoUserInfo models.ParticipateIdoUserInfo
+func ReadParticipateIdoUserInfo(id uint) (*models.IdoParticipateUserInfo, error) {
+	var participateIdoUserInfo models.IdoParticipateUserInfo
 	err := middleware.DB.First(&participateIdoUserInfo, id).Error
 	return &participateIdoUserInfo, err
 }
 
-func ReadParticipateIdoUserInfosByAssetId(assetId string) (*[]models.ParticipateIdoUserInfo, error) {
-	var participateIdoUserInfos []models.ParticipateIdoUserInfo
+func ReadParticipateIdoUserInfosByAssetId(assetId string) (*[]models.IdoParticipateUserInfo, error) {
+	var participateIdoUserInfos []models.IdoParticipateUserInfo
 	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, models.IdoStatusNormal).Find(&participateIdoUserInfos).Error
 	return &participateIdoUserInfos, err
 }
 
-func ReadParticipateIdoUserInfosByUserId(userId int) (*[]models.ParticipateIdoUserInfo, error) {
-	var participateIdoUserInfos []models.ParticipateIdoUserInfo
+func ReadParticipateIdoUserInfosByUserId(userId int) (*[]models.IdoParticipateUserInfo, error) {
+	var participateIdoUserInfos []models.IdoParticipateUserInfo
 	err := middleware.DB.Where("user_id = ? AND status = ?", userId, models.IdoStatusNormal).Find(&participateIdoUserInfos).Error
 	return &participateIdoUserInfos, err
 }
 
-func UpdateParticipateIdoUserInfo(participateIdoUserInfo *models.ParticipateIdoUserInfo) error {
+func UpdateParticipateIdoUserInfo(participateIdoUserInfo *models.IdoParticipateUserInfo) error {
 	return middleware.DB.Save(participateIdoUserInfo).Error
 }
 
-func UpdateParticipateIdoUserInfos(participateIdoUserInfos *[]models.ParticipateIdoUserInfo) error {
+func UpdateParticipateIdoUserInfos(participateIdoUserInfos *[]models.IdoParticipateUserInfo) error {
 	return middleware.DB.Save(participateIdoUserInfos).Error
 }
 
 func DeleteParticipateIdoUserInfo(id uint) error {
-	var participateIdoUserInfo models.ParticipateIdoUserInfo
+	var participateIdoUserInfo models.IdoParticipateUserInfo
 	return middleware.DB.Delete(&participateIdoUserInfo, id).Error
 }

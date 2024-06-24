@@ -113,7 +113,7 @@ type ParticipateIdoRequest struct {
 	EncodedAddr      string `json:"encoded_addr" gorm:"type:varchar(512)"`
 }
 
-type ParticipateIdoUserInfo struct {
+type IdoParticipateUserInfo struct {
 	gorm.Model
 	UserID               int       `json:"user_id" gorm:"not null"`
 	IdoParticipateInfoID int       `json:"ido_participate_info_id"`
