@@ -32,6 +32,8 @@ const (
 	ProcessIdoParticipateInfoErr
 	SetIdoPublishInfoErr
 	SetIdoParticipateInfoErr
+	GetBtcBalanceByUsernameErr
+	CreateOrUpdateBtcBalanceErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

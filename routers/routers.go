@@ -29,5 +29,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.Snapshot {
 		SetupSnapshotRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.Snapshot {
+		SetupBtcBalanceRouter(r)
+	}
 	return r
 }

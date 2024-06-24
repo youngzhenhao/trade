@@ -11,3 +11,10 @@ type BtcBalance struct {
 	LockedBalance      int    `json:"locked_balance"`
 	Status             int    `json:"status" gorm:"default:1"`
 }
+
+type BtcBalanceSetRequest struct {
+	TotalBalance       int `json:"total_balance"`
+	ConfirmedBalance   int `json:"confirmed_balance"`
+	UnconfirmedBalance int `json:"unconfirmed_balance"`
+	LockedBalance      int `json:"locked_balance"`
+}
