@@ -14,21 +14,19 @@ const (
 
 type AssetTransfer struct {
 	gorm.Model
-	AssetID           string                `json:"asset_id" gorm:"type:varchar(255)"`
-	AssetName         string                `json:"asset_name" gorm:"type:varchar(255)"`
-	AssetType         taprpc.AssetType      `json:"asset_type"`
-	AssetAddressFrom  string                `json:"address_from" gorm:"type:varchar(255)"`
-	AssetAddressTo    string                `json:"address_to" gorm:"type:varchar(255)"`
-	Amount            int                   `json:"amount"`
-	TransferType      AssetTransferType     `json:"transfer_type"`
-	Inputs            []AssetTransferInput  `json:"inputs"`
-	Outputs           []AssetTransferOutput `json:"outputs"`
-	UserID            int                   `json:"user_id"`
-	TransactionID     string                `json:"transaction_id" gorm:"type:varchar(255)"`
-	TransferTimestamp int                   `json:"transfer_timestamp"`
-	AnchorTxChainFees int                   `json:"anchor_tx_chain_fees"`
-	ConfirmedBlocks   int                   `json:"confirmed_blocks"`
-	Status            int                   `json:"status" gorm:"default:1"`
+	AssetID           string            `json:"asset_id" gorm:"type:varchar(255)"`
+	AssetName         string            `json:"asset_name" gorm:"type:varchar(255)"`
+	AssetType         taprpc.AssetType  `json:"asset_type"`
+	AssetAddressFrom  string            `json:"address_from" gorm:"type:varchar(255)"`
+	AssetAddressTo    string            `json:"address_to" gorm:"type:varchar(255)"`
+	Amount            int               `json:"amount"`
+	TransferType      AssetTransferType `json:"transfer_type"`
+	UserID            int               `json:"user_id"`
+	TransactionID     string            `json:"transaction_id" gorm:"type:varchar(255)"`
+	TransferTimestamp int               `json:"transfer_timestamp"`
+	AnchorTxChainFees int               `json:"anchor_tx_chain_fees"`
+	ConfirmedBlocks   int               `json:"confirmed_blocks"`
+	Status            int               `json:"status" gorm:"default:1"`
 }
 
 type AssetTransferInput struct {
@@ -50,7 +48,6 @@ type AssetTransferOutput struct {
 }
 
 type AssetTransaction struct {
-	gorm.Model
 	AssetID         string                 `json:"asset_id" gorm:"type:varchar(255)"`
 	AssetName       string                 `json:"asset_name" gorm:"type:varchar(255)"`
 	AssetType       taprpc.AssetType       `json:"asset_type"`
@@ -70,14 +67,12 @@ type AssetTransactionItem struct {
 }
 
 type AssetTransferSetRequest struct {
-	AssetID           string                `json:"asset_id" gorm:"type:varchar(255)"`
-	AssetAddressFrom  string                `json:"address_from" gorm:"type:varchar(255)"`
-	AssetAddressTo    string                `json:"address_to" gorm:"type:varchar(255)"`
-	Amount            int                   `json:"amount"`
-	TransferType      AssetTransferType     `json:"transfer_type"`
-	Inputs            []AssetTransferInput  `json:"inputs"`
-	Outputs           []AssetTransferOutput `json:"outputs"`
-	TransactionID     string                `json:"transaction_id" gorm:"type:varchar(255)"`
-	TransferTimestamp int                   `json:"transfer_timestamp"`
-	AnchorTxChainFees int                   `json:"anchor_tx_chain_fees"`
+	AssetID           string            `json:"asset_id" gorm:"type:varchar(255)"`
+	AssetAddressFrom  string            `json:"address_from" gorm:"type:varchar(255)"`
+	AssetAddressTo    string            `json:"address_to" gorm:"type:varchar(255)"`
+	Amount            int               `json:"amount"`
+	TransferType      AssetTransferType `json:"transfer_type"`
+	TransactionID     string            `json:"transaction_id" gorm:"type:varchar(255)"`
+	TransferTimestamp int               `json:"transfer_timestamp"`
+	AnchorTxChainFees int               `json:"anchor_tx_chain_fees"`
 }

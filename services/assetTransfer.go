@@ -22,8 +22,6 @@ func ProcessAssetTransfer(userId int, assetTransferSetRequest *models.AssetTrans
 		AssetAddressTo:    assetTransferSetRequest.AssetAddressTo,
 		Amount:            assetTransferSetRequest.Amount,
 		TransferType:      assetTransferSetRequest.TransferType,
-		Inputs:            assetTransferSetRequest.Inputs,
-		Outputs:           assetTransferSetRequest.Outputs,
 		UserID:            userId,
 		TransactionID:     assetTransferSetRequest.TransactionID,
 		TransferTimestamp: assetTransferSetRequest.TransferTimestamp,
