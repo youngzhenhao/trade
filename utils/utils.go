@@ -331,3 +331,28 @@ func ToLowerWords(s string) string {
 	}
 	return strings.ToLower(result.String())
 }
+
+func FirstUpper(s string) string {
+	if s == "" {
+		return ""
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+func ToCamelWord(s string, isByUnderline bool, isLowerCaseInitial bool) string {
+	var sli []string
+	if isByUnderline {
+		sli = strings.Split(s, "_")
+	} else {
+		sli = strings.Split(s, " ")
+	}
+	var result strings.Builder
+	for _, word := range sli {
+		if result.String() == "" && isLowerCaseInitial {
+			result.WriteString(word)
+		} else {
+			result.WriteString(FirstUpper(word))
+		}
+	}
+	return result.String()
+}

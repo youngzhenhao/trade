@@ -37,6 +37,8 @@ type Config struct {
 		Proof          bool `yaml:"proof" json:"proof"`
 		Ido            bool `yaml:"ido" json:"ido"`
 		Snapshot       bool `yaml:"snapshot" json:"snapshot"`
+		BtcBalance     bool `yaml:"btc_balance" json:"btc_balance"`
+		AssetTransfer  bool `yaml:"asset_transfer" json:"asset_transfer"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {

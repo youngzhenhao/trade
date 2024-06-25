@@ -7,7 +7,6 @@ import (
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
-
 	if !config.GetLoadConfig().RouterDisable.Login {
 		SetupLoginRouter(r)
 	}
@@ -29,8 +28,11 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.Snapshot {
 		SetupSnapshotRouter(r)
 	}
-	if !config.GetLoadConfig().RouterDisable.Snapshot {
+	if !config.GetLoadConfig().RouterDisable.BtcBalance {
 		SetupBtcBalanceRouter(r)
+	}
+	if !config.GetLoadConfig().RouterDisable.AssetTransfer {
+		SetupAssetTransferRouter(r)
 	}
 	return r
 }

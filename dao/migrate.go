@@ -58,5 +58,8 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.BtcBalance{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.AssetTransfer{}); err != nil {
+		return err
+	}
 	return err
 }
