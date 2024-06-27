@@ -18,6 +18,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -332,6 +333,23 @@ func ToLowerWords(s string) string {
 	return strings.ToLower(result.String())
 }
 
+func ToLowerWordsWithHyphens(s string) string {
+	var result strings.Builder
+	for i, char := range s {
+		if char == ' ' {
+			continue
+		}
+		if i > 0 && char >= 'A' && char <= 'Z' {
+			temp := result.String()
+			if len(temp) > 0 && temp[len(temp)-1] != ' ' {
+				result.WriteRune('-')
+			}
+		}
+		result.WriteRune(char)
+	}
+	return strings.ToLower(result.String())
+}
+
 func FirstUpper(s string) string {
 	if s == "" {
 		return ""
@@ -355,4 +373,37 @@ func ToCamelWord(s string, isByUnderline bool, isLowerCaseInitial bool) string {
 		}
 	}
 	return result.String()
+}
+
+func CreateTestMainFile(testPath string, testFuncName string) {
+	dirPath := path.Join(testPath, ToLowerWordsWithHyphens(testFuncName))
+	err := os.Mkdir(dirPath, os.ModePerm)
+	if err != nil {
+		fmt.Println(err)
+	}
+	filePath := path.Join(dirPath, "main.go")
+	f, err := os.Create(filePath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}(f)
+	content := []byte(`package main
+
+func main() {
+	
+}
+`)
+	_, err = f.Write(content)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(filePath, "has been created successfully!")
 }

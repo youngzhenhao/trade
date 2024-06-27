@@ -6,7 +6,7 @@ replace google.golang.org/protobuf => github.com/lightninglabs/protobuf-go-hex-d
 
 require (
 	github.com/boltdb/bolt v1.3.1
-	github.com/btcsuite/btcd v0.24.2-beta.rc1.0.20240403021926-ae5533602c46
+	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcec/v2 v2.3.3
 	github.com/btcsuite/btcd/btcutil v1.1.5
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
