@@ -24,6 +24,8 @@ router_disable:
     proof: false
     ido: false
     snapshot: false
+    btc_balance: false
+    asset_transfer: false
 api_config:
     lnd:
         host: ""
@@ -45,10 +47,11 @@ api_config:
         tls_cert_path: ""
         macaroon_path: ""
     bitcoind:
-        host: ""
+        ip: ""
         port: 0
-        rpcuser: ""
-        rpcpasswd: ""
+        wallet: ""
+        rpc_user: ""
+        rpc_passwd: ""
         http_post_mode: false
         disable_tls: false
     custody_account:

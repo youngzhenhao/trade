@@ -45,35 +45,36 @@ type Config struct {
 			Host         string `yaml:"host" json:"host"`
 			Port         int    `yaml:"port" json:"port"`
 			Dir          string `yaml:"dir" json:"dir"`
-			TlsCertPath  string `yaml:"tls_cert_path" json:"tlsCertPath"`
-			MacaroonPath string `yaml:"macaroon_path" json:"macaroonPath"`
+			TlsCertPath  string `yaml:"tls_cert_path" json:"tls_cert_path"`
+			MacaroonPath string `yaml:"macaroon_path" json:"macaroon_path"`
 		} `yaml:"lnd" json:"lnd"`
 		Tapd struct {
 			Host         string `yaml:"host" json:"host"`
 			Port         int    `yaml:"port" json:"port"`
 			Dir          string `yaml:"dir" json:"dir"`
-			TlsCertPath  string `yaml:"tls_cert_path" json:"tlsCertPath"`
-			MacaroonPath string `yaml:"macaroon_path" json:"macaroonPath"`
+			TlsCertPath  string `yaml:"tls_cert_path" json:"tls_cert_path"`
+			MacaroonPath string `yaml:"macaroon_path" json:"macaroon_path"`
 			UniverseHost string `yaml:"universe_host" json:"universe_host"`
 		} `yaml:"tapd" json:"tapd"`
 		Litd struct {
 			Host         string `yaml:"host" json:"host"`
 			Port         int    `yaml:"port" json:"port"`
 			Dir          string `yaml:"dir" json:"dir"`
-			TlsCertPath  string `yaml:"tls_cert_path" json:"tlsCertPath"`
-			MacaroonPath string `yaml:"macaroon_path" json:"macaroonPath"`
+			TlsCertPath  string `yaml:"tls_cert_path" json:"tls_cert_path"`
+			MacaroonPath string `yaml:"macaroon_path" json:"macaroon_path"`
 		} `yaml:"litd" json:"litd"`
 		Bitcoind struct {
-			Host         string `yaml:"host" json:"host"`
+			Ip           string `yaml:"ip" json:"ip"`
 			Port         int    `yaml:"port" json:"port"`
-			RpcUser      string `yaml:"rpcuser" json:"rpcUser"`
-			RpcPasswd    string `yaml:"rpcpasswd" json:"rpcPasswd"`
-			HTTPPostMode bool   `yaml:"http_post_mode" json:"HTTPPostMode"`
-			DisableTLS   bool   `yaml:"disable_tls" json:"disableTLS"`
+			Wallet       string `yaml:"wallet" json:"wallet"`
+			RpcUser      string `yaml:"rpc_user" json:"rpc_user"`
+			RpcPasswd    string `yaml:"rpc_passwd" json:"rpc_passwd"`
+			HTTPPostMode bool   `yaml:"http_post_mode" json:"http_post_mode"`
+			DisableTLS   bool   `yaml:"disable_tls" json:"disable_tls"`
 		} `yaml:"bitcoind" json:"bitcoind"`
 		CustodyAccount struct {
 			MacaroonDir string `yaml:"macaroon_dir" json:"macaroon_dir"`
-		} `yaml:"custody_account" json:"custodyAccount"`
+		} `yaml:"custody_account" json:"custody_account"`
 	} `yaml:"api_config" json:"api_config"`
 	FairLaunchConfig struct {
 		EstimateSmartFeeRateBlocks int  `yaml:"estimate_smart_fee_rate_blocks" json:"estimate_smart_fee_rate_blocks"`
