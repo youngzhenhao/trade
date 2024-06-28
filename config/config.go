@@ -22,11 +22,13 @@ type Config struct {
 		} `yaml:"mysql" json:"mysql"`
 	} `yaml:"gorm_config" json:"gorm_config"`
 	Redis struct {
-		Host     string `yaml:"host" json:"host"`
-		Port     string `yaml:"port" json:"port"`
-		Username string `yaml:"username" json:"username"`
-		Password string `yaml:"password" json:"password"`
-		DB       int    `yaml:"db" json:"db"`
+		Host                 string `yaml:"host" json:"host"`
+		Port                 string `yaml:"port" json:"port"`
+		Username             string `yaml:"username" json:"username"`
+		Password             string `yaml:"password" json:"password"`
+		DB                   int    `yaml:"db" json:"db"`
+		ExpirationTimeMinute int    `yaml:"expiration_time_minute" json:"expiration_time_minute"`
+		RedisSetTimeMinute   int    `yaml:"redis_set_time_minute" json:"redis_set_time_minute"`
 	} `yaml:"redis" json:"redis"`
 	RouterDisable struct {
 		Login          bool `yaml:"login" json:"login"`
