@@ -116,3 +116,87 @@ func GetAddressByOutpoint(network models.Network, outpoint string) (address stri
 	}
 	return GetAddressByTxidAndIndex(network, txid, index)
 }
+
+func GetAddressesByOutpointSlice(network models.Network, outpoints []string) (addresses map[string]string, err error) {
+	return GetAddressesBatchProcess(network, outpoints)
+}
+
+func OutpointsToTxidsAndIndexes(outpoints []string) (txidIndex map[string]int) {
+	txidIndex = make(map[string]int)
+	for _, outpoint := range outpoints {
+		txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+		if txid == "" || indexStr == "" {
+			continue
+		}
+		index, err := strconv.Atoi(indexStr)
+		if err != nil {
+			continue
+		}
+		txidIndex[txid] = index
+	}
+	return txidIndex
+}
+
+func OutpointsToTxids(outpoints []string) (txids []string) {
+	for _, outpoint := range outpoints {
+		txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+		if txid == "" || indexStr == "" {
+			continue
+		}
+		_, err := strconv.Atoi(indexStr)
+		if err != nil {
+			continue
+		}
+		txids = append(txids, txid)
+	}
+	return txids
+}
+
+func PostGetRawTransactionsWithFeeAndPrevoutByOutpoints(network models.Network, outpoints []string) (*[]PostGetRawTransactionResponse, error) {
+	response, err := postGetRawTransactions(network, outpoints, VerbosityJsonWithFeeAndPrevout)
+	if err != nil {
+		return nil, err
+	}
+	result := ProcessGetRawTransactions(response)
+	return result, nil
+}
+
+func ProcessGetRawTransactions(response *[]PostGetRawTransactionResponse) *[]PostGetRawTransactionResponse {
+	var result []PostGetRawTransactionResponse
+	for _, transaction := range *response {
+		if transaction.Result == nil || transaction.Error != nil {
+			continue
+		}
+		result = append(result, transaction)
+	}
+	return &result
+}
+
+func GetAddressesBatchProcess(network models.Network, outpoints []string) (outpointAddress map[string]string, err error) {
+	outpointAddress = make(map[string]string)
+	response, err := PostGetRawTransactionsWithFeeAndPrevoutByOutpoints(network, outpoints)
+	if err != nil {
+		return nil, err
+	}
+	for _, transaction := range *response {
+		var index int
+		if transaction.Result == nil || transaction.Error != nil {
+			continue
+		}
+		outpoint := transaction.ID
+		txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+		if txid == "" || indexStr == "" {
+			continue
+		}
+		index, err = strconv.Atoi(indexStr)
+		if err != nil {
+			continue
+		}
+		out := transaction.Result.Vout
+		if !(index < len(out)) {
+			continue
+		}
+		outpointAddress[outpoint] = out[index].ScriptPubKey.Address
+	}
+	return outpointAddress, nil
+}

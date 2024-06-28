@@ -100,7 +100,7 @@ func GetListAssetsResponse(withWitness bool, includeSpent bool, includeLeased bo
 }
 
 func TransactionAndIndexToOutpoint(transaction string, index int) (outpoint string) {
-	return transaction + strconv.Itoa(index)
+	return transaction + ":" + strconv.Itoa(index)
 }
 
 func OutpointToTransactionAndIndex(outpoint string) (transaction string, index string) {

@@ -28,6 +28,7 @@ func SetupBitcoindRouter(router *gin.Engine) *gin.Engine {
 		address := regtest.Group("/address")
 		{
 			address.GET("/outpoint/:op", handlers.GetAddressByOutpointInRegtest)
+			address.POST("/outpoints", handlers.GetAddressesByOutpointSliceInRegtest)
 		}
 	}
 	return router

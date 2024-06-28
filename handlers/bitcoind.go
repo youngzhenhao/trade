@@ -66,3 +66,35 @@ func GetAddressByOutpointInRegtest(c *gin.Context) {
 		Data:    address,
 	})
 }
+
+func GetAddressesByOutpointSliceInRegtest(c *gin.Context) {
+	var outpointSlice struct {
+		Outpoints []string `json:"outpoints"`
+	}
+	err := c.ShouldBindJSON(&outpointSlice)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    "",
+		})
+		return
+	}
+	addresses, err := api.GetAddressesByOutpointSlice(models.Regtest, outpointSlice.Outpoints)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAddressesByOutpointSliceErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    addresses,
+	})
+}

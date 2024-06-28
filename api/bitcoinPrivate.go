@@ -17,6 +17,91 @@ import (
 	"trade/models"
 )
 
+type GetRawTransactionResponse struct {
+	Txid          string            `json:"txid"`
+	Hash          string            `json:"hash"`
+	Version       int               `json:"version"`
+	Size          int               `json:"size"`
+	Vsize         int               `json:"vsize"`
+	Weight        int               `json:"weight"`
+	Locktime      int               `json:"locktime"`
+	Vin           []TransactionVin  `json:"vin"`
+	Vout          []TransactionVout `json:"vout"`
+	Fee           float64           `json:"fee"`
+	Hex           string            `json:"hex"`
+	Blockhash     string            `json:"blockhash"`
+	Confirmations int               `json:"confirmations"`
+	Time          int               `json:"time"`
+	Blocktime     int               `json:"blocktime"`
+}
+
+type TransactionVinScriptSig struct {
+	Asm string `json:"asm"`
+	Hex string `json:"hex"`
+}
+
+type TransactionVinPrevoutScriptPubKey struct {
+	Asm     string `json:"asm"`
+	Desc    string `json:"desc"`
+	Hex     string `json:"hex"`
+	Address string `json:"address"`
+	Type    string `json:"type"`
+}
+
+type TransactionVinPrevout struct {
+	Generated    bool                              `json:"generated"`
+	Height       int                               `json:"height"`
+	Value        float64                           `json:"value"`
+	ScriptPubKey TransactionVinPrevoutScriptPubKey `json:"scriptPubKey"`
+}
+
+type TransactionVin struct {
+	Txid        string                  `json:"txid"`
+	Vout        int                     `json:"vout"`
+	ScriptSig   TransactionVinScriptSig `json:"scriptSig"`
+	Txinwitness []string                `json:"txinwitness"`
+	Prevout     TransactionVinPrevout   `json:"prevout"`
+	Sequence    int                     `json:"sequence"`
+}
+
+type TransactionVoutScriptPubKey struct {
+	Asm     string `json:"asm"`
+	Desc    string `json:"desc"`
+	Hex     string `json:"hex"`
+	Address string `json:"address"`
+	Type    string `json:"type"`
+}
+
+type TransactionVout struct {
+	Value        float64                     `json:"value"`
+	N            int                         `json:"n"`
+	ScriptPubKey TransactionVoutScriptPubKey `json:"scriptPubKey"`
+}
+
+type GetRawTransactionResponseMsgTx struct {
+	Version  int                   `json:"Version"`
+	TxIn     []TransactionMsgTxIn  `json:"TxIn"`
+	TxOut    []TransactionMsgTxOut `json:"TxOut"`
+	LockTime int                   `json:"LockTime"`
+}
+
+type TransactionMsgTxIn struct {
+	PreviousOutPoint TransactionMsgTxInPreviousOutPoint `json:"PreviousOutPoint"`
+	SignatureScript  string                             `json:"SignatureScript"`
+	Witness          []string                           `json:"Witness"`
+	Sequence         int                                `json:"Sequence"`
+}
+
+type TransactionMsgTxInPreviousOutPoint struct {
+	Hash  string `json:"Hash"`
+	Index int    `json:"Index"`
+}
+
+type TransactionMsgTxOut struct {
+	Value    int    `json:"Value"`
+	PkScript string `json:"PkScript"`
+}
+
 func getBitcoinConnConfig(network models.Network) (*rpcclient.ConnConfig, error) {
 	var ip string
 	var port int
@@ -54,7 +139,11 @@ func getBitcoinConnConfig(network models.Network) (*rpcclient.ConnConfig, error)
 	default:
 		return nil, errors.New("invalid api network")
 	}
-	host = fmt.Sprintf("%s:%d/wallet/%s", ip, port, wallet)
+	if wallet == "" {
+		host = fmt.Sprintf("%s:%d", ip, port)
+	} else {
+		host = fmt.Sprintf("%s:%d/wallet/%s", ip, port, wallet)
+	}
 	connConfig := rpcclient.ConnConfig{
 		Host:         host,
 		User:         user,
@@ -171,166 +260,10 @@ func getRawTransactionAndDecodeOutputScript(txid string) (err error) {
 	return nil
 }
 
-type GetRawTransactionResponse struct {
-	Txid          string            `json:"txid"`
-	Hash          string            `json:"hash"`
-	Version       int               `json:"version"`
-	Size          int               `json:"size"`
-	Vsize         int               `json:"vsize"`
-	Weight        int               `json:"weight"`
-	Locktime      int               `json:"locktime"`
-	Vin           []TransactionVin  `json:"vin"`
-	Vout          []TransactionVout `json:"vout"`
-	Fee           float64           `json:"fee"`
-	Hex           string            `json:"hex"`
-	Blockhash     string            `json:"blockhash"`
-	Confirmations int               `json:"confirmations"`
-	Time          int               `json:"time"`
-	Blocktime     int               `json:"blocktime"`
-}
-
-type TransactionVinScriptSig struct {
-	Asm string `json:"asm"`
-	Hex string `json:"hex"`
-}
-
-type TransactionVinPrevoutScriptPubKey struct {
-	Asm     string `json:"asm"`
-	Desc    string `json:"desc"`
-	Hex     string `json:"hex"`
-	Address string `json:"address"`
-	Type    string `json:"type"`
-}
-
-type TransactionVinPrevout struct {
-	Generated    bool                              `json:"generated"`
-	Height       int                               `json:"height"`
-	Value        float64                           `json:"value"`
-	ScriptPubKey TransactionVinPrevoutScriptPubKey `json:"scriptPubKey"`
-}
-
-type TransactionVin struct {
-	Txid        string                  `json:"txid"`
-	Vout        int                     `json:"vout"`
-	ScriptSig   TransactionVinScriptSig `json:"scriptSig"`
-	Txinwitness []string                `json:"txinwitness"`
-	Prevout     TransactionVinPrevout   `json:"prevout"`
-	Sequence    int                     `json:"sequence"`
-}
-
-type TransactionVoutScriptPubKey struct {
-	Asm     string `json:"asm"`
-	Desc    string `json:"desc"`
-	Hex     string `json:"hex"`
-	Address string `json:"address"`
-	Type    string `json:"type"`
-}
-
-type TransactionVout struct {
-	Value        float64                     `json:"value"`
-	N            int                         `json:"n"`
-	ScriptPubKey TransactionVoutScriptPubKey `json:"scriptPubKey"`
-}
-
-type GetRawTransactionResponseMsgTx struct {
-	Version  int                   `json:"Version"`
-	TxIn     []TransactionMsgTxIn  `json:"TxIn"`
-	TxOut    []TransactionMsgTxOut `json:"TxOut"`
-	LockTime int                   `json:"LockTime"`
-}
-
-type TransactionMsgTxIn struct {
-	PreviousOutPoint TransactionMsgTxInPreviousOutPoint `json:"PreviousOutPoint"`
-	SignatureScript  string                             `json:"SignatureScript"`
-	Witness          []string                           `json:"Witness"`
-	Sequence         int                                `json:"Sequence"`
-}
-
-type TransactionMsgTxInPreviousOutPoint struct {
-	Hash  string `json:"Hash"`
-	Index int    `json:"Index"`
-}
-
-type TransactionMsgTxOut struct {
-	Value    int    `json:"Value"`
-	PkScript string `json:"PkScript"`
-}
-
-func GetUri(network models.Network) (string, error) {
-	var user string
-	var password string
-	var ip string
-	var port int
-	var wallet string
-	var url string
-	switch network {
-	case models.Mainnet:
-		user = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.RpcUser
-		password = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.RpcPasswd
-		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Ip
-		port = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Port
-		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Wallet
-	case models.Testnet:
-		user = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.RpcUser
-		password = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.RpcPasswd
-		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Ip
-		port = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Port
-		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Wallet
-	case models.Regtest:
-		user = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.RpcUser
-		password = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.RpcPasswd
-		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Ip
-		port = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Port
-		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Wallet
-	default:
-		return "", errors.New("invalid network")
-	}
-	url = fmt.Sprintf("http://%s:%s@%s:%d/wallet/%s", user, password, ip, port, wallet)
-	return url, nil
-}
-
-func postGetRawTransaction(network models.Network, txid string, verbosity Verbosity) (result *PostGetRawTransactionResult, err error) {
-	url, err := GetUri(network)
-	if err != nil {
-		return nil, err
-	}
-	requestBodyRaw := fmt.Sprintf(`{"jsonrpc":"1.0","id":1,"method":"getrawtransaction","params":["%s",%d]}`, txid, verbosity)
-	payload := strings.NewReader(requestBodyRaw)
-	req, err := http.NewRequest("POST", url, payload)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("accept", "application/json")
-	req.Header.Add("content-type", "application/json")
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			return
-		}
-	}(res.Body)
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	var response PostGetRawTransactionResponse
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return nil, err
-	}
-	if response.Error != nil {
-		return nil, errors.New(strconv.Itoa(response.Error.Code) + response.Error.Message)
-	}
-	return response.Result, nil
-}
-
 type PostGetRawTransactionResponse struct {
 	Result *PostGetRawTransactionResult `json:"result"`
 	Error  *PostGetRawTransactionError  `json:"error"`
-	ID     int                          `json:"id"`
+	ID     string                       `json:"id"`
 }
 
 type PostGetRawTransactionError struct {
@@ -397,4 +330,140 @@ type RawTransactionResultVoutScriptPubKey struct {
 	Hex     string `json:"hex"`
 	Address string `json:"address"`
 	Type    string `json:"type"`
+}
+
+func getUri(network models.Network) (string, error) {
+	var user string
+	var password string
+	var ip string
+	var port int
+	var wallet string
+	var uri string
+	switch network {
+	case models.Mainnet:
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.RpcUser
+		password = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.RpcPasswd
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Wallet
+	case models.Testnet:
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.RpcUser
+		password = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.RpcPasswd
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Wallet
+	case models.Regtest:
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.RpcUser
+		password = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.RpcPasswd
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Wallet
+	default:
+		return "", errors.New("invalid network")
+	}
+	if wallet == "" {
+		uri = fmt.Sprintf("http://%s:%s@%s:%d", user, password, ip, port)
+	} else {
+		uri = fmt.Sprintf("http://%s:%s@%s:%d/wallet/%s", user, password, ip, port, wallet)
+	}
+	return uri, nil
+}
+
+func outpointSliceToRequestBodyRawString(outpoints []string, verbosity Verbosity) (request string) {
+	request = "["
+	for i, outpoint := range outpoints {
+		txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+		if txid == "" || indexStr == "" {
+			continue
+		}
+		_, err := strconv.Atoi(indexStr)
+		if err != nil {
+			continue
+		}
+		element := fmt.Sprintf("{\"jsonrpc\":\"1.0\",\"id\":\"%s\",\"method\":\"getrawtransaction\",\"params\":[\"%s\",%d]}", outpoint, txid, verbosity)
+		request += element
+		if i != len(outpoints)-1 {
+			request += ","
+		}
+	}
+	request += "]"
+	return request
+}
+
+func postGetRawTransaction(network models.Network, txid string, verbosity Verbosity) (result *PostGetRawTransactionResult, err error) {
+	uri, err := getUri(network)
+	if err != nil {
+		return nil, err
+	}
+	requestBodyRaw := fmt.Sprintf(`{"jsonrpc":"1.0","id":"%s","method":"getrawtransaction","params":["%s",%d]}`, txid, txid, verbosity)
+	payload := strings.NewReader(requestBodyRaw)
+	req, err := http.NewRequest("POST", uri, payload)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("content-type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	var response PostGetRawTransactionResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != nil {
+		return nil, errors.New(strconv.Itoa(response.Error.Code) + response.Error.Message)
+	}
+	return response.Result, nil
+}
+
+func postGetRawTransactions(network models.Network, outpoints []string, verbosity Verbosity) (*[]PostGetRawTransactionResponse, error) {
+	uri, err := getUri(network)
+	if err != nil {
+		return nil, err
+	}
+	requestBodyRaw := outpointSliceToRequestBodyRawString(outpoints, verbosity)
+	payload := strings.NewReader(requestBodyRaw)
+	req, err := http.NewRequest("POST", uri, payload)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("content-type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	var response []PostGetRawTransactionResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		var responseSingle PostGetRawTransactionResponse
+		err = json.Unmarshal(body, &responseSingle)
+		if err != nil {
+			return nil, err
+		}
+		response = append(response, responseSingle)
+	}
+	return &response, nil
 }
