@@ -14,6 +14,7 @@ func SetupBitcoindRouter(router *gin.Engine) *gin.Engine {
 		address := mainnet.Group("/address")
 		{
 			address.GET("/outpoint/:op", handlers.GetAddressByOutpointInMainnet)
+			address.POST("/outpoints", handlers.GetAddressesByOutpointSliceInMainnet)
 		}
 	}
 	testnet := bitcoind.Group("/testnet")
@@ -21,6 +22,7 @@ func SetupBitcoindRouter(router *gin.Engine) *gin.Engine {
 		address := testnet.Group("/address")
 		{
 			address.GET("/outpoint/:op", handlers.GetAddressByOutpointInTestnet)
+			address.POST("/outpoints", handlers.GetAddressesByOutpointSliceInTestnet)
 		}
 	}
 	regtest := bitcoind.Group("/regtest")
