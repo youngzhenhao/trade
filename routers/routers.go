@@ -34,5 +34,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AssetTransfer {
 		SetupAssetTransferRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.Bitcoind {
+		SetupBitcoindRouter(r)
+	}
 	return r
 }

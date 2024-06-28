@@ -20,6 +20,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
+	"runtime"
 	"strings"
 	"time"
 	"trade/models"
@@ -394,16 +396,17 @@ func CreateTestMainFile(testPath string, testFuncName string) {
 			return
 		}
 	}(f)
-	content := []byte(`package main
-
-func main() {
-	
-}
-`)
+	content := []byte("package main\n\nfunc main() {\n\n}\n")
 	_, err = f.Write(content)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Println(filePath, "has been created successfully!")
+}
+
+func GetFunctionName(i any) string {
+	completeName := runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+	s := strings.Split(completeName, ".")
+	return s[len(s)-1]
 }

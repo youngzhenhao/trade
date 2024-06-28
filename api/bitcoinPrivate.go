@@ -14,115 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"trade/config"
+	"trade/models"
 )
-
-func getBitcoinConnConfig() *rpcclient.ConnConfig {
-	ip := config.GetLoadConfig().ApiConfig.Bitcoind.Ip
-	port := config.GetLoadConfig().ApiConfig.Bitcoind.Port
-	wallet := config.GetLoadConfig().ApiConfig.Bitcoind.Wallet
-	host := fmt.Sprintf("%s:%d/wallet/%s", ip, port, wallet)
-	return &rpcclient.ConnConfig{
-		Host:         host,
-		User:         config.GetLoadConfig().ApiConfig.Bitcoind.RpcUser,
-		Pass:         config.GetLoadConfig().ApiConfig.Bitcoind.RpcPasswd,
-		HTTPPostMode: config.GetLoadConfig().ApiConfig.Bitcoind.HTTPPostMode,
-		DisableTLS:   config.GetLoadConfig().ApiConfig.Bitcoind.DisableTLS,
-	}
-}
-
-func estimateSmartFee(confTarget int64, mode *btcjson.EstimateSmartFeeMode) (feeResult *btcjson.EstimateSmartFeeResult, err error) {
-	connCfg := getBitcoinConnConfig()
-	client, err := rpcclient.New(connCfg, nil)
-	if err != nil {
-		return
-	}
-	defer client.Shutdown()
-	feeResult, err = client.EstimateSmartFee(confTarget, mode)
-	if err != nil {
-		return
-	}
-	return feeResult, nil
-}
-
-func getRawTransaction(txid string) (transaction *btcutil.Tx, err error) {
-	connCfg := getBitcoinConnConfig()
-	client, err := rpcclient.New(connCfg, nil)
-	if err != nil {
-		return
-	}
-	defer client.Shutdown()
-	var blockHash chainhash.Hash
-	err = chainhash.Decode(&blockHash, txid)
-	if err != nil {
-		return nil, err
-	}
-	var response *btcutil.Tx
-	response, err = client.GetRawTransaction(&blockHash)
-	if err != nil {
-		return nil, err
-	}
-	return response, nil
-}
-
-func getTransaction(txid string) (transaction *btcjson.GetTransactionResult, err error) {
-	connCfg := getBitcoinConnConfig()
-	client, err := rpcclient.New(connCfg, nil)
-	if err != nil {
-		return
-	}
-	defer client.Shutdown()
-	var blockHash chainhash.Hash
-	err = chainhash.Decode(&blockHash, txid)
-	if err != nil {
-		return nil, err
-	}
-	var response *btcjson.GetTransactionResult
-	response, err = client.GetTransaction(&blockHash)
-	if err != nil {
-		return nil, err
-	}
-	return response, nil
-}
-
-func decodeScript(encodedPubKeyScript string) (transaction *btcjson.DecodeScriptResult, err error) {
-	connCfg := getBitcoinConnConfig()
-	client, err := rpcclient.New(connCfg, nil)
-	if err != nil {
-		return
-	}
-	defer client.Shutdown()
-	var response *btcjson.DecodeScriptResult
-	decodeString, err := hex.DecodeString(encodedPubKeyScript)
-	if err != nil {
-		return nil, err
-	}
-	response, err = client.DecodeScript(decodeString)
-	if err != nil {
-		return nil, err
-	}
-	return response, nil
-}
-
-func getRawTransactionAndDecodeOutputScript(txid string) (err error) {
-	//connCfg := getBitcoinConnConfig()
-	//client, err := rpcclient.New(connCfg, nil)
-	//if err != nil {
-	//	return
-	//}
-	//defer client.Shutdown()
-	//var blockHash chainhash.Hash
-	//err = chainhash.Decode(&blockHash, txid)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//var response *btcjson.GetTransactionResult
-	//response, err = client.GetTransaction(&blockHash)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//return response, nil
-	return nil
-}
 
 type GetRawTransactionResponse struct {
 	Txid          string            `json:"txid"`
@@ -209,55 +102,168 @@ type TransactionMsgTxOut struct {
 	PkScript string `json:"PkScript"`
 }
 
-func GetUri() string {
-	user := config.GetLoadConfig().ApiConfig.Bitcoind.RpcUser
-	password := config.GetLoadConfig().ApiConfig.Bitcoind.RpcPasswd
-	ip := config.GetLoadConfig().ApiConfig.Bitcoind.Ip
-	port := config.GetLoadConfig().ApiConfig.Bitcoind.Port
-	wallet := config.GetLoadConfig().ApiConfig.Bitcoind.Wallet
-	url := fmt.Sprintf("http://%s:%s@%s:%d/wallet/%s", user, password, ip, port, wallet)
-	return url
+func getBitcoinConnConfig(network models.Network) (*rpcclient.ConnConfig, error) {
+	var ip string
+	var port int
+	var wallet string
+	var host string
+	var user string
+	var pass string
+	var httpPostMode bool
+	var disableTLS bool
+	switch network {
+	case models.Mainnet:
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Wallet
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.RpcUser
+		pass = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.RpcPasswd
+		httpPostMode = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.HttpPostMode
+		disableTLS = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.DisableTLS
+	case models.Testnet:
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Wallet
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.RpcUser
+		pass = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.RpcPasswd
+		httpPostMode = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.HttpPostMode
+		disableTLS = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.DisableTLS
+	case models.Regtest:
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Wallet
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.RpcUser
+		pass = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.RpcPasswd
+		httpPostMode = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.HttpPostMode
+		disableTLS = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.DisableTLS
+	default:
+		return nil, errors.New("invalid api network")
+	}
+	if wallet == "" {
+		host = fmt.Sprintf("%s:%d", ip, port)
+	} else {
+		host = fmt.Sprintf("%s:%d/wallet/%s", ip, port, wallet)
+	}
+	connConfig := rpcclient.ConnConfig{
+		Host:         host,
+		User:         user,
+		Pass:         pass,
+		HTTPPostMode: httpPostMode,
+		DisableTLS:   disableTLS,
+	}
+	return &connConfig, nil
 }
 
-func postGetRawTransaction(txid string, verbosity Verbosity) (result *PostGetRawTransactionResult, err error) {
-	url := GetUri()
-	requestBodyRaw := fmt.Sprintf(`{"jsonrpc":"1.0","id":1,"method":"getrawtransaction","params":["%s",%d]}`, txid, verbosity)
-	payload := strings.NewReader(requestBodyRaw)
-	req, err := http.NewRequest("POST", url, payload)
+func estimateSmartFee(network models.Network, confTarget int64, mode *btcjson.EstimateSmartFeeMode) (feeResult *btcjson.EstimateSmartFeeResult, err error) {
+	connCfg, err := getBitcoinConnConfig(network)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("accept", "application/json")
-	req.Header.Add("content-type", "application/json")
-	res, err := http.DefaultClient.Do(req)
+	client, err := rpcclient.New(connCfg, nil)
+	if err != nil {
+		return
+	}
+	defer client.Shutdown()
+	feeResult, err = client.EstimateSmartFee(confTarget, mode)
+	if err != nil {
+		return
+	}
+	return feeResult, nil
+}
+
+func getRawTransaction(network models.Network, txid string) (transaction *btcutil.Tx, err error) {
+	connCfg, err := getBitcoinConnConfig(network)
 	if err != nil {
 		return nil, err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			return
-		}
-	}(res.Body)
-	body, err := io.ReadAll(res.Body)
+	client, err := rpcclient.New(connCfg, nil)
+	if err != nil {
+		return
+	}
+	defer client.Shutdown()
+	var blockHash chainhash.Hash
+	err = chainhash.Decode(&blockHash, txid)
 	if err != nil {
 		return nil, err
 	}
-	var response PostGetRawTransactionResponse
-	err = json.Unmarshal(body, &response)
+	var response *btcutil.Tx
+	response, err = client.GetRawTransaction(&blockHash)
 	if err != nil {
 		return nil, err
 	}
-	if response.Error != nil {
-		return nil, errors.New(strconv.Itoa(response.Error.Code) + response.Error.Message)
+	return response, nil
+}
+
+func getTransaction(network models.Network, txid string) (transaction *btcjson.GetTransactionResult, err error) {
+	connCfg, err := getBitcoinConnConfig(network)
+	if err != nil {
+		return nil, err
 	}
-	return response.Result, nil
+	client, err := rpcclient.New(connCfg, nil)
+	if err != nil {
+		return
+	}
+	defer client.Shutdown()
+	var blockHash chainhash.Hash
+	err = chainhash.Decode(&blockHash, txid)
+	if err != nil {
+		return nil, err
+	}
+	var response *btcjson.GetTransactionResult
+	response, err = client.GetTransaction(&blockHash)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func decodeScript(network models.Network, encodedPubKeyScript string) (transaction *btcjson.DecodeScriptResult, err error) {
+	connCfg, err := getBitcoinConnConfig(network)
+	if err != nil {
+		return nil, err
+	}
+	client, err := rpcclient.New(connCfg, nil)
+	if err != nil {
+		return
+	}
+	defer client.Shutdown()
+	var response *btcjson.DecodeScriptResult
+	decodeString, err := hex.DecodeString(encodedPubKeyScript)
+	if err != nil {
+		return nil, err
+	}
+	response, err = client.DecodeScript(decodeString)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func getRawTransactionAndDecodeOutputScript(txid string) (err error) {
+	//connCfg := getBitcoinConnConfig()
+	//client, err := rpcclient.New(connCfg, nil)
+	//if err != nil {
+	//	return
+	//}
+	//defer client.Shutdown()
+	//var blockHash chainhash.Hash
+	//err = chainhash.Decode(&blockHash, txid)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//var response *btcjson.GetTransactionResult
+	//response, err = client.GetTransaction(&blockHash)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//return response, nil
+	return nil
 }
 
 type PostGetRawTransactionResponse struct {
 	Result *PostGetRawTransactionResult `json:"result"`
 	Error  *PostGetRawTransactionError  `json:"error"`
-	ID     int                          `json:"id"`
+	ID     string                       `json:"id"`
 }
 
 type PostGetRawTransactionError struct {
@@ -324,4 +330,140 @@ type RawTransactionResultVoutScriptPubKey struct {
 	Hex     string `json:"hex"`
 	Address string `json:"address"`
 	Type    string `json:"type"`
+}
+
+func getUri(network models.Network) (string, error) {
+	var user string
+	var password string
+	var ip string
+	var port int
+	var wallet string
+	var uri string
+	switch network {
+	case models.Mainnet:
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.RpcUser
+		password = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.RpcPasswd
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Wallet
+	case models.Testnet:
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.RpcUser
+		password = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.RpcPasswd
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Wallet
+	case models.Regtest:
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.RpcUser
+		password = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.RpcPasswd
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Wallet
+	default:
+		return "", errors.New("invalid network")
+	}
+	if wallet == "" {
+		uri = fmt.Sprintf("http://%s:%s@%s:%d", user, password, ip, port)
+	} else {
+		uri = fmt.Sprintf("http://%s:%s@%s:%d/wallet/%s", user, password, ip, port, wallet)
+	}
+	return uri, nil
+}
+
+func outpointSliceToRequestBodyRawString(outpoints []string, verbosity Verbosity) (request string) {
+	request = "["
+	for i, outpoint := range outpoints {
+		txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+		if txid == "" || indexStr == "" {
+			continue
+		}
+		_, err := strconv.Atoi(indexStr)
+		if err != nil {
+			continue
+		}
+		element := fmt.Sprintf("{\"jsonrpc\":\"1.0\",\"id\":\"%s\",\"method\":\"getrawtransaction\",\"params\":[\"%s\",%d]}", outpoint, txid, verbosity)
+		request += element
+		if i != len(outpoints)-1 {
+			request += ","
+		}
+	}
+	request += "]"
+	return request
+}
+
+func postGetRawTransaction(network models.Network, txid string, verbosity Verbosity) (result *PostGetRawTransactionResult, err error) {
+	uri, err := getUri(network)
+	if err != nil {
+		return nil, err
+	}
+	requestBodyRaw := fmt.Sprintf(`{"jsonrpc":"1.0","id":"%s","method":"getrawtransaction","params":["%s",%d]}`, txid, txid, verbosity)
+	payload := strings.NewReader(requestBodyRaw)
+	req, err := http.NewRequest("POST", uri, payload)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("content-type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	var response PostGetRawTransactionResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != nil {
+		return nil, errors.New(strconv.Itoa(response.Error.Code) + response.Error.Message)
+	}
+	return response.Result, nil
+}
+
+func postGetRawTransactions(network models.Network, outpoints []string, verbosity Verbosity) (*[]PostGetRawTransactionResponse, error) {
+	uri, err := getUri(network)
+	if err != nil {
+		return nil, err
+	}
+	requestBodyRaw := outpointSliceToRequestBodyRawString(outpoints, verbosity)
+	payload := strings.NewReader(requestBodyRaw)
+	req, err := http.NewRequest("POST", uri, payload)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("content-type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	var response []PostGetRawTransactionResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		var responseSingle PostGetRawTransactionResponse
+		err = json.Unmarshal(body, &responseSingle)
+		if err != nil {
+			return nil, err
+		}
+		response = append(response, responseSingle)
+	}
+	return &response, nil
 }

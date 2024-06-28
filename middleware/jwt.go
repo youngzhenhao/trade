@@ -5,6 +5,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-redis/redis/v8"
 	"time"
+	"trade/config"
 )
 
 var (
@@ -17,7 +18,11 @@ type Claims struct {
 }
 
 func GenerateToken(username string) (string, error) {
-	expirationTime := time.Now().Add(20 * time.Minute)
+	expirationTimeMinute := config.GetLoadConfig().Redis.ExpirationTimeMinute
+	if expirationTimeMinute == 0 {
+		expirationTimeMinute = 30
+	}
+	expirationTime := time.Now().Add(time.Duration(expirationTimeMinute) * time.Minute)
 	claims := &Claims{
 		Username: username,
 		StandardClaims: jwt.StandardClaims{
@@ -45,11 +50,15 @@ func GenerateToken(username string) (string, error) {
 		return "", err
 	}
 	// Store the token in Redis
-	err = RedisSet(username, tokenString, 5*time.Minute)
+	redisSetTimeMinute := config.GetLoadConfig().Redis.RedisSetTimeMinute
+	if redisSetTimeMinute == 0 {
+		redisSetTimeMinute = 10
+	}
+	err = RedisSet(username, tokenString, time.Duration(redisSetTimeMinute)*time.Minute)
 	if err != nil {
 		return "", err
 	}
-	err = RedisSet(tokenString, username, 5*time.Minute)
+	err = RedisSet(tokenString, username, time.Duration(redisSetTimeMinute)*time.Minute)
 	if err != nil {
 		return "", err
 	}
