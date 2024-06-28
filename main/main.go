@@ -24,13 +24,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
-	utils.PrintAsciiLogoAndInfo()
-	utils.PrintTitle(false, "Initialize")
+
 	mode := loadConfig.GinConfig.Mode
 	if !(mode == gin.DebugMode || mode == gin.ReleaseMode || mode == gin.TestMode) {
 		mode = gin.DebugMode
 	}
 	gin.SetMode(mode)
+	utils.PrintAsciiLogoAndInfo()
+	if mode != gin.ReleaseMode {
+		utils.PrintTitle(false, "Initialize")
+	}
 	// Initialize the database connection
 	if err := middleware.InitMysql(); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
@@ -68,7 +71,9 @@ func main() {
 	c.Start()
 	defer c.Stop() // Ensure cron scheduler is stopped on shutdown
 	// Setup HTTP server
-	utils.PrintTitle(true, "Setup Router")
+	if mode != gin.ReleaseMode {
+		utils.PrintTitle(true, "Setup Router")
+	}
 	r := routers.SetupRouter()
 	/**
 	for _, routeInfo := range r.Routes() {

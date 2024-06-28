@@ -7,6 +7,13 @@ import (
 )
 
 func SetupBitcoindRouter(router *gin.Engine) *gin.Engine {
+	SetupBitcoindMainnetRouter(router)
+	SetupBitcoindTestnetRouter(router)
+	SetupBitcoindRegtestRouter(router)
+	return router
+}
+
+func SetupBitcoindMainnetRouter(router *gin.Engine) *gin.Engine {
 	bitcoind := router.Group("/bitcoind")
 	bitcoind.Use(middleware.AuthMiddleware())
 	mainnet := bitcoind.Group("/mainnet")
@@ -16,7 +23,18 @@ func SetupBitcoindRouter(router *gin.Engine) *gin.Engine {
 			address.GET("/outpoint/:op", handlers.GetAddressByOutpointInMainnet)
 			address.POST("/outpoints", handlers.GetAddressesByOutpointSliceInMainnet)
 		}
+		transaction := mainnet.Group("/transaction")
+		{
+			transaction.GET("/outpoint/:op", handlers.GetTransactionByOutpointInMainnet)
+			transaction.POST("/outpoints", handlers.GetTransactionsByOutpointSliceInMainnet)
+		}
 	}
+	return router
+}
+
+func SetupBitcoindTestnetRouter(router *gin.Engine) *gin.Engine {
+	bitcoind := router.Group("/bitcoind")
+	bitcoind.Use(middleware.AuthMiddleware())
 	testnet := bitcoind.Group("/testnet")
 	{
 		address := testnet.Group("/address")
@@ -24,13 +42,29 @@ func SetupBitcoindRouter(router *gin.Engine) *gin.Engine {
 			address.GET("/outpoint/:op", handlers.GetAddressByOutpointInTestnet)
 			address.POST("/outpoints", handlers.GetAddressesByOutpointSliceInTestnet)
 		}
+		transaction := testnet.Group("/transaction")
+		{
+			transaction.GET("/outpoint/:op", handlers.GetTransactionByOutpointInTestnet)
+			transaction.POST("/outpoints", handlers.GetTransactionsByOutpointSliceInTestnet)
+		}
 	}
+	return router
+}
+
+func SetupBitcoindRegtestRouter(router *gin.Engine) *gin.Engine {
+	bitcoind := router.Group("/bitcoind")
+	bitcoind.Use(middleware.AuthMiddleware())
 	regtest := bitcoind.Group("/regtest")
 	{
 		address := regtest.Group("/address")
 		{
 			address.GET("/outpoint/:op", handlers.GetAddressByOutpointInRegtest)
 			address.POST("/outpoints", handlers.GetAddressesByOutpointSliceInRegtest)
+		}
+		transaction := regtest.Group("/transaction")
+		{
+			transaction.GET("/outpoint/:op", handlers.GetTransactionByOutpointInRegtest)
+			transaction.POST("/outpoints", handlers.GetTransactionsByOutpointSliceInRegtest)
 		}
 	}
 	return router

@@ -1,3 +1,4 @@
+network: ""
 gin_config:
     bind: ""
     port: ""

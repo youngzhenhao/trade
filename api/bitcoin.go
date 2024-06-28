@@ -105,6 +105,14 @@ func GetAddressByTxidAndIndex(network models.Network, txid string, index int) (a
 	return vout[index].ScriptPubKey.Address, nil
 }
 
+func GetTransactionByTxid(network models.Network, txid string) (transaction *PostGetRawTransactionResult, err error) {
+	response, err := PostGetRawTransactionWithFeeAndPrevout(network, txid)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
 func GetAddressByOutpoint(network models.Network, outpoint string) (address string, err error) {
 	txid, indexStr := OutpointToTransactionAndIndex(outpoint)
 	if txid == "" || indexStr == "" {
@@ -115,6 +123,18 @@ func GetAddressByOutpoint(network models.Network, outpoint string) (address stri
 		return "", err
 	}
 	return GetAddressByTxidAndIndex(network, txid, index)
+}
+
+func GetTransactionByOutpoint(network models.Network, outpoint string) (transaction *PostGetRawTransactionResult, err error) {
+	txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+	if txid == "" || indexStr == "" {
+		return nil, fmt.Errorf("invalid outpoint: %s", outpoint)
+	}
+	_, err = strconv.Atoi(indexStr)
+	if err != nil {
+		return nil, err
+	}
+	return GetTransactionByTxid(network, txid)
 }
 
 func GetAddressesByOutpointSlice(network models.Network, outpoints []string) (addresses map[string]string, err error) {
@@ -199,4 +219,16 @@ func GetAddressesBatchProcess(network models.Network, outpoints []string) (outpo
 		outpointAddress[outpoint] = out[index].ScriptPubKey.Address
 	}
 	return outpointAddress, nil
+}
+
+func GetTransactionsBatchProcess(network models.Network, outpoints []string) (*[]PostGetRawTransactionResponse, error) {
+	response, err := PostGetRawTransactionsWithFeeAndPrevoutByOutpoints(network, outpoints)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func GetTransactionsByOutpointSlice(network models.Network, outpoints []string) (*[]PostGetRawTransactionResponse, error) {
+	return GetTransactionsBatchProcess(network, outpoints)
 }
