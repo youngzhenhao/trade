@@ -126,6 +126,18 @@ func checkStart() bool {
 		log.Println("Custody account MacaroonDir is not set")
 		return false
 	}
+	switch cfg.NetWork {
+	case "testnet":
+		log.Println("Running on testnet")
+	case "mainnet":
+		log.Println("Running on mainnet")
+	case "regtest":
+		log.Println("Running on regtest")
+	default:
+		log.Println("NetWork need set testnet, mainnet or regtest")
+		return false
+	}
+
 	fmt.Println("Custody account MacaroonDir is set:", cfg.ApiConfig.CustodyAccount.MacaroonDir)
 	// 检测admin账户
 	if !services.CheckAdminAccount() {

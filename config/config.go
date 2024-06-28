@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	NetWork   string `yaml:"network" json:"network"`
 	GinConfig struct {
 		Bind string `yaml:"bind" json:"bind"`
 		Port string `yaml:"port" json:"port"`
