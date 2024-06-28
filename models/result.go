@@ -37,6 +37,7 @@ const (
 	ProcessAssetTransferErr
 	CreateAssetTransferErr
 	GetAssetTransfersByUserIdErr
+	GetAddressByOutpointErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

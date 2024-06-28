@@ -39,6 +39,7 @@ type Config struct {
 		Snapshot       bool `yaml:"snapshot" json:"snapshot"`
 		BtcBalance     bool `yaml:"btc_balance" json:"btc_balance"`
 		AssetTransfer  bool `yaml:"asset_transfer" json:"asset_transfer"`
+		Bitcoind       bool `yaml:"bitcoind" json:"bitcoind"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {
@@ -64,13 +65,33 @@ type Config struct {
 			MacaroonPath string `yaml:"macaroon_path" json:"macaroon_path"`
 		} `yaml:"litd" json:"litd"`
 		Bitcoind struct {
-			Ip           string `yaml:"ip" json:"ip"`
-			Port         int    `yaml:"port" json:"port"`
-			Wallet       string `yaml:"wallet" json:"wallet"`
-			RpcUser      string `yaml:"rpc_user" json:"rpc_user"`
-			RpcPasswd    string `yaml:"rpc_passwd" json:"rpc_passwd"`
-			HTTPPostMode bool   `yaml:"http_post_mode" json:"http_post_mode"`
-			DisableTLS   bool   `yaml:"disable_tls" json:"disable_tls"`
+			Mainnet struct {
+				Ip           string `yaml:"ip" json:"ip"`
+				Port         int    `yaml:"port" json:"port"`
+				Wallet       string `yaml:"wallet" json:"wallet"`
+				RpcUser      string `yaml:"rpc_user" json:"rpc_user"`
+				RpcPasswd    string `yaml:"rpc_passwd" json:"rpc_passwd"`
+				HttpPostMode bool   `yaml:"http_post_mode" json:"http_post_mode"`
+				DisableTLS   bool   `yaml:"disable_tls" json:"disable_tls"`
+			} `yaml:"mainnet" json:"mainnet"`
+			Testnet struct {
+				Ip           string `yaml:"ip" json:"ip"`
+				Port         int    `yaml:"port" json:"port"`
+				Wallet       string `yaml:"wallet" json:"wallet"`
+				RpcUser      string `yaml:"rpc_user" json:"rpc_user"`
+				RpcPasswd    string `yaml:"rpc_passwd" json:"rpc_passwd"`
+				HttpPostMode bool   `yaml:"http_post_mode" json:"http_post_mode"`
+				DisableTLS   bool   `yaml:"disable_tls" json:"disable_tls"`
+			} `yaml:"testnet" json:"testnet"`
+			Regtest struct {
+				Ip           string `yaml:"ip" json:"ip"`
+				Port         int    `yaml:"port" json:"port"`
+				Wallet       string `yaml:"wallet" json:"wallet"`
+				RpcUser      string `yaml:"rpc_user" json:"rpc_user"`
+				RpcPasswd    string `yaml:"rpc_passwd" json:"rpc_passwd"`
+				HttpPostMode bool   `yaml:"http_post_mode" json:"http_post_mode"`
+				DisableTLS   bool   `yaml:"disable_tls" json:"disable_tls"`
+			} `yaml:"regtest" json:"regtest"`
 		} `yaml:"bitcoind" json:"bitcoind"`
 		CustodyAccount struct {
 			MacaroonDir string `yaml:"macaroon_dir" json:"macaroon_dir"`

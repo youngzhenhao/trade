@@ -26,6 +26,7 @@ router_disable:
     snapshot: false
     btc_balance: false
     asset_transfer: false
+    bitcoind: false
 api_config:
     lnd:
         host: ""
@@ -47,13 +48,30 @@ api_config:
         tls_cert_path: ""
         macaroon_path: ""
     bitcoind:
-        ip: ""
-        port: 0
-        wallet: ""
-        rpc_user: ""
-        rpc_passwd: ""
-        http_post_mode: false
-        disable_tls: false
+        mainnet:
+            ip: ""
+            port: 0
+            wallet: ""
+            rpc_user: ""
+            rpc_passwd: ""
+            http_post_mode: false
+            disable_tls: false
+        testnet:
+            ip: ""
+            port: 0
+            wallet: ""
+            rpc_user: ""
+            rpc_passwd: ""
+            http_post_mode: false
+            disable_tls: false
+        regtest:
+            ip: ""
+            port: 0
+            wallet: ""
+            rpc_user: ""
+            rpc_passwd: ""
+            http_post_mode: false
+            disable_tls: false
     custody_account:
         macaroon_dir: ""
 fair_launch_config:

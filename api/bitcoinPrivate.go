@@ -14,24 +14,62 @@ import (
 	"strconv"
 	"strings"
 	"trade/config"
+	"trade/models"
 )
 
-func getBitcoinConnConfig() *rpcclient.ConnConfig {
-	ip := config.GetLoadConfig().ApiConfig.Bitcoind.Ip
-	port := config.GetLoadConfig().ApiConfig.Bitcoind.Port
-	wallet := config.GetLoadConfig().ApiConfig.Bitcoind.Wallet
-	host := fmt.Sprintf("%s:%d/wallet/%s", ip, port, wallet)
-	return &rpcclient.ConnConfig{
-		Host:         host,
-		User:         config.GetLoadConfig().ApiConfig.Bitcoind.RpcUser,
-		Pass:         config.GetLoadConfig().ApiConfig.Bitcoind.RpcPasswd,
-		HTTPPostMode: config.GetLoadConfig().ApiConfig.Bitcoind.HTTPPostMode,
-		DisableTLS:   config.GetLoadConfig().ApiConfig.Bitcoind.DisableTLS,
+func getBitcoinConnConfig(network models.Network) (*rpcclient.ConnConfig, error) {
+	var ip string
+	var port int
+	var wallet string
+	var host string
+	var user string
+	var pass string
+	var httpPostMode bool
+	var disableTLS bool
+	switch network {
+	case models.Mainnet:
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Wallet
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.RpcUser
+		pass = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.RpcPasswd
+		httpPostMode = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.HttpPostMode
+		disableTLS = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.DisableTLS
+	case models.Testnet:
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Wallet
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.RpcUser
+		pass = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.RpcPasswd
+		httpPostMode = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.HttpPostMode
+		disableTLS = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.DisableTLS
+	case models.Regtest:
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Wallet
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.RpcUser
+		pass = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.RpcPasswd
+		httpPostMode = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.HttpPostMode
+		disableTLS = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.DisableTLS
+	default:
+		return nil, errors.New("invalid api network")
 	}
+	host = fmt.Sprintf("%s:%d/wallet/%s", ip, port, wallet)
+	connConfig := rpcclient.ConnConfig{
+		Host:         host,
+		User:         user,
+		Pass:         pass,
+		HTTPPostMode: httpPostMode,
+		DisableTLS:   disableTLS,
+	}
+	return &connConfig, nil
 }
 
-func estimateSmartFee(confTarget int64, mode *btcjson.EstimateSmartFeeMode) (feeResult *btcjson.EstimateSmartFeeResult, err error) {
-	connCfg := getBitcoinConnConfig()
+func estimateSmartFee(network models.Network, confTarget int64, mode *btcjson.EstimateSmartFeeMode) (feeResult *btcjson.EstimateSmartFeeResult, err error) {
+	connCfg, err := getBitcoinConnConfig(network)
+	if err != nil {
+		return nil, err
+	}
 	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {
 		return
@@ -44,8 +82,11 @@ func estimateSmartFee(confTarget int64, mode *btcjson.EstimateSmartFeeMode) (fee
 	return feeResult, nil
 }
 
-func getRawTransaction(txid string) (transaction *btcutil.Tx, err error) {
-	connCfg := getBitcoinConnConfig()
+func getRawTransaction(network models.Network, txid string) (transaction *btcutil.Tx, err error) {
+	connCfg, err := getBitcoinConnConfig(network)
+	if err != nil {
+		return nil, err
+	}
 	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {
 		return
@@ -64,8 +105,11 @@ func getRawTransaction(txid string) (transaction *btcutil.Tx, err error) {
 	return response, nil
 }
 
-func getTransaction(txid string) (transaction *btcjson.GetTransactionResult, err error) {
-	connCfg := getBitcoinConnConfig()
+func getTransaction(network models.Network, txid string) (transaction *btcjson.GetTransactionResult, err error) {
+	connCfg, err := getBitcoinConnConfig(network)
+	if err != nil {
+		return nil, err
+	}
 	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {
 		return
@@ -84,8 +128,11 @@ func getTransaction(txid string) (transaction *btcjson.GetTransactionResult, err
 	return response, nil
 }
 
-func decodeScript(encodedPubKeyScript string) (transaction *btcjson.DecodeScriptResult, err error) {
-	connCfg := getBitcoinConnConfig()
+func decodeScript(network models.Network, encodedPubKeyScript string) (transaction *btcjson.DecodeScriptResult, err error) {
+	connCfg, err := getBitcoinConnConfig(network)
+	if err != nil {
+		return nil, err
+	}
 	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {
 		return
@@ -209,18 +256,44 @@ type TransactionMsgTxOut struct {
 	PkScript string `json:"PkScript"`
 }
 
-func GetUri() string {
-	user := config.GetLoadConfig().ApiConfig.Bitcoind.RpcUser
-	password := config.GetLoadConfig().ApiConfig.Bitcoind.RpcPasswd
-	ip := config.GetLoadConfig().ApiConfig.Bitcoind.Ip
-	port := config.GetLoadConfig().ApiConfig.Bitcoind.Port
-	wallet := config.GetLoadConfig().ApiConfig.Bitcoind.Wallet
-	url := fmt.Sprintf("http://%s:%s@%s:%d/wallet/%s", user, password, ip, port, wallet)
-	return url
+func GetUri(network models.Network) (string, error) {
+	var user string
+	var password string
+	var ip string
+	var port int
+	var wallet string
+	var url string
+	switch network {
+	case models.Mainnet:
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.RpcUser
+		password = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.RpcPasswd
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Mainnet.Wallet
+	case models.Testnet:
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.RpcUser
+		password = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.RpcPasswd
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Testnet.Wallet
+	case models.Regtest:
+		user = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.RpcUser
+		password = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.RpcPasswd
+		ip = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Ip
+		port = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Port
+		wallet = config.GetLoadConfig().ApiConfig.Bitcoind.Regtest.Wallet
+	default:
+		return "", errors.New("invalid network")
+	}
+	url = fmt.Sprintf("http://%s:%s@%s:%d/wallet/%s", user, password, ip, port, wallet)
+	return url, nil
 }
 
-func postGetRawTransaction(txid string, verbosity Verbosity) (result *PostGetRawTransactionResult, err error) {
-	url := GetUri()
+func postGetRawTransaction(network models.Network, txid string, verbosity Verbosity) (result *PostGetRawTransactionResult, err error) {
+	url, err := GetUri(network)
+	if err != nil {
+		return nil, err
+	}
 	requestBodyRaw := fmt.Sprintf(`{"jsonrpc":"1.0","id":1,"method":"getrawtransaction","params":["%s",%d]}`, txid, verbosity)
 	payload := strings.NewReader(requestBodyRaw)
 	req, err := http.NewRequest("POST", url, payload)

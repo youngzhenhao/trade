@@ -77,33 +77,33 @@ func CalculateGasFeeRateByMempool(number int) (*FeeRateResponseTransformed, erro
 	}, nil
 }
 
-func UpdateAndEstimateSmartFeeRateSatPerKw() (estimatedFeeSatPerKw int, err error) {
-	UpdateFeeRate()
+func UpdateAndEstimateSmartFeeRateSatPerKw(network models.Network) (estimatedFeeSatPerKw int, err error) {
+	UpdateFeeRate(network)
 	return EstimateSmartFeeRateSatPerKw()
 }
 
-func UpdateAndEstimateSmartFeeRateSatPerB() (estimatedFeeSatPerB int, err error) {
-	UpdateFeeRate()
+func UpdateAndEstimateSmartFeeRateSatPerB(network models.Network) (estimatedFeeSatPerB int, err error) {
+	UpdateFeeRate(network)
 	return EstimateSmartFeeRateSatPerB()
 }
 
-func UpdateAndEstimateSmartFeeRateBtcPerKb() (estimatedFeeBtcPerKb float64, err error) {
-	UpdateFeeRate()
+func UpdateAndEstimateSmartFeeRateBtcPerKb(network models.Network) (estimatedFeeBtcPerKb float64, err error) {
+	UpdateFeeRate(network)
 	return EstimateSmartFeeRateBtcPerKb()
 }
 
-func UpdateAndCalculateGasFeeRateSatPerKw(number int) (int, error) {
-	UpdateFeeRate()
+func UpdateAndCalculateGasFeeRateSatPerKw(network models.Network, number int) (int, error) {
+	UpdateFeeRate(network)
 	return CalculateGasFeeRateSatPerKw(number)
 }
 
-func UpdateAndCalculateGasFeeRateSatPerB(number int) (int, error) {
-	UpdateFeeRate()
+func UpdateAndCalculateGasFeeRateSatPerB(network models.Network, number int) (int, error) {
+	UpdateFeeRate(network)
 	return CalculateGasFeeRateSatPerB(number)
 }
 
-func UpdateAndCalculateGasFeeRateBtcPerKb(number int) (float64, error) {
-	UpdateFeeRate()
+func UpdateAndCalculateGasFeeRateBtcPerKb(network models.Network, number int) (float64, error) {
+	UpdateFeeRate(network)
 	return CalculateGasFeeRateBtcPerKb(number)
 }
 
@@ -139,8 +139,8 @@ func NumberToGasFeeRate(number int) (gasFeeRate float64, err error) {
 
 // EstimateSmartFeeRate
 // BTC/kB
-func EstimateSmartFeeRate(blocks int) (gasFeeRate float64, err error) {
-	feeResult, err := api.EstimateSmartFeeAndGetResult(blocks)
+func EstimateSmartFeeRate(network models.Network, blocks int) (gasFeeRate float64, err error) {
+	feeResult, err := api.EstimateSmartFeeAndGetResult(network, blocks)
 	if err != nil {
 		return 0, utils.AppendErrorInfo(err, "EstimateSmartFeeAndGetResult")
 	}
@@ -151,8 +151,8 @@ func EstimateSmartFeeRate(blocks int) (gasFeeRate float64, err error) {
 	return *feeResult.FeeRate, nil
 }
 
-func UpdateFeeRate() {
-	err := CheckIfUpdateFeeRateInfo()
+func UpdateFeeRate(network models.Network) {
+	err := CheckIfUpdateFeeRateInfo(network)
 	if err != nil {
 		return
 	}
@@ -379,7 +379,7 @@ func GetFeeRateInfoEstimateSmartFeeRateByName(name string) (estimateSmartFeeRate
 	return feeRateInfo.FeeRate, nil
 }
 
-func UpdateFeeRateInfoByBitcoind() (err error) {
+func UpdateFeeRateInfoByBitcoind(network models.Network) (err error) {
 	var feeRateInfo *models.FeeRateInfo
 	var f = FeeRateInfoStore{DB: middleware.DB}
 	feeRateInfo, err = GetFeeRateInfoByName(string(GasFeeRateNameBitcoind))
@@ -395,7 +395,7 @@ func UpdateFeeRateInfoByBitcoind() (err error) {
 		// @dev: Create new record
 		FEE.Info("Bitcoind FeeRateInfo record created. %v", err)
 	}
-	feeRateInfo.FeeRate, err = EstimateSmartFeeRate(config.GetLoadConfig().FairLaunchConfig.EstimateSmartFeeRateBlocks)
+	feeRateInfo.FeeRate, err = EstimateSmartFeeRate(network, config.GetLoadConfig().FairLaunchConfig.EstimateSmartFeeRateBlocks)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "EstimateSmartFeeRate")
 	}
@@ -406,7 +406,7 @@ func UpdateFeeRateInfoByBitcoind() (err error) {
 	return nil
 }
 
-func UpdateFeeRateInfoByBlock(block int) (err error) {
+func UpdateFeeRateInfoByBlock(network models.Network, block int) (err error) {
 	var feeRateInfo *models.FeeRateInfo
 	var f = FeeRateInfoStore{DB: middleware.DB}
 	name := strconv.Itoa(block)
@@ -422,7 +422,7 @@ func UpdateFeeRateInfoByBlock(block int) (err error) {
 		}
 		FEE.Info("%s %v", name, "FeeRateInfo record created.")
 	}
-	feeRateInfo.FeeRate, err = EstimateSmartFeeRate(block)
+	feeRateInfo.FeeRate, err = EstimateSmartFeeRate(network, block)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "EstimateSmartFeeRate")
 	}
@@ -435,9 +435,9 @@ func UpdateFeeRateInfoByBlock(block int) (err error) {
 
 // CheckIfUpdateFeeRateInfo
 // @dev: 1.Update fee rate or not
-func CheckIfUpdateFeeRateInfo() (err error) {
+func CheckIfUpdateFeeRateInfo(network models.Network) (err error) {
 	if config.GetLoadConfig().FairLaunchConfig.IsAutoUpdateFeeRate {
-		err = UpdateFeeRateInfoByBitcoind()
+		err = UpdateFeeRateInfoByBitcoind(network)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "UpdateFeeRateInfoByBitcoind")
 		}
@@ -445,11 +445,11 @@ func CheckIfUpdateFeeRateInfo() (err error) {
 	return nil
 }
 
-func CheckIfUpdateFeeRateInfoByBlockOfWeek() (err error) {
+func CheckIfUpdateFeeRateInfoByBlockOfWeek(network models.Network) (err error) {
 	if config.GetLoadConfig().FairLaunchConfig.IsAutoUpdateFeeRate {
 		for i := 2; i <= 1008; i++ {
 			block := i
-			err = UpdateFeeRateInfoByBlock(block)
+			err = UpdateFeeRateInfoByBlock(network, block)
 			if err != nil {
 				// @dev: Do not return
 			}
@@ -459,11 +459,11 @@ func CheckIfUpdateFeeRateInfoByBlockOfWeek() (err error) {
 	return nil
 }
 
-func CheckIfUpdateFeeRateInfoByBlockOfDay() (err error) {
+func CheckIfUpdateFeeRateInfoByBlockOfDay(network models.Network) (err error) {
 	if config.GetLoadConfig().FairLaunchConfig.IsAutoUpdateFeeRate {
 		for i := 2; i <= 144; i++ {
 			block := i
-			err = UpdateFeeRateInfoByBlock(block)
+			err = UpdateFeeRateInfoByBlock(network, block)
 			if err != nil {
 				return utils.AppendErrorInfo(err, "UpdateFeeRateInfoByBlock")
 			}
@@ -473,10 +473,10 @@ func CheckIfUpdateFeeRateInfoByBlockOfDay() (err error) {
 	return nil
 }
 
-func CheckIfUpdateFeeRateInfoByBlockCustom() (err error) {
+func CheckIfUpdateFeeRateInfoByBlockCustom(network models.Network) (err error) {
 	if config.GetLoadConfig().FairLaunchConfig.IsAutoUpdateFeeRate {
 		for _, block := range []int{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 18, 21, 24, 27, 30, 36, 42, 48, 54, 60, 66, 72, 84, 96, 108, 126, 144, 288, 432, 576, 720, 864, 1008} {
-			err = UpdateFeeRateInfoByBlock(block)
+			err = UpdateFeeRateInfoByBlock(network, block)
 			if err != nil {
 				return utils.AppendErrorInfo(err, "UpdateFeeRateInfoByBlock")
 			}
@@ -502,8 +502,8 @@ func GetMempoolFeeRate() (*FeeRateResponseTransformed, error) {
 	return UpdateAndGetFeeRateResponseTransformed()
 }
 
-func GetFeeRate() (*FeeRateResponse, error) {
-	UpdateFeeRate()
+func GetFeeRate(network models.Network) (*FeeRateResponse, error) {
+	UpdateFeeRate(network)
 	var feeRateResponse FeeRateResponse
 	var err error
 	feeRateResponse.SatPerKw, err = EstimateSmartFeeRateSatPerKw()
