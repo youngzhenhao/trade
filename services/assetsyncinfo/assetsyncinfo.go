@@ -112,14 +112,13 @@ func getAssetInfoFromLeaves(assetId string) (*models.AssetSyncInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	Meta := hex.EncodeToString(meta.GetData())
-	assetSyncInfo.Meta = &Meta
+	m := api.Meta{}
+	m.GetMetaFromStr(string(meta.GetData()))
+	assetSyncInfo.Meta = &m.Description
 	//获取组信息
 	if response.Leaves[0].Asset.AssetGroup != nil {
 		groupKey := hex.EncodeToString(response.Leaves[0].Asset.AssetGroup.RawGroupKey)
 		assetSyncInfo.GroupKey = &groupKey
-		m := api.Meta{}
-		m.GetMetaFromStr(string(meta.GetData()))
 		if m.GroupName != "" {
 			assetSyncInfo.GroupName = &m.GroupName
 		}
