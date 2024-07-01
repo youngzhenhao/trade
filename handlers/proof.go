@@ -94,7 +94,7 @@ func SyncAssetInfo(c *gin.Context) {
 		AssetId:      assetSyncInfo.AssetId,
 		Name:         assetSyncInfo.Name,
 		Point:        assetSyncInfo.Point,
-		AssetType:    models.AssetType_name[int32(assetSyncInfo.AssetType)],
+		AssetType:    models.AssetType_name[assetSyncInfo.AssetType],
 		GroupName:    assetSyncInfo.GroupName,
 		GroupKey:     assetSyncInfo.GroupKey,
 		Amount:       assetSyncInfo.Amount,
