@@ -30,3 +30,14 @@ const (
 	AssettypeNormal AssetType = iota
 	AssetTypeNFT
 )
+
+var (
+	AssetType_name = map[AssetType]string{
+		AssettypeNormal: "NORMAL",
+		AssetTypeNFT:    "COLLECTIBLE",
+	}
+	AssetType_value = map[string]AssetType{
+		"NORMAL":      AssettypeNormal,
+		"COLLECTIBLE": AssetTypeNFT,
+	}
+)

@@ -79,22 +79,22 @@ func SyncAssetInfo(c *gin.Context) {
 		return
 	}
 	r := struct {
-		AssetId      string           `json:"asset_Id"`
-		Name         string           `json:"name"`
-		Point        string           `json:"point"`
-		AssetType    models.AssetType `json:"assetType"`
-		GroupName    *string          `json:"group_name"`
-		GroupKey     *string          `json:"group_key"`
-		Amount       uint64           `json:"amount"`
-		Meta         *string          `json:"meta"`
-		CreateHeight int64            `json:"create_height"`
-		CreateTime   int64            `json:"create_time"`
-		Universe     string           `json:"universe"`
+		AssetId      string  `json:"asset_Id"`
+		Name         string  `json:"name"`
+		Point        string  `json:"point"`
+		AssetType    string  `json:"assetType"`
+		GroupName    *string `json:"group_name"`
+		GroupKey     *string `json:"group_key"`
+		Amount       uint64  `json:"amount"`
+		Meta         *string `json:"meta"`
+		CreateHeight int64   `json:"create_height"`
+		CreateTime   int64   `json:"create_time"`
+		Universe     string  `json:"universe"`
 	}{
 		AssetId:      assetSyncInfo.AssetId,
 		Name:         assetSyncInfo.Name,
 		Point:        assetSyncInfo.Point,
-		AssetType:    assetSyncInfo.AssetType,
+		AssetType:    models.AssetType_name[int32(assetSyncInfo.AssetType)],
 		GroupName:    assetSyncInfo.GroupName,
 		GroupKey:     assetSyncInfo.GroupKey,
 		Amount:       assetSyncInfo.Amount,
