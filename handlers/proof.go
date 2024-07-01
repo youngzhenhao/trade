@@ -58,8 +58,8 @@ func DownloadProof2(c *gin.Context) {
 	}
 }
 
-// SycnAssetInfo 拉取资产同步信息
-func SycnAssetInfo(c *gin.Context) {
+// SyncAssetInfo 拉取资产同步信息
+func SyncAssetInfo(c *gin.Context) {
 	req := assetsyncinfo.SyncInfoRequest{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -78,5 +78,30 @@ func SycnAssetInfo(c *gin.Context) {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": fmt.Errorf("server error")})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"accountModel": assetSyncInfo})
+	r := struct {
+		AssetId      string           `json:"asset_Id"`
+		Name         string           `json:"name"`
+		Point        string           `json:"point"`
+		AssetType    models.AssetType `json:"assetType"`
+		GroupName    *string          `json:"group_name"`
+		GroupKey     *string          `json:"group_key"`
+		Amount       uint64           `json:"amount"`
+		Meta         *string          `json:"meta"`
+		CreateHeight int64            `json:"create_height"`
+		CreateTime   int64            `json:"create_time"`
+		Universe     string           `json:"universe"`
+	}{
+		AssetId:      assetSyncInfo.AssetId,
+		Name:         assetSyncInfo.Name,
+		Point:        assetSyncInfo.Point,
+		AssetType:    assetSyncInfo.AssetType,
+		GroupName:    assetSyncInfo.GroupName,
+		GroupKey:     assetSyncInfo.GroupKey,
+		Amount:       assetSyncInfo.Amount,
+		Meta:         assetSyncInfo.Meta,
+		CreateHeight: assetSyncInfo.CreateHeight,
+		CreateTime:   assetSyncInfo.CreateTime.Unix(),
+		Universe:     assetSyncInfo.Universe,
+	}
+	c.JSON(http.StatusOK, gin.H{"sync_asset_info": r})
 }
