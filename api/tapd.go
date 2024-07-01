@@ -183,7 +183,14 @@ func SyncAssetIssuanceAndGetResponse(universeHost string, assetId string) (*univ
 }
 
 func SyncAssetIssuance(assetId string) error {
-	universeHost := config.GetLoadConfig().ApiConfig.Tapd.UniverseHost
+	var universeHost string
+	switch config.GetLoadConfig().NetWork {
+	case "mainnet":
+		universeHost = "mainnet.universe.lightning.finance:10029"
+	case "testnet":
+	case "regtest":
+	default:
+	}
 	_, err := SyncAssetIssuanceAndGetResponse(universeHost, assetId)
 	return err
 }

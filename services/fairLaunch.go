@@ -1084,7 +1084,7 @@ func FairLaunchTapdMint(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	if fairLaunchInfo.AssetType == taprpc.AssetType_COLLECTIBLE {
 		isCollectible = true
 	}
-	newMeta := api.NewMeta(fairLaunchInfo.Description, fairLaunchInfo.ImageData)
+	newMeta := api.NewMetaWithImageStr(fairLaunchInfo.Description, fairLaunchInfo.ImageData)
 	mintResponse, err := api.MintAssetAndGetResponse(fairLaunchInfo.Name, isCollectible, newMeta, fairLaunchInfo.Amount, false)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "MintAssetAndGetResponse")

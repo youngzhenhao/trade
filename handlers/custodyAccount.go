@@ -62,6 +62,7 @@ func ApplyInvoice(c *gin.Context) {
 	apply := services.ApplyRequest{}
 	if err = c.ShouldBindJSON(&apply); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
 	}
 	if apply.Amount <= 0 {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "发票信息不合法"})
@@ -90,6 +91,7 @@ func QueryInvoice(c *gin.Context) {
 	}{}
 	if err := c.ShouldBindJSON(&invoiceRequest); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Request is erro"})
+		return
 	}
 
 	// 查询账户发票
@@ -152,6 +154,7 @@ func QueryBalance(c *gin.Context) {
 	balance, err := services.QueryAccountBalanceByUserId(user.ID)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"balance": balance})
 }
@@ -170,12 +173,14 @@ func QueryPayment(c *gin.Context) {
 	query := services.PaymentRequest{}
 	if err := c.ShouldBindJSON(&query); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
 	}
 
 	// 查询交易记录
 	payments, err := services.QueryPaymentByUserId(user.ID, query.AssetId)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"payments": payments})
 

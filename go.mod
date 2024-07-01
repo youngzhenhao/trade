@@ -5,9 +5,7 @@ go 1.22.4
 replace google.golang.org/protobuf => github.com/lightninglabs/protobuf-go-hex-display v1.33.0-hex-display
 
 require (
-	github.com/boltdb/bolt v1.3.1
 	github.com/btcsuite/btcd v0.24.2
-	github.com/btcsuite/btcd/btcec/v2 v2.3.3
 	github.com/btcsuite/btcd/btcutil v1.1.5
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -20,7 +18,6 @@ require (
 	github.com/lightningnetwork/lnd v0.18.0-beta.rc3.0.20240604145823-53dbd1ee66d0
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/stretchr/testify v1.9.0
 	github.com/vincent-petithory/dataurl v1.0.0
 	golang.org/x/crypto v0.24.0
 	google.golang.org/grpc v1.64.0
@@ -39,6 +36,7 @@ require (
 	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da // indirect
 	github.com/aead/siphash v1.0.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/btcsuite/btcd/btcec/v2 v2.3.3 // indirect
 	github.com/btcsuite/btcd/btcutil/psbt v1.1.9 // indirect
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
 	github.com/btcsuite/btcwallet v0.16.10-0.20240410030101-6fe19a472a62 // indirect
@@ -119,6 +117,7 @@ require (
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/lightninglabs/faraday v0.2.13-alpha // indirect
 	github.com/lightninglabs/gozmq v0.0.0-20191113021534-d20a764486bf // indirect
+	github.com/lightninglabs/lightning-node-connect/hashmailrpc v1.0.2 // indirect
 	github.com/lightninglabs/lndclient v1.0.1-0.20240604150101-6b56ac87a4fa // indirect
 	github.com/lightninglabs/loop v0.28.1-beta // indirect
 	github.com/lightninglabs/loop/swapserverrpc v1.0.7 // indirect
@@ -162,6 +161,7 @@ require (
 	github.com/soheilhy/cmux v0.1.5 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect

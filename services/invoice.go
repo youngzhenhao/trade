@@ -11,7 +11,7 @@ func CreateInvoice(invoice *models.Invoice) error {
 	return middleware.DB.Create(invoice).Error
 }
 
-// GetInvoice retrieves an invoice by ID
+// GetInvoice retrieves an invoice by Id
 func GetInvoice(id uint) (*models.Invoice, error) {
 	var invoice models.Invoice
 	err := middleware.DB.First(&invoice, id).Error
@@ -30,7 +30,7 @@ func UpdateInvoice(db *gorm.DB, invoice *models.Invoice) error {
 	return db.Save(invoice).Error
 }
 
-// DeleteInvoice soft deletes an invoice by ID
+// DeleteInvoice soft deletes an invoice by Id
 func DeleteInvoice(id uint) error {
 	var invoice models.Invoice
 	return middleware.DB.Delete(&invoice, id).Error

@@ -31,7 +31,7 @@ func CreateUser(user *models.User) error {
 	return middleware.DB.Create(user).Error
 }
 
-// ReadUser retrieves a user by ID
+// ReadUser retrieves a user by Id
 func ReadUser(id uint) (*models.User, error) {
 	var user models.User
 	err := middleware.DB.First(&user, id).Error
@@ -50,7 +50,7 @@ func UpdateUser(user *models.User) error {
 	return middleware.DB.Save(user).Error
 }
 
-// DeleteUser soft deletes a user by ID
+// DeleteUser soft deletes a user by Id
 func DeleteUser(id uint) error {
 	var user models.User
 	return middleware.DB.Delete(&user, id).Error

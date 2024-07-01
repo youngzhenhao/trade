@@ -10,14 +10,14 @@ func CreateAccount(account *models.Account) error {
 	return middleware.DB.Create(account).Error
 }
 
-// ReadAccount retrieves an account by ID
+// ReadAccount retrieves an account by Id
 func ReadAccount(id uint) (*models.Account, error) {
 	var account models.Account
 	err := middleware.DB.First(&account, id).Error
 	return &account, err
 }
 
-// ReadAccountByUserId retrieves an account by user ID
+// ReadAccountByUserId retrieves an account by user Id
 func ReadAccountByUserId(userId uint) (*models.Account, error) {
 	var account models.Account
 	err := middleware.DB.Where("user_id =?", userId).First(&account).Error

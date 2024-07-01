@@ -11,12 +11,22 @@ type Meta struct {
 	Acronym     string `json:"acronym,omitempty"`
 	Description string `json:"description,omitempty"`
 	ImageData   string `json:"image_data,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Email       string `json:"email,omitempty"`
+	GroupName   string `json:"groupName,omitempty"`
 }
 
-func NewMeta(description string, imageData string) *Meta {
+func NewMetaWithImageStr(description string, imageData string) *Meta {
 	meta := Meta{
 		Description: description,
 		ImageData:   imageData,
+	}
+	return &meta
+}
+
+func NewMeta(description string) *Meta {
+	meta := Meta{
+		Description: description,
 	}
 	return &meta
 }

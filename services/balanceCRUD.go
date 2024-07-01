@@ -10,7 +10,7 @@ func CreateBalance(balance *models.Balance) error {
 	return middleware.DB.Create(balance).Error
 }
 
-// ReadBalance retrieves a balance by ID
+// ReadBalance retrieves a balance by Id
 func ReadBalance(id uint) (*models.Balance, error) {
 	var balance models.Balance
 	err := middleware.DB.First(&balance, id).Error
@@ -22,7 +22,7 @@ func UpdateBalance(balance *models.Balance) error {
 	return middleware.DB.Save(balance).Error
 }
 
-// DeleteBalance soft deletes a balance by ID
+// DeleteBalance soft deletes a balance by Id
 func DeleteBalance(id uint) error {
 	var balance models.Balance
 	return middleware.DB.Delete(&balance, id).Error

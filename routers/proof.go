@@ -12,6 +12,7 @@ func SetupProofRouter(router *gin.Engine) *gin.Engine {
 	{
 		proof.GET("/download/:asset_id/:proof_name", handlers.DownloadProof)
 		proof.POST("/download2/:asset_id/:proof_name", handlers.DownloadProof2)
+		proof.POST("/sync_info", handlers.SycnAssetInfo)
 	}
 	return router
 }
