@@ -28,6 +28,11 @@ func SetupBitcoindMainnetRouter(router *gin.Engine) *gin.Engine {
 			transaction.GET("/outpoint/:op", handlers.GetTransactionByOutpointInMainnet)
 			transaction.POST("/outpoints", handlers.GetTransactionsByOutpointSliceInMainnet)
 		}
+		decode := mainnet.Group("/decode")
+		{
+			decode.GET("/transaction/:tx", handlers.DecodeTransactionInMainnet)
+			decode.POST("/transactions", handlers.DecodeTransactionSliceInMainnet)
+		}
 	}
 	return router
 }
@@ -47,6 +52,11 @@ func SetupBitcoindTestnetRouter(router *gin.Engine) *gin.Engine {
 			transaction.GET("/outpoint/:op", handlers.GetTransactionByOutpointInTestnet)
 			transaction.POST("/outpoints", handlers.GetTransactionsByOutpointSliceInTestnet)
 		}
+		decode := testnet.Group("/decode")
+		{
+			decode.GET("/transaction/:tx", handlers.DecodeTransactionInTestnet)
+			decode.POST("/transactions", handlers.DecodeTransactionSliceInTestnet)
+		}
 	}
 	return router
 }
@@ -65,6 +75,11 @@ func SetupBitcoindRegtestRouter(router *gin.Engine) *gin.Engine {
 		{
 			transaction.GET("/outpoint/:op", handlers.GetTransactionByOutpointInRegtest)
 			transaction.POST("/outpoints", handlers.GetTransactionsByOutpointSliceInRegtest)
+		}
+		decode := regtest.Group("/decode")
+		{
+			decode.GET("/transaction/:tx", handlers.DecodeTransactionInRegtest)
+			decode.POST("/transactions", handlers.DecodeTransactionSliceInRegtest)
 		}
 	}
 	return router
