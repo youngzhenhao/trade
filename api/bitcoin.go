@@ -229,6 +229,38 @@ func GetTransactionsBatchProcess(network models.Network, outpoints []string) (*[
 	return response, nil
 }
 
+// GetTransactionsByOutpointSlice
+// Handlers call
 func GetTransactionsByOutpointSlice(network models.Network, outpoints []string) (*[]PostGetRawTransactionResponse, error) {
 	return GetTransactionsBatchProcess(network, outpoints)
+}
+
+func ProcessDecodeRawTransactions(response *[]PostDecodeRawTransactionResponse) *[]PostDecodeRawTransactionResponse {
+	var result []PostDecodeRawTransactionResponse
+	for _, transaction := range *response {
+		if transaction.Result == nil || transaction.Error != nil {
+			continue
+		}
+		result = append(result, transaction)
+	}
+	return &result
+}
+
+func PostDecodeRawTransactions(network models.Network, rawTransactions []string) (*[]PostDecodeRawTransactionResponse, error) {
+	response, err := postDecodeRawTransactions(network, rawTransactions)
+	if err != nil {
+		return nil, err
+	}
+	result := ProcessDecodeRawTransactions(response)
+	return result, nil
+}
+
+// DecodeRawTransactionSlice
+// Handlers call
+func DecodeRawTransactionSlice(network models.Network, rawTransactions []string) (*[]PostDecodeRawTransactionResponse, error) {
+	return PostDecodeRawTransactions(network, rawTransactions)
+}
+
+func DecodeRawTransaction(network models.Network, rawTransaction string) (*PostDecodeRawTransactionResponse, error) {
+	return postDecodeRawTransaction(network, rawTransaction)
 }

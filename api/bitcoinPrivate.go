@@ -262,11 +262,11 @@ func getRawTransactionAndDecodeOutputScript(txid string) (err error) {
 
 type PostGetRawTransactionResponse struct {
 	Result *PostGetRawTransactionResult `json:"result"`
-	Error  *PostGetRawTransactionError  `json:"error"`
+	Error  *BitcoindRpcResponseError    `json:"error"`
 	ID     string                       `json:"id"`
 }
 
-type PostGetRawTransactionError struct {
+type BitcoindRpcResponseError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
@@ -369,27 +369,6 @@ func getUri(network models.Network) (string, error) {
 	return uri, nil
 }
 
-func outpointSliceToRequestBodyRawString(outpoints []string, verbosity Verbosity) (request string) {
-	request = "["
-	for i, outpoint := range outpoints {
-		txid, indexStr := OutpointToTransactionAndIndex(outpoint)
-		if txid == "" || indexStr == "" {
-			continue
-		}
-		_, err := strconv.Atoi(indexStr)
-		if err != nil {
-			continue
-		}
-		element := fmt.Sprintf("{\"jsonrpc\":\"1.0\",\"id\":\"%s\",\"method\":\"getrawtransaction\",\"params\":[\"%s\",%d]}", outpoint, txid, verbosity)
-		request += element
-		if i != len(outpoints)-1 {
-			request += ","
-		}
-	}
-	request += "]"
-	return request
-}
-
 func postGetRawTransaction(network models.Network, txid string, verbosity Verbosity) (result *PostGetRawTransactionResult, err error) {
 	uri, err := getUri(network)
 	if err != nil {
@@ -428,12 +407,11 @@ func postGetRawTransaction(network models.Network, txid string, verbosity Verbos
 	return response.Result, nil
 }
 
-func postGetRawTransactions(network models.Network, outpoints []string, verbosity Verbosity) (*[]PostGetRawTransactionResponse, error) {
+func postCallBitcoindToGetRawTransaction(network models.Network, requestBodyRaw string) (*[]PostGetRawTransactionResponse, error) {
 	uri, err := getUri(network)
 	if err != nil {
 		return nil, err
 	}
-	requestBodyRaw := outpointSliceToRequestBodyRawString(outpoints, verbosity)
 	payload := strings.NewReader(requestBodyRaw)
 	req, err := http.NewRequest("POST", uri, payload)
 	if err != nil {
@@ -464,6 +442,177 @@ func postGetRawTransactions(network models.Network, outpoints []string, verbosit
 			return nil, err
 		}
 		response = append(response, responseSingle)
+	}
+	return &response, nil
+}
+
+func postCallBitcoindToDecodeRawTransaction(network models.Network, requestBodyRaw string) (*[]PostDecodeRawTransactionResponse, error) {
+	uri, err := getUri(network)
+	if err != nil {
+		return nil, err
+	}
+	payload := strings.NewReader(requestBodyRaw)
+	req, err := http.NewRequest("POST", uri, payload)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("content-type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	var response []PostDecodeRawTransactionResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		var responseSingle PostDecodeRawTransactionResponse
+		err = json.Unmarshal(body, &responseSingle)
+		if err != nil {
+			return nil, err
+		}
+		response = append(response, responseSingle)
+	}
+	return &response, nil
+}
+
+func outpointSliceToRequestBodyRawString(outpoints []string, verbosity Verbosity) (request string) {
+	request = "["
+	for i, outpoint := range outpoints {
+		txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+		if txid == "" || indexStr == "" {
+			continue
+		}
+		_, err := strconv.Atoi(indexStr)
+		if err != nil {
+			continue
+		}
+		element := fmt.Sprintf("{\"jsonrpc\":\"1.0\",\"id\":\"%s\",\"method\":\"getrawtransaction\",\"params\":[\"%s\",%d]}", outpoint, txid, verbosity)
+		request += element
+		if i != len(outpoints)-1 {
+			request += ","
+		}
+	}
+	request += "]"
+	return request
+}
+
+func postGetRawTransactions(network models.Network, outpoints []string, verbosity Verbosity) (*[]PostGetRawTransactionResponse, error) {
+	requestBodyRaw := outpointSliceToRequestBodyRawString(outpoints, verbosity)
+	response, err := postCallBitcoindToGetRawTransaction(network, requestBodyRaw)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func rawTransactionHexSliceToRequestBodyRawString(rawTransactions []string) (request string) {
+	request = "["
+	for i, transaction := range rawTransactions {
+		element := fmt.Sprintf("{\"jsonrpc\":\"1.0\",\"id\":\"%s\",\"method\":\"decoderawtransaction\",\"params\":[\"%s\"]}", transaction, transaction)
+		request += element
+		if i != len(rawTransactions)-1 {
+			request += ","
+		}
+	}
+	request += "]"
+	return request
+}
+
+func postDecodeRawTransactions(network models.Network, rawTransactions []string) (*[]PostDecodeRawTransactionResponse, error) {
+	requestBodyRaw := rawTransactionHexSliceToRequestBodyRawString(rawTransactions)
+	response, err := postCallBitcoindToDecodeRawTransaction(network, requestBodyRaw)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+type PostDecodeRawTransactionResponse struct {
+	Result *PostDecodeRawTransactionResult `json:"result"`
+	Error  *BitcoindRpcResponseError       `json:"error"`
+	ID     string                          `json:"id"`
+}
+
+type PostDecodeRawTransactionResult struct {
+	Txid     string                           `json:"txid"`
+	Hash     string                           `json:"hash"`
+	Version  int                              `json:"version"`
+	Size     int                              `json:"size"`
+	Vsize    int                              `json:"vsize"`
+	Weight   int                              `json:"weight"`
+	Locktime int                              `json:"locktime"`
+	Vin      []DecodeRawTransactionResultVin  `json:"vin"`
+	Vout     []DecodeRawTransactionResultVout `json:"vout"`
+}
+
+type DecodeRawTransactionResultVin struct {
+	Txid        string                                 `json:"txid"`
+	Vout        int                                    `json:"vout"`
+	ScriptSig   DecodeRawTransactionResultVinScriptSig `json:"scriptSig"`
+	Txinwitness []string                               `json:"txinwitness"`
+	Sequence    int64                                  `json:"sequence"`
+}
+
+type DecodeRawTransactionResultVinScriptSig struct {
+	Asm string `json:"asm"`
+	Hex string `json:"hex"`
+}
+
+type DecodeRawTransactionResultVout struct {
+	Value        float64                                    `json:"value"`
+	N            int                                        `json:"n"`
+	ScriptPubKey DecodeRawTransactionResultVoutScriptPubKey `json:"scriptPubKey"`
+}
+
+type DecodeRawTransactionResultVoutScriptPubKey struct {
+	Asm     string `json:"asm"`
+	Desc    string `json:"desc"`
+	Hex     string `json:"hex"`
+	Address string `json:"address"`
+	Type    string `json:"type"`
+}
+
+func postDecodeRawTransaction(network models.Network, transaction string) (*PostDecodeRawTransactionResponse, error) {
+	uri, err := getUri(network)
+	if err != nil {
+		return nil, err
+	}
+	request := fmt.Sprintf("{\"jsonrpc\":\"1.0\",\"id\":\"%s\",\"method\":\"decoderawtransaction\",\"params\":[\"%s\"]}", transaction, transaction)
+	payload := strings.NewReader(request)
+	req, err := http.NewRequest("POST", uri, payload)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("content-type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	var response PostDecodeRawTransactionResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
 	}
 	return &response, nil
 }

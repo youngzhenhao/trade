@@ -163,6 +163,66 @@ func GetAddressesByOutpointSliceInRegtest(c *gin.Context) {
 	})
 }
 
+func GetTransactionByOutpointInMainnet(c *gin.Context) {
+	outpoint := c.Param("op")
+	transaction, err := api.GetTransactionByOutpoint(models.Mainnet, outpoint)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAddressByOutpointErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    transaction,
+	})
+}
+
+func GetTransactionByOutpointInTestnet(c *gin.Context) {
+	outpoint := c.Param("op")
+	transaction, err := api.GetTransactionByOutpoint(models.Testnet, outpoint)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAddressByOutpointErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    transaction,
+	})
+}
+
+func GetTransactionByOutpointInRegtest(c *gin.Context) {
+	outpoint := c.Param("op")
+	transaction, err := api.GetTransactionByOutpoint(models.Regtest, outpoint)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAddressByOutpointErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    transaction,
+	})
+}
+
 func GetTransactionsByOutpointSliceInMainnet(c *gin.Context) {
 	var outpointSlice struct {
 		Outpoints []string `json:"outpoints"`
@@ -259,14 +319,110 @@ func GetTransactionsByOutpointSliceInRegtest(c *gin.Context) {
 	})
 }
 
-func GetTransactionByOutpointInMainnet(c *gin.Context) {
-	outpoint := c.Param("op")
-	transaction, err := api.GetTransactionByOutpoint(models.Mainnet, outpoint)
+func DecodeTransactionSliceInMainnet(c *gin.Context) {
+	var transactionSlice struct {
+		Transactions []string `json:"transactions"`
+	}
+	err := c.ShouldBindJSON(&transactionSlice)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAddressByOutpointErr,
+			Code:    models.ShouldBindJsonErr,
+			Data:    "",
+		})
+		return
+	}
+	transactions, err := api.DecodeRawTransactionSlice(models.Mainnet, transactionSlice.Transactions)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.DecodeRawTransactionSliceErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    transactions,
+	})
+}
+
+func DecodeTransactionSliceInTestnet(c *gin.Context) {
+	var transactionSlice struct {
+		Transactions []string `json:"transactions"`
+	}
+	err := c.ShouldBindJSON(&transactionSlice)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    "",
+		})
+		return
+	}
+	transactions, err := api.DecodeRawTransactionSlice(models.Testnet, transactionSlice.Transactions)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.DecodeRawTransactionSliceErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    transactions,
+	})
+}
+
+func DecodeTransactionSliceInRegtest(c *gin.Context) {
+	var transactionSlice struct {
+		Transactions []string `json:"transactions"`
+	}
+	err := c.ShouldBindJSON(&transactionSlice)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    "",
+		})
+		return
+	}
+	transactions, err := api.DecodeRawTransactionSlice(models.Regtest, transactionSlice.Transactions)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.DecodeRawTransactionSliceErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    transactions,
+	})
+}
+
+func DecodeTransactionInMainnet(c *gin.Context) {
+	rawTransaction := c.Param("tx")
+	transaction, err := api.DecodeRawTransaction(models.Mainnet, rawTransaction)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.DecodeRawTransactionErr,
 			Data:    nil,
 		})
 		return
@@ -279,14 +435,14 @@ func GetTransactionByOutpointInMainnet(c *gin.Context) {
 	})
 }
 
-func GetTransactionByOutpointInTestnet(c *gin.Context) {
-	outpoint := c.Param("op")
-	transaction, err := api.GetTransactionByOutpoint(models.Testnet, outpoint)
+func DecodeTransactionInTestnet(c *gin.Context) {
+	rawTransaction := c.Param("tx")
+	transaction, err := api.DecodeRawTransaction(models.Testnet, rawTransaction)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAddressByOutpointErr,
+			Code:    models.DecodeRawTransactionErr,
 			Data:    nil,
 		})
 		return
@@ -299,14 +455,14 @@ func GetTransactionByOutpointInTestnet(c *gin.Context) {
 	})
 }
 
-func GetTransactionByOutpointInRegtest(c *gin.Context) {
-	outpoint := c.Param("op")
-	transaction, err := api.GetTransactionByOutpoint(models.Regtest, outpoint)
+func DecodeTransactionInRegtest(c *gin.Context) {
+	rawTransaction := c.Param("tx")
+	transaction, err := api.DecodeRawTransaction(models.Regtest, rawTransaction)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAddressByOutpointErr,
+			Code:    models.DecodeRawTransactionErr,
 			Data:    nil,
 		})
 		return
