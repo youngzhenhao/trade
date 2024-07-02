@@ -42,6 +42,7 @@ const (
 	DecodeRawTransactionSliceErr
 	DecodeRawTransactionErr
 	GetRawTransactionsByTxidsErr
+	GenerateBlocksErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

@@ -1,7 +1,6 @@
 package services
 
 import (
-	"gorm.io/gorm"
 	"trade/api"
 	"trade/models"
 	"trade/utils"
@@ -14,7 +13,6 @@ func ProcessAssetTransfer(userId int, assetTransferSetRequest *models.AssetTrans
 		return nil, errorAppendInfo(utils.ToLowerWords("GetAssetInfo"))
 	}
 	assetTransfer := models.AssetTransfer{
-		Model:             gorm.Model{},
 		AssetID:           assetTransferSetRequest.AssetID,
 		AssetName:         assetInfo.Name,
 		AssetType:         assetInfo.AssetType,

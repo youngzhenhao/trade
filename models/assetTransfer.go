@@ -8,7 +8,7 @@ import (
 type AssetTransferType int
 
 const (
-	AssetTransferTypeOut = iota
+	AssetTransferTypeOut AssetTransferType = iota
 	AssetTransferTypeIn
 )
 

@@ -43,6 +43,7 @@ type Config struct {
 		BtcBalance     bool `yaml:"btc_balance" json:"btc_balance"`
 		AssetTransfer  bool `yaml:"asset_transfer" json:"asset_transfer"`
 		Bitcoind       bool `yaml:"bitcoind" json:"bitcoind"`
+		Shell          bool `yaml:"shell" json:"shell"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {

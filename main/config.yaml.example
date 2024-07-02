@@ -30,6 +30,7 @@ router_disable:
     btc_balance: false
     asset_transfer: false
     bitcoind: false
+    shell: false
 api_config:
     lnd:
         host: ""
