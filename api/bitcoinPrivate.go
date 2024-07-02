@@ -616,3 +616,19 @@ func postDecodeRawTransaction(network models.Network, transaction string) (*Post
 	}
 	return &response, nil
 }
+
+func txidsToRequestBodyRawString(txids []string, verbosity Verbosity) (request string) {
+	request = "["
+	for i, txid := range txids {
+		if txid == "" {
+			continue
+		}
+		element := fmt.Sprintf("{\"jsonrpc\":\"1.0\",\"id\":\"%s\",\"method\":\"getrawtransaction\",\"params\":[\"%s\",%d]}", txid, txid, verbosity)
+		request += element
+		if i != len(txids)-1 {
+			request += ","
+		}
+	}
+	request += "]"
+	return request
+}

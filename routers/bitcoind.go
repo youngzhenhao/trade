@@ -32,6 +32,7 @@ func SetupBitcoindMainnetRouter(router *gin.Engine) *gin.Engine {
 		{
 			decode.GET("/transaction/:tx", handlers.DecodeTransactionInMainnet)
 			decode.POST("/transactions", handlers.DecodeTransactionSliceInMainnet)
+			decode.POST("/query/transactions", handlers.DecodeAndQueryTransactionSliceInMainnet)
 		}
 	}
 	return router
@@ -56,6 +57,7 @@ func SetupBitcoindTestnetRouter(router *gin.Engine) *gin.Engine {
 		{
 			decode.GET("/transaction/:tx", handlers.DecodeTransactionInTestnet)
 			decode.POST("/transactions", handlers.DecodeTransactionSliceInTestnet)
+			decode.POST("/query/transactions", handlers.DecodeAndQueryTransactionSliceInTestnet)
 		}
 	}
 	return router
@@ -80,6 +82,7 @@ func SetupBitcoindRegtestRouter(router *gin.Engine) *gin.Engine {
 		{
 			decode.GET("/transaction/:tx", handlers.DecodeTransactionInRegtest)
 			decode.POST("/transactions", handlers.DecodeTransactionSliceInRegtest)
+			decode.POST("/query/transactions", handlers.DecodeAndQueryTransactionSliceInRegtest)
 		}
 	}
 	return router

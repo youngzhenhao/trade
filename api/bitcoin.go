@@ -264,3 +264,20 @@ func DecodeRawTransactionSlice(network models.Network, rawTransactions []string)
 func DecodeRawTransaction(network models.Network, rawTransaction string) (*PostDecodeRawTransactionResponse, error) {
 	return postDecodeRawTransaction(network, rawTransaction)
 }
+
+func GetTxidsFromTransactions(transactions *[]PostDecodeRawTransactionResponse) []string {
+	txids := make([]string, 0)
+	for _, transaction := range *transactions {
+		txids = append(txids, transaction.Result.Txid)
+	}
+	return txids
+}
+
+func GetRawTransactionsByTxids(network models.Network, txids []string) (*[]PostGetRawTransactionResponse, error) {
+	requestBodyRaw := txidsToRequestBodyRawString(txids, VerbosityJsonWithFeeAndPrevout)
+	response, err := postCallBitcoindToGetRawTransaction(network, requestBodyRaw)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}

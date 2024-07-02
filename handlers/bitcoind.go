@@ -474,3 +474,132 @@ func DecodeTransactionInRegtest(c *gin.Context) {
 		Data:    transaction,
 	})
 }
+
+func DecodeAndQueryTransactionSliceInMainnet(c *gin.Context) {
+	var transactionSlice struct {
+		Transactions []string `json:"transactions"`
+	}
+	err := c.ShouldBindJSON(&transactionSlice)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    "",
+		})
+		return
+	}
+	transactions, err := api.DecodeRawTransactionSlice(models.Mainnet, transactionSlice.Transactions)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.DecodeRawTransactionSliceErr,
+			Data:    nil,
+		})
+		return
+	}
+	txids := api.GetTxidsFromTransactions(transactions)
+	rawTransactions, err := api.GetRawTransactionsByTxids(models.Mainnet, txids)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetRawTransactionsByTxidsErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    rawTransactions,
+	})
+}
+
+func DecodeAndQueryTransactionSliceInTestnet(c *gin.Context) {
+	var transactionSlice struct {
+		Transactions []string `json:"transactions"`
+	}
+	err := c.ShouldBindJSON(&transactionSlice)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    "",
+		})
+		return
+	}
+	transactions, err := api.DecodeRawTransactionSlice(models.Testnet, transactionSlice.Transactions)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.DecodeRawTransactionSliceErr,
+			Data:    nil,
+		})
+		return
+	}
+	txids := api.GetTxidsFromTransactions(transactions)
+	rawTransactions, err := api.GetRawTransactionsByTxids(models.Testnet, txids)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetRawTransactionsByTxidsErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    rawTransactions,
+	})
+}
+
+func DecodeAndQueryTransactionSliceInRegtest(c *gin.Context) {
+	var transactionSlice struct {
+		Transactions []string `json:"transactions"`
+	}
+	err := c.ShouldBindJSON(&transactionSlice)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    "",
+		})
+		return
+	}
+	transactions, err := api.DecodeRawTransactionSlice(models.Regtest, transactionSlice.Transactions)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.DecodeRawTransactionSliceErr,
+			Data:    nil,
+		})
+		return
+	}
+	txids := api.GetTxidsFromTransactions(transactions)
+	rawTransactions, err := api.GetRawTransactionsByTxids(models.Regtest, txids)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetRawTransactionsByTxidsErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    rawTransactions,
+	})
+}

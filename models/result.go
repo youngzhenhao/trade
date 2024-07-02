@@ -41,6 +41,7 @@ const (
 	GetAddressesByOutpointSliceErr
 	DecodeRawTransactionSliceErr
 	DecodeRawTransactionErr
+	GetRawTransactionsByTxidsErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
