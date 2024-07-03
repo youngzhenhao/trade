@@ -48,7 +48,7 @@ func GetAssetSyncInfo(req *SyncInfoRequest) (*models.AssetSyncInfo, error) {
 	}
 	// 如果资产同步信息不存在，则调用资产查询接口获取资产同步信息并更新数据库
 	assetSyncInfo, err := getAssetInfoFromLeaves(req.Id)
-	if err != nil && errors.Is(err, AssetNotFoundErr) {
+	if err != nil && !errors.Is(err, AssetNotFoundErr) {
 		return nil, err
 	}
 	// 更新数据库
