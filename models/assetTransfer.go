@@ -12,8 +12,60 @@ const (
 	AssetTransferTypeIn
 )
 
-type AssetTransferProcessed struct {
+// @dev: DB
+
+type AssetTransferProcessedDb struct {
 	gorm.Model
+	Txid               string `json:"txid" gorm:"type:varchar(255)"`
+	AssetID            string `json:"asset_id" gorm:"type:varchar(255)"`
+	TransferTimestamp  int    `json:"transfer_timestamp"`
+	AnchorTxHash       string `json:"anchor_tx_hash" gorm:"type:varchar(255)"`
+	AnchorTxHeightHint int    `json:"anchor_tx_height_hint"`
+	AnchorTxChainFees  int    `json:"anchor_tx_chain_fees"`
+	Inputs             int    `json:"inputs"`
+	Outputs            int    `json:"outputs"`
+	UserID             int    `json:"user_id"`
+	Status             int    `json:"status" gorm:"default:1"`
+}
+
+type AssetTransferProcessedInputDb struct {
+	gorm.Model
+	Txid        string `json:"txid" gorm:"type:varchar(255)"`
+	Index       int    `json:"index" gorm:"index"`
+	Address     string `json:"address" gorm:"type:varchar(255)"`
+	Amount      int    `json:"amount"`
+	AnchorPoint string `json:"anchor_point" gorm:"type:varchar(255)"`
+	ScriptKey   string `json:"script_key" gorm:"type:varchar(255)"`
+	UserID      int    `json:"user_id"`
+	Status      int    `json:"status" gorm:"default:1"`
+}
+
+type AssetTransferProcessedOutputDb struct {
+	gorm.Model
+	Txid                   string `json:"txid" gorm:"type:varchar(255)"`
+	Index                  int    `json:"index" gorm:"index"`
+	Address                string `json:"address" gorm:"type:varchar(255)"`
+	Amount                 int    `json:"amount"`
+	AnchorOutpoint         string `json:"anchor_outpoint" gorm:"type:varchar(255)"`
+	AnchorValue            int    `json:"anchor_value"`
+	AnchorInternalKey      string `json:"anchor_internal_key" gorm:"type:varchar(255)"`
+	AnchorTaprootAssetRoot string `json:"anchor_taproot_asset_root" gorm:"type:varchar(255)"`
+	AnchorMerkleRoot       string `json:"anchor_merkle_root" gorm:"type:varchar(255)"`
+	AnchorTapscriptSibling string `json:"anchor_tapscript_sibling" gorm:"type:varchar(255)"`
+	AnchorNumPassiveAssets int    `json:"anchor_num_passive_assets"`
+	ScriptKey              string `json:"script_key" gorm:"type:varchar(255)"`
+	ScriptKeyIsLocal       bool   `json:"script_key_is_local"`
+	NewProofBlob           string `json:"new_proof_blob"`
+	SplitCommitRootHash    string `json:"split_commit_root_hash" gorm:"type:varchar(255)"`
+	OutputType             string `json:"output_type" gorm:"type:varchar(255)"`
+	AssetVersion           string `json:"asset_version" gorm:"type:varchar(255)"`
+	UserID                 int    `json:"user_id"`
+	Status                 int    `json:"status" gorm:"default:1"`
+}
+
+// @dev: Request
+
+type AssetTransferProcessedSetRequest struct {
 	Txid               string                         `json:"txid" gorm:"type:varchar(255)"`
 	AssetID            string                         `json:"asset_id" gorm:"type:varchar(255)"`
 	TransferTimestamp  int                            `json:"transfer_timestamp"`
@@ -22,8 +74,6 @@ type AssetTransferProcessed struct {
 	AnchorTxChainFees  int                            `json:"anchor_tx_chain_fees"`
 	Inputs             []AssetTransferProcessedInput  `json:"inputs"`
 	Outputs            []AssetTransferProcessedOutput `json:"outputs"`
-	UserID             int                            `json:"user_id"`
-	Status             int                            `json:"status" gorm:"default:1"`
 }
 
 type AssetTransferProcessedInput struct {
@@ -49,17 +99,6 @@ type AssetTransferProcessedOutput struct {
 	SplitCommitRootHash    string `json:"split_commit_root_hash" gorm:"type:varchar(255)"`
 	OutputType             string `json:"output_type" gorm:"type:varchar(255)"`
 	AssetVersion           string `json:"asset_version" gorm:"type:varchar(255)"`
-}
-
-type AssetTransferProcessedSetRequest struct {
-	Txid               string                         `json:"txid" gorm:"type:varchar(255)"`
-	AssetID            string                         `json:"asset_id" gorm:"type:varchar(255)"`
-	TransferTimestamp  int                            `json:"transfer_timestamp"`
-	AnchorTxHash       string                         `json:"anchor_tx_hash" gorm:"type:varchar(255)"`
-	AnchorTxHeightHint int                            `json:"anchor_tx_height_hint"`
-	AnchorTxChainFees  int                            `json:"anchor_tx_chain_fees"`
-	Inputs             []AssetTransferProcessedInput  `json:"inputs"`
-	Outputs            []AssetTransferProcessedOutput `json:"outputs"`
 }
 
 // @dev: These models may be deprecated.

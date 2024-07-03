@@ -30,7 +30,8 @@ func SetAssetTransfer(c *gin.Context) {
 		})
 		return
 	}
-	var assetTransferProcessedSlice *[]models.AssetTransferProcessed
+	var assetTransferProcessedSlice *[]models.AssetTransferProcessedDb
+	// TODO: Store inputs and outputs in db
 	assetTransferProcessedSlice, err = services.ProcessAssetTransferProcessedSlice(userId, &assetTransferProcessedSetRequestSlice)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{

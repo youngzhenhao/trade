@@ -58,10 +58,16 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.BtcBalance{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&models.AssetTransfer{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&models.AssetSyncInfo{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&models.AssetSyncInfo{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&models.AssetTransferProcessedDb{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&models.AssetTransferProcessedInputDb{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&models.AssetTransferProcessedOutputDb{}); err != nil {
 		return err
 	}
 	return err

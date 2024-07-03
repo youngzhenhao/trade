@@ -4,29 +4,29 @@ import (
 	"trade/models"
 )
 
-func ProcessAssetTransferProcessedSlice(userId int, assetTransferSetRequestSlice *[]models.AssetTransferProcessedSetRequest) (*[]models.AssetTransferProcessed, error) {
-	var assetTransferProcessedSlice []models.AssetTransferProcessed
+func ProcessAssetTransferProcessedSlice(userId int, assetTransferSetRequestSlice *[]models.AssetTransferProcessedSetRequest) (*[]models.AssetTransferProcessedDb, error) {
+	var assetTransferProcessedSlice []models.AssetTransferProcessedDb
 	for _, assetTransferSetRequest := range *assetTransferSetRequestSlice {
-		assetTransferProcessedSlice = append(assetTransferProcessedSlice, models.AssetTransferProcessed{
+		assetTransferProcessedSlice = append(assetTransferProcessedSlice, models.AssetTransferProcessedDb{
 			Txid:               assetTransferSetRequest.Txid,
 			AssetID:            assetTransferSetRequest.AssetID,
 			TransferTimestamp:  assetTransferSetRequest.TransferTimestamp,
 			AnchorTxHash:       assetTransferSetRequest.AnchorTxHash,
 			AnchorTxHeightHint: assetTransferSetRequest.AnchorTxHeightHint,
 			AnchorTxChainFees:  assetTransferSetRequest.AnchorTxChainFees,
-			Inputs:             assetTransferSetRequest.Inputs,
-			Outputs:            assetTransferSetRequest.Outputs,
+			Inputs:             len(assetTransferSetRequest.Inputs),
+			Outputs:            len(assetTransferSetRequest.Outputs),
 			UserID:             userId,
 		})
 	}
 	return &assetTransferProcessedSlice, nil
 }
 
-func GetAssetTransferProcessedSliceByUserId(userId int) (*[]models.AssetTransferProcessed, error) {
+func GetAssetTransferProcessedSliceByUserId(userId int) (*[]models.AssetTransferProcessedDb, error) {
 	return ReadAssetTransferProcessedSliceByUserId(userId)
 }
 
-func CreateAssetTransferProcessedIfNotExistOrUpdate(assetTransferProcessed *models.AssetTransferProcessed) (err error) {
+func CreateAssetTransferProcessedIfNotExistOrUpdate(assetTransferProcessed *models.AssetTransferProcessedDb) (err error) {
 	assetTransferProcessedByTxid, err := ReadAssetTransferProcessedByTxid(assetTransferProcessed.Txid)
 	if err != nil {
 		err = CreateAssetTransferProcessed(assetTransferProcessed)
@@ -50,7 +50,7 @@ func CreateAssetTransferProcessedIfNotExistOrUpdate(assetTransferProcessed *mode
 	return UpdateAssetTransferProcessed(assetTransferProcessed)
 }
 
-func IsAssetTransferProcessedChanged(assetTransferProcessed *models.AssetTransferProcessed, old *models.AssetTransferProcessed) bool {
+func IsAssetTransferProcessedChanged(assetTransferProcessed *models.AssetTransferProcessedDb, old *models.AssetTransferProcessedDb) bool {
 	if assetTransferProcessed == nil || old == nil {
 		return true
 	}
@@ -73,11 +73,11 @@ func IsAssetTransferProcessedChanged(assetTransferProcessed *models.AssetTransfe
 		return true
 	}
 	// @dev: Only check slice length
-	if len(old.Inputs) != len(assetTransferProcessed.Inputs) {
+	if (old.Inputs) != (assetTransferProcessed.Inputs) {
 		return true
 	}
 	// @dev: Only check slice length
-	if len(old.Outputs) != len(assetTransferProcessed.Outputs) {
+	if (old.Outputs) != (assetTransferProcessed.Outputs) {
 		return true
 	}
 	if old.UserID != assetTransferProcessed.UserID {
@@ -86,7 +86,7 @@ func IsAssetTransferProcessedChanged(assetTransferProcessed *models.AssetTransfe
 	return false
 }
 
-func CreateOrUpdateAssetTransferProcessedSlice(assetTransferProcessedSlice *[]models.AssetTransferProcessed) (err error) {
+func CreateOrUpdateAssetTransferProcessedSlice(assetTransferProcessedSlice *[]models.AssetTransferProcessedDb) (err error) {
 	for _, assetTransferProcessed := range *assetTransferProcessedSlice {
 		err = CreateAssetTransferProcessedIfNotExistOrUpdate(&assetTransferProcessed)
 		if err != nil {
