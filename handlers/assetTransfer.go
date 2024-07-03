@@ -26,7 +26,7 @@ func SetAssetTransfer(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -37,7 +37,7 @@ func SetAssetTransfer(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ProcessAssetTransferErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -47,7 +47,7 @@ func SetAssetTransfer(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.CreateAssetTransferProcessedErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -86,5 +86,35 @@ func GetAssetTransfer(c *gin.Context) {
 		Error:   "",
 		Code:    models.SUCCESS,
 		Data:    assetTransferProcessedSlice,
+	})
+}
+
+func GetAssetTransferTxids(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	txids, err := services.GetAssetTransferTxidsByUserId(userId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetTransferProcessedSliceByUserIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    txids,
 	})
 }

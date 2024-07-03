@@ -17,7 +17,7 @@ func GetAllIdoPublishInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.GetAllIdoPublishInfosErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -38,7 +38,7 @@ func GetIdoPublishedInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.GetIdoPublishedInfosErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -133,7 +133,7 @@ func GetIdoPublishInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.GetIdoParticipateInfoErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -153,7 +153,7 @@ func GetIdoPublishInfoByAssetId(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.GetIdoParticipateInfosByAssetIdErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -183,7 +183,7 @@ func GetIdoParticipateInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.GetIdoParticipateInfoErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -219,7 +219,7 @@ func SetIdoPublishInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -230,7 +230,7 @@ func SetIdoPublishInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.SyncAssetIssuanceErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -247,7 +247,7 @@ func SetIdoPublishInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ProcessIdoPublishInfoErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -257,7 +257,7 @@ func SetIdoPublishInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.SetIdoPublishInfoErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -278,7 +278,7 @@ func SetIdoParticipateInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -293,7 +293,7 @@ func SetIdoParticipateInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.IsIdoParticipateTimeRightErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -303,7 +303,7 @@ func SetIdoParticipateInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.IsNotRightTime,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -314,7 +314,7 @@ func SetIdoParticipateInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.IdoIsNotPublished,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -335,7 +335,7 @@ func SetIdoParticipateInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ProcessIdoParticipateInfoErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -345,7 +345,7 @@ func SetIdoParticipateInfo(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.SetIdoParticipateInfoErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}

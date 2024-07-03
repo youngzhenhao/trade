@@ -36,7 +36,7 @@ func SetBtcBalance(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -53,7 +53,7 @@ func SetBtcBalance(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.CreateOrUpdateBtcBalanceErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}

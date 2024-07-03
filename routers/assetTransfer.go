@@ -6,14 +6,12 @@ import (
 	"trade/middleware"
 )
 
-//TODO: need to test
-
 func SetupAssetTransferRouter(router *gin.Engine) *gin.Engine {
 	assetTransfer := router.Group("/asset_transfer")
 	assetTransfer.Use(middleware.AuthMiddleware())
 	{
 		assetTransfer.GET("/get", handlers.GetAssetTransfer)
-		//TODO: need to call after send asset to asset's address
+		assetTransfer.GET("/get/txids", handlers.GetAssetTransferTxids)
 		assetTransfer.POST("/set", handlers.SetAssetTransfer)
 	}
 	return router

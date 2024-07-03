@@ -112,3 +112,15 @@ func CreateOrUpdateAssetTransferProcessedSlice(assetTransferProcessedSlice *[]mo
 	}
 	return nil
 }
+
+func GetAssetTransferTxidsByUserId(userId int) ([]string, error) {
+	transfers, err := GetAssetTransferProcessedSliceByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+	var txids []string
+	for _, transfer := range *transfers {
+		txids = append(txids, transfer.Txid)
+	}
+	return txids, nil
+}

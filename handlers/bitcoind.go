@@ -77,7 +77,7 @@ func GetAddressesByOutpointSliceInMainnet(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -109,7 +109,7 @@ func GetAddressesByOutpointSliceInTestnet(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -141,7 +141,7 @@ func GetAddressesByOutpointSliceInRegtest(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -233,7 +233,7 @@ func GetTransactionsByOutpointSliceInMainnet(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -265,7 +265,7 @@ func GetTransactionsByOutpointSliceInTestnet(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -297,7 +297,7 @@ func GetTransactionsByOutpointSliceInRegtest(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -329,7 +329,7 @@ func DecodeTransactionSliceInMainnet(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -361,7 +361,7 @@ func DecodeTransactionSliceInTestnet(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -393,7 +393,7 @@ func DecodeTransactionSliceInRegtest(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -485,7 +485,7 @@ func DecodeAndQueryTransactionSliceInMainnet(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -528,7 +528,7 @@ func DecodeAndQueryTransactionSliceInTestnet(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -571,7 +571,7 @@ func DecodeAndQueryTransactionSliceInRegtest(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.ShouldBindJsonErr,
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}

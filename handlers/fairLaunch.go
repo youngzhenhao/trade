@@ -15,7 +15,7 @@ func GetAllFairLaunchInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Can not get all fair launch infos. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -33,7 +33,7 @@ func GetFairLaunchInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "id is not valid int. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -42,7 +42,7 @@ func GetFairLaunchInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Can not get fair launch info. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -60,7 +60,7 @@ func GetMintedInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "id is not valid int. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -69,7 +69,7 @@ func GetMintedInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Can not get fair launch minted info. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -89,7 +89,7 @@ func SetFairLaunchInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Query user id by name." + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -100,7 +100,7 @@ func SetFairLaunchInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Should Bind JSON setFairLaunchInfoRequest. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -121,7 +121,7 @@ func SetFairLaunchInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Process fair launch info. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -131,7 +131,7 @@ func SetFairLaunchInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Set fair launch error. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -151,7 +151,7 @@ func SetFairLaunchMintedInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Should Bind JSON mintFairLaunchRequest. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -161,7 +161,7 @@ func SetFairLaunchMintedInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Is FairLaunch Mint Time Right. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -170,7 +170,7 @@ func SetFairLaunchMintedInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -193,7 +193,7 @@ func SetFairLaunchMintedInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Name to id error. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -205,7 +205,7 @@ func SetFairLaunchMintedInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Process FairLaunchMintedInfo " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -215,7 +215,7 @@ func SetFairLaunchMintedInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Set fair launch minted info. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -233,7 +233,7 @@ func QueryInventory(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "strconv string to int." + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -242,7 +242,7 @@ func QueryInventory(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get inventory could be minted by fair launch info id." + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -260,7 +260,7 @@ func QueryMintIsAvailable(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Should Bind JSON mintFairLaunchRequest. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -272,7 +272,7 @@ func QueryMintIsAvailable(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Calculate Gas FeeRate. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -285,7 +285,7 @@ func QueryMintIsAvailable(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get Number And Amount Of Inventory Could Be Minted. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -309,7 +309,7 @@ func MintFairLaunchReserved(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Should Bind JSON mintFairLaunchRequest. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -322,7 +322,7 @@ func MintFairLaunchReserved(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get FairLaunchInfo By AssetId. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -332,7 +332,7 @@ func MintFairLaunchReserved(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Is FairLaunch Mint Time Right. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -340,7 +340,7 @@ func MintFairLaunchReserved(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "It is not Valid Time Now. ",
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -349,7 +349,7 @@ func MintFairLaunchReserved(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Can not get fair launch info. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -357,7 +357,7 @@ func MintFairLaunchReserved(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Invalid user id. ",
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -366,7 +366,7 @@ func MintFairLaunchReserved(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Send FairLaunch Reserved. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -376,7 +376,7 @@ func MintFairLaunchReserved(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Update FairLaunchInfo IsReservedSent. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -397,7 +397,7 @@ func GetIssuedFairLaunchInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get Issued FairLaunchInfos. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -418,7 +418,7 @@ func GetOwnFairLaunchInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Query user id by name." + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -427,7 +427,7 @@ func GetOwnFairLaunchInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get Own Set FairLaunchInfos By UserId. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -447,7 +447,7 @@ func GetOwnFairLaunchMintedInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Query user id by name." + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -456,7 +456,7 @@ func GetOwnFairLaunchMintedInfo(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get Own FairLaunchMintedInfos By UserId. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -474,7 +474,7 @@ func GetFairLaunchInfoByAssetId(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Can not get fair launch info By AssetId. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -492,7 +492,7 @@ func GetFairLaunchInventoryMintNumberAssetId(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Can not get fair launch info By AssetId. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -501,7 +501,7 @@ func GetFairLaunchInventoryMintNumberAssetId(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get Number And Amount Of Inventory Could Be Minted. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}

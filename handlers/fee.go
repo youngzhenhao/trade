@@ -13,7 +13,7 @@ func QueryFeeRate(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get FeeRate. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -37,7 +37,7 @@ func QueryAllFeeRate(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get FeeRate. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
@@ -54,7 +54,7 @@ func QueryRecommendedFeeRate(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   "Get FeeRate. " + err.Error(),
-			Data:    "",
+			Data:    nil,
 		})
 		return
 	}
