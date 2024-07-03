@@ -1,5 +1,5 @@
 #!/bin/bash
 binaryName="Trade"
-pid=$(pgrep -f $binaryName)
+pid=$(pgrep -x $binaryName)
 kill "$pid"
 echo "process '$binaryName' was killed."

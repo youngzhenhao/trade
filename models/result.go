@@ -43,6 +43,7 @@ const (
 	DecodeRawTransactionErr
 	GetRawTransactionsByTxidsErr
 	GenerateBlocksErr
+	FaucetTransferBtcErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

@@ -25,3 +25,43 @@ func GenerateBlockOne(c *gin.Context) {
 		Data:    out,
 	})
 }
+
+func FaucetTransferOneTenthBtc(c *gin.Context) {
+	address := c.PostForm("address")
+	out, err := services.FaucetTransferBtc(address, 0.1)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.FaucetTransferBtcErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    out,
+	})
+}
+
+func FaucetTransferOnehundredthBtc(c *gin.Context) {
+	address := c.PostForm("address")
+	out, err := services.FaucetTransferBtc(address, 0.01)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.FaucetTransferBtcErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    out,
+	})
+}
