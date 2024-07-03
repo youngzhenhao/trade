@@ -19,8 +19,8 @@ func SetAssetTransfer(c *gin.Context) {
 		})
 		return
 	}
-	var assetTransferSetRequest models.AssetTransferSetRequest
-	err = c.ShouldBindJSON(&assetTransferSetRequest)
+	var assetTransferProcessedSetRequestSlice []models.AssetTransferProcessedSetRequest
+	err = c.ShouldBindJSON(&assetTransferProcessedSetRequestSlice)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -30,8 +30,8 @@ func SetAssetTransfer(c *gin.Context) {
 		})
 		return
 	}
-	var assetTransfer *models.AssetTransfer
-	assetTransfer, err = services.ProcessAssetTransfer(userId, &assetTransferSetRequest)
+	var assetTransferProcessedSlice *[]models.AssetTransferProcessed
+	assetTransferProcessedSlice, err = services.ProcessAssetTransferProcessedSlice(userId, &assetTransferProcessedSetRequestSlice)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -41,12 +41,12 @@ func SetAssetTransfer(c *gin.Context) {
 		})
 		return
 	}
-	err = services.CreateAssetTransfer(assetTransfer)
+	err = services.CreateOrUpdateAssetTransferProcessedSlice(assetTransferProcessedSlice)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.CreateAssetTransferErr,
+			Code:    models.CreateAssetTransferProcessedErr,
 			Data:    "",
 		})
 		return
@@ -71,12 +71,12 @@ func GetAssetTransfer(c *gin.Context) {
 		})
 		return
 	}
-	assetTransfers, err := services.GetAssetTransfersByUserId(userId)
+	assetTransferProcessedSlice, err := services.GetAssetTransferProcessedSliceByUserId(userId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAssetTransfersByUserIdErr,
+			Code:    models.GetAssetTransferProcessedSliceByUserIdErr,
 			Data:    nil,
 		})
 		return
@@ -85,6 +85,6 @@ func GetAssetTransfer(c *gin.Context) {
 		Success: true,
 		Error:   "",
 		Code:    models.SUCCESS,
-		Data:    assetTransfers,
+		Data:    assetTransferProcessedSlice,
 	})
 }

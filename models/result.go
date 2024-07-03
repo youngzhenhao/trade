@@ -44,6 +44,8 @@ const (
 	GetRawTransactionsByTxidsErr
 	GenerateBlocksErr
 	FaucetTransferBtcErr
+	CreateAssetTransferProcessedErr
+	GetAssetTransferProcessedSliceByUserIdErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
