@@ -1,24 +1,15 @@
 package services
 
 import (
-	"trade/api"
 	"trade/models"
-	"trade/utils"
 )
 
 func ProcessAssetTransferProcessedSlice(userId int, assetTransferSetRequestSlice *[]models.AssetTransferProcessedSetRequest) (*[]models.AssetTransferProcessed, error) {
 	var assetTransferProcessedSlice []models.AssetTransferProcessed
 	for _, assetTransferSetRequest := range *assetTransferSetRequestSlice {
-		assetInfo, err := api.GetAssetInfo(assetTransferSetRequest.AssetID)
-		errorAppendInfo := utils.ErrorAppendInfo(err)
-		if err != nil {
-			return nil, errorAppendInfo(utils.ToLowerWords("GetAssetInfo"))
-		}
 		assetTransferProcessedSlice = append(assetTransferProcessedSlice, models.AssetTransferProcessed{
 			Txid:               assetTransferSetRequest.Txid,
 			AssetID:            assetTransferSetRequest.AssetID,
-			AssetName:          assetInfo.Name,
-			AssetType:          assetInfo.AssetType,
 			TransferTimestamp:  assetTransferSetRequest.TransferTimestamp,
 			AnchorTxHash:       assetTransferSetRequest.AnchorTxHash,
 			AnchorTxHeightHint: assetTransferSetRequest.AnchorTxHeightHint,
@@ -49,8 +40,6 @@ func CreateAssetTransferProcessedIfNotExistOrUpdate(assetTransferProcessed *mode
 	}
 	assetTransferProcessed.Txid = assetTransferProcessedByTxid.Txid
 	assetTransferProcessed.AssetID = assetTransferProcessedByTxid.AssetID
-	assetTransferProcessed.AssetName = assetTransferProcessedByTxid.AssetName
-	assetTransferProcessed.AssetType = assetTransferProcessedByTxid.AssetType
 	assetTransferProcessed.TransferTimestamp = assetTransferProcessedByTxid.TransferTimestamp
 	assetTransferProcessed.AnchorTxHash = assetTransferProcessedByTxid.AnchorTxHash
 	assetTransferProcessed.AnchorTxHeightHint = assetTransferProcessedByTxid.AnchorTxHeightHint
@@ -69,12 +58,6 @@ func IsAssetTransferProcessedChanged(assetTransferProcessed *models.AssetTransfe
 		return true
 	}
 	if old.AssetID != assetTransferProcessed.AssetID {
-		return true
-	}
-	if old.AssetName != assetTransferProcessed.AssetName {
-		return true
-	}
-	if old.AssetType != assetTransferProcessed.AssetType {
 		return true
 	}
 	if old.TransferTimestamp != assetTransferProcessed.TransferTimestamp {

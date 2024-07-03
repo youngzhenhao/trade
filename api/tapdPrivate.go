@@ -54,7 +54,7 @@ func assetLeavesSpecified(id string, proofType string) (*universerpc.AssetLeafRe
 }
 
 func processAssetIssuanceLeaf(response *universerpc.AssetLeafResponse) *models.AssetIssuanceLeaf {
-	if response == nil {
+	if response == nil || response.Leaves == nil {
 		return nil
 	}
 	return &models.AssetIssuanceLeaf{

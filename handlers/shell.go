@@ -46,7 +46,7 @@ func FaucetTransferOneTenthBtc(c *gin.Context) {
 	})
 }
 
-func FaucetTransferOnehundredthBtc(c *gin.Context) {
+func FaucetTransferOneHundredthBtc(c *gin.Context) {
 	address := c.Param("address")
 	out, err := services.FaucetTransferBtc(address, 0.01)
 	if err != nil {
