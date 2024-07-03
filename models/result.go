@@ -46,6 +46,9 @@ const (
 	FaucetTransferBtcErr
 	CreateAssetTransferProcessedErr
 	GetAssetTransferProcessedSliceByUserIdErr
+	GetAssetTransferCombinedSliceByUserIdErr
+	CreateOrUpdateAssetTransferProcessedInputSliceErr
+	CreateOrUpdateAssetTransferProcessedOutputSliceErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

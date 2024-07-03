@@ -99,4 +99,108 @@ func DeleteAssetTransferProcessed(id uint) error {
 	return middleware.DB.Delete(&assetTransferProcessed, id).Error
 }
 
-// TODO: Inputs and outputs
+// AssetTransferProcessedInputDb
+
+func CreateAssetTransferProcessedInput(assetTransferProcessedInput *models.AssetTransferProcessedInputDb) error {
+	return middleware.DB.Create(assetTransferProcessedInput).Error
+}
+
+func CreateAssetTransferProcessedInputSlice(assetTransferProcessedInputSlice *[]models.AssetTransferProcessedInputDb) error {
+	return middleware.DB.Create(assetTransferProcessedInputSlice).Error
+}
+
+func ReadAllAssetTransferProcessedInputSlice() (*[]models.AssetTransferProcessedInputDb, error) {
+	var assetTransferProcessedInputSlice []models.AssetTransferProcessedInputDb
+	err := middleware.DB.Find(&assetTransferProcessedInputSlice).Error
+	return &assetTransferProcessedInputSlice, err
+}
+
+func ReadAssetTransferProcessedInput(id uint) (*models.AssetTransferProcessedInputDb, error) {
+	var assetTransferProcessedInput models.AssetTransferProcessedInputDb
+	err := middleware.DB.First(&assetTransferProcessedInput, id).Error
+	return &assetTransferProcessedInput, err
+}
+
+func ReadAssetTransferProcessedInputSliceByUserId(userId int) (*[]models.AssetTransferProcessedInputDb, error) {
+	var assetTransferProcessedInputSlice []models.AssetTransferProcessedInputDb
+	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Order("index").Find(&assetTransferProcessedInputSlice).Error
+	return &assetTransferProcessedInputSlice, err
+}
+
+func ReadAssetTransferProcessedInputByTxid(txid string) (*models.AssetTransferProcessedInputDb, error) {
+	var assetTransferProcessedInput models.AssetTransferProcessedInputDb
+	err := middleware.DB.Where("txid = ? AND status = ?", txid, 1).First(&assetTransferProcessedInput).Error
+	return &assetTransferProcessedInput, err
+}
+
+func ReadAssetTransferProcessedInputByTxidAndIndex(txid string, index int) (*models.AssetTransferProcessedInputDb, error) {
+	var assetTransferProcessedInput models.AssetTransferProcessedInputDb
+	err := middleware.DB.Where("txid = ? AND index = ? AND status = ?", txid, index, 1).First(&assetTransferProcessedInput).Error
+	return &assetTransferProcessedInput, err
+}
+
+func UpdateAssetTransferProcessedInput(assetTransferProcessedInput *models.AssetTransferProcessedInputDb) error {
+	return middleware.DB.Save(assetTransferProcessedInput).Error
+}
+
+func UpdateAssetTransferProcessedInputSlice(assetTransferProcessedInputSlice *[]models.AssetTransferProcessedInputDb) error {
+	return middleware.DB.Save(assetTransferProcessedInputSlice).Error
+}
+
+func DeleteAssetTransferProcessedInput(id uint) error {
+	var assetTransferProcessedInput models.AssetTransferProcessedInputDb
+	return middleware.DB.Delete(&assetTransferProcessedInput, id).Error
+}
+
+// AssetTransferProcessedOutputDb
+
+func CreateAssetTransferProcessedOutput(assetTransferProcessedOutput *models.AssetTransferProcessedOutputDb) error {
+	return middleware.DB.Create(assetTransferProcessedOutput).Error
+}
+
+func CreateAssetTransferProcessedOutputSlice(assetTransferProcessedOutputSlice *[]models.AssetTransferProcessedOutputDb) error {
+	return middleware.DB.Create(assetTransferProcessedOutputSlice).Error
+}
+
+func ReadAllAssetTransferProcessedOutputSlice() (*[]models.AssetTransferProcessedOutputDb, error) {
+	var assetTransferProcessedOutputSlice []models.AssetTransferProcessedOutputDb
+	err := middleware.DB.Find(&assetTransferProcessedOutputSlice).Error
+	return &assetTransferProcessedOutputSlice, err
+}
+
+func ReadAssetTransferProcessedOutput(id uint) (*models.AssetTransferProcessedOutputDb, error) {
+	var assetTransferProcessedOutput models.AssetTransferProcessedOutputDb
+	err := middleware.DB.First(&assetTransferProcessedOutput, id).Error
+	return &assetTransferProcessedOutput, err
+}
+
+func ReadAssetTransferProcessedOutputSliceByUserId(userId int) (*[]models.AssetTransferProcessedOutputDb, error) {
+	var assetTransferProcessedOutputSlice []models.AssetTransferProcessedOutputDb
+	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Order("index").Find(&assetTransferProcessedOutputSlice).Error
+	return &assetTransferProcessedOutputSlice, err
+}
+
+func ReadAssetTransferProcessedOutputByTxid(txid string) (*models.AssetTransferProcessedOutputDb, error) {
+	var assetTransferProcessedOutput models.AssetTransferProcessedOutputDb
+	err := middleware.DB.Where("txid = ? AND status = ?", txid, 1).First(&assetTransferProcessedOutput).Error
+	return &assetTransferProcessedOutput, err
+}
+
+func ReadAssetTransferProcessedOutputByTxidAndIndex(txid string, index int) (*models.AssetTransferProcessedOutputDb, error) {
+	var assetTransferProcessedOutput models.AssetTransferProcessedOutputDb
+	err := middleware.DB.Where("txid = ? AND index = ? AND status = ?", txid, index, 1).First(&assetTransferProcessedOutput).Error
+	return &assetTransferProcessedOutput, err
+}
+
+func UpdateAssetTransferProcessedOutput(assetTransferProcessedOutput *models.AssetTransferProcessedOutputDb) error {
+	return middleware.DB.Save(assetTransferProcessedOutput).Error
+}
+
+func UpdateAssetTransferProcessedOutputSlice(assetTransferProcessedOutputSlice *[]models.AssetTransferProcessedOutputDb) error {
+	return middleware.DB.Save(assetTransferProcessedOutputSlice).Error
+}
+
+func DeleteAssetTransferProcessedOutput(id uint) error {
+	var assetTransferProcessedOutput models.AssetTransferProcessedOutputDb
+	return middleware.DB.Delete(&assetTransferProcessedOutput, id).Error
+}

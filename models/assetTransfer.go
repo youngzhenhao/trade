@@ -12,6 +12,22 @@ const (
 	AssetTransferTypeIn
 )
 
+// @dev: Combined data
+
+type AssetTransferProcessedCombined struct {
+	gorm.Model
+	Txid               string                         `json:"txid" gorm:"type:varchar(255)"`
+	AssetID            string                         `json:"asset_id" gorm:"type:varchar(255)"`
+	TransferTimestamp  int                            `json:"transfer_timestamp"`
+	AnchorTxHash       string                         `json:"anchor_tx_hash" gorm:"type:varchar(255)"`
+	AnchorTxHeightHint int                            `json:"anchor_tx_height_hint"`
+	AnchorTxChainFees  int                            `json:"anchor_tx_chain_fees"`
+	Inputs             []AssetTransferProcessedInput  `json:"inputs"`
+	Outputs            []AssetTransferProcessedOutput `json:"outputs"`
+	UserID             int                            `json:"user_id"`
+	Status             int                            `json:"status" gorm:"default:1"`
+}
+
 // @dev: DB
 
 type AssetTransferProcessedDb struct {
