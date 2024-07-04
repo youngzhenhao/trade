@@ -302,6 +302,7 @@ func CreateOrUpdateAssetTransferProcessedOutputSlice(assetTransferProcessedOutpu
 	}
 	return UpdateAssetTransferProcessedOutputSlice(&assetTransferOutputSlice)
 }
+
 func GetTxidsByAssetTransfers(transfers *[]models.AssetTransferProcessedDb) []string {
 	var txids []string
 	for _, transfer := range *transfers {
@@ -367,25 +368,9 @@ func GetOutputsByTxidWithTransfersOutputs(transfersOutputs *[]models.AssetTransf
 	return result, nil
 }
 
-func GetAssetTransferCombinedSliceByUserId(userId int) (*[]models.AssetTransferProcessedCombined, error) {
+func CombineAssetTransfers(transfers *[]models.AssetTransferProcessedDb, transfersInputs *[]models.AssetTransferProcessedInputDb, transfersOutputs *[]models.AssetTransferProcessedOutputDb) (*[]models.AssetTransferProcessedCombined, error) {
 	var err error
 	var transferCombinedSlice []models.AssetTransferProcessedCombined
-	// @dev: 1.AssetTransferProcessedDb
-	transfers, err := GetAssetTransferProcessedSliceByUserId(userId)
-	if err != nil {
-		return nil, err
-	}
-	// @dev: 2.Get all inputs by user id
-	transfersInputs, err := GetAssetTransferProcessedInputSliceByUserId(userId)
-	if err != nil {
-		return nil, err
-	}
-	// @dev: 3.Get all outputs by user id
-	transfersOutputs, err := GetAssetTransferProcessedOutputSliceByUserId(userId)
-	if err != nil {
-		return nil, err
-	}
-	// @dev: 4.Range and combine data
 	for _, transfer := range *transfers {
 		var transferCombined models.AssetTransferProcessedCombined
 		inputs := make([]models.AssetTransferProcessedInput, transfer.Inputs)
@@ -410,5 +395,31 @@ func GetAssetTransferCombinedSliceByUserId(userId int) (*[]models.AssetTransferP
 		}
 		transferCombinedSlice = append(transferCombinedSlice, transferCombined)
 	}
-	return nil, err
+	return &transferCombinedSlice, nil
+}
+
+func GetAssetTransferCombinedSliceByUserId(userId int) (*[]models.AssetTransferProcessedCombined, error) {
+	var err error
+	var transferCombinedSlice *[]models.AssetTransferProcessedCombined
+	// @dev: 1.AssetTransferProcessedDb
+	transfers, err := GetAssetTransferProcessedSliceByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+	// @dev: 2.Get all inputs by user id
+	transfersInputs, err := GetAssetTransferProcessedInputSliceByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+	// @dev: 3.Get all outputs by user id
+	transfersOutputs, err := GetAssetTransferProcessedOutputSliceByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+	// @dev: 4.Range and combine data
+	transferCombinedSlice, err = CombineAssetTransfers(transfers, transfersInputs, transfersOutputs)
+	if err != nil {
+		return nil, err
+	}
+	return transferCombinedSlice, nil
 }
