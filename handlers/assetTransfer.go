@@ -7,8 +7,6 @@ import (
 	"trade/services"
 )
 
-// TODO: Need to test
-
 func SetAssetTransfer(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)

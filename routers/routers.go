@@ -37,8 +37,11 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.Bitcoind {
 		SetupBitcoindRouter(r)
 	}
-	if !config.GetLoadConfig().RouterDisable.Bitcoind {
+	if !config.GetLoadConfig().RouterDisable.Shell {
 		SetupShellRouter(r)
+	}
+	if !config.GetLoadConfig().RouterDisable.AddrReceive {
+		SetupAddrReceiveRouter(r)
 	}
 	return r
 }

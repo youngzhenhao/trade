@@ -49,6 +49,9 @@ const (
 	GetAssetTransferCombinedSliceByUserIdErr
 	CreateOrUpdateAssetTransferProcessedInputSliceErr
 	CreateOrUpdateAssetTransferProcessedOutputSliceErr
+	GetAddrReceiveEventsByUserIdErr
+	CreateAddrReceiveEventsErr
+	GetAddrReceiveEventsProcessedOriginByUserIdErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

@@ -44,6 +44,7 @@ type Config struct {
 		AssetTransfer  bool `yaml:"asset_transfer" json:"asset_transfer"`
 		Bitcoind       bool `yaml:"bitcoind" json:"bitcoind"`
 		Shell          bool `yaml:"shell" json:"shell"`
+		AddrReceive    bool `yaml:"addr_receive" json:"addr_receive"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {
