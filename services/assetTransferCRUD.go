@@ -123,7 +123,7 @@ func ReadAssetTransferProcessedInput(id uint) (*models.AssetTransferProcessedInp
 
 func ReadAssetTransferProcessedInputSliceByUserId(userId int) (*[]models.AssetTransferProcessedInputDb, error) {
 	var assetTransferProcessedInputSlice []models.AssetTransferProcessedInputDb
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Order("index").Find(&assetTransferProcessedInputSlice).Error
+	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&assetTransferProcessedInputSlice).Error
 	return &assetTransferProcessedInputSlice, err
 }
 
@@ -176,7 +176,7 @@ func ReadAssetTransferProcessedOutput(id uint) (*models.AssetTransferProcessedOu
 
 func ReadAssetTransferProcessedOutputSliceByUserId(userId int) (*[]models.AssetTransferProcessedOutputDb, error) {
 	var assetTransferProcessedOutputSlice []models.AssetTransferProcessedOutputDb
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Order("index").Find(&assetTransferProcessedOutputSlice).Error
+	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&assetTransferProcessedOutputSlice).Error
 	return &assetTransferProcessedOutputSlice, err
 }
 
