@@ -31,7 +31,7 @@ func SetAddrReceive(c *gin.Context) {
 		return
 	}
 	addrReceiveEvents := services.ProcessAddrReceiveEventsSetRequest(userId, &addrReceiveEventsSetRequest)
-	err = services.CreateAddrReceiveEvents(addrReceiveEvents)
+	err = services.CreateOrUpdateAddrReceiveEvents(addrReceiveEvents)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
