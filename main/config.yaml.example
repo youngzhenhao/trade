@@ -31,6 +31,7 @@ router_disable:
     asset_transfer: false
     bitcoind: false
     shell: false
+    addr_receive: false
 api_config:
     lnd:
         host: ""
