@@ -22,6 +22,7 @@ func ProcessAddrReceiveEventsSetRequest(userId int, addrReceiveEventsSetRequest 
 			UtxoAmtSat:              event.UtxoAmtSat,
 			ConfirmationHeight:      event.ConfirmationHeight,
 			HasProof:                event.HasProof,
+			DeviceID:                event.DeviceID,
 			UserID:                  userId,
 		})
 	}
@@ -51,6 +52,7 @@ func ProcessGetAddrReceiveEvents(addrReceiveEvents *[]models.AddrReceiveEvent) *
 			UtxoAmtSat:         event.UtxoAmtSat,
 			ConfirmationHeight: event.ConfirmationHeight,
 			HasProof:           event.HasProof,
+			DeviceID:           event.DeviceID,
 		})
 	}
 	return &addrReceiveEventsSetRequest
@@ -107,6 +109,9 @@ func IsAddrReceiveEventChanged(addrReceiveEventByAddrEncoded *models.AddrReceive
 	if addrReceiveEventByAddrEncoded.HasProof != old.HasProof {
 		return true
 	}
+	if addrReceiveEventByAddrEncoded.DeviceID != old.DeviceID {
+		return true
+	}
 	if addrReceiveEventByAddrEncoded.UserID != old.UserID {
 		return true
 	}
@@ -137,6 +142,7 @@ func CheckAddrReceiveEventIfUpdate(addrReceiveEvent *models.AddrReceiveEvent) (*
 	addrReceiveEventByAddrEncoded.UtxoAmtSat = addrReceiveEvent.UtxoAmtSat
 	addrReceiveEventByAddrEncoded.ConfirmationHeight = addrReceiveEvent.ConfirmationHeight
 	addrReceiveEventByAddrEncoded.HasProof = addrReceiveEvent.HasProof
+	addrReceiveEventByAddrEncoded.DeviceID = addrReceiveEvent.DeviceID
 	addrReceiveEventByAddrEncoded.UserID = addrReceiveEvent.UserID
 	return addrReceiveEventByAddrEncoded, nil
 }

@@ -20,6 +20,7 @@ func ProcessAssetTransferProcessedSlice(userId int, assetTransferSetRequestSlice
 			AnchorTxChainFees:  assetTransferSetRequest.AnchorTxChainFees,
 			Inputs:             len(assetTransferSetRequest.Inputs),
 			Outputs:            len(assetTransferSetRequest.Outputs),
+			DeviceID:           assetTransferSetRequest.DeviceID,
 			UserID:             userId,
 		})
 		for index, input := range assetTransferSetRequest.Inputs {
@@ -82,6 +83,7 @@ func CheckAssetTransferProcessedIfUpdate(assetTransferProcessed *models.AssetTra
 	assetTransferProcessedByTxid.AnchorTxChainFees = assetTransferProcessed.AnchorTxChainFees
 	assetTransferProcessedByTxid.Inputs = assetTransferProcessed.Inputs
 	assetTransferProcessedByTxid.Outputs = assetTransferProcessed.Outputs
+	assetTransferProcessedByTxid.DeviceID = assetTransferProcessed.DeviceID
 	assetTransferProcessedByTxid.UserID = assetTransferProcessed.UserID
 	return assetTransferProcessedByTxid, nil
 }
@@ -167,6 +169,9 @@ func IsAssetTransferProcessedChanged(assetTransferProcessed *models.AssetTransfe
 	}
 	// @dev: Only check slice length
 	if (old.Outputs) != (assetTransferProcessed.Outputs) {
+		return true
+	}
+	if old.DeviceID != assetTransferProcessed.DeviceID {
 		return true
 	}
 	if old.UserID != assetTransferProcessed.UserID {
@@ -390,6 +395,7 @@ func CombineAssetTransfers(transfers *[]models.AssetTransferProcessedDb, transfe
 			AnchorTxChainFees:  transfer.AnchorTxChainFees,
 			Inputs:             inputs,
 			Outputs:            outputs,
+			DeviceID:           transfer.DeviceID,
 			UserID:             transfer.UserID,
 			Status:             transfer.Status,
 		}

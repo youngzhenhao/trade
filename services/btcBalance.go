@@ -22,6 +22,7 @@ func CreateBtcBalanceIfNotExistOrUpdate(btcBalance *models.BtcBalance) (err erro
 	readBtcBalance.ConfirmedBalance = btcBalance.ConfirmedBalance
 	readBtcBalance.UnconfirmedBalance = btcBalance.UnconfirmedBalance
 	readBtcBalance.LockedBalance = btcBalance.LockedBalance
+	readBtcBalance.DeviceID = btcBalance.DeviceID
 	return UpdateBtcBalance(readBtcBalance)
 }
 

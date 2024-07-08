@@ -32,6 +32,7 @@ router_disable:
     bitcoind: false
     shell: false
     addr_receive: false
+    batch_transfer: false
 api_config:
     lnd:
         host: ""

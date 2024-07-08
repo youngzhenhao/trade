@@ -17,6 +17,7 @@ type AddrReceiveEvent struct {
 	UtxoAmtSat              int    `json:"utxo_amt_sat"`
 	ConfirmationHeight      int    `json:"confirmation_height"`
 	HasProof                bool   `json:"has_proof,omitempty"`
+	DeviceID                string `json:"device_id"`
 	UserID                  int    `json:"user_id"`
 	Status                  int    `json:"status" gorm:"default:1"`
 }
@@ -29,6 +30,7 @@ type AddrReceiveEventSetRequest struct {
 	UtxoAmtSat              int                            `json:"utxo_amt_sat"`
 	ConfirmationHeight      int                            `json:"confirmation_height"`
 	HasProof                bool                           `json:"has_proof,omitempty"`
+	DeviceID                string                         `json:"device_id"`
 }
 
 type AddrReceiveEventSetRequestAddr struct {

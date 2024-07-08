@@ -43,5 +43,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AddrReceive {
 		SetupAddrReceiveRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.BatchTransfer {
+		SetupBatchTransferRouter(r)
+	}
 	return r
 }
