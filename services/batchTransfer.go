@@ -55,53 +55,53 @@ func GetBatchTransfersByUserId(userId int) (*[]models.BatchTransfer, error) {
 	return ReadBatchTransfersByUserId(userId)
 }
 
-func IsBatchTransferChanged(addrReceiveEventByAddrEncoded *models.BatchTransfer, old *models.BatchTransfer) bool {
-	if addrReceiveEventByAddrEncoded == nil || old == nil {
+func IsBatchTransferChanged(batchTransferByTxidAndIndex *models.BatchTransfer, old *models.BatchTransfer) bool {
+	if batchTransferByTxidAndIndex == nil || old == nil {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.Encoded != old.Encoded {
+	if batchTransferByTxidAndIndex.Encoded != old.Encoded {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.AssetID != old.AssetID {
+	if batchTransferByTxidAndIndex.AssetID != old.AssetID {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.Amount != old.Amount {
+	if batchTransferByTxidAndIndex.Amount != old.Amount {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.ScriptKey != old.ScriptKey {
+	if batchTransferByTxidAndIndex.ScriptKey != old.ScriptKey {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.InternalKey != old.InternalKey {
+	if batchTransferByTxidAndIndex.InternalKey != old.InternalKey {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.TaprootOutputKey != old.TaprootOutputKey {
+	if batchTransferByTxidAndIndex.TaprootOutputKey != old.TaprootOutputKey {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.ProofCourierAddr != old.ProofCourierAddr {
+	if batchTransferByTxidAndIndex.ProofCourierAddr != old.ProofCourierAddr {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.Txid != old.Txid {
+	if batchTransferByTxidAndIndex.Txid != old.Txid {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.Index != old.Index {
+	if batchTransferByTxidAndIndex.Index != old.Index {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.TransferTimestamp != old.TransferTimestamp {
+	if batchTransferByTxidAndIndex.TransferTimestamp != old.TransferTimestamp {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.AnchorTxHash != old.AnchorTxHash {
+	if batchTransferByTxidAndIndex.AnchorTxHash != old.AnchorTxHash {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.AnchorTxHeightHint != old.AnchorTxHeightHint {
+	if batchTransferByTxidAndIndex.AnchorTxHeightHint != old.AnchorTxHeightHint {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.AnchorTxChainFees != old.AnchorTxChainFees {
+	if batchTransferByTxidAndIndex.AnchorTxChainFees != old.AnchorTxChainFees {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.DeviceID != old.DeviceID {
+	if batchTransferByTxidAndIndex.DeviceID != old.DeviceID {
 		return true
 	}
-	if addrReceiveEventByAddrEncoded.UserID != old.UserID {
+	if batchTransferByTxidAndIndex.UserID != old.UserID {
 		return true
 	}
 	return false
@@ -109,33 +109,33 @@ func IsBatchTransferChanged(addrReceiveEventByAddrEncoded *models.BatchTransfer,
 
 func CheckBatchTransferIfUpdate(addrReceiveEvent *models.BatchTransfer) (*models.BatchTransfer, error) {
 	if addrReceiveEvent == nil {
-		return nil, errors.New("nil addr receive event")
+		return nil, errors.New("nil batch transfer event")
 	}
 	txid := addrReceiveEvent.Txid
 	index := addrReceiveEvent.Index
-	addrReceiveEventByAddrEncoded, err := ReadBatchTransferByTxidAndIndex(txid, index)
+	batchTransferByTxidAndIndex, err := ReadBatchTransferByTxidAndIndex(txid, index)
 	if err != nil {
 		return addrReceiveEvent, nil
 	}
-	if !IsBatchTransferChanged(addrReceiveEventByAddrEncoded, addrReceiveEvent) {
-		return addrReceiveEventByAddrEncoded, nil
+	if !IsBatchTransferChanged(batchTransferByTxidAndIndex, addrReceiveEvent) {
+		return batchTransferByTxidAndIndex, nil
 	}
-	addrReceiveEventByAddrEncoded.Encoded = addrReceiveEvent.Encoded
-	addrReceiveEventByAddrEncoded.AssetID = addrReceiveEvent.AssetID
-	addrReceiveEventByAddrEncoded.Amount = addrReceiveEvent.Amount
-	addrReceiveEventByAddrEncoded.ScriptKey = addrReceiveEvent.ScriptKey
-	addrReceiveEventByAddrEncoded.InternalKey = addrReceiveEvent.InternalKey
-	addrReceiveEventByAddrEncoded.TaprootOutputKey = addrReceiveEvent.TaprootOutputKey
-	addrReceiveEventByAddrEncoded.ProofCourierAddr = addrReceiveEvent.ProofCourierAddr
-	addrReceiveEventByAddrEncoded.Txid = addrReceiveEvent.Txid
-	addrReceiveEventByAddrEncoded.Index = addrReceiveEvent.Index
-	addrReceiveEventByAddrEncoded.TransferTimestamp = addrReceiveEvent.TransferTimestamp
-	addrReceiveEventByAddrEncoded.AnchorTxHash = addrReceiveEvent.AnchorTxHash
-	addrReceiveEventByAddrEncoded.AnchorTxHeightHint = addrReceiveEvent.AnchorTxHeightHint
-	addrReceiveEventByAddrEncoded.AnchorTxChainFees = addrReceiveEvent.AnchorTxChainFees
-	addrReceiveEventByAddrEncoded.DeviceID = addrReceiveEvent.DeviceID
-	addrReceiveEventByAddrEncoded.UserID = addrReceiveEvent.UserID
-	return addrReceiveEventByAddrEncoded, nil
+	batchTransferByTxidAndIndex.Encoded = addrReceiveEvent.Encoded
+	batchTransferByTxidAndIndex.AssetID = addrReceiveEvent.AssetID
+	batchTransferByTxidAndIndex.Amount = addrReceiveEvent.Amount
+	batchTransferByTxidAndIndex.ScriptKey = addrReceiveEvent.ScriptKey
+	batchTransferByTxidAndIndex.InternalKey = addrReceiveEvent.InternalKey
+	batchTransferByTxidAndIndex.TaprootOutputKey = addrReceiveEvent.TaprootOutputKey
+	batchTransferByTxidAndIndex.ProofCourierAddr = addrReceiveEvent.ProofCourierAddr
+	batchTransferByTxidAndIndex.Txid = addrReceiveEvent.Txid
+	batchTransferByTxidAndIndex.Index = addrReceiveEvent.Index
+	batchTransferByTxidAndIndex.TransferTimestamp = addrReceiveEvent.TransferTimestamp
+	batchTransferByTxidAndIndex.AnchorTxHash = addrReceiveEvent.AnchorTxHash
+	batchTransferByTxidAndIndex.AnchorTxHeightHint = addrReceiveEvent.AnchorTxHeightHint
+	batchTransferByTxidAndIndex.AnchorTxChainFees = addrReceiveEvent.AnchorTxChainFees
+	batchTransferByTxidAndIndex.DeviceID = addrReceiveEvent.DeviceID
+	batchTransferByTxidAndIndex.UserID = addrReceiveEvent.UserID
+	return batchTransferByTxidAndIndex, nil
 }
 
 func CreateOrUpdateBatchTransfer(transfer *models.BatchTransfer) (err error) {

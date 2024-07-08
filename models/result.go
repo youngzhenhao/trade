@@ -62,6 +62,8 @@ const (
 	CreateOrUpdateBatchTransferErr
 	GetBatchTransfersByUserIdErr
 	CreateOrUpdateBatchTransfersErr
+	GetAssetAddrsByUserIdErr
+	CreateOrUpdateAssetAddrErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
