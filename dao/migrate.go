@@ -55,10 +55,10 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.IdoParticipateUserInfo{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&models.BtcBalance{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&models.AssetSyncInfo{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&models.AssetSyncInfo{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&models.BtcBalance{}); err != nil {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&models.AssetTransferProcessedDb{}); err != nil {
@@ -71,6 +71,9 @@ func Migrate() error {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&models.AddrReceiveEvent{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&models.BatchTransfer{}); err != nil {
 		return err
 	}
 	return err
