@@ -14,5 +14,12 @@ func SetupSnapshotRouter(router *gin.Engine) *gin.Engine {
 	{
 		snapshot.GET("/download", handlers.DownloadSnapshot)
 	}
+	snapshotBasicAuth := router.Group("/snapshot_basic_auth", gin.BasicAuth(gin.Accounts{
+		"foo":   "bar",
+		"admin": "123456",
+	}))
+	{
+		snapshotBasicAuth.GET("/download", handlers.DownloadSnapshot)
+	}
 	return router
 }
