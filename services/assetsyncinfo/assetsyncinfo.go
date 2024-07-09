@@ -95,7 +95,7 @@ func GetAssetSyncInfo(req *SyncInfoRequest) (*models.AssetSyncInfo, error) {
 
 func getAssetInfoFromLeaves(assetId string) (*models.AssetSyncInfo, error) {
 	response, _ := servicesrpc.GetAssetLeaves(assetId, false, "issuance")
-	if len(response.Leaves) == 0 {
+	if response.Leaves == nil {
 		return nil, AssetNotFoundErr
 	}
 
