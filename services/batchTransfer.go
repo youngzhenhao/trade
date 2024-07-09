@@ -109,7 +109,7 @@ func IsBatchTransferChanged(batchTransferByTxidAndIndex *models.BatchTransfer, o
 
 func CheckBatchTransferIfUpdate(addrReceiveEvent *models.BatchTransfer) (*models.BatchTransfer, error) {
 	if addrReceiveEvent == nil {
-		return nil, errors.New("nil batch transfer event")
+		return nil, errors.New("nil batch transfer")
 	}
 	txid := addrReceiveEvent.Txid
 	index := addrReceiveEvent.Index

@@ -6,10 +6,7 @@ import (
 )
 
 func SetupShellRouter(router *gin.Engine) *gin.Engine {
-	shell := router.Group("/shell", gin.BasicAuth(gin.Accounts{
-		"foo":   "bar",
-		"admin": "123456",
-	}))
+	shell := router.Group("/shell", gin.BasicAuth(basicAuthAccounts))
 	{
 		shell.GET("/generate/1", handlers.GenerateBlockOne)
 		shell.GET("/faucet/0.1/:address", handlers.FaucetTransferOneTenthBtc)

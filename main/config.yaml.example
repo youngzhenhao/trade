@@ -34,6 +34,7 @@ router_disable:
     addr_receive: false
     batch_transfer: false
     asset_addr: false
+    asset_lock: false
 api_config:
     lnd:
         host: ""

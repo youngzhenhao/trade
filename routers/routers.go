@@ -49,5 +49,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AssetAddr {
 		SetupAssetAddrRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.AssetLock {
+		SetupAssetLockRouter(r)
+	}
 	return r
 }
