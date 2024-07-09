@@ -1,6 +1,9 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"errors"
+)
 
 type JsonResult struct {
 	Success bool    `json:"success"`
@@ -10,6 +13,10 @@ type JsonResult struct {
 }
 
 type ErrCode int
+
+var (
+	SuccessErr = errors.New("").Error()
+)
 
 const (
 	SUCCESS     ErrCode = 200
@@ -52,6 +59,11 @@ const (
 	GetAddrReceiveEventsByUserIdErr
 	CreateAddrReceiveEventsErr
 	GetAddrReceiveEventsProcessedOriginByUserIdErr
+	CreateOrUpdateBatchTransferErr
+	GetBatchTransfersByUserIdErr
+	CreateOrUpdateBatchTransfersErr
+	GetAssetAddrsByUserIdErr
+	CreateOrUpdateAssetAddrErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
