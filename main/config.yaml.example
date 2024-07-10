@@ -35,6 +35,7 @@ router_disable:
     batch_transfer: false
     asset_addr: false
     asset_lock: false
+    validate_token: false
 api_config:
     lnd:
         host: ""
