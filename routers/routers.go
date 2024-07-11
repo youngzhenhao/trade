@@ -55,5 +55,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.ValidateToken {
 		SetupValidateTokenRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.AssetBalance {
+		SetupAssetBalanceRouter(r)
+	}
 	return r
 }

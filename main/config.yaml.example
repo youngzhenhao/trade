@@ -36,6 +36,7 @@ router_disable:
     asset_addr: false
     asset_lock: false
     validate_token: false
+    asset_balance: false
 api_config:
     lnd:
         host: ""

@@ -82,5 +82,8 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.AssetLock{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.AssetBalance{}); err != nil {
+		return err
+	}
 	return err
 }
