@@ -26,7 +26,7 @@ func PrintUrl() {
 }
 
 func GetUrl() string {
-	return "https://bitlong.gitbook.io/api-doc/fairlaunch/fairlaunch-trade-rest-api"
+	return "https://bitlong.gitbook.io/api-doc"
 }
 
 func GetVersion() string {

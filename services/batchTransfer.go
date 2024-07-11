@@ -16,6 +16,7 @@ func ProcessBatchTransferSetRequest(userId int, batchTransferRequest *models.Bat
 		TaprootOutputKey:   batchTransferRequest.TaprootOutputKey,
 		ProofCourierAddr:   batchTransferRequest.ProofCourierAddr,
 		Txid:               batchTransferRequest.Txid,
+		TxTotalAmount:      batchTransferRequest.TxTotalAmount,
 		Index:              batchTransferRequest.Index,
 		TransferTimestamp:  batchTransferRequest.TransferTimestamp,
 		AnchorTxHash:       batchTransferRequest.AnchorTxHash,
@@ -39,6 +40,7 @@ func ProcessBatchTransfersSetRequest(userId int, batchTransfersRequest *[]models
 			TaprootOutputKey:   batchTransferRequest.TaprootOutputKey,
 			ProofCourierAddr:   batchTransferRequest.ProofCourierAddr,
 			Txid:               batchTransferRequest.Txid,
+			TxTotalAmount:      batchTransferRequest.TxTotalAmount,
 			Index:              batchTransferRequest.Index,
 			TransferTimestamp:  batchTransferRequest.TransferTimestamp,
 			AnchorTxHash:       batchTransferRequest.AnchorTxHash,
@@ -81,6 +83,9 @@ func IsBatchTransferChanged(batchTransferByTxidAndIndex *models.BatchTransfer, o
 		return true
 	}
 	if batchTransferByTxidAndIndex.Txid != old.Txid {
+		return true
+	}
+	if batchTransferByTxidAndIndex.TxTotalAmount != old.TxTotalAmount {
 		return true
 	}
 	if batchTransferByTxidAndIndex.Index != old.Index {
@@ -128,6 +133,7 @@ func CheckBatchTransferIfUpdate(addrReceiveEvent *models.BatchTransfer) (*models
 	batchTransferByTxidAndIndex.TaprootOutputKey = addrReceiveEvent.TaprootOutputKey
 	batchTransferByTxidAndIndex.ProofCourierAddr = addrReceiveEvent.ProofCourierAddr
 	batchTransferByTxidAndIndex.Txid = addrReceiveEvent.Txid
+	batchTransferByTxidAndIndex.TxTotalAmount = addrReceiveEvent.TxTotalAmount
 	batchTransferByTxidAndIndex.Index = addrReceiveEvent.Index
 	batchTransferByTxidAndIndex.TransferTimestamp = addrReceiveEvent.TransferTimestamp
 	batchTransferByTxidAndIndex.AnchorTxHash = addrReceiveEvent.AnchorTxHash
