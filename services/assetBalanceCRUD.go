@@ -15,7 +15,7 @@ func CreateAssetBalances(assetBalances *[]models.AssetBalance) error {
 
 func ReadAllAssetBalances() (*[]models.AssetBalance, error) {
 	var assetBalances []models.AssetBalance
-	err := middleware.DB.Find(&assetBalances).Error
+	err := middleware.DB.Order("updated_at desc").Find(&assetBalances).Error
 	return &assetBalances, err
 }
 

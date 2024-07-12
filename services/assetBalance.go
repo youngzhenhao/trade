@@ -245,3 +245,7 @@ func GetAllAssetIdAndUserAssetBalances() (*[]AssetIdAndUserAssetBalance, error) 
 	}
 	return &assetIdAndUserAssetBalances, nil
 }
+
+// TODO: 1. Get asset's transfer records by assetId
+
+// TODO: 2. Get asset's number of holders by assetId
