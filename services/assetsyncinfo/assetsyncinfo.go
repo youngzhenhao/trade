@@ -104,6 +104,7 @@ func getAssetInfoFromLeaves(assetId string) (*models.AssetSyncInfo, error) {
 			fmt.Println(err.Error())
 			return nil, SeverError
 		}
+		fmt.Println(err.Error())
 		return nil, AssetRequestErr
 	}
 	if response.Leaves == nil {
