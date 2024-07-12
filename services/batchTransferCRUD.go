@@ -46,15 +46,19 @@ func ReadBatchTransferByTxid(txid string) (*models.BatchTransfer, error) {
 	return &batchTransfer, err
 }
 
+// ReadBatchTransferByAddrEncodedAndIndex
+// @dev: `index`
 func ReadBatchTransferByAddrEncodedAndIndex(encoded string, index int) (*models.BatchTransfer, error) {
 	var batchTransfer models.BatchTransfer
-	err := middleware.DB.Where("encoded = ? AND index = ? AND status = ?", encoded, index, 1).First(&batchTransfer).Error
+	err := middleware.DB.Where("encoded = ? AND `index` = ? AND status = ?", encoded, index, 1).First(&batchTransfer).Error
 	return &batchTransfer, err
 }
 
+// ReadBatchTransferByTxidAndIndex
+// @dev: `index`
 func ReadBatchTransferByTxidAndIndex(txid string, index int) (*models.BatchTransfer, error) {
 	var batchTransfer models.BatchTransfer
-	err := middleware.DB.Where("txid = ? AND index = ? AND status = ?", txid, index, 1).First(&batchTransfer).Error
+	err := middleware.DB.Where("txid = ? AND `index` = ? AND status = ?", txid, index, 1).First(&batchTransfer).Error
 	return &batchTransfer, err
 }
 

@@ -124,3 +124,124 @@ func CreateOrUpdateAssetBalances(balances *[]models.AssetBalance) (err error) {
 	}
 	return UpdateAssetBalances(&assetBalances)
 }
+
+type UserAssetBalance struct {
+	UserId        int                    `json:"user_id"`
+	AssetBalances *[]models.AssetBalance `json:"asset_balances"`
+}
+
+func GetAllAssetBalances() (*[]models.AssetBalance, error) {
+	return ReadAllAssetBalances()
+}
+
+func AssetBalancesToUserMapAssetBalances(assetBalances *[]models.AssetBalance) *map[int]*[]models.AssetBalance {
+	userMapAssetBalances := make(map[int]*[]models.AssetBalance)
+	for _, assetBalance := range *assetBalances {
+		balances, ok := userMapAssetBalances[assetBalance.UserId]
+		if !ok {
+			userMapAssetBalances[assetBalance.UserId] = &[]models.AssetBalance{assetBalance}
+		} else {
+			*balances = append(*balances, assetBalance)
+		}
+	}
+	return &userMapAssetBalances
+}
+
+func UserMapAssetBalancesToUserAssetBalances(userMapAssetBalances *map[int]*[]models.AssetBalance) *[]UserAssetBalance {
+	var userAssetBalances []UserAssetBalance
+	for userId, assetBalances := range *userMapAssetBalances {
+		userAssetBalances = append(userAssetBalances, UserAssetBalance{
+			UserId:        userId,
+			AssetBalances: assetBalances,
+		})
+	}
+	return &userAssetBalances
+}
+
+func AssetBalancesToUserAssetBalances(assetBalances *[]models.AssetBalance) *[]UserAssetBalance {
+	userMapAssetBalances := AssetBalancesToUserMapAssetBalances(assetBalances)
+	userAssetBalances := UserMapAssetBalancesToUserAssetBalances(userMapAssetBalances)
+	return userAssetBalances
+}
+
+// GetAllUserAssetBalances
+// @Description: Get all asset balances by userId
+func GetAllUserAssetBalances() (*[]UserAssetBalance, error) {
+	allAssetBalances, err := GetAllAssetBalances()
+	if err != nil {
+		return nil, err
+	}
+	userAssetBalances := AssetBalancesToUserAssetBalances(allAssetBalances)
+	return userAssetBalances, nil
+}
+
+type AssetIdAndBalance struct {
+	AssetId       string                 `json:"asset_id"`
+	AssetBalances *[]models.AssetBalance `json:"asset_balances"`
+}
+
+func AssetBalancesToAssetIdMapAssetBalances(assetBalances *[]models.AssetBalance) *map[string]*[]models.AssetBalance {
+	AssetIdMapAssetBalances := make(map[string]*[]models.AssetBalance)
+	for _, assetBalance := range *assetBalances {
+		balances, ok := AssetIdMapAssetBalances[assetBalance.AssetID]
+		if !ok {
+			AssetIdMapAssetBalances[assetBalance.AssetID] = &[]models.AssetBalance{assetBalance}
+		} else {
+			*balances = append(*balances, assetBalance)
+		}
+	}
+	return &AssetIdMapAssetBalances
+}
+
+func AssetIdMapAssetBalancesToAssetIdAndBalances(AssetIdMapAssetBalances *map[string]*[]models.AssetBalance) *[]AssetIdAndBalance {
+	var assetIdAndBalances []AssetIdAndBalance
+	for assetId, assetBalances := range *AssetIdMapAssetBalances {
+		assetIdAndBalances = append(assetIdAndBalances, AssetIdAndBalance{
+			AssetId:       assetId,
+			AssetBalances: assetBalances,
+		})
+	}
+	return &assetIdAndBalances
+}
+
+func AssetBalancesToAssetIdAndBalances(assetBalances *[]models.AssetBalance) *[]AssetIdAndBalance {
+	assetIdMapAssetBalances := AssetBalancesToAssetIdMapAssetBalances(assetBalances)
+	assetIdAndBalances := AssetIdMapAssetBalancesToAssetIdAndBalances(assetIdMapAssetBalances)
+	return assetIdAndBalances
+}
+
+// GetAllAssetIdAndBalances
+// @Description: Get all asset balances by assetId
+func GetAllAssetIdAndBalances() (*[]AssetIdAndBalance, error) {
+	allAssetBalances, err := GetAllAssetBalances()
+	if err != nil {
+		return nil, err
+	}
+	assetIdAndBalances := AssetBalancesToAssetIdAndBalances(allAssetBalances)
+	return assetIdAndBalances, nil
+}
+
+type AssetIdAndUserAssetBalance struct {
+	AssetId          string              `json:"asset_id"`
+	UserAssetBalance *[]UserAssetBalance `json:"user_asset_balance"`
+}
+
+// GetAllAssetIdAndUserAssetBalances
+// @Description: Get all asset balances by assetId and userId
+func GetAllAssetIdAndUserAssetBalances() (*[]AssetIdAndUserAssetBalance, error) {
+	var assetIdAndUserAssetBalances []AssetIdAndUserAssetBalance
+	allAssetBalances, err := GetAllAssetBalances()
+	if err != nil {
+		return nil, err
+	}
+	assetIdAndBalances := AssetBalancesToAssetIdAndBalances(allAssetBalances)
+	for _, assetIdAndBalance := range *assetIdAndBalances {
+		userAssetBalances := AssetBalancesToUserAssetBalances(assetIdAndBalance.AssetBalances)
+
+		assetIdAndUserAssetBalances = append(assetIdAndUserAssetBalances, AssetIdAndUserAssetBalance{
+			AssetId:          assetIdAndBalance.AssetId,
+			UserAssetBalance: userAssetBalances,
+		})
+	}
+	return &assetIdAndUserAssetBalances, nil
+}

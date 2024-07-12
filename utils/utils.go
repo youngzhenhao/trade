@@ -18,6 +18,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -403,6 +404,19 @@ func CreateTestMainFile(testPath string, testFuncName string) {
 		return
 	}
 	fmt.Println(filePath, "has been created successfully!")
+}
+
+func BuildTestMainFile(testPath string, testFuncName string) {
+	dirPath := path.Join(testPath, ToLowerWordsWithHyphens(testFuncName))
+	filePath := path.Join(dirPath, "main.go")
+	executableFileName := testFuncName + ".exe"
+	cmd := exec.Command("go", "build", "-o", executableFileName, filePath)
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(path.Join(testPath, executableFileName), "has been built successfully!")
 }
 
 func GetFunctionName(i any) string {

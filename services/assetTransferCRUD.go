@@ -133,9 +133,11 @@ func ReadAssetTransferProcessedInputByTxid(txid string) (*models.AssetTransferPr
 	return &assetTransferProcessedInput, err
 }
 
+// ReadAssetTransferProcessedInputByTxidAndIndex
+// @dev: `index`
 func ReadAssetTransferProcessedInputByTxidAndIndex(txid string, index int) (*models.AssetTransferProcessedInputDb, error) {
 	var assetTransferProcessedInput models.AssetTransferProcessedInputDb
-	err := middleware.DB.Where("txid = ? AND index = ? AND status = ?", txid, index, 1).First(&assetTransferProcessedInput).Error
+	err := middleware.DB.Where("txid = ? AND `index` = ? AND status = ?", txid, index, 1).First(&assetTransferProcessedInput).Error
 	return &assetTransferProcessedInput, err
 }
 
@@ -186,9 +188,11 @@ func ReadAssetTransferProcessedOutputByTxid(txid string) (*models.AssetTransferP
 	return &assetTransferProcessedOutput, err
 }
 
+// ReadAssetTransferProcessedOutputByTxidAndIndex
+// @dev: `index`
 func ReadAssetTransferProcessedOutputByTxidAndIndex(txid string, index int) (*models.AssetTransferProcessedOutputDb, error) {
 	var assetTransferProcessedOutput models.AssetTransferProcessedOutputDb
-	err := middleware.DB.Where("txid = ? AND index = ? AND status = ?", txid, index, 1).First(&assetTransferProcessedOutput).Error
+	err := middleware.DB.Where("txid = ? AND `index` = ? AND status = ?", txid, index, 1).First(&assetTransferProcessedOutput).Error
 	return &assetTransferProcessedOutput, err
 }
 

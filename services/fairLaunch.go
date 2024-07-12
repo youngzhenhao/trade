@@ -174,6 +174,9 @@ func SetFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) 
 // ProcessFairLaunchInfo
 // @Description: Process fairLaunchInfo
 func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount int, reserved int, mintQuantity int, startTime int, endTime int, description string, feeRate int, userId int) (*models.FairLaunchInfo, error) {
+	if FeeRateSatPerKwToSatPerB(feeRate) > 500 {
+		return nil, errors.New("fee rate exceeds max(500)")
+	}
 	err := ValidateStartAndEndTime(startTime, endTime)
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "ValidateStartAndEndTime")
@@ -265,6 +268,9 @@ func ValidateStartAndEndTime(startTime int, endTime int) error {
 // ProcessFairLaunchMintedInfo
 // @Description: Process fairLaunchMintedInfo
 func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedFeeRateSatPerKw int, addr string, userId int) (*models.FairLaunchMintedInfo, error) {
+	if FeeRateSatPerKwToSatPerB(mintedFeeRateSatPerKw) > 500 {
+		return nil, errors.New("fee rate exceeds max(500)")
+	}
 	var fairLaunchMintedInfo models.FairLaunchMintedInfo
 	isFairLaunchMintTimeRight, err := IsFairLaunchMintTimeRight(fairLaunchInfoID)
 	if err != nil {
