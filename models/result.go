@@ -64,6 +64,11 @@ const (
 	CreateOrUpdateBatchTransfersErr
 	GetAssetAddrsByUserIdErr
 	CreateOrUpdateAssetAddrErr
+	GetAssetLocksByUserIdErr
+	CreateOrUpdateAssetLockErr
+	GetAssetBalancesByUserIdErr
+	CreateOrUpdateAssetBalanceErr
+	CreateOrUpdateAssetBalancesErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

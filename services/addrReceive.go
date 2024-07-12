@@ -120,7 +120,7 @@ func IsAddrReceiveEventChanged(addrReceiveEventByAddrEncoded *models.AddrReceive
 
 func CheckAddrReceiveEventIfUpdate(addrReceiveEvent *models.AddrReceiveEvent) (*models.AddrReceiveEvent, error) {
 	if addrReceiveEvent == nil {
-		return nil, errors.New("nil addr receive event")
+		return nil, errors.New("nil addr receive")
 	}
 	addrReceiveEventByAddrEncoded, err := ReadAddrReceiveEventByAddrEncoded(addrReceiveEvent.AddrEncoded)
 	if err != nil {

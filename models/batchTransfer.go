@@ -12,6 +12,7 @@ type BatchTransfer struct {
 	TaprootOutputKey   string `json:"taproot_output_key" gorm:"type:varchar(255)"`
 	ProofCourierAddr   string `json:"proof_courier_addr" gorm:"type:varchar(255)"`
 	Txid               string `json:"txid" gorm:"type:varchar(255)"`
+	TxTotalAmount      int    `json:"tx_total_amount"`
 	Index              int    `json:"index"`
 	TransferTimestamp  int    `json:"transfer_timestamp"`
 	AnchorTxHash       string `json:"anchor_tx_hash" gorm:"type:varchar(255)"`
@@ -31,6 +32,7 @@ type BatchTransferRequest struct {
 	TaprootOutputKey   string `json:"taproot_output_key"`
 	ProofCourierAddr   string `json:"proof_courier_addr"`
 	Txid               string `json:"txid"`
+	TxTotalAmount      int    `json:"tx_total_amount"`
 	Index              int    `json:"index"`
 	TransferTimestamp  int    `json:"transfer_timestamp"`
 	AnchorTxHash       string `json:"anchor_tx_hash"`

@@ -47,6 +47,9 @@ type Config struct {
 		AddrReceive    bool `yaml:"addr_receive" json:"addr_receive"`
 		BatchTransfer  bool `yaml:"batch_transfer" json:"batch_transfer"`
 		AssetAddr      bool `yaml:"asset_addr" json:"asset_addr"`
+		AssetLock      bool `yaml:"asset_lock" json:"asset_lock"`
+		ValidateToken  bool `yaml:"validate_token" json:"validate_token"`
+		AssetBalance   bool `yaml:"asset_balance" json:"asset_balance"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {

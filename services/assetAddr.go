@@ -77,7 +77,7 @@ func IsAssetAddrChanged(assetAddrByAddrEncoded *models.AssetAddr, old *models.As
 
 func CheckAssetAddrIfUpdate(assetAddr *models.AssetAddr) (*models.AssetAddr, error) {
 	if assetAddr == nil {
-		return nil, errors.New("nil asset addr event")
+		return nil, errors.New("nil asset addr")
 	}
 	assetAddrByAddrEncoded, err := ReadAssetAddrByAddrEncoded(assetAddr.Encoded)
 	if err != nil {
