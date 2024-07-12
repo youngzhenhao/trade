@@ -11,6 +11,7 @@ import (
 	"github.com/lightninglabs/taproot-assets/commitment"
 	"github.com/lightninglabs/taproot-assets/proof"
 	"github.com/lightninglabs/taproot-assets/taprpc"
+	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	"gorm.io/gorm"
 	"net"
 	"strconv"
@@ -31,6 +32,8 @@ type SyncInfoRequest struct {
 
 var (
 	AssetNotFoundErr = errors.New("asset not found")
+	AssetRequestErr  = errors.New("asset request error")
+	SeverError       = errors.New("server error")
 )
 
 // GetAssetSyncInfo returns the asset sync information.
@@ -94,7 +97,16 @@ func GetAssetSyncInfo(req *SyncInfoRequest) (*models.AssetSyncInfo, error) {
 }
 
 func getAssetInfoFromLeaves(assetId string) (*models.AssetSyncInfo, error) {
-	response, _ := servicesrpc.GetAssetLeaves(assetId, false, "issuance")
+	response, err := servicesrpc.GetAssetLeaves(assetId, false, "issuance")
+	if err != nil {
+		var etcdError *rpctypes.EtcdError
+		if errors.As(err, &etcdError) {
+			fmt.Println(err.Error())
+			return nil, SeverError
+		}
+		fmt.Println(err.Error())
+		return nil, AssetRequestErr
+	}
 	if response.Leaves == nil {
 		return nil, AssetNotFoundErr
 	}

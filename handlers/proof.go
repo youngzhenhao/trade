@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
 	"net/http"
@@ -66,7 +65,7 @@ func SyncAssetInfo(c *gin.Context) {
 		return
 	}
 	if req.Id == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": fmt.Errorf("request error")})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "request error"})
 		return
 	}
 	assetSyncInfo, err := assetsyncinfo.GetAssetSyncInfo(&req)
@@ -75,7 +74,7 @@ func SyncAssetInfo(c *gin.Context) {
 		return
 	}
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": fmt.Errorf("server error")})
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
 		return
 	}
 	r := struct {
