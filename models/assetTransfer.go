@@ -49,6 +49,7 @@ type AssetTransferProcessedDb struct {
 type AssetTransferProcessedInputDb struct {
 	gorm.Model
 	Txid        string `json:"txid" gorm:"type:varchar(255)"`
+	AssetID     string `json:"asset_id" gorm:"type:varchar(255)"`
 	Index       int    `json:"index" gorm:"index"`
 	Address     string `json:"address" gorm:"type:varchar(255)"`
 	Amount      int    `json:"amount"`
@@ -61,6 +62,7 @@ type AssetTransferProcessedInputDb struct {
 type AssetTransferProcessedOutputDb struct {
 	gorm.Model
 	Txid                   string `json:"txid" gorm:"type:varchar(255)"`
+	AssetID                string `json:"asset_id" gorm:"type:varchar(255)"`
 	Index                  int    `json:"index" gorm:"index"`
 	Address                string `json:"address" gorm:"type:varchar(255)"`
 	Amount                 int    `json:"amount"`

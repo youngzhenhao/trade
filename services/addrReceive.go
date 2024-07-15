@@ -159,3 +159,11 @@ func CreateOrUpdateAddrReceiveEvents(addrReceiveEvents *[]models.AddrReceiveEven
 	}
 	return UpdateAddrReceiveEvents(&addrReceives)
 }
+
+func GetAllAddrReceiveEvents() (*[]models.AddrReceiveEvent, error) {
+	return ReadAllAddrReceiveEvents()
+}
+
+func GetAddrReceiveEventsByAssetId(assetId string) (*[]models.AddrReceiveEvent, error) {
+	return ReadAddrReceiveEventsByAssetId(assetId)
+}

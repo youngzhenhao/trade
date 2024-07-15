@@ -15,7 +15,7 @@ func CreateAddrReceiveEvents(addrReceiveEvents *[]models.AddrReceiveEvent) error
 
 func ReadAllAddrReceiveEvents() (*[]models.AddrReceiveEvent, error) {
 	var addrReceiveEvents []models.AddrReceiveEvent
-	err := middleware.DB.Find(&addrReceiveEvents).Error
+	err := middleware.DB.Order("updated_at desc").Find(&addrReceiveEvents).Error
 	return &addrReceiveEvents, err
 }
 
@@ -27,7 +27,7 @@ func ReadAddrReceiveEvent(id uint) (*models.AddrReceiveEvent, error) {
 
 func ReadAddrReceiveEventsByUserId(userId int) (*[]models.AddrReceiveEvent, error) {
 	var addrReceiveEvents []models.AddrReceiveEvent
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&addrReceiveEvents).Error
+	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Order("updated_at desc").Find(&addrReceiveEvents).Error
 	return &addrReceiveEvents, err
 }
 
@@ -35,6 +35,12 @@ func ReadAddrReceiveEventByAddrEncoded(addrEncoded string) (*models.AddrReceiveE
 	var addrReceiveEvent models.AddrReceiveEvent
 	err := middleware.DB.Where("addr_encoded = ? AND status = ?", addrEncoded, 1).First(&addrReceiveEvent).Error
 	return &addrReceiveEvent, err
+}
+
+func ReadAddrReceiveEventsByAssetId(assetId string) (*[]models.AddrReceiveEvent, error) {
+	var addrReceiveEvents []models.AddrReceiveEvent
+	err := middleware.DB.Where("addr_asset_id = ? AND status = ?", assetId, 1).Order("updated_at desc").Find(&addrReceiveEvents).Error
+	return &addrReceiveEvents, err
 }
 
 func UpdateAddrReceiveEvent(addrReceiveEvent *models.AddrReceiveEvent) error {

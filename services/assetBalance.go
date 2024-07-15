@@ -237,7 +237,6 @@ func GetAllAssetIdAndUserAssetBalances() (*[]AssetIdAndUserAssetBalance, error) 
 	assetIdAndBalances := AssetBalancesToAssetIdAndBalances(allAssetBalances)
 	for _, assetIdAndBalance := range *assetIdAndBalances {
 		userAssetBalances := AssetBalancesToUserAssetBalances(assetIdAndBalance.AssetBalances)
-
 		assetIdAndUserAssetBalances = append(assetIdAndUserAssetBalances, AssetIdAndUserAssetBalance{
 			AssetId:          assetIdAndBalance.AssetId,
 			UserAssetBalance: userAssetBalances,
@@ -246,6 +245,41 @@ func GetAllAssetIdAndUserAssetBalances() (*[]AssetIdAndUserAssetBalance, error) 
 	return &assetIdAndUserAssetBalances, nil
 }
 
-// TODO: 1. Get asset's transfer records by assetId
+type AssetHolderNumber struct {
+	AssetId   string `json:"asset_id"`
+	HolderNum int    `json:"holder_num"`
+}
 
-// TODO: 2. Get asset's number of holders by assetId
+func AllAssetIdAndUserAssetBalancesToAssetHolderInfos(assetIdAndUserAssetBalances *[]AssetIdAndUserAssetBalance) *[]AssetHolderNumber {
+	var assetHolderInfos []AssetHolderNumber
+	for _, asset := range *assetIdAndUserAssetBalances {
+		assetHolderInfos = append(assetHolderInfos, AssetHolderNumber{
+			AssetId:   asset.AssetId,
+			HolderNum: len(*(asset.UserAssetBalance)),
+		})
+	}
+	return &assetHolderInfos
+}
+
+func GetAssetHolderInfosByAssetBalances() (*[]AssetHolderNumber, error) {
+	assetIdAndUserAssetBalance, err := GetAllAssetIdAndUserAssetBalances()
+	if err != nil {
+		return nil, err
+	}
+	assetHolderInfos := AllAssetIdAndUserAssetBalancesToAssetHolderInfos(assetIdAndUserAssetBalance)
+	return assetHolderInfos, nil
+}
+
+func GetAssetHolderNumberByAssetIdWithAssetBalances(assetId string) (int, error) {
+	assetHolderInfos, err := GetAssetHolderInfosByAssetBalances()
+	if err != nil {
+		return 0, err
+	}
+	for _, asset := range *assetHolderInfos {
+		if asset.AssetId == assetId {
+			return asset.HolderNum, nil
+		}
+	}
+	err = errors.New("asset holder info not found")
+	return 0, err
+}
