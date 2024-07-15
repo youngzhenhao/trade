@@ -112,6 +112,26 @@ func GetAssetTransfer(c *gin.Context) {
 	})
 }
 
+func GetAssetTransferByAssetId(c *gin.Context) {
+	assetId := c.Param("asset_id")
+	assetTransferCombinedSliceByAssetId, err := services.GetAssetTransferCombinedSliceByAssetId(assetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetTransferCombinedSliceByAssetIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    assetTransferCombinedSliceByAssetId,
+	})
+}
+
 func GetAssetTransferTxids(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)
