@@ -17,7 +17,7 @@ func CreateAssetTransfers(assetTransfers *[]models.AssetTransfer) error {
 
 func ReadAllAssetTransfers() (*[]models.AssetTransfer, error) {
 	var assetTransfers []models.AssetTransfer
-	err := middleware.DB.Order("updated_at desc").Find(&assetTransfers).Error
+	err := middleware.DB.Order("transfer_timestamp desc").Find(&assetTransfers).Error
 	return &assetTransfers, err
 }
 
@@ -29,7 +29,7 @@ func ReadAssetTransfer(id uint) (*models.AssetTransfer, error) {
 
 func ReadAssetTransfersByUserId(userId int) (*[]models.AssetTransfer, error) {
 	var assetTransfers []models.AssetTransfer
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Order("updated_at desc").Find(&assetTransfers).Error
+	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Order("transfer_timestamp desc").Find(&assetTransfers).Error
 	return &assetTransfers, err
 }
 
@@ -58,7 +58,7 @@ func CreateAssetTransferProcessedSlice(assetTransferProcessedSlice *[]models.Ass
 
 func ReadAllAssetTransferProcessedSlice() (*[]models.AssetTransferProcessedDb, error) {
 	var assetTransferProcessedSlice []models.AssetTransferProcessedDb
-	err := middleware.DB.Order("updated_at desc").Find(&assetTransferProcessedSlice).Error
+	err := middleware.DB.Order("transfer_timestamp desc").Find(&assetTransferProcessedSlice).Error
 	return &assetTransferProcessedSlice, err
 }
 
@@ -70,13 +70,13 @@ func ReadAssetTransferProcessed(id uint) (*models.AssetTransferProcessedDb, erro
 
 func ReadAssetTransferProcessedSliceByUserId(userId int) (*[]models.AssetTransferProcessedDb, error) {
 	var assetTransferProcessedSlice []models.AssetTransferProcessedDb
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Order("updated_at desc").Find(&assetTransferProcessedSlice).Error
+	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Order("transfer_timestamp desc").Find(&assetTransferProcessedSlice).Error
 	return &assetTransferProcessedSlice, err
 }
 
 func ReadAssetTransferProcessedSliceByAssetId(assetId string) (*[]models.AssetTransferProcessedDb, error) {
 	var assetTransferProcessedSlice []models.AssetTransferProcessedDb
-	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Order("updated_at desc").Find(&assetTransferProcessedSlice).Error
+	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Order("transfer_timestamp desc").Find(&assetTransferProcessedSlice).Error
 	return &assetTransferProcessedSlice, err
 }
 
@@ -117,7 +117,7 @@ func CreateAssetTransferProcessedInputSlice(assetTransferProcessedInputSlice *[]
 
 func ReadAllAssetTransferProcessedInputSlice() (*[]models.AssetTransferProcessedInputDb, error) {
 	var assetTransferProcessedInputSlice []models.AssetTransferProcessedInputDb
-	err := middleware.DB.Order("updated_at desc").Find(&assetTransferProcessedInputSlice).Error
+	err := middleware.DB.Find(&assetTransferProcessedInputSlice).Error
 	return &assetTransferProcessedInputSlice, err
 }
 
@@ -129,13 +129,13 @@ func ReadAssetTransferProcessedInput(id uint) (*models.AssetTransferProcessedInp
 
 func ReadAssetTransferProcessedInputSliceByUserId(userId int) (*[]models.AssetTransferProcessedInputDb, error) {
 	var assetTransferProcessedInputSlice []models.AssetTransferProcessedInputDb
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Order("updated_at desc").Find(&assetTransferProcessedInputSlice).Error
+	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&assetTransferProcessedInputSlice).Error
 	return &assetTransferProcessedInputSlice, err
 }
 
 func ReadAssetTransferProcessedInputSliceByAssetId(assetId string) (*[]models.AssetTransferProcessedInputDb, error) {
 	var assetTransferProcessedInputSlice []models.AssetTransferProcessedInputDb
-	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Order("updated_at desc").Find(&assetTransferProcessedInputSlice).Error
+	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Find(&assetTransferProcessedInputSlice).Error
 	return &assetTransferProcessedInputSlice, err
 }
 
@@ -178,7 +178,7 @@ func CreateAssetTransferProcessedOutputSlice(assetTransferProcessedOutputSlice *
 
 func ReadAllAssetTransferProcessedOutputSlice() (*[]models.AssetTransferProcessedOutputDb, error) {
 	var assetTransferProcessedOutputSlice []models.AssetTransferProcessedOutputDb
-	err := middleware.DB.Order("updated_at desc").Find(&assetTransferProcessedOutputSlice).Error
+	err := middleware.DB.Find(&assetTransferProcessedOutputSlice).Error
 	return &assetTransferProcessedOutputSlice, err
 }
 
@@ -190,13 +190,13 @@ func ReadAssetTransferProcessedOutput(id uint) (*models.AssetTransferProcessedOu
 
 func ReadAssetTransferProcessedOutputSliceByUserId(userId int) (*[]models.AssetTransferProcessedOutputDb, error) {
 	var assetTransferProcessedOutputSlice []models.AssetTransferProcessedOutputDb
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Order("updated_at desc").Find(&assetTransferProcessedOutputSlice).Error
+	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&assetTransferProcessedOutputSlice).Error
 	return &assetTransferProcessedOutputSlice, err
 }
 
 func ReadAssetTransferProcessedOutputSliceByAssetId(assetId string) (*[]models.AssetTransferProcessedOutputDb, error) {
 	var assetTransferProcessedOutputSlice []models.AssetTransferProcessedOutputDb
-	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Order("updated_at desc").Find(&assetTransferProcessedOutputSlice).Error
+	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Find(&assetTransferProcessedOutputSlice).Error
 	return &assetTransferProcessedOutputSlice, err
 }
 
