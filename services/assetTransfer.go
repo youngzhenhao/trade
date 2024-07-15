@@ -102,6 +102,7 @@ func CheckAssetTransferProcessedInputIfUpdate(assetTransferProcessedInput *model
 		return assetTransferProcessedInputByTxidAndIndex, nil
 	}
 	assetTransferProcessedInputByTxidAndIndex.Txid = assetTransferProcessedInput.Txid
+	assetTransferProcessedInputByTxidAndIndex.AssetID = assetTransferProcessedInput.AssetID
 	assetTransferProcessedInputByTxidAndIndex.Index = assetTransferProcessedInput.Index
 	assetTransferProcessedInputByTxidAndIndex.Address = assetTransferProcessedInput.Address
 	assetTransferProcessedInputByTxidAndIndex.Amount = assetTransferProcessedInput.Amount
@@ -123,6 +124,7 @@ func CheckAssetTransferProcessedOutputIfUpdate(assetTransferProcessedOutput *mod
 		return assetTransferProcessedOutputByTxidAndIndex, nil
 	}
 	assetTransferProcessedOutputByTxidAndIndex.Txid = assetTransferProcessedOutput.Txid
+	assetTransferProcessedOutputByTxidAndIndex.AssetID = assetTransferProcessedOutput.AssetID
 	assetTransferProcessedOutputByTxidAndIndex.Index = assetTransferProcessedOutput.Index
 	assetTransferProcessedOutputByTxidAndIndex.Address = assetTransferProcessedOutput.Address
 	assetTransferProcessedOutputByTxidAndIndex.Amount = assetTransferProcessedOutput.Amount
@@ -192,6 +194,9 @@ func IsAssetTransferProcessedInputChanged(assetTransferProcessedInput *models.As
 	if old.Index != assetTransferProcessedInput.Index {
 		return true
 	}
+	if old.AssetID != assetTransferProcessedInput.AssetID {
+		return true
+	}
 	if old.Address != assetTransferProcessedInput.Address {
 		return true
 	}
@@ -215,6 +220,9 @@ func IsAssetTransferProcessedOutputChanged(assetTransferProcessedOutput *models.
 		return true
 	}
 	if old.Txid != assetTransferProcessedOutput.Txid {
+		return true
+	}
+	if old.AssetID != assetTransferProcessedOutput.AssetID {
 		return true
 	}
 	if old.Index != assetTransferProcessedOutput.Index {
