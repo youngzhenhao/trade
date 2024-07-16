@@ -19,12 +19,12 @@ func GetAssetBalance(c *gin.Context) {
 		})
 		return
 	}
-	assetBalances, err := services.GetAssetBalancesByUserId(userId)
+	assetBalances, err := services.GetAssetBalancesByUserIdNonZero(userId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAssetBalancesByUserIdErr,
+			Code:    models.GetAssetBalancesByUserIdNonZeroErr,
 			Data:    nil,
 		})
 		return

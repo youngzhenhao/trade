@@ -9,6 +9,10 @@ func GetAssetBalancesByUserId(userId int) (*[]models.AssetBalance, error) {
 	return ReadAssetBalancesByUserId(userId)
 }
 
+func GetAssetBalancesByUserIdNonZero(userId int) (*[]models.AssetBalance, error) {
+	return ReadAssetBalancesByUserIdNonZero(userId)
+}
+
 func ProcessAssetBalanceSetRequest(userId int, assetBalanceSetRequest *models.AssetBalanceSetRequest) *models.AssetBalance {
 	var assetBalance models.AssetBalance
 	assetBalance = models.AssetBalance{
