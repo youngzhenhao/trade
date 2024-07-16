@@ -107,3 +107,7 @@ func CreateOrUpdateAssetAddr(addr *models.AssetAddr) (err error) {
 	assetAddr, err = CheckAssetAddrIfUpdate(addr)
 	return UpdateAssetAddr(assetAddr)
 }
+
+func GetAssetAddrsByScriptKey(scriptKey string) (*[]models.AssetAddr, error) {
+	return ReadAssetAddrsByScriptKey(scriptKey)
+}

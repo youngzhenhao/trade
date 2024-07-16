@@ -31,6 +31,12 @@ func ReadAssetAddrsByUserId(userId int) (*[]models.AssetAddr, error) {
 	return &assetAddrs, err
 }
 
+func ReadAssetAddrsByScriptKey(scriptKey string) (*[]models.AssetAddr, error) {
+	var assetAddrs []models.AssetAddr
+	err := middleware.DB.Where("script_key = ? AND status = ?", scriptKey, 1).Find(&assetAddrs).Error
+	return &assetAddrs, err
+}
+
 func ReadAssetAddrByAddrEncoded(addrEncoded string) (*models.AssetAddr, error) {
 	var assetAddr models.AssetAddr
 	err := middleware.DB.Where("encoded = ? AND status = ?", addrEncoded, 1).First(&assetAddr).Error

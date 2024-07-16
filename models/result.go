@@ -70,6 +70,7 @@ const (
 	CreateOrUpdateAssetBalanceErr
 	CreateOrUpdateAssetBalancesErr
 	GetAssetTransferCombinedSliceByAssetIdErr
+	GetAssetAddrsByScriptKeyErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

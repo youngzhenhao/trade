@@ -78,3 +78,23 @@ func SetAssetAddr(c *gin.Context) {
 		Data:    nil,
 	})
 }
+
+func GetAssetAddrByScriptKey(c *gin.Context) {
+	scriptKey := c.Param("script_key")
+	assetAddrs, err := services.GetAssetAddrsByScriptKey(scriptKey)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetAddrsByScriptKeyErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    assetAddrs,
+	})
+}
