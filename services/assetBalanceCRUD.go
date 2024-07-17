@@ -19,6 +19,12 @@ func ReadAllAssetBalances() (*[]models.AssetBalance, error) {
 	return &assetBalances, err
 }
 
+func ReadAllAssetBalancesNonZero() (*[]models.AssetBalance, error) {
+	var assetBalances []models.AssetBalance
+	err := middleware.DB.Where("status = ? AND balance <> ?", 1, 0).Order("updated_at desc").Find(&assetBalances).Error
+	return &assetBalances, err
+}
+
 func ReadAssetBalance(id uint) (*models.AssetBalance, error) {
 	var assetBalance models.AssetBalance
 	err := middleware.DB.First(&assetBalance, id).Error

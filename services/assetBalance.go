@@ -138,6 +138,10 @@ func GetAllAssetBalances() (*[]models.AssetBalance, error) {
 	return ReadAllAssetBalances()
 }
 
+func GetAllAssetBalancesNonZero() (*[]models.AssetBalance, error) {
+	return ReadAllAssetBalancesNonZero()
+}
+
 func AssetBalancesToUserMapAssetBalances(assetBalances *[]models.AssetBalance) *map[int]*[]models.AssetBalance {
 	userMapAssetBalances := make(map[int]*[]models.AssetBalance)
 	for _, assetBalance := range *assetBalances {
@@ -234,7 +238,7 @@ type AssetIdAndUserAssetBalance struct {
 // @Description: Get all asset balances by assetId and userId
 func GetAllAssetIdAndUserAssetBalances() (*[]AssetIdAndUserAssetBalance, error) {
 	var assetIdAndUserAssetBalances []AssetIdAndUserAssetBalance
-	allAssetBalances, err := GetAllAssetBalances()
+	allAssetBalances, err := GetAllAssetBalancesNonZero()
 	if err != nil {
 		return nil, err
 	}
@@ -286,4 +290,10 @@ func GetAssetHolderNumberByAssetIdWithAssetBalances(assetId string) (int, error)
 	}
 	err = errors.New("asset holder info not found")
 	return 0, err
+}
+
+// GetAssetHolderNumberAssetBalance
+// @Description: Use asset balances
+func GetAssetHolderNumberAssetBalance(assetId string) (int, error) {
+	return GetAssetHolderNumberByAssetIdWithAssetBalances(assetId)
 }

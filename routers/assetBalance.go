@@ -11,6 +11,7 @@ func SetupAssetBalanceRouter(router *gin.Engine) *gin.Engine {
 	assetBalance.Use(middleware.AuthMiddleware())
 	{
 		assetBalance.GET("/get", handlers.GetAssetBalance)
+		assetBalance.GET("/get/holder/number/:asset_id", handlers.GetAssetHolderNumber)
 		assetBalance.POST("/set", handlers.SetAssetBalance)
 		assetBalance.POST("/set_slice", handlers.SetAssetBalances)
 	}
