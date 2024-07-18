@@ -452,6 +452,8 @@ func GetAllAssetTransferProcessedOutputSlice() (*[]models.AssetTransferProcessed
 	return ReadAllAssetTransferProcessedOutputSlice()
 }
 
+// GetAllAssetTransferCombinedSlice
+// @Description: get all asset transfer combined slice
 func GetAllAssetTransferCombinedSlice() (*[]models.AssetTransferProcessedCombined, error) {
 	var err error
 	var transferCombinedSlice *[]models.AssetTransferProcessedCombined
@@ -490,6 +492,21 @@ func GetAssetTransferProcessedOutputSliceByAssetId(assetId string) (*[]models.As
 	return ReadAssetTransferProcessedOutputSliceByAssetId(assetId)
 }
 
+// @dev: Use this
+func GetAssetTransferProcessedSliceByAssetIdLimit(assetId string, limit int) (*[]models.AssetTransferProcessedDb, error) {
+	return ReadAssetTransferProcessedSliceByAssetIdLimit(assetId, limit)
+}
+
+// Deprecated
+func GetAssetTransferProcessedInputSliceByAssetIdLimit(assetId string, limit int) (*[]models.AssetTransferProcessedInputDb, error) {
+	return ReadAssetTransferProcessedInputSliceByAssetIdLimit(assetId, limit)
+}
+
+// Deprecated
+func GetAssetTransferProcessedOutputSliceByAssetIdLimit(assetId string, limit int) (*[]models.AssetTransferProcessedOutputDb, error) {
+	return ReadAssetTransferProcessedOutputSliceByAssetIdLimit(assetId, limit)
+}
+
 func GetAssetTransferCombinedSliceByAssetId(assetId string) (*[]models.AssetTransferProcessedCombined, error) {
 	var err error
 	var transferCombinedSlice *[]models.AssetTransferProcessedCombined
@@ -510,4 +527,188 @@ func GetAssetTransferCombinedSliceByAssetId(assetId string) (*[]models.AssetTran
 		return nil, err
 	}
 	return transferCombinedSlice, nil
+}
+
+func GetAssetTransferCombinedSliceByAssetIdLimit(assetId string, limit int) (*[]models.AssetTransferProcessedCombined, error) {
+	var err error
+	var transferCombinedSlice *[]models.AssetTransferProcessedCombined
+	// @dev: Use limit only here
+	transfers, err := GetAssetTransferProcessedSliceByAssetIdLimit(assetId, limit)
+	if err != nil {
+		return nil, err
+	}
+	transfersInputs, err := GetAssetTransferProcessedInputSliceByAssetId(assetId)
+	if err != nil {
+		return nil, err
+	}
+	transfersOutputs, err := GetAssetTransferProcessedOutputSliceByAssetId(assetId)
+	if err != nil {
+		return nil, err
+	}
+	transferCombinedSlice, err = CombineAssetTransfers(transfers, transfersInputs, transfersOutputs)
+	if err != nil {
+		return nil, err
+	}
+	return transferCombinedSlice, nil
+}
+
+type AssetIdAndUserAssetTransferAmount struct {
+	AssetId                  string                     `json:"asset_id"`
+	UserAssetTransferAmounts *[]UserAssetTransferAmount `json:"user_asset_transfer_amounts"`
+}
+
+type AssetIdAndUserAssetTransferAmountMap struct {
+	AssetId                    string       `json:"asset_id"`
+	UserAssetTransferAmountMap *map[int]int `json:"user_asset_transfer_amount_map"`
+}
+
+type UserAssetTransferAmount struct {
+	UserId              int `json:"user_id"`
+	AssetTransferAmount int `json:"asset_transfer_amount"`
+}
+
+type AssetTransfer struct {
+	AssetId string `json:"asset_id"`
+	Txid    string `json:"txid"`
+	Amount  int    `json:"amount"`
+	UserId  int    `json:"user_id"`
+}
+
+type AssetIdAndTransfer struct {
+	AssetId        string           `json:"asset_id"`
+	AssetTransfers *[]AssetTransfer `json:"asset_receives"`
+}
+
+func GetTotalAmountOfOutputs(assetTransferProcessedOutputs *[]models.AssetTransferProcessedOutput) int {
+	var totalAmountOfOutputs int
+	for _, output := range *assetTransferProcessedOutputs {
+		totalAmountOfOutputs += output.Amount
+	}
+	return totalAmountOfOutputs
+}
+
+func AssetTransferCombinedSliceToAssetTransfers(assetTransferProcessedCombined *[]models.AssetTransferProcessedCombined) *[]AssetTransfer {
+	var assetTransfers []AssetTransfer
+	for _, assetTransfer := range *assetTransferProcessedCombined {
+		assetTransfers = append(assetTransfers, AssetTransfer{
+			AssetId: assetTransfer.AssetID,
+			Txid:    assetTransfer.Txid,
+			Amount:  GetTotalAmountOfOutputs(&(assetTransfer.Outputs)),
+			UserId:  assetTransfer.UserID,
+		})
+	}
+	return &assetTransfers
+}
+
+// GetAllAssetTransfers
+// @Description: Get all asset transfer
+func GetAllAssetTransfers() (*[]AssetTransfer, error) {
+	allAssetTransferCombined, err := GetAllAssetTransferCombinedSlice()
+	if err != nil {
+		return nil, err
+	}
+	assetTransfers := AssetTransferCombinedSliceToAssetTransfers(allAssetTransferCombined)
+	return assetTransfers, nil
+}
+
+func AssetTransfersToAssetIdMapAssetTransfers(assetTransfers *[]AssetTransfer) *map[string]*[]AssetTransfer {
+	AssetIdMapAssetTransfers := make(map[string]*[]AssetTransfer)
+	for _, assetTransfer := range *assetTransfers {
+		receives, ok := AssetIdMapAssetTransfers[assetTransfer.AssetId]
+		if !ok {
+			AssetIdMapAssetTransfers[assetTransfer.AssetId] = &[]AssetTransfer{assetTransfer}
+		} else {
+			*receives = append(*receives, assetTransfer)
+		}
+	}
+	return &AssetIdMapAssetTransfers
+}
+
+func AssetIdMapAssetTransfersToAssetIdAndTransfers(AssetIdMapAssetTransfers *map[string]*[]AssetTransfer) *[]AssetIdAndTransfer {
+	var assetIdAndTransfers []AssetIdAndTransfer
+	for assetId, assetTransfers := range *AssetIdMapAssetTransfers {
+		assetIdAndTransfers = append(assetIdAndTransfers, AssetIdAndTransfer{
+			AssetId:        assetId,
+			AssetTransfers: assetTransfers,
+		})
+	}
+	return &assetIdAndTransfers
+}
+
+func AssetTransfersToAssetIdAndTransfers(assetTransfers *[]AssetTransfer) *[]AssetIdAndTransfer {
+	assetIdMapAssetTransfers := AssetTransfersToAssetIdMapAssetTransfers(assetTransfers)
+	assetIdAndTransfers := AssetIdMapAssetTransfersToAssetIdAndTransfers(assetIdMapAssetTransfers)
+	return assetIdAndTransfers
+}
+
+func AssetTransfersToUserMapAssetTransferAmount(assetTransfers *[]AssetTransfer) *map[int]int {
+	userMapAssetTransferAmount := make(map[int]int)
+	for _, assetTransfer := range *assetTransfers {
+		balances, ok := userMapAssetTransferAmount[assetTransfer.UserId]
+		if !ok || balances == 0 {
+			userMapAssetTransferAmount[assetTransfer.UserId] = assetTransfer.Amount
+		} else {
+			userMapAssetTransferAmount[assetTransfer.UserId] += assetTransfer.Amount
+		}
+	}
+	return &userMapAssetTransferAmount
+}
+
+func UserMapAssetTransferAmountToUserAssetTransferAmount(userMapAssetTransferAmount *map[int]int) *[]UserAssetTransferAmount {
+	var userAssetTransferAmount []UserAssetTransferAmount
+	for userId, receiveAmount := range *userMapAssetTransferAmount {
+		userAssetTransferAmount = append(userAssetTransferAmount, UserAssetTransferAmount{
+			UserId:              userId,
+			AssetTransferAmount: receiveAmount,
+		})
+	}
+	return &userAssetTransferAmount
+}
+
+func AssetTransfersToUserAssetTransferAmount(assetTransfers *[]AssetTransfer) *[]UserAssetTransferAmount {
+	userMapAssetTransfers := AssetTransfersToUserMapAssetTransferAmount(assetTransfers)
+	userAssetTransferAmount := UserMapAssetTransferAmountToUserAssetTransferAmount(userMapAssetTransfers)
+	return userAssetTransferAmount
+}
+
+func AssetTransfersToUserAssetTransferAmountMap(assetTransfers *[]AssetTransfer) *map[int]int {
+	userMapAssetTransfers := AssetTransfersToUserMapAssetTransferAmount(assetTransfers)
+	return userMapAssetTransfers
+}
+
+// GetAllAssetIdAndUserAssetTransferAmount
+// @Description: asset transfers to user asset transfer amount
+func GetAllAssetIdAndUserAssetTransferAmount() (*[]AssetIdAndUserAssetTransferAmount, error) {
+	var assetIdAndUserAssetTransferAmount []AssetIdAndUserAssetTransferAmount
+	allAssetTransfers, err := GetAllAssetTransfers()
+	if err != nil {
+		return nil, err
+	}
+	assetIdAndTransfers := AssetTransfersToAssetIdAndTransfers(allAssetTransfers)
+	for _, assetIdAndTransfer := range *assetIdAndTransfers {
+		userAssetTransferAmount := AssetTransfersToUserAssetTransferAmount(assetIdAndTransfer.AssetTransfers)
+		assetIdAndUserAssetTransferAmount = append(assetIdAndUserAssetTransferAmount, AssetIdAndUserAssetTransferAmount{
+			AssetId:                  assetIdAndTransfer.AssetId,
+			UserAssetTransferAmounts: userAssetTransferAmount,
+		})
+	}
+	return &assetIdAndUserAssetTransferAmount, nil
+}
+
+// @dev: Use map
+func GetAllAssetIdAndUserAssetTransferAmountMap() (*[]AssetIdAndUserAssetTransferAmountMap, error) {
+	var assetIdAndUserAssetTransferAmount []AssetIdAndUserAssetTransferAmountMap
+	allAssetTransfers, err := GetAllAssetTransfers()
+	if err != nil {
+		return nil, err
+	}
+	assetIdAndTransfers := AssetTransfersToAssetIdAndTransfers(allAssetTransfers)
+	for _, assetIdAndTransfer := range *assetIdAndTransfers {
+		userAssetTransferAmountMap := AssetTransfersToUserAssetTransferAmountMap(assetIdAndTransfer.AssetTransfers)
+		assetIdAndUserAssetTransferAmount = append(assetIdAndUserAssetTransferAmount, AssetIdAndUserAssetTransferAmountMap{
+			AssetId:                    assetIdAndTransfer.AssetId,
+			UserAssetTransferAmountMap: userAssetTransferAmountMap,
+		})
+	}
+	return &assetIdAndUserAssetTransferAmount, nil
 }

@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"trade/api"
 	"trade/models"
 )
 
@@ -170,6 +171,7 @@ func GetAddrReceiveEventsByAssetId(assetId string) (*[]models.AddrReceiveEvent, 
 
 type AssetReceive struct {
 	AssetId string `json:"asset_id"`
+	Txid    string `json:"txid"`
 	Encoded string `json:"encoded"`
 	Amount  int    `json:"amount"`
 	UserId  int    `json:"user_id"`
@@ -202,8 +204,10 @@ func GetAllAssetReceives() (*[]AssetReceive, error) {
 func AddrReceiveEventsToAssetReceives(allAddrReceiveEvents *[]models.AddrReceiveEvent) *[]AssetReceive {
 	var assetReceives []AssetReceive
 	for _, addrReceiveEvent := range *allAddrReceiveEvents {
+		txid, _ := api.OutpointToTransactionAndIndex(addrReceiveEvent.Outpoint)
 		assetReceives = append(assetReceives, AssetReceive{
 			AssetId: addrReceiveEvent.AddrAssetID,
+			Txid:    txid,
 			Encoded: addrReceiveEvent.AddrEncoded,
 			Amount:  addrReceiveEvent.AddrAmount,
 			UserId:  addrReceiveEvent.UserID,
@@ -236,18 +240,44 @@ func AssetIdMapAssetReceivesToAssetIdAndReceives(AssetIdMapAssetReceives *map[st
 	return &assetIdAndReceives
 }
 
-// TODO: Test
 func AssetReceivesToAssetIdAndReceives(assetReceives *[]AssetReceive) *[]AssetIdAndReceive {
 	assetIdMapAssetReceives := AssetReceivesToAssetIdMapAssetReceives(assetReceives)
 	assetIdAndReceives := AssetIdMapAssetReceivesToAssetIdAndReceives(assetIdMapAssetReceives)
 	return assetIdAndReceives
 }
 
-func AssetReceivesToUserAssetReceives(userAssetReceives *[]AssetReceive) *[]UserAssetReceive {
-	// TODO
-	return nil
+func AssetReceivesToUserMapAssetReceives(assetReceives *[]AssetReceive) *map[int]*[]AssetReceive {
+	userMapAssetReceives := make(map[int]*[]AssetReceive)
+	for _, assetReceive := range *assetReceives {
+		balances, ok := userMapAssetReceives[assetReceive.UserId]
+		if !ok {
+			userMapAssetReceives[assetReceive.UserId] = &[]AssetReceive{assetReceive}
+		} else {
+			*balances = append(*balances, assetReceive)
+		}
+	}
+	return &userMapAssetReceives
 }
 
+func UserMapAssetReceivesToUserAssetReceives(userMapAssetReceives *map[int]*[]AssetReceive) *[]UserAssetReceive {
+	var userAssetReceives []UserAssetReceive
+	for userId, assetReceives := range *userMapAssetReceives {
+		userAssetReceives = append(userAssetReceives, UserAssetReceive{
+			UserId:        userId,
+			AssetReceives: assetReceives,
+		})
+	}
+	return &userAssetReceives
+}
+
+func AssetReceivesToUserAssetReceives(assetReceives *[]AssetReceive) *[]UserAssetReceive {
+	userMapAssetReceives := AssetReceivesToUserMapAssetReceives(assetReceives)
+	userAssetReceives := UserMapAssetReceivesToUserAssetReceives(userMapAssetReceives)
+	return userAssetReceives
+}
+
+// GetAllAssetIdAndUserAssetReceives
+// @Description: Get all asset id and user asset receives
 func GetAllAssetIdAndUserAssetReceives() (*[]AssetIdAndUserAssetReceive, error) {
 	var assetIdAndUserAssetReceives []AssetIdAndUserAssetReceive
 	allAssetReceives, err := GetAllAssetReceives()
@@ -263,4 +293,91 @@ func GetAllAssetIdAndUserAssetReceives() (*[]AssetIdAndUserAssetReceive, error) 
 		})
 	}
 	return &assetIdAndUserAssetReceives, nil
+}
+
+type AssetIdAndUserAssetReceiveAmount struct {
+	AssetId                 string                    `json:"asset_id"`
+	UserAssetReceiveAmounts *[]UserAssetReceiveAmount `json:"user_asset_receive_amounts"`
+}
+
+type AssetIdAndUserAssetReceiveAmountMap struct {
+	AssetId                   string       `json:"asset_id"`
+	UserAssetReceiveAmountMap *map[int]int `json:"user_asset_receive_amount_map"`
+}
+
+type UserAssetReceiveAmount struct {
+	UserId             int `json:"user_id"`
+	AssetReceiveAmount int `json:"asset_receive_amount"`
+}
+
+func AssetReceivesToUserMapAssetReceiveAmount(assetReceives *[]AssetReceive) *map[int]int {
+	userMapAssetReceiveAmount := make(map[int]int)
+	for _, assetReceive := range *assetReceives {
+		balances, ok := userMapAssetReceiveAmount[assetReceive.UserId]
+		if !ok || balances == 0 {
+			userMapAssetReceiveAmount[assetReceive.UserId] = assetReceive.Amount
+		} else {
+			userMapAssetReceiveAmount[assetReceive.UserId] += assetReceive.Amount
+		}
+	}
+	return &userMapAssetReceiveAmount
+}
+
+func UserMapAssetReceiveAmountToUserAssetReceiveAmount(userMapAssetReceiveAmount *map[int]int) *[]UserAssetReceiveAmount {
+	var userAssetReceiveAmount []UserAssetReceiveAmount
+	for userId, receiveAmount := range *userMapAssetReceiveAmount {
+		userAssetReceiveAmount = append(userAssetReceiveAmount, UserAssetReceiveAmount{
+			UserId:             userId,
+			AssetReceiveAmount: receiveAmount,
+		})
+	}
+	return &userAssetReceiveAmount
+}
+
+func AssetReceivesToUserAssetReceiveAmount(assetReceives *[]AssetReceive) *[]UserAssetReceiveAmount {
+	userMapAssetReceives := AssetReceivesToUserMapAssetReceiveAmount(assetReceives)
+	userAssetReceiveAmount := UserMapAssetReceiveAmountToUserAssetReceiveAmount(userMapAssetReceives)
+	return userAssetReceiveAmount
+}
+
+// GetAllAssetIdAndUserAssetReceiveAmount
+// @Description: get all asset id and user asset receive amount
+func GetAllAssetIdAndUserAssetReceiveAmount() (*[]AssetIdAndUserAssetReceiveAmount, error) {
+	var assetIdAndUserAssetReceiveAmount []AssetIdAndUserAssetReceiveAmount
+	allAssetReceives, err := GetAllAssetReceives()
+	if err != nil {
+		return nil, err
+	}
+	assetIdAndReceives := AssetReceivesToAssetIdAndReceives(allAssetReceives)
+	for _, assetIdAndReceive := range *assetIdAndReceives {
+		userAssetReceiveAmount := AssetReceivesToUserAssetReceiveAmount(assetIdAndReceive.AssetReceives)
+		assetIdAndUserAssetReceiveAmount = append(assetIdAndUserAssetReceiveAmount, AssetIdAndUserAssetReceiveAmount{
+			AssetId:                 assetIdAndReceive.AssetId,
+			UserAssetReceiveAmounts: userAssetReceiveAmount,
+		})
+	}
+	return &assetIdAndUserAssetReceiveAmount, nil
+}
+
+func AssetReceivesToUserAssetReceiveAmountMap(assetReceives *[]AssetReceive) *map[int]int {
+	userMapAssetReceives := AssetReceivesToUserMapAssetReceiveAmount(assetReceives)
+	return userMapAssetReceives
+}
+
+// @dev: Use map
+func GetAllAssetIdAndUserAssetReceiveAmountMap() (*[]AssetIdAndUserAssetReceiveAmountMap, error) {
+	var assetIdAndUserAssetReceiveAmount []AssetIdAndUserAssetReceiveAmountMap
+	allAssetReceives, err := GetAllAssetReceives()
+	if err != nil {
+		return nil, err
+	}
+	assetIdAndReceives := AssetReceivesToAssetIdAndReceives(allAssetReceives)
+	for _, assetIdAndReceive := range *assetIdAndReceives {
+		userAssetReceiveAmountMap := AssetReceivesToUserAssetReceiveAmountMap(assetIdAndReceive.AssetReceives)
+		assetIdAndUserAssetReceiveAmount = append(assetIdAndUserAssetReceiveAmount, AssetIdAndUserAssetReceiveAmountMap{
+			AssetId:                   assetIdAndReceive.AssetId,
+			UserAssetReceiveAmountMap: userAssetReceiveAmountMap,
+		})
+	}
+	return &assetIdAndUserAssetReceiveAmount, nil
 }

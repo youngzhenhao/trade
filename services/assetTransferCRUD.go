@@ -80,6 +80,12 @@ func ReadAssetTransferProcessedSliceByAssetId(assetId string) (*[]models.AssetTr
 	return &assetTransferProcessedSlice, err
 }
 
+func ReadAssetTransferProcessedSliceByAssetIdLimit(assetId string, limit int) (*[]models.AssetTransferProcessedDb, error) {
+	var assetTransferProcessedSlice []models.AssetTransferProcessedDb
+	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Limit(limit).Order("transfer_timestamp desc").Find(&assetTransferProcessedSlice).Error
+	return &assetTransferProcessedSlice, err
+}
+
 func ReadAssetTransferProcessedByTxid(txid string) (*models.AssetTransferProcessedDb, error) {
 	var assetTransferProcessed models.AssetTransferProcessedDb
 	err := middleware.DB.Where("txid = ? AND status = ?", txid, 1).First(&assetTransferProcessed).Error
@@ -136,6 +142,13 @@ func ReadAssetTransferProcessedInputSliceByUserId(userId int) (*[]models.AssetTr
 func ReadAssetTransferProcessedInputSliceByAssetId(assetId string) (*[]models.AssetTransferProcessedInputDb, error) {
 	var assetTransferProcessedInputSlice []models.AssetTransferProcessedInputDb
 	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Find(&assetTransferProcessedInputSlice).Error
+	return &assetTransferProcessedInputSlice, err
+}
+
+// Deprecated
+func ReadAssetTransferProcessedInputSliceByAssetIdLimit(assetId string, limit int) (*[]models.AssetTransferProcessedInputDb, error) {
+	var assetTransferProcessedInputSlice []models.AssetTransferProcessedInputDb
+	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Limit(limit).Find(&assetTransferProcessedInputSlice).Error
 	return &assetTransferProcessedInputSlice, err
 }
 
@@ -197,6 +210,13 @@ func ReadAssetTransferProcessedOutputSliceByUserId(userId int) (*[]models.AssetT
 func ReadAssetTransferProcessedOutputSliceByAssetId(assetId string) (*[]models.AssetTransferProcessedOutputDb, error) {
 	var assetTransferProcessedOutputSlice []models.AssetTransferProcessedOutputDb
 	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Find(&assetTransferProcessedOutputSlice).Error
+	return &assetTransferProcessedOutputSlice, err
+}
+
+// Deprecated
+func ReadAssetTransferProcessedOutputSliceByAssetIdLimit(assetId string, limit int) (*[]models.AssetTransferProcessedOutputDb, error) {
+	var assetTransferProcessedOutputSlice []models.AssetTransferProcessedOutputDb
+	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Limit(limit).Find(&assetTransferProcessedOutputSlice).Error
 	return &assetTransferProcessedOutputSlice, err
 }
 

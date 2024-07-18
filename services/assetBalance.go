@@ -324,3 +324,22 @@ func GetAssetIdAndBalancesByAssetId(assetId string) (*AssetIdAndBalance, error) 
 		AssetBalances: assetBalances,
 	}, nil
 }
+
+// @dev: Use receives and transfers
+// @dev: Rat stands for Receices and transfers
+type UserAssetBalanceByRat struct {
+	UserId             int `json:"user_id"`
+	AssetBalanceAmount int `json:"asset_balance_amount"`
+}
+
+type AssetIdAndUserAssetBalanceByRat struct {
+	AssetId          string                   `json:"asset_id"`
+	UserAssetBalance *[]UserAssetBalanceByRat `json:"user_asset_balance"`
+}
+
+// @dev: Use to maps to compute
+func GetAssetIdAndUserAssetBalanceByRat() *[]AssetIdAndUserAssetBalanceByRat {
+
+	// TODO: Compute asset Balance by receives and transfers' maps
+	return nil
+}

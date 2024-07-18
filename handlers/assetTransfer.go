@@ -114,7 +114,7 @@ func GetAssetTransfer(c *gin.Context) {
 
 func GetAssetTransferByAssetId(c *gin.Context) {
 	assetId := c.Param("asset_id")
-	assetTransferCombinedSliceByAssetId, err := services.GetAssetTransferCombinedSliceByAssetId(assetId)
+	assetTransferCombinedSliceByAssetId, err := services.GetAssetTransferCombinedSliceByAssetIdLimit(assetId, 50)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
