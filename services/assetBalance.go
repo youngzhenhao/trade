@@ -142,6 +142,10 @@ func GetAllAssetBalancesNonZero() (*[]models.AssetBalance, error) {
 	return ReadAllAssetBalancesNonZero()
 }
 
+func GetAllAssetBalancesNonZeroLimit(limit int) (*[]models.AssetBalance, error) {
+	return ReadAllAssetBalancesNonZeroLimit(limit)
+}
+
 func AssetBalancesToUserMapAssetBalances(assetBalances *[]models.AssetBalance) *map[int]*[]models.AssetBalance {
 	userMapAssetBalances := make(map[int]*[]models.AssetBalance)
 	for _, assetBalance := range *assetBalances {
@@ -303,7 +307,7 @@ func GetAssetHolderNumberAssetBalance(assetId string) (int, error) {
 // @Description: Get assetId and balances by assetId
 // @dev
 func GetAssetIdAndBalancesByAssetId(assetId string) (*AssetIdAndBalance, error) {
-	allAssetBalances, err := GetAllAssetBalancesNonZero()
+	allAssetBalances, err := GetAllAssetBalancesNonZeroLimit(50)
 	if err != nil {
 		return nil, err
 	}
