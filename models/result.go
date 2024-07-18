@@ -73,6 +73,7 @@ const (
 	GetAssetAddrsByScriptKeyErr
 	GetAssetBalancesByUserIdNonZeroErr
 	GetAssetHolderNumberAssetBalanceErr
+	GetAssetIdAndBalancesByAssetIdErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

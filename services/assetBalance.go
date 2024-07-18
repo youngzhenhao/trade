@@ -220,6 +220,7 @@ func AssetBalancesToAssetIdAndBalances(assetBalances *[]models.AssetBalance) *[]
 
 // GetAllAssetIdAndBalances
 // @Description: Get all asset balances by assetId
+// @dev
 func GetAllAssetIdAndBalances() (*[]AssetIdAndBalance, error) {
 	allAssetBalances, err := GetAllAssetBalances()
 	if err != nil {
@@ -296,4 +297,26 @@ func GetAssetHolderNumberByAssetIdWithAssetBalances(assetId string) (int, error)
 // @Description: Use asset balances
 func GetAssetHolderNumberAssetBalance(assetId string) (int, error) {
 	return GetAssetHolderNumberByAssetIdWithAssetBalances(assetId)
+}
+
+// GetAssetIdAndBalancesByAssetId
+// @Description: Get assetId and balances by assetId
+// @dev
+func GetAssetIdAndBalancesByAssetId(assetId string) (*AssetIdAndBalance, error) {
+	allAssetBalances, err := GetAllAssetBalancesNonZero()
+	if err != nil {
+		return nil, err
+	}
+	assetIdMapAssetBalances := AssetBalancesToAssetIdMapAssetBalances(allAssetBalances)
+	assetBalances, ok := (*assetIdMapAssetBalances)[assetId]
+	if !ok {
+		return &AssetIdAndBalance{
+			AssetId:       assetId,
+			AssetBalances: nil,
+		}, nil
+	}
+	return &AssetIdAndBalance{
+		AssetId:       assetId,
+		AssetBalances: assetBalances,
+	}, nil
 }

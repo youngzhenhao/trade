@@ -140,3 +140,23 @@ func GetAssetHolderNumber(c *gin.Context) {
 		Data:    holderNumber,
 	})
 }
+
+func GetAssetHolderBalance(c *gin.Context) {
+	assetId := c.Param("asset_id")
+	holderBalances, err := services.GetAssetIdAndBalancesByAssetId(assetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetIdAndBalancesByAssetIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    holderBalances,
+	})
+}
