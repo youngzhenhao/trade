@@ -55,6 +55,12 @@ func ReadAssetBalanceByAssetID(assetId string) (*models.AssetBalance, error) {
 	return &assetBalance, err
 }
 
+func ReadAssetBalanceByAssetIdAndUserId(assetId string, userId int) (*models.AssetBalance, error) {
+	var assetBalance models.AssetBalance
+	err := middleware.DB.Where("asset_id = ? AND user_id = ? AND status = ?", assetId, userId, 1).First(&assetBalance).Error
+	return &assetBalance, err
+}
+
 func UpdateAssetBalance(assetBalance *models.AssetBalance) error {
 	return middleware.DB.Save(assetBalance).Error
 }

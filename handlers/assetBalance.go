@@ -60,8 +60,8 @@ func SetAssetBalance(c *gin.Context) {
 		})
 		return
 	}
-	assetBalance := services.ProcessAssetBalanceSetRequest(userId, &assetBalanceSetRequest)
-	err = services.CreateOrUpdateAssetBalance(assetBalance)
+	assetBalance := services.ProcessAssetBalanceSetRequest(userId, username, &assetBalanceSetRequest)
+	err = services.CreateOrUpdateAssetBalance(assetBalance, userId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -102,8 +102,8 @@ func SetAssetBalances(c *gin.Context) {
 		})
 		return
 	}
-	assetBalances := services.ProcessAssetBalanceSetRequestSlice(userId, &assetBalanceSetRequestSlice)
-	err = services.CreateOrUpdateAssetBalances(assetBalances)
+	assetBalances := services.ProcessAssetBalanceSetRequestSlice(userId, username, &assetBalanceSetRequestSlice)
+	err = services.CreateOrUpdateAssetBalances(assetBalances, userId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,

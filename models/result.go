@@ -76,6 +76,7 @@ const (
 	GetAssetIdAndBalancesByAssetIdErr
 	GetTimeByOutpointErr
 	GetTimesByOutpointSliceErr
+	ValidateAndGetProofFilePathErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

@@ -20,7 +20,7 @@ func DownloadProof(c *gin.Context) {
 			Success: false,
 			Error:   "Validate And Get Proof File Path. " + err.Error(),
 			Data:    nil,
-			Code:    models.DefaultErr,
+			Code:    models.ValidateAndGetProofFilePathErr,
 		})
 		return
 	}

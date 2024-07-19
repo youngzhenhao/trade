@@ -13,7 +13,7 @@ func GetAssetBalancesByUserIdNonZero(userId int) (*[]models.AssetBalance, error)
 	return ReadAssetBalancesByUserIdNonZero(userId)
 }
 
-func ProcessAssetBalanceSetRequest(userId int, assetBalanceSetRequest *models.AssetBalanceSetRequest) *models.AssetBalance {
+func ProcessAssetBalanceSetRequest(userId int, username string, assetBalanceSetRequest *models.AssetBalanceSetRequest) *models.AssetBalance {
 	var assetBalance models.AssetBalance
 	assetBalance = models.AssetBalance{
 		GenesisPoint: assetBalanceSetRequest.GenesisPoint,
@@ -26,6 +26,7 @@ func ProcessAssetBalanceSetRequest(userId int, assetBalanceSetRequest *models.As
 		Balance:      assetBalanceSetRequest.Balance,
 		DeviceId:     assetBalanceSetRequest.DeviceId,
 		UserId:       userId,
+		Username:     username,
 	}
 	return &assetBalance
 }
@@ -64,14 +65,17 @@ func IsAssetBalanceChanged(assetBalanceByInvoice *models.AssetBalance, old *mode
 	if assetBalanceByInvoice.UserId != old.UserId {
 		return true
 	}
+	if assetBalanceByInvoice.Username != old.Username {
+		return true
+	}
 	return false
 }
 
-func CheckAssetBalanceIfUpdate(assetBalance *models.AssetBalance) (*models.AssetBalance, error) {
+func CheckAssetBalanceIfUpdate(assetBalance *models.AssetBalance, userId int) (*models.AssetBalance, error) {
 	if assetBalance == nil {
 		return nil, errors.New("nil asset balance")
 	}
-	assetBalanceByAssetId, err := ReadAssetBalanceByAssetID(assetBalance.AssetID)
+	assetBalanceByAssetId, err := ReadAssetBalanceByAssetIdAndUserId(assetBalance.AssetID, userId)
 	if err != nil {
 		return assetBalance, nil
 	}
@@ -88,16 +92,17 @@ func CheckAssetBalanceIfUpdate(assetBalance *models.AssetBalance) (*models.Asset
 	assetBalanceByAssetId.Balance = assetBalance.Balance
 	assetBalanceByAssetId.DeviceId = assetBalance.DeviceId
 	assetBalanceByAssetId.UserId = assetBalance.UserId
+	assetBalanceByAssetId.Username = assetBalance.Username
 	return assetBalanceByAssetId, nil
 }
 
-func CreateOrUpdateAssetBalance(lock *models.AssetBalance) (err error) {
+func CreateOrUpdateAssetBalance(balance *models.AssetBalance, userId int) (err error) {
 	var assetBalance *models.AssetBalance
-	assetBalance, err = CheckAssetBalanceIfUpdate(lock)
+	assetBalance, err = CheckAssetBalanceIfUpdate(balance, userId)
 	return UpdateAssetBalance(assetBalance)
 }
 
-func ProcessAssetBalanceSetRequestSlice(userId int, assetBalanceSetRequestSlice *[]models.AssetBalanceSetRequest) *[]models.AssetBalance {
+func ProcessAssetBalanceSetRequestSlice(userId int, username string, assetBalanceSetRequestSlice *[]models.AssetBalanceSetRequest) *[]models.AssetBalance {
 	var assetBalances []models.AssetBalance
 	for _, assetBalanceRequest := range *assetBalanceSetRequestSlice {
 		assetBalances = append(assetBalances, models.AssetBalance{
@@ -111,16 +116,17 @@ func ProcessAssetBalanceSetRequestSlice(userId int, assetBalanceSetRequestSlice 
 			Balance:      assetBalanceRequest.Balance,
 			DeviceId:     assetBalanceRequest.DeviceId,
 			UserId:       userId,
+			Username:     username,
 		})
 	}
 	return &assetBalances
 }
 
-func CreateOrUpdateAssetBalances(balances *[]models.AssetBalance) (err error) {
+func CreateOrUpdateAssetBalances(balances *[]models.AssetBalance, userId int) (err error) {
 	var assetBalances []models.AssetBalance
 	var assetBalance *models.AssetBalance
 	for _, balance := range *balances {
-		assetBalance, err = CheckAssetBalanceIfUpdate(&balance)
+		assetBalance, err = CheckAssetBalanceIfUpdate(&balance, userId)
 		if err != nil {
 			return err
 		}
