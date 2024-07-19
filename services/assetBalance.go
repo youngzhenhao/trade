@@ -140,6 +140,11 @@ type UserAssetBalance struct {
 	AssetBalances *[]models.AssetBalance `json:"asset_balances"`
 }
 
+type UsernameAssetBalance struct {
+	Username      string                 `json:"username"`
+	AssetBalances *[]models.AssetBalance `json:"asset_balances"`
+}
+
 func GetAllAssetBalances() (*[]models.AssetBalance, error) {
 	return ReadAllAssetBalances()
 }
@@ -169,6 +174,19 @@ func AssetBalancesToUserMapAssetBalances(assetBalances *[]models.AssetBalance) *
 	return &userMapAssetBalances
 }
 
+func AssetBalancesToUsernameMapAssetBalances(assetBalances *[]models.AssetBalance) *map[string]*[]models.AssetBalance {
+	usernameMapBalances := make(map[string]*[]models.AssetBalance)
+	for _, assetBalance := range *assetBalances {
+		balances, ok := usernameMapBalances[assetBalance.Username]
+		if !ok {
+			usernameMapBalances[assetBalance.Username] = &[]models.AssetBalance{assetBalance}
+		} else {
+			*balances = append(*balances, assetBalance)
+		}
+	}
+	return &usernameMapBalances
+}
+
 func UserMapAssetBalancesToUserAssetBalances(userMapAssetBalances *map[int]*[]models.AssetBalance) *[]UserAssetBalance {
 	var userAssetBalances []UserAssetBalance
 	for userId, assetBalances := range *userMapAssetBalances {
@@ -180,13 +198,31 @@ func UserMapAssetBalancesToUserAssetBalances(userMapAssetBalances *map[int]*[]mo
 	return &userAssetBalances
 }
 
+func UsernameMapAssetBalancesToUsernameAssetBalances(userMapAssetBalances *map[string]*[]models.AssetBalance) *[]UsernameAssetBalance {
+	var usernameAssetBalances []UsernameAssetBalance
+	for username, assetBalances := range *userMapAssetBalances {
+		usernameAssetBalances = append(usernameAssetBalances, UsernameAssetBalance{
+			Username:      username,
+			AssetBalances: assetBalances,
+		})
+	}
+	return &usernameAssetBalances
+}
+
 func AssetBalancesToUserAssetBalances(assetBalances *[]models.AssetBalance) *[]UserAssetBalance {
 	userMapAssetBalances := AssetBalancesToUserMapAssetBalances(assetBalances)
 	userAssetBalances := UserMapAssetBalancesToUserAssetBalances(userMapAssetBalances)
 	return userAssetBalances
 }
 
+func AssetBalancesToUsernameAssetBalances(assetBalances *[]models.AssetBalance) *[]UsernameAssetBalance {
+	usernameMapAssetBalances := AssetBalancesToUsernameMapAssetBalances(assetBalances)
+	usernameAssetBalances := UsernameMapAssetBalancesToUsernameAssetBalances(usernameMapAssetBalances)
+	return usernameAssetBalances
+}
+
 // GetAllUserAssetBalances
+// @dev: UserId
 // @Description: Get all asset balances by userId
 func GetAllUserAssetBalances() (*[]UserAssetBalance, error) {
 	allAssetBalances, err := GetAllAssetBalances()
@@ -195,6 +231,18 @@ func GetAllUserAssetBalances() (*[]UserAssetBalance, error) {
 	}
 	userAssetBalances := AssetBalancesToUserAssetBalances(allAssetBalances)
 	return userAssetBalances, nil
+}
+
+// GetAllUsernameAssetBalances
+// @dev: Username
+// @Description: Get all username asset balances
+func GetAllUsernameAssetBalances() (*[]UsernameAssetBalance, error) {
+	allAssetBalances, err := GetAllAssetBalances()
+	if err != nil {
+		return nil, err
+	}
+	usernameAssetBalances := AssetBalancesToUsernameAssetBalances(allAssetBalances)
+	return usernameAssetBalances, nil
 }
 
 type AssetIdAndBalance struct {
@@ -327,7 +375,7 @@ func GetAssetIdAndBalancesByAssetId(assetId string) (*AssetIdAndBalance, error) 
 	if !ok {
 		return &AssetIdAndBalance{
 			AssetId:       assetId,
-			AssetBalances: nil,
+			AssetBalances: &[]models.AssetBalance{},
 		}, nil
 	}
 	return &AssetIdAndBalance{
@@ -346,7 +394,7 @@ func GetAssetIdAndBalancesByAssetIdLimitAndOffset(assetId string, limit int, off
 	if !ok {
 		return &AssetIdAndBalance{
 			AssetId:       assetId,
-			AssetBalances: nil,
+			AssetBalances: &[]models.AssetBalance{},
 		}, nil
 	}
 	return &AssetIdAndBalance{
