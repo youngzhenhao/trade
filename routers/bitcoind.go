@@ -34,6 +34,11 @@ func SetupBitcoindMainnetRouter(router *gin.Engine) *gin.Engine {
 			decode.POST("/transactions", handlers.DecodeTransactionSliceInMainnet)
 			decode.POST("/query/transactions", handlers.DecodeAndQueryTransactionSliceInMainnet)
 		}
+		time := mainnet.Group("/time")
+		{
+			time.GET("/outpoint/:op", handlers.GetTimeByOutpointInMainnet)
+			time.POST("/outpoints", handlers.GetTimesByOutpointSliceInMainnet)
+		}
 	}
 	return router
 }
@@ -59,6 +64,11 @@ func SetupBitcoindTestnetRouter(router *gin.Engine) *gin.Engine {
 			decode.POST("/transactions", handlers.DecodeTransactionSliceInTestnet)
 			decode.POST("/query/transactions", handlers.DecodeAndQueryTransactionSliceInTestnet)
 		}
+		time := testnet.Group("/time")
+		{
+			time.GET("/outpoint/:op", handlers.GetTimeByOutpointInTestnet)
+			time.POST("/outpoints", handlers.GetTimesByOutpointSliceInTestnet)
+		}
 	}
 	return router
 }
@@ -83,6 +93,11 @@ func SetupBitcoindRegtestRouter(router *gin.Engine) *gin.Engine {
 			decode.GET("/transaction/:tx", handlers.DecodeTransactionInRegtest)
 			decode.POST("/transactions", handlers.DecodeTransactionSliceInRegtest)
 			decode.POST("/query/transactions", handlers.DecodeAndQueryTransactionSliceInRegtest)
+		}
+		time := regtest.Group("/time")
+		{
+			time.GET("/outpoint/:op", handlers.GetTimeByOutpointInRegtest)
+			time.POST("/outpoints", handlers.GetTimesByOutpointSliceInRegtest)
 		}
 	}
 	return router

@@ -603,3 +603,159 @@ func DecodeAndQueryTransactionSliceInRegtest(c *gin.Context) {
 		Data:    rawTransactions,
 	})
 }
+
+func GetTimeByOutpointInMainnet(c *gin.Context) {
+	outpoint := c.Param("op")
+	time, err := api.GetTimeByOutpoint(models.Mainnet, outpoint)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetTimeByOutpointErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    time,
+	})
+}
+
+func GetTimeByOutpointInTestnet(c *gin.Context) {
+	outpoint := c.Param("op")
+	time, err := api.GetTimeByOutpoint(models.Testnet, outpoint)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetTimeByOutpointErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    time,
+	})
+}
+
+func GetTimeByOutpointInRegtest(c *gin.Context) {
+	outpoint := c.Param("op")
+	time, err := api.GetTimeByOutpoint(models.Regtest, outpoint)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetTimeByOutpointErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    time,
+	})
+}
+
+func GetTimesByOutpointSliceInMainnet(c *gin.Context) {
+	var outpointSlice struct {
+		Outpoints []string `json:"outpoints"`
+	}
+	err := c.ShouldBindJSON(&outpointSlice)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	times, err := api.GetTimesByOutpointSlice(models.Mainnet, outpointSlice.Outpoints)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetTimesByOutpointSliceErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    times,
+	})
+}
+
+func GetTimesByOutpointSliceInTestnet(c *gin.Context) {
+	var outpointSlice struct {
+		Outpoints []string `json:"outpoints"`
+	}
+	err := c.ShouldBindJSON(&outpointSlice)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	times, err := api.GetTimesByOutpointSlice(models.Testnet, outpointSlice.Outpoints)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetTimesByOutpointSliceErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    times,
+	})
+}
+
+func GetTimesByOutpointSliceInRegtest(c *gin.Context) {
+	var outpointSlice struct {
+		Outpoints []string `json:"outpoints"`
+	}
+	err := c.ShouldBindJSON(&outpointSlice)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	times, err := api.GetTimesByOutpointSlice(models.Regtest, outpointSlice.Outpoints)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetTimesByOutpointSliceErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    times,
+	})
+}

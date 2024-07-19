@@ -281,3 +281,43 @@ func GetRawTransactionsByTxids(network models.Network, txids []string) (*[]PostG
 	}
 	return response, nil
 }
+
+func GetTimeByTxid(network models.Network, txid string) (int, error) {
+	response, err := PostGetRawTransactionWithFeeAndPrevout(network, txid)
+	if err != nil {
+		return 0, err
+	}
+	return response.Time, nil
+}
+
+func GetTimeByOutpoint(network models.Network, outpoint string) (int, error) {
+	txid, _ := OutpointToTransactionAndIndex(outpoint)
+	if txid == "" {
+		return 0, fmt.Errorf("invalid outpoint: %s", outpoint)
+	}
+	return GetTimeByTxid(network, txid)
+}
+
+func GetTimesBatchProcess(network models.Network, outpoints []string) (outpointTime map[string]int, err error) {
+	outpointTime = make(map[string]int)
+	response, err := PostGetRawTransactionsWithFeeAndPrevoutByOutpoints(network, outpoints)
+	if err != nil {
+		return nil, err
+	}
+	for _, transaction := range *response {
+		if transaction.Result == nil || transaction.Error != nil {
+			continue
+		}
+		outpoint := transaction.ID
+		txid, _ := OutpointToTransactionAndIndex(outpoint)
+		if txid == "" {
+			continue
+		}
+		outpointTime[outpoint] = transaction.Result.Time
+	}
+	return outpointTime, nil
+}
+
+func GetTimesByOutpointSlice(network models.Network, outpoints []string) (addresses map[string]int, err error) {
+	return GetTimesBatchProcess(network, outpoints)
+}

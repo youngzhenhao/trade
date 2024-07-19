@@ -21,7 +21,7 @@ var (
 const (
 	SUCCESS     ErrCode = 200
 	DefaultErr  ErrCode = -1
-	NameToIdErr ErrCode = iota
+	NameToIdErr ErrCode = iota + 500
 	IdAtoiErr
 	ShouldBindJsonErr
 	SyncAssetIssuanceErr
@@ -74,6 +74,8 @@ const (
 	GetAssetBalancesByUserIdNonZeroErr
 	GetAssetHolderNumberAssetBalanceErr
 	GetAssetIdAndBalancesByAssetIdErr
+	GetTimeByOutpointErr
+	GetTimesByOutpointSliceErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
