@@ -61,6 +61,14 @@ func ReadAssetBalanceByAssetId(assetId string) (*[]models.AssetBalance, error) {
 	return &assetBalances, err
 }
 
+func ReadAssetBalanceByAssetIdNonZero(assetId string) (*[]models.AssetBalance, error) {
+	var assetBalances []models.AssetBalance
+	err := middleware.DB.Where("asset_id = ? AND status = ? AND balance <> ?", assetId, 1, 0).Order("updated_at desc").Find(&assetBalances).Error
+	return &assetBalances, err
+}
+
+// ReadAssetBalanceByAssetIdNonZeroLimitAndOffset
+// @Description: read asset balance by asset id non-zero limit and offset
 func ReadAssetBalanceByAssetIdNonZeroLimitAndOffset(assetId string, limit int, offset int) (*[]models.AssetBalance, error) {
 	var assetBalances []models.AssetBalance
 	err := middleware.DB.Where("asset_id = ? AND status = ? AND balance <> ?", assetId, 1, 0).Order("updated_at desc").Limit(limit).Offset(offset).Find(&assetBalances).Error

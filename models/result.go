@@ -78,6 +78,7 @@ const (
 	GetTimesByOutpointSliceErr
 	ValidateAndGetProofFilePathErr
 	IsLimitAndOffsetValidErr
+	GetAssetBalanceByAssetIdNonZeroLengthErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

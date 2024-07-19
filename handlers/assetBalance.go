@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"trade/models"
@@ -176,8 +177,18 @@ func GetAssetHolderBalanceLimitAndOffset(c *gin.Context) {
 	assetId := assetIdLimitOffset.AssetId
 	limit := assetIdLimitOffset.Limit
 	offset := assetIdLimitOffset.Offset
-	err = services.IsLimitAndOffsetValid(assetId, limit, offset)
+	isValid, err := services.IsLimitAndOffsetValid(assetId, limit, offset)
 	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.IsLimitAndOffsetValidErr,
+			Data:    nil,
+		})
+		return
+	}
+	if !isValid {
+		err = errors.New("records number is less equal than offset")
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
@@ -204,9 +215,23 @@ func GetAssetHolderBalanceLimitAndOffset(c *gin.Context) {
 	})
 }
 
-func GetAssetHolderBalancePage(c *gin.Context) {
-	// TODO: Query total records number
-
-	// TODO: Query total page number
-
+func GetAssetHolderBalanceRecordsNumber(c *gin.Context) {
+	assetId := c.Param("asset_id")
+	// @dev: Query total records number
+	recordsNum, err := services.GetAssetBalanceByAssetIdNonZeroLength(assetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetBalanceByAssetIdNonZeroLengthErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    recordsNum,
+	})
 }

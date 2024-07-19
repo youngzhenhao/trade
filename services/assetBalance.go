@@ -153,6 +153,7 @@ func GetAllAssetBalancesNonZero() (*[]models.AssetBalance, error) {
 	return ReadAllAssetBalancesNonZero()
 }
 
+// Deprecated: Use GetAssetIdAndBalancesByAssetIdLimitAndOffset instead
 func GetAllAssetBalancesNonZeroLimit(limit int) (*[]models.AssetBalance, error) {
 	return ReadAllAssetBalancesNonZeroLimit(limit)
 }
@@ -403,9 +404,36 @@ func GetAssetIdAndBalancesByAssetIdLimitAndOffset(assetId string, limit int, off
 	}, nil
 }
 
-func IsLimitAndOffsetValid(assetId string, limit int, offset int) error {
-	// TODO: check limit and offset is valid by total amount
-	return nil
+func GetAssetBalanceByAssetIdNonZero(assetId string) (*[]models.AssetBalance, error) {
+	return ReadAssetBalanceByAssetIdNonZero(assetId)
+}
+
+// GetAssetBalanceByAssetIdNonZeroLength
+// @Description: Get asset balance by asset id non-zero length
+// @dev: handlers.GetAssetHolderBalancePage
+// TODO: Need to test
+func GetAssetBalanceByAssetIdNonZeroLength(assetId string) (int, error) {
+	response, err := GetAssetBalanceByAssetIdNonZero(assetId)
+	if err != nil {
+		return 0, err
+	}
+	if response == nil || len(*(response)) == 0 {
+		return 0, nil
+	}
+	return len(*response), nil
+}
+
+// TODO: check limit and offset is valid by total amount
+// TODO: Need to test
+func IsLimitAndOffsetValid(assetId string, limit int, offset int) (bool, error) {
+	if !(limit > 0 && offset >= 0) {
+		return false, errors.New("invalid limit or offset")
+	}
+	recordsNum, err := GetAssetBalanceByAssetIdNonZeroLength(assetId)
+	if err != nil {
+		return false, err
+	}
+	return recordsNum > offset, nil
 }
 
 // @dev: Use receives and transfers
