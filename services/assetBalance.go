@@ -299,8 +299,8 @@ func GetAssetHolderNumberByAssetIdWithAssetBalances(assetId string) (int, error)
 			return asset.HolderNum, nil
 		}
 	}
-	err = errors.New("asset holder info not found")
-	return 0, err
+	// @dev: Asset holder info not found
+	return 0, nil
 }
 
 // GetAssetHolderNumberAssetBalance
