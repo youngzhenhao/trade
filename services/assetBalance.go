@@ -385,13 +385,13 @@ func GetAssetIdAndBalancesByAssetId(assetId string) (*AssetIdAndBalance, error) 
 }
 
 func GetAssetIdAndBalancesByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*AssetIdAndBalance, error) {
-	allAssetBalances, err := GetAllAssetBalancesNonZeroLimitAndOffset(limit, offset)
+	// @dev: Do not use GetAllAssetBalancesNonZeroLimitAndOffset(limit, offset)
+	// @dev: Do not use AssetBalancesToAssetIdMapAssetBalances(allAssetBalances)
+	assetBalances, err := ReadAssetBalanceByAssetIdNonZeroLimitAndOffset(assetId, limit, offset)
 	if err != nil {
 		return nil, err
 	}
-	assetIdMapAssetBalances := AssetBalancesToAssetIdMapAssetBalances(allAssetBalances)
-	assetBalances, ok := (*assetIdMapAssetBalances)[assetId]
-	if !ok {
+	if assetBalances == nil || len(*(assetBalances)) == 0 {
 		return &AssetIdAndBalance{
 			AssetId:       assetId,
 			AssetBalances: &[]models.AssetBalance{},

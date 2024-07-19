@@ -205,5 +205,8 @@ func GetAssetHolderBalanceLimitAndOffset(c *gin.Context) {
 }
 
 func GetAssetHolderBalancePage(c *gin.Context) {
-	//	TODO: Query total page number
+	// TODO: Query total records number
+
+	// TODO: Query total page number
+
 }

@@ -55,10 +55,16 @@ func ReadAssetBalancesByUserIdNonZero(userId int) (*[]models.AssetBalance, error
 	return &assetBalances, err
 }
 
-func ReadAssetBalanceByAssetID(assetId string) (*models.AssetBalance, error) {
-	var assetBalance models.AssetBalance
-	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).First(&assetBalance).Error
-	return &assetBalance, err
+func ReadAssetBalanceByAssetId(assetId string) (*[]models.AssetBalance, error) {
+	var assetBalances []models.AssetBalance
+	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Find(&assetBalances).Error
+	return &assetBalances, err
+}
+
+func ReadAssetBalanceByAssetIdNonZeroLimitAndOffset(assetId string, limit int, offset int) (*[]models.AssetBalance, error) {
+	var assetBalances []models.AssetBalance
+	err := middleware.DB.Where("asset_id = ? AND status = ? AND balance <> ?", assetId, 1, 0).Order("updated_at desc").Limit(limit).Offset(offset).Find(&assetBalances).Error
+	return &assetBalances, err
 }
 
 func ReadAssetBalanceByAssetIdAndUserId(assetId string, userId int) (*models.AssetBalance, error) {
