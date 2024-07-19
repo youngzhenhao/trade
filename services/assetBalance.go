@@ -152,6 +152,10 @@ func GetAllAssetBalancesNonZeroLimit(limit int) (*[]models.AssetBalance, error) 
 	return ReadAllAssetBalancesNonZeroLimit(limit)
 }
 
+func GetAllAssetBalancesNonZeroLimitAndOffset(limit int, offset int) (*[]models.AssetBalance, error) {
+	return ReadAllAssetBalancesNonZeroLimitAndOffset(limit, offset)
+}
+
 func AssetBalancesToUserMapAssetBalances(assetBalances *[]models.AssetBalance) *map[int]*[]models.AssetBalance {
 	userMapAssetBalances := make(map[int]*[]models.AssetBalance)
 	for _, assetBalance := range *assetBalances {
@@ -313,6 +317,7 @@ func GetAssetHolderNumberAssetBalance(assetId string) (int, error) {
 // @Description: Get assetId and balances by assetId
 // @dev
 func GetAssetIdAndBalancesByAssetId(assetId string) (*AssetIdAndBalance, error) {
+	// @dev: Limit 50 records
 	allAssetBalances, err := GetAllAssetBalancesNonZeroLimit(50)
 	if err != nil {
 		return nil, err
@@ -329,6 +334,30 @@ func GetAssetIdAndBalancesByAssetId(assetId string) (*AssetIdAndBalance, error) 
 		AssetId:       assetId,
 		AssetBalances: assetBalances,
 	}, nil
+}
+
+func GetAssetIdAndBalancesByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*AssetIdAndBalance, error) {
+	allAssetBalances, err := GetAllAssetBalancesNonZeroLimitAndOffset(limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	assetIdMapAssetBalances := AssetBalancesToAssetIdMapAssetBalances(allAssetBalances)
+	assetBalances, ok := (*assetIdMapAssetBalances)[assetId]
+	if !ok {
+		return &AssetIdAndBalance{
+			AssetId:       assetId,
+			AssetBalances: nil,
+		}, nil
+	}
+	return &AssetIdAndBalance{
+		AssetId:       assetId,
+		AssetBalances: assetBalances,
+	}, nil
+}
+
+func IsLimitAndOffsetValid(assetId string, limit int, offset int) error {
+	// TODO: check limit and offset is valid by total amount
+	return nil
 }
 
 // @dev: Use receives and transfers

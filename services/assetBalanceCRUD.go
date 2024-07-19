@@ -31,6 +31,12 @@ func ReadAllAssetBalancesNonZeroLimit(limit int) (*[]models.AssetBalance, error)
 	return &assetBalances, err
 }
 
+func ReadAllAssetBalancesNonZeroLimitAndOffset(limit int, offset int) (*[]models.AssetBalance, error) {
+	var assetBalances []models.AssetBalance
+	err := middleware.DB.Where("status = ? AND balance <> ?", 1, 0).Order("updated_at desc").Limit(limit).Offset(offset).Find(&assetBalances).Error
+	return &assetBalances, err
+}
+
 func ReadAssetBalance(id uint) (*models.AssetBalance, error) {
 	var assetBalance models.AssetBalance
 	err := middleware.DB.First(&assetBalance, id).Error

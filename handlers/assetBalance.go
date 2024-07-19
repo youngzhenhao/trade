@@ -160,3 +160,50 @@ func GetAssetHolderBalance(c *gin.Context) {
 		Data:    holderBalances,
 	})
 }
+
+func GetAssetHolderBalanceLimitAndOffset(c *gin.Context) {
+	var assetIdLimitOffset models.AssetHolderBalanceLimitAndOffsetRequest
+	err := c.ShouldBindJSON(&assetIdLimitOffset)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	assetId := assetIdLimitOffset.AssetId
+	limit := assetIdLimitOffset.Limit
+	offset := assetIdLimitOffset.Offset
+	err = services.IsLimitAndOffsetValid(assetId, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.IsLimitAndOffsetValidErr,
+			Data:    nil,
+		})
+		return
+	}
+	holderBalances, err := services.GetAssetIdAndBalancesByAssetIdLimitAndOffset(assetId, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetIdAndBalancesByAssetIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    holderBalances,
+	})
+}
+
+func GetAssetHolderBalancePage(c *gin.Context) {
+	//	TODO: Query total page number
+}

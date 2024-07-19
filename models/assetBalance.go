@@ -29,3 +29,9 @@ type AssetBalanceSetRequest struct {
 	Balance      int    `json:"balance"`
 	DeviceId     string `json:"device_id" gorm:"type:varchar(255)"`
 }
+
+type AssetHolderBalanceLimitAndOffsetRequest struct {
+	AssetId string `json:"asset_id"`
+	Limit   int    `json:"limit"`
+	Offset  int    `json:"offset"`
+}

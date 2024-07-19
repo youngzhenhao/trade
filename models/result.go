@@ -77,6 +77,7 @@ const (
 	GetTimeByOutpointErr
 	GetTimesByOutpointSliceErr
 	ValidateAndGetProofFilePathErr
+	IsLimitAndOffsetValidErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
