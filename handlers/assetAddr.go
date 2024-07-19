@@ -60,7 +60,7 @@ func SetAssetAddr(c *gin.Context) {
 		})
 		return
 	}
-	assetAddr := services.ProcessAssetAddrSetRequest(userId, &assetAddrSetRequest)
+	assetAddr := services.ProcessAssetAddrSetRequest(userId, username, &assetAddrSetRequest)
 	err = services.CreateOrUpdateAssetAddr(assetAddr)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{

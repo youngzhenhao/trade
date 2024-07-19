@@ -9,7 +9,7 @@ func GetAssetAddrsByUserId(userId int) (*[]models.AssetAddr, error) {
 	return ReadAssetAddrsByUserId(userId)
 }
 
-func ProcessAssetAddrSetRequest(userId int, assetAddrSetRequest *models.AssetAddrSetRequest) *models.AssetAddr {
+func ProcessAssetAddrSetRequest(userId int, username string, assetAddrSetRequest *models.AssetAddrSetRequest) *models.AssetAddr {
 	var assetAddr models.AssetAddr
 	assetAddr = models.AssetAddr{
 		Encoded:          assetAddrSetRequest.Encoded,
@@ -25,6 +25,7 @@ func ProcessAssetAddrSetRequest(userId int, assetAddrSetRequest *models.AssetAdd
 		AssetVersion:     assetAddrSetRequest.AssetVersion,
 		DeviceID:         assetAddrSetRequest.DeviceID,
 		UserId:           userId,
+		Username:         username,
 	}
 	return &assetAddr
 }

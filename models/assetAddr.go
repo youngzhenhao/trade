@@ -17,6 +17,7 @@ type AssetAddr struct {
 	AssetVersion     int    `json:"asset_version"`
 	DeviceID         string `json:"device_id" gorm:"type:varchar(255)"`
 	UserId           int    `json:"user_id"`
+	Username         string `json:"username" gorm:"type:varchar(255)"`
 	Status           int    `json:"status" gorm:"default:1"`
 }
 
