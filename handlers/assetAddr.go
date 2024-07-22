@@ -98,3 +98,23 @@ func GetAssetAddrByScriptKey(c *gin.Context) {
 		Data:    assetAddrs,
 	})
 }
+
+func GetAssetAddrByEncoded(c *gin.Context) {
+	encoded := c.Param("encoded")
+	assetAddrs, err := services.GetAssetAddrsByEncoded(encoded)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetAddrsByEncodedErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    assetAddrs,
+	})
+}

@@ -80,6 +80,7 @@ const (
 	IsLimitAndOffsetValidErr
 	GetAssetBalanceByAssetIdNonZeroLengthErr
 	GetAllUsernameAssetBalancesErr
+	GetAssetAddrsByEncodedErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

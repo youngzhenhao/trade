@@ -112,3 +112,7 @@ func CreateOrUpdateAssetAddr(addr *models.AssetAddr) (err error) {
 func GetAssetAddrsByScriptKey(scriptKey string) (*[]models.AssetAddr, error) {
 	return ReadAssetAddrsByScriptKey(scriptKey)
 }
+
+func GetAssetAddrsByEncoded(encoded string) (*models.AssetAddr, error) {
+	return ReadAssetAddrByAddrEncoded(encoded)
+}
