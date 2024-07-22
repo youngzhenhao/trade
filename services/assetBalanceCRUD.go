@@ -27,7 +27,7 @@ func ReadAllAssetBalancesNonZero() (*[]models.AssetBalance, error) {
 
 func ReadAllAssetBalancesNonZeroLimit(limit int) (*[]models.AssetBalance, error) {
 	var assetBalances []models.AssetBalance
-	err := middleware.DB.Where("status = ? AND balance <> ?", 1, 0).Limit(limit).Order("updated_at desc").Find(&assetBalances).Error
+	err := middleware.DB.Where("status = ? AND balance <> ?", 1, 0).Limit(limit).Order("balance desc").Find(&assetBalances).Error
 	return &assetBalances, err
 }
 
@@ -71,7 +71,7 @@ func ReadAssetBalanceByAssetIdNonZero(assetId string) (*[]models.AssetBalance, e
 // @Description: read asset balance by asset id non-zero limit and offset
 func ReadAssetBalanceByAssetIdNonZeroLimitAndOffset(assetId string, limit int, offset int) (*[]models.AssetBalance, error) {
 	var assetBalances []models.AssetBalance
-	err := middleware.DB.Where("asset_id = ? AND status = ? AND balance <> ?", assetId, 1, 0).Order("updated_at desc").Limit(limit).Offset(offset).Find(&assetBalances).Error
+	err := middleware.DB.Where("asset_id = ? AND status = ? AND balance <> ?", assetId, 1, 0).Order("updated_at desc").Limit(limit).Offset(offset).Order("balance desc").Find(&assetBalances).Error
 	return &assetBalances, err
 }
 
