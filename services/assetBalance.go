@@ -410,8 +410,6 @@ func GetAssetBalanceByAssetIdNonZero(assetId string) (*[]models.AssetBalance, er
 
 // GetAssetBalanceByAssetIdNonZeroLength
 // @Description: Get asset balance by asset id non-zero length
-// @dev: handlers.GetAssetHolderBalancePage
-// TODO: Need to test
 func GetAssetBalanceByAssetIdNonZeroLength(assetId string) (int, error) {
 	response, err := GetAssetBalanceByAssetIdNonZero(assetId)
 	if err != nil {

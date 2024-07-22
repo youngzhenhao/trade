@@ -79,6 +79,7 @@ const (
 	ValidateAndGetProofFilePathErr
 	IsLimitAndOffsetValidErr
 	GetAssetBalanceByAssetIdNonZeroLengthErr
+	GetAllUsernameAssetBalancesErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

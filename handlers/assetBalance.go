@@ -235,3 +235,22 @@ func GetAssetHolderBalanceRecordsNumber(c *gin.Context) {
 		Data:    recordsNum,
 	})
 }
+
+func GetAssetHolderUsernameBalanceAll(c *gin.Context) {
+	usernameBalances, err := services.GetAllUsernameAssetBalances()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllUsernameAssetBalancesErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    usernameBalances,
+	})
+}
