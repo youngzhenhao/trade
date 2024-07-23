@@ -31,6 +31,12 @@ func ReadAssetBurnsByUserId(userId int) (*[]models.AssetBurn, error) {
 	return &assetBurns, err
 }
 
+func ReadAssetBurnsByAssetId(assetId string) (*[]models.AssetBurn, error) {
+	var assetBurns []models.AssetBurn
+	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Find(&assetBurns).Error
+	return &assetBurns, err
+}
+
 func UpdateAssetBurn(assetBurn *models.AssetBurn) error {
 	return middleware.DB.Save(assetBurn).Error
 }

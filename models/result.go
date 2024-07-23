@@ -84,6 +84,7 @@ const (
 	GetAssetBurnsByUserIdErr
 	CreateAssetBurnErr
 	UpdateUsernameByUserIdAllErr
+	GetAssetBurnTotalErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
