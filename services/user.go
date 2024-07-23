@@ -67,6 +67,14 @@ func NameToId(name string) (int, error) {
 	return int(user.ID), err
 }
 
+func IdToName(id int) (string, error) {
+	user, err := ReadUser(uint(id))
+	if err != nil {
+		return "", err
+	}
+	return user.Username, nil
+}
+
 func hashPassword(password string) (string, error) {
 	// Passwords are encrypted using the bcrypt algorithm
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)

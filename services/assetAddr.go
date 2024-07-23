@@ -116,3 +116,26 @@ func GetAssetAddrsByScriptKey(scriptKey string) (*[]models.AssetAddr, error) {
 func GetAssetAddrsByEncoded(encoded string) (*models.AssetAddr, error) {
 	return ReadAssetAddrByAddrEncoded(encoded)
 }
+
+func GetAllAssetAddrs() (*[]models.AssetAddr, error) {
+	return ReadAllAssetAddrs()
+}
+
+func UpdateUsernameByUserIdAll() error {
+	allAssetAddrs, err := GetAllAssetAddrs()
+	if allAssetAddrs == nil || *allAssetAddrs == nil || len(*allAssetAddrs) == 0 {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	for i, assetAddr := range *allAssetAddrs {
+		var name string
+		name, err = IdToName(assetAddr.UserId)
+		if err != nil {
+			continue
+		}
+		(*allAssetAddrs)[i].Username = name
+	}
+	return UpdateAssetAddrs(allAssetAddrs)
+}
