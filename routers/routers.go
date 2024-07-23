@@ -58,5 +58,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AssetBalance {
 		SetupAssetBalanceRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.AssetBurn {
+		SetupAssetBurnRouter(r)
+	}
 	return r
 }

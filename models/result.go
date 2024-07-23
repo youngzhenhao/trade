@@ -81,6 +81,8 @@ const (
 	GetAssetBalanceByAssetIdNonZeroLengthErr
 	GetAllUsernameAssetBalancesErr
 	GetAssetAddrsByEncodedErr
+	GetAssetBurnsByUserIdErr
+	CreateAssetBurnErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

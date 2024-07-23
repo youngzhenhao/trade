@@ -50,6 +50,7 @@ type Config struct {
 		AssetLock      bool `yaml:"asset_lock" json:"asset_lock"`
 		ValidateToken  bool `yaml:"validate_token" json:"validate_token"`
 		AssetBalance   bool `yaml:"asset_balance" json:"asset_balance"`
+		AssetBurn      bool `yaml:"asset_burn" json:"asset_burn"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {
