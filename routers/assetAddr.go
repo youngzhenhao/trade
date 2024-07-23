@@ -13,6 +13,7 @@ func SetupAssetAddrRouter(router *gin.Engine) *gin.Engine {
 		assetAddr.GET("/get", handlers.GetAssetAddr)
 		assetAddr.GET("/get/script_key/:script_key", handlers.GetAssetAddrByScriptKey)
 		assetAddr.GET("/get/encoded/:encoded", handlers.GetAssetAddrByEncoded)
+		assetAddr.GET("/migrate/update", handlers.UpdateUsernameByUserId)
 		assetAddr.POST("/set", handlers.SetAssetAddr)
 	}
 	return router

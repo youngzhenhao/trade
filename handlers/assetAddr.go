@@ -118,3 +118,22 @@ func GetAssetAddrByEncoded(c *gin.Context) {
 		Data:    assetAddrs,
 	})
 }
+
+func UpdateUsernameByUserId(c *gin.Context) {
+	err := services.UpdateUsernameByUserIdAll()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.UpdateUsernameByUserIdAllErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    nil,
+	})
+}

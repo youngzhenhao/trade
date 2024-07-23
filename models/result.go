@@ -83,6 +83,7 @@ const (
 	GetAssetAddrsByEncodedErr
 	GetAssetBurnsByUserIdErr
 	CreateAssetBurnErr
+	UpdateUsernameByUserIdAllErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
