@@ -459,7 +459,6 @@ func SetAddrReceivesEvents(receives *[]models.AddrReceiveEventSetRequest) error 
 
 // GetAndSetAddrReceivesEvents
 // @Description: Get and set addr receives events
-// TODO: This should be scheduled task
 func GetAndSetAddrReceivesEvents(deviceId string) error {
 	receives, err := api.AddrReceivesAndGetEventSetRequests(deviceId)
 	if err != nil {

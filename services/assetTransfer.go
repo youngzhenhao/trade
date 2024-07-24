@@ -804,7 +804,8 @@ func SetAssetTransfer(transfers *[]models.AssetTransferProcessedSetRequest) erro
 	return nil
 }
 
-// TODO: This should be scheduled task
+// ListAndSetAssetTransfers
+// @Description: List and set asset transfers
 // @dev: Use config's network
 func ListAndSetAssetTransfers(network models.Network, deviceId string) error {
 	transfers, err := api.ListTransfersAndGetProcessedResponse(network, deviceId)

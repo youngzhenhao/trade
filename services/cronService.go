@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"trade/api"
 	"trade/config"
 	"trade/middleware"
 	"trade/models"
@@ -24,6 +25,10 @@ func CheckIfAutoUpdateScheduledTask() {
 			ScheduledTask.Info("%v", err)
 		}
 		err = CreateSnapshotProcessions()
+		if err != nil {
+			ScheduledTask.Info("%v", err)
+		}
+		err = CreateSetTransfersAndReceives()
 		if err != nil {
 			ScheduledTask.Info("%v", err)
 		}
@@ -229,6 +234,41 @@ func CreateSnapshotProcessions() (err error) {
 			Name:           "SnapshotToZipLast",
 			CronExpression: "0 0 */12 * * *",
 			FunctionName:   "SnapshotToZipLast",
+			Package:        "services",
+		},
+	})
+}
+
+func (cs *CronService) ListAndSetAssetTransfers() {
+	network, err := api.NetworkStringToNetwork(config.GetLoadConfig().NetWork)
+	if err != nil {
+		return
+	}
+	err = ListAndSetAssetTransfers(network, AdminUploadUserName)
+	if err != nil {
+		return
+	}
+}
+
+func (cs *CronService) GetAndSetAddrReceivesEvents() {
+	err := GetAndSetAddrReceivesEvents(AdminUploadUserName)
+	if err != nil {
+		return
+	}
+}
+
+func CreateSetTransfersAndReceives() (err error) {
+	return CreateOrUpdateScheduledTasks(&[]models.ScheduledTask{
+		{
+			Name:           "ListAndSetAssetTransfers",
+			CronExpression: "0 */5 * * * *",
+			FunctionName:   "ListAndSetAssetTransfers",
+			Package:        "services",
+		},
+		{
+			Name:           "GetAndSetAddrReceivesEvents",
+			CronExpression: "0 */5 * * * *",
+			FunctionName:   "GetAndSetAddrReceivesEvents",
 			Package:        "services",
 		},
 	})
