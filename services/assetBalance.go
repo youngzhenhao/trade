@@ -367,7 +367,7 @@ func GetAssetHolderNumberAssetBalance(assetId string) (int, error) {
 // @dev
 func GetAssetIdAndBalancesByAssetId(assetId string) (*AssetIdAndBalance, error) {
 	// @dev: Limit 50 records
-	allAssetBalances, err := GetAllAssetBalancesNonZeroLimit(50)
+	allAssetBalances, err := GetAllAssetBalancesNonZeroLimit(500000)
 	if err != nil {
 		return nil, err
 	}
