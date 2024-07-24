@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"trade/api"
 	"trade/models"
 )
 
@@ -757,4 +758,65 @@ func AllAssetTransferCombinedToAddressAmountMap() (*map[string]*AssetIdAndAmount
 	}
 	addressAmountMap := AssetTransfersToAddressAmountMap(allAssetTransfers)
 	return addressAmountMap, nil
+}
+
+func SetAssetTransfer(transfers *[]models.AssetTransferProcessedSetRequest) error {
+	username := AdminUploadUserName
+	userId, err := NameToId(username)
+	if err != nil {
+		// @dev: Admin upload user does not exist
+		password, _ := hashPassword(username)
+		if password == "" {
+			password = username
+		}
+		err = CreateUser(&models.User{
+			Username: username,
+			Password: password,
+		})
+		if err != nil {
+			return err
+		}
+		userId, err = NameToId(username)
+		if err != nil {
+			return err
+		}
+	}
+	var assetTransferProcessedSlice *[]models.AssetTransferProcessedDb
+	var assetTransferProcessedInputsSlice *[]models.AssetTransferProcessedInputDb
+	var assetTransferProcessedOutputsSlice *[]models.AssetTransferProcessedOutputDb
+	assetTransferProcessedSlice, assetTransferProcessedInputsSlice, assetTransferProcessedOutputsSlice, err = ProcessAssetTransferProcessedSlice(userId, transfers)
+	if err != nil {
+		return err
+	}
+	err = CreateOrUpdateAssetTransferProcessedSlice(assetTransferProcessedSlice)
+	if err != nil {
+		return err
+	}
+	// @dev: Store inputs and outputs in db
+	err = CreateOrUpdateAssetTransferProcessedInputSlice(assetTransferProcessedInputsSlice)
+	if err != nil {
+		return err
+	}
+	err = CreateOrUpdateAssetTransferProcessedOutputSlice(assetTransferProcessedOutputsSlice)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// TODO: This should be scheduled task
+// @dev: Use config's network
+func ListAndSetAssetTransfers(network models.Network, deviceId string) error {
+	transfers, err := api.ListTransfersAndGetProcessedResponse(network, deviceId)
+	if err != nil {
+		return err
+	}
+	if transfers == nil || len(*transfers) == 0 {
+		return nil
+	}
+	err = SetAssetTransfer(transfers)
+	if err != nil {
+		return nil
+	}
+	return nil
 }

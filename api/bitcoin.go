@@ -2,11 +2,14 @@ package api
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/wire"
 	"strconv"
+	"strings"
 	"trade/models"
+	"trade/utils"
 )
 
 type Verbosity int
@@ -114,7 +117,7 @@ func GetTransactionByTxid(network models.Network, txid string) (transaction *Pos
 }
 
 func GetAddressByOutpoint(network models.Network, outpoint string) (address string, err error) {
-	txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+	txid, indexStr := utils.OutpointToTransactionAndIndex(outpoint)
 	if txid == "" || indexStr == "" {
 		return "", fmt.Errorf("invalid outpoint: %s", outpoint)
 	}
@@ -126,7 +129,7 @@ func GetAddressByOutpoint(network models.Network, outpoint string) (address stri
 }
 
 func GetTransactionByOutpoint(network models.Network, outpoint string) (transaction *PostGetRawTransactionResult, err error) {
-	txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+	txid, indexStr := utils.OutpointToTransactionAndIndex(outpoint)
 	if txid == "" || indexStr == "" {
 		return nil, fmt.Errorf("invalid outpoint: %s", outpoint)
 	}
@@ -146,7 +149,7 @@ func GetAddressesByOutpointSlice(network models.Network, outpoints []string) (ad
 func OutpointsToTxidsAndIndexes(outpoints []string) (txidIndex map[string]int) {
 	txidIndex = make(map[string]int)
 	for _, outpoint := range outpoints {
-		txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+		txid, indexStr := utils.OutpointToTransactionAndIndex(outpoint)
 		if txid == "" || indexStr == "" {
 			continue
 		}
@@ -161,7 +164,7 @@ func OutpointsToTxidsAndIndexes(outpoints []string) (txidIndex map[string]int) {
 
 func OutpointsToTxids(outpoints []string) (txids []string) {
 	for _, outpoint := range outpoints {
-		txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+		txid, indexStr := utils.OutpointToTransactionAndIndex(outpoint)
 		if txid == "" || indexStr == "" {
 			continue
 		}
@@ -206,7 +209,7 @@ func GetAddressesBatchProcess(network models.Network, outpoints []string) (outpo
 			continue
 		}
 		outpoint := transaction.ID
-		txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+		txid, indexStr := utils.OutpointToTransactionAndIndex(outpoint)
 		if txid == "" || indexStr == "" {
 			continue
 		}
@@ -293,7 +296,7 @@ func GetTimeByTxid(network models.Network, txid string) (int, error) {
 }
 
 func GetTimeByOutpoint(network models.Network, outpoint string) (int, error) {
-	txid, _ := OutpointToTransactionAndIndex(outpoint)
+	txid, _ := utils.OutpointToTransactionAndIndex(outpoint)
 	if txid == "" {
 		return 0, fmt.Errorf("invalid outpoint: %s", outpoint)
 	}
@@ -311,7 +314,7 @@ func GetTimesBatchProcess(network models.Network, outpoints []string) (outpointT
 			continue
 		}
 		outpoint := transaction.ID
-		txid, _ := OutpointToTransactionAndIndex(outpoint)
+		txid, _ := utils.OutpointToTransactionAndIndex(outpoint)
 		if txid == "" {
 			continue
 		}
@@ -322,4 +325,16 @@ func GetTimesBatchProcess(network models.Network, outpoints []string) (outpointT
 
 func GetTimesByOutpointSlice(network models.Network, outpoints []string) (addresses map[string]int, err error) {
 	return GetTimesBatchProcess(network, outpoints)
+}
+
+func NetworkStringToNetwork(network string) (models.Network, error) {
+	network = strings.ToLower(network)
+	if network == "mainnet" {
+		return models.Mainnet, nil
+	} else if network == "testnet" {
+		return models.Testnet, nil
+	} else if network == "regtest" {
+		return models.Regtest, nil
+	}
+	return models.Mainnet, errors.New("invalid network")
 }

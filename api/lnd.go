@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"strconv"
-	"strings"
 	"trade/utils"
 )
 
@@ -25,19 +24,12 @@ func WalletBalanceAndGetResponse() (*lnrpc.WalletBalanceResponse, error) {
 	return walletBalance()
 }
 
-// GetTransactionAndIndexByOutpoint
-// @dev: Split outpoint
-func GetTransactionAndIndexByOutpoint(outpoint string) (transaction string, index string) {
-	result := strings.Split(outpoint, ":")
-	return result[0], result[1]
-}
-
 func GetListChainTransactionsOutpointAddress(outpoint string) (address string, err error) {
 	response, err := GetListChainTransactions()
 	if err != nil {
 		return "", utils.AppendErrorInfo(err, "GetListChainTransactions")
 	}
-	tx, indexStr := GetTransactionAndIndexByOutpoint(outpoint)
+	tx, indexStr := utils.GetTransactionAndIndexByOutpoint(outpoint)
 	index, err := strconv.Atoi(indexStr)
 	if err != nil {
 		return "", utils.AppendErrorInfo(err, "GetTransactionAndIndexByOutpoint")

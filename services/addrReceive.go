@@ -4,6 +4,7 @@ import (
 	"errors"
 	"trade/api"
 	"trade/models"
+	"trade/utils"
 )
 
 func ProcessAddrReceiveEventsSetRequest(userId int, addrReceiveEventsSetRequest *[]models.AddrReceiveEventSetRequest) *[]models.AddrReceiveEvent {
@@ -204,7 +205,7 @@ func GetAllAssetReceives() (*[]AssetReceive, error) {
 func AddrReceiveEventsToAssetReceives(allAddrReceiveEvents *[]models.AddrReceiveEvent) *[]AssetReceive {
 	var assetReceives []AssetReceive
 	for _, addrReceiveEvent := range *allAddrReceiveEvents {
-		txid, _ := api.OutpointToTransactionAndIndex(addrReceiveEvent.Outpoint)
+		txid, _ := utils.OutpointToTransactionAndIndex(addrReceiveEvent.Outpoint)
 		assetReceives = append(assetReceives, AssetReceive{
 			AssetId: addrReceiveEvent.AddrAssetID,
 			Txid:    txid,
@@ -425,4 +426,51 @@ func AllAssetReceivesToAddressAmountMap(network models.Network) (*map[string]*As
 	}
 	addressAmountMap := AssetReceivesToAddressAmountMap(allAssetReceiveEvents, &opMapAddress)
 	return addressAmountMap, nil
+}
+
+func SetAddrReceivesEvents(receives *[]models.AddrReceiveEventSetRequest) error {
+	username := AdminUploadUserName
+	userId, err := NameToId(username)
+	if err != nil {
+		// @dev: Admin upload user does not exist
+		password, _ := hashPassword(username)
+		if password == "" {
+			password = username
+		}
+		err = CreateUser(&models.User{
+			Username: username,
+			Password: password,
+		})
+		if err != nil {
+			return err
+		}
+		userId, err = NameToId(username)
+		if err != nil {
+			return err
+		}
+	}
+	addrReceiveEvents := ProcessAddrReceiveEventsSetRequest(userId, receives)
+	err = CreateOrUpdateAddrReceiveEvents(addrReceiveEvents)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetAndSetAddrReceivesEvents
+// @Description: Get and set addr receives events
+// TODO: This should be scheduled task
+func GetAndSetAddrReceivesEvents(deviceId string) error {
+	receives, err := api.AddrReceivesAndGetEventSetRequests(deviceId)
+	if err != nil {
+		return err
+	}
+	if receives == nil || len(*receives) == 0 {
+		return nil
+	}
+	err = SetAddrReceivesEvents(receives)
+	if err != nil {
+		return nil
+	}
+	return nil
 }

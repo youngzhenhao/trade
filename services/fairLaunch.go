@@ -1575,7 +1575,7 @@ func UpdateFairLaunchMintedInfosBySendAssetResponse(fairLaunchMintedInfos *[]mod
 		if err != nil {
 			return utils.AppendErrorInfo(err, "SendAssetResponseScriptKeyAndInternalKeyToOutpoint")
 		}
-		fairLaunchMintedInfo.OutpointTxHash, _ = api.GetTransactionAndIndexByOutpoint(outpoint)
+		fairLaunchMintedInfo.OutpointTxHash, _ = utils.GetTransactionAndIndexByOutpoint(outpoint)
 		// @dev: Update outpoint and isAddrSent
 		fairLaunchMintedInfo.Outpoint = outpoint
 		fairLaunchMintedInfo.IsAddrSent = true
@@ -1719,7 +1719,7 @@ func ProcessSentButNotUpdatedMintedInfo(fairLaunchMintedInfo *models.FairLaunchM
 	var txHash string
 	var address string
 	// @dev: get tx and address
-	txHash, _ = api.GetTransactionAndIndexByOutpoint(outpoint)
+	txHash, _ = utils.GetTransactionAndIndexByOutpoint(outpoint)
 	address, err = api.GetListChainTransactionsOutpointAddress(outpoint)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "Get ListChainTransactions Outpoint Address")
@@ -1941,7 +1941,7 @@ func IsMintedNumberValid(userId int, fairLaunchInfoId int, mintedNumber int) (bo
 }
 
 func ProcessSendFairLaunchReservedResponse(response *taprpc.SendAssetResponse) (txid string) {
-	txid, _ = api.GetTransactionAndIndexByOutpoint(response.Transfer.Outputs[0].Anchor.Outpoint)
+	txid, _ = utils.GetTransactionAndIndexByOutpoint(response.Transfer.Outputs[0].Anchor.Outpoint)
 	return txid
 }
 

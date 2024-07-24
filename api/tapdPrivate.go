@@ -326,3 +326,15 @@ func syncUniverse(universeHost string, syncTargets []*universerpc.SyncTarget, sy
 	response, err := client.SyncUniverse(context.Background(), request)
 	return response, err
 }
+
+func addrReceives() (*taprpc.AddrReceivesResponse, error) {
+	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
+	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
+	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	request := &taprpc.AddrReceivesRequest{}
+	client := taprpc.NewTaprootAssetsClient(conn)
+	response, err := client.AddrReceives(context.Background(), request)
+	return response, err
+}

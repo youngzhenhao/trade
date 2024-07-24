@@ -3,9 +3,9 @@ package services
 import (
 	"errors"
 	"strconv"
-	"trade/api"
 	"trade/middleware"
 	"trade/models"
+	"trade/utils"
 )
 
 func CreateBatchTransfer(batchTransfer *models.BatchTransfer) error {
@@ -63,7 +63,7 @@ func ReadBatchTransferByTxidAndIndex(txid string, index int) (*models.BatchTrans
 }
 
 func ReadBatchTransferByOutpoint(outpoint string) (*models.BatchTransfer, error) {
-	txid, indexStr := api.OutpointToTransactionAndIndex(outpoint)
+	txid, indexStr := utils.OutpointToTransactionAndIndex(outpoint)
 	if txid == "" || indexStr == "" {
 		return nil, errors.New("invalid outpoint or index")
 	}

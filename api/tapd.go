@@ -7,7 +7,6 @@ import (
 	"github.com/lightninglabs/taproot-assets/taprpc/mintrpc"
 	"github.com/lightninglabs/taproot-assets/taprpc/universerpc"
 	"strconv"
-	"strings"
 	"trade/config"
 	"trade/models"
 	"trade/utils"
@@ -103,15 +102,10 @@ func TransactionAndIndexToOutpoint(transaction string, index int) (outpoint stri
 	return transaction + ":" + strconv.Itoa(index)
 }
 
-func OutpointToTransactionAndIndex(outpoint string) (transaction string, index string) {
-	result := strings.Split(outpoint, ":")
-	return result[0], result[1]
-}
-
 func BatchTxidAnchorToAssetId(batchTxidAnchor string) (string, error) {
 	assets, _ := listAssets(true, true, false)
 	for _, asset := range assets.Assets {
-		txid, _ := OutpointToTransactionAndIndex(asset.GetChainAnchor().GetAnchorOutpoint())
+		txid, _ := utils.OutpointToTransactionAndIndex(asset.GetChainAnchor().GetAnchorOutpoint())
 		if batchTxidAnchor == txid {
 			return hex.EncodeToString(asset.GetAssetGenesis().AssetId), nil
 		}
@@ -135,6 +129,88 @@ func ListBalancesAndGetResponse(isGroupByAssetIdOrGroupKey bool) (*taprpc.ListBa
 
 func ListTransfersAndGetResponse() (*taprpc.ListTransfersResponse, error) {
 	return listTransfers()
+}
+
+func GetAllOutPointsOfListTransfersResponse(listTransfersResponse *taprpc.ListTransfersResponse) []string {
+	var allOutPoints []string
+	for _, listTransfer := range listTransfersResponse.Transfers {
+		for _, input := range listTransfer.Inputs {
+			allOutPoints = append(allOutPoints, input.AnchorPoint)
+		}
+		for _, output := range listTransfer.Outputs {
+			allOutPoints = append(allOutPoints, output.Anchor.Outpoint)
+		}
+	}
+	return allOutPoints
+}
+
+func ProcessListTransfersResponse(network models.Network, listTransfersResponse *taprpc.ListTransfersResponse, deviceId string) *[]models.AssetTransferProcessedSetRequest {
+	var assetTransferProcessed []models.AssetTransferProcessedSetRequest
+	allOutpoints := GetAllOutPointsOfListTransfersResponse(listTransfersResponse)
+	response, err := GetAddressesByOutpointSlice(network, allOutpoints)
+	if err != nil {
+		return nil
+	}
+	addressMap := response
+	for _, listTransfer := range listTransfersResponse.Transfers {
+		var txid string
+		txid, err = utils.GetTxidFromOutpoint(listTransfer.Outputs[0].Anchor.Outpoint)
+		if err != nil {
+			return nil
+		}
+		var assetTransferProcessedInput []models.AssetTransferProcessedInput
+		for _, input := range listTransfer.Inputs {
+			inOp := input.AnchorPoint
+			assetTransferProcessedInput = append(assetTransferProcessedInput, models.AssetTransferProcessedInput{
+				Address:     addressMap[inOp],
+				Amount:      int(input.Amount),
+				AnchorPoint: inOp,
+				ScriptKey:   hex.EncodeToString(input.ScriptKey),
+			})
+		}
+		var assetTransferProcessedOutput []models.AssetTransferProcessedOutput
+		for _, output := range listTransfer.Outputs {
+			outOp := output.Anchor.Outpoint
+			assetTransferProcessedOutput = append(assetTransferProcessedOutput, models.AssetTransferProcessedOutput{
+				Address:                addressMap[outOp],
+				Amount:                 int(output.Amount),
+				AnchorOutpoint:         outOp,
+				AnchorValue:            int(output.Anchor.Value),
+				AnchorInternalKey:      hex.EncodeToString(output.Anchor.InternalKey),
+				AnchorTaprootAssetRoot: hex.EncodeToString(output.Anchor.TaprootAssetRoot),
+				AnchorMerkleRoot:       hex.EncodeToString(output.Anchor.MerkleRoot),
+				AnchorTapscriptSibling: hex.EncodeToString(output.Anchor.TapscriptSibling),
+				AnchorNumPassiveAssets: int(output.Anchor.NumPassiveAssets),
+				ScriptKey:              hex.EncodeToString(output.ScriptKey),
+				ScriptKeyIsLocal:       output.ScriptKeyIsLocal,
+				NewProofBlob:           hex.EncodeToString(output.NewProofBlob),
+				SplitCommitRootHash:    hex.EncodeToString(output.SplitCommitRootHash),
+				OutputType:             output.OutputType.String(),
+				AssetVersion:           output.AssetVersion.String(),
+			})
+		}
+		assetTransferProcessed = append(assetTransferProcessed, models.AssetTransferProcessedSetRequest{
+			Txid:               txid,
+			AssetID:            hex.EncodeToString(listTransfer.Inputs[0].AssetId),
+			TransferTimestamp:  int(listTransfer.TransferTimestamp),
+			AnchorTxHash:       hex.EncodeToString(listTransfer.AnchorTxHash),
+			AnchorTxHeightHint: int(listTransfer.AnchorTxHeightHint),
+			AnchorTxChainFees:  int(listTransfer.AnchorTxChainFees),
+			Inputs:             assetTransferProcessedInput,
+			Outputs:            assetTransferProcessedOutput,
+			DeviceID:           deviceId,
+		})
+	}
+	return &assetTransferProcessed
+}
+
+func ListTransfersAndGetProcessedResponse(network models.Network, deviceId string) (*[]models.AssetTransferProcessedSetRequest, error) {
+	transfers, err := ListTransfersAndGetResponse()
+	if err != nil {
+		return nil, err
+	}
+	processedListTransfers := ProcessListTransfersResponse(network, transfers, deviceId)
+	return processedListTransfers, nil
 }
 
 type ListBalancesShortResponse struct {
@@ -193,4 +269,41 @@ func SyncAssetIssuance(assetId string) error {
 	}
 	_, err := SyncAssetIssuanceAndGetResponse(universeHost, assetId)
 	return err
+}
+
+func AddrReceivesAndGetResponse() (*taprpc.AddrReceivesResponse, error) {
+	return addrReceives()
+}
+
+func AddrReceivesResponseToAddrReceiveEventSetRequests(addrReceivesResponse *taprpc.AddrReceivesResponse, deviceId string) *[]models.AddrReceiveEventSetRequest {
+	var addrReceiveEvents []models.AddrReceiveEventSetRequest
+	for _, event := range addrReceivesResponse.Events {
+		addrReceiveEvents = append(addrReceiveEvents, models.AddrReceiveEventSetRequest{
+			CreationTimeUnixSeconds: int(event.CreationTimeUnixSeconds),
+			Addr: models.AddrReceiveEventSetRequestAddr{
+				Encoded:          event.Addr.Encoded,
+				AssetID:          hex.EncodeToString(event.Addr.AssetId),
+				Amount:           int(event.Addr.Amount),
+				ScriptKey:        hex.EncodeToString(event.Addr.ScriptKey),
+				InternalKey:      hex.EncodeToString(event.Addr.InternalKey),
+				TaprootOutputKey: hex.EncodeToString(event.Addr.TaprootOutputKey),
+				ProofCourierAddr: event.Addr.ProofCourierAddr,
+			},
+			Status:             event.Status.String(),
+			Outpoint:           event.Outpoint,
+			UtxoAmtSat:         int(event.UtxoAmtSat),
+			ConfirmationHeight: int(event.ConfirmationHeight),
+			HasProof:           event.HasProof,
+			DeviceID:           deviceId,
+		})
+	}
+	return &addrReceiveEvents
+}
+
+func AddrReceivesAndGetEventSetRequests(deviceId string) (*[]models.AddrReceiveEventSetRequest, error) {
+	response, err := AddrReceivesAndGetResponse()
+	if err != nil {
+		return nil, err
+	}
+	return AddrReceivesResponseToAddrReceiveEventSetRequests(response, deviceId), nil
 }

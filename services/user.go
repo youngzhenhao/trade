@@ -10,6 +10,10 @@ import (
 	"trade/models"
 )
 
+const (
+	AdminUploadUserName = "adminUploadUser"
+)
+
 func ValidateUser(creds models.User) (string, error) {
 	var user models.User
 	result := middleware.DB.Where("username = ?", creds.Username).First(&user)

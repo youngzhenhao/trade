@@ -15,6 +15,7 @@ import (
 	"strings"
 	"trade/config"
 	"trade/models"
+	"trade/utils"
 )
 
 type GetRawTransactionResponse struct {
@@ -488,7 +489,7 @@ func postCallBitcoindToDecodeRawTransaction(network models.Network, requestBodyR
 func outpointSliceToRequestBodyRawString(outpoints []string, verbosity Verbosity) (request string) {
 	request = "["
 	for i, outpoint := range outpoints {
-		txid, indexStr := OutpointToTransactionAndIndex(outpoint)
+		txid, indexStr := utils.OutpointToTransactionAndIndex(outpoint)
 		if txid == "" || indexStr == "" {
 			continue
 		}

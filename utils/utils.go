@@ -424,3 +424,23 @@ func GetFunctionName(i any) string {
 	s := strings.Split(completeName, ".")
 	return s[len(s)-1]
 }
+
+// GetTransactionAndIndexByOutpoint
+// @dev: Split outpoint
+func GetTransactionAndIndexByOutpoint(outpoint string) (transaction string, index string) {
+	result := strings.Split(outpoint, ":")
+	return result[0], result[1]
+}
+
+func GetTxidFromOutpoint(outpoint string) (string, error) {
+	txid, indexStr := GetTransactionAndIndexByOutpoint(outpoint)
+	if txid == "" || indexStr == "" {
+		return "", errors.New("txid or index is empty")
+	}
+	return txid, nil
+}
+
+func OutpointToTransactionAndIndex(outpoint string) (transaction string, index string) {
+	result := strings.Split(outpoint, ":")
+	return result[0], result[1]
+}
