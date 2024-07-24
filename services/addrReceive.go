@@ -382,11 +382,23 @@ func GetAllAssetIdAndUserAssetReceiveAmountMap() (*[]AssetIdAndUserAssetReceiveA
 	return &assetIdAndUserAssetReceiveAmount, nil
 }
 
-func AssetReceivesToAddressAmountMap(assetReceiveEvents *[]models.AddrReceiveEvent, opMapAddress *map[string]string) *map[string]int {
-	addressAmountMap := make(map[string]int)
+func AssetReceivesToAddressAmountMap(assetReceiveEvents *[]models.AddrReceiveEvent, opMapAddress *map[string]string) *map[string]*AssetIdAndAmount {
+	addressAmountMap := make(map[string]*AssetIdAndAmount)
 	for _, assetReceive := range *assetReceiveEvents {
-		// TODO: Continue to process
-		_ = assetReceive
+		op := assetReceive.Outpoint
+		address, ok := (*opMapAddress)[op]
+		if !ok {
+			continue
+		}
+		_, ok = addressAmountMap[address]
+		if !ok {
+			addressAmountMap[address] = &AssetIdAndAmount{
+				AssetId: assetReceive.AddrAssetID,
+			}
+		}
+		if (*(addressAmountMap[address])).AssetId == assetReceive.AddrAssetID {
+			(*(addressAmountMap[address])).Amount += assetReceive.AddrAmount
+		}
 	}
 	return &addressAmountMap
 }
@@ -399,7 +411,9 @@ func AssetReceiveEventsToOutpointSlice(addrReceiveEvents *[]models.AddrReceiveEv
 	return ops
 }
 
-func AllAssetReceivesToAddressAmountMap(network models.Network) (*map[string]int, error) {
+// AllAssetReceivesToAddressAmountMap
+// @Description: All asset receives to address amount map
+func AllAssetReceivesToAddressAmountMap(network models.Network) (*map[string]*AssetIdAndAmount, error) {
 	allAssetReceiveEvents, err := GetAllAddrReceiveEvents()
 	if err != nil {
 		return nil, err

@@ -1313,6 +1313,8 @@ func ProcessFairLaunchStateIssuedPendingInfoService(fairLaunchInfo *models.FairL
 		if err != nil {
 			return utils.AppendErrorInfo(err, "UpdateAssetIssuance")
 		}
+		// TODO: 	After the issued assets are confirmed on-chain,
+		// 			the server directly inserts the proof into the local universe
 		return nil
 	}
 	// @dev: Transaction has not been Confirmed

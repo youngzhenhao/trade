@@ -452,3 +452,65 @@ func GetAssetIdAndUserAssetBalanceByRat() *[]AssetIdAndUserAssetBalanceByRat {
 	// TODO: Compute asset Balance by receives and transfers' maps
 	return nil
 }
+
+// GetAllAddressAmountMapByRat
+// @Description: Get all address amount map by receives and transfers
+func GetAllAddressAmountMapByRat(network models.Network) (*map[string]*AssetIdAndAmount, error) {
+	addressAmountMap := make(map[string]*AssetIdAndAmount)
+	receivesAddressAmountMap, err := AllAssetReceivesToAddressAmountMap(network)
+	if err != nil {
+		return nil, err
+	}
+	if receivesAddressAmountMap != nil {
+		for address, assetIdAndAmount := range *receivesAddressAmountMap {
+			_, ok := addressAmountMap[address]
+			if !ok {
+				addressAmountMap[address] = &AssetIdAndAmount{
+					AssetId: assetIdAndAmount.AssetId,
+				}
+			}
+			if (*(addressAmountMap[address])).AssetId == assetIdAndAmount.AssetId {
+				(*(addressAmountMap[address])).Amount += assetIdAndAmount.Amount
+			}
+		}
+	}
+	transfersAddressAmountMap, err := AllAssetTransferCombinedToAddressAmountMap()
+	if err != nil {
+		return nil, err
+	}
+	if transfersAddressAmountMap != nil {
+		for address, assetIdAndAmount := range *transfersAddressAmountMap {
+			_, ok := addressAmountMap[address]
+			if !ok {
+				addressAmountMap[address] = &AssetIdAndAmount{
+					AssetId: assetIdAndAmount.AssetId,
+				}
+			}
+			if (*(addressAmountMap[address])).AssetId == assetIdAndAmount.AssetId {
+				(*(addressAmountMap[address])).Amount += assetIdAndAmount.Amount
+			}
+		}
+	}
+	return &addressAmountMap, nil
+}
+
+// TODO: Get all address amount map by receives and transfers, then store data in db
+
+// GetAllAddressAmountMapByRatPositiveAmount
+// @Description: Filter zero and negative amount of asset address
+func GetAllAddressAmountMapByRatPositiveAmount(network models.Network) (*map[string]*AssetIdAndAmount, error) {
+	addressAmountMap := make(map[string]*AssetIdAndAmount)
+	allAddressAmountMapByRat, err := GetAllAddressAmountMapByRat(network)
+	if err != nil {
+		return nil, err
+	}
+	for address, assetIdAndAmount := range *allAddressAmountMapByRat {
+		if assetIdAndAmount.Amount > 0 {
+			addressAmountMap[address] = &AssetIdAndAmount{
+				AssetId: assetIdAndAmount.AssetId,
+				Amount:  assetIdAndAmount.Amount,
+			}
+		}
+	}
+	return &addressAmountMap, nil
+}

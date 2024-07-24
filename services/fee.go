@@ -286,7 +286,7 @@ func GetTapdSendReservedAssetTransactionByteSize() ByteSize {
 }
 
 func GetIssuanceTransactionGasFee(feeRateSatPerKw int) int {
-	return FeeRateSatPerKwToSatPerB(feeRateSatPerKw)*GetIssuanceTransactionByteSize() + 2000
+	return FeeRateSatPerKwToSatPerB(feeRateSatPerKw)*GetIssuanceTransactionByteSize() + 3000
 }
 
 func GetMintTransactionByteSize() ByteSize {
