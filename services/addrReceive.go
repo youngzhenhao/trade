@@ -429,7 +429,10 @@ func AllAssetReceivesToAddressAmountMap(network models.Network) (*map[string]*As
 }
 
 func SetAddrReceivesEvents(receives *[]models.AddrReceiveEventSetRequest) error {
-	username := AdminUploadUserName
+	username, err := hashPassword(AdminUploadUserName)
+	if err != nil {
+		return err
+	}
 	userId, err := NameToId(username)
 	if err != nil {
 		// @dev: Admin upload user does not exist

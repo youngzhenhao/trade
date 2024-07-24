@@ -244,14 +244,30 @@ func (cs *CronService) ListAndSetAssetTransfers() {
 	if err != nil {
 		return
 	}
-	err = ListAndSetAssetTransfers(network, AdminUploadUserName)
+	hash, err := hashPassword(AdminUploadUserName)
+	if err != nil {
+		return
+	}
+	if len(hash) < 16 {
+		return
+	}
+	deviceId := hash[:16]
+	err = ListAndSetAssetTransfers(network, deviceId)
 	if err != nil {
 		return
 	}
 }
 
 func (cs *CronService) GetAndSetAddrReceivesEvents() {
-	err := GetAndSetAddrReceivesEvents(AdminUploadUserName)
+	hash, err := hashPassword(AdminUploadUserName)
+	if err != nil {
+		return
+	}
+	if len(hash) < 16 {
+		return
+	}
+	deviceId := hash[:16]
+	err = GetAndSetAddrReceivesEvents(deviceId)
 	if err != nil {
 		return
 	}
@@ -261,13 +277,13 @@ func CreateSetTransfersAndReceives() (err error) {
 	return CreateOrUpdateScheduledTasks(&[]models.ScheduledTask{
 		{
 			Name:           "ListAndSetAssetTransfers",
-			CronExpression: "0 */5 * * * *",
+			CronExpression: "0 */3 * * * *",
 			FunctionName:   "ListAndSetAssetTransfers",
 			Package:        "services",
 		},
 		{
 			Name:           "GetAndSetAddrReceivesEvents",
-			CronExpression: "0 */5 * * * *",
+			CronExpression: "0 */3 * * * *",
 			FunctionName:   "GetAndSetAddrReceivesEvents",
 			Package:        "services",
 		},
