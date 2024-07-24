@@ -712,3 +712,49 @@ func GetAllAssetIdAndUserAssetTransferAmountMap() (*[]AssetIdAndUserAssetTransfe
 	}
 	return &assetIdAndUserAssetTransferAmount, nil
 }
+
+func AssetTransfersToAddressAmountMap(allAssetTransfers *[]models.AssetTransferProcessedCombined) *map[string]*AssetIdAndAmount {
+	addressAmountMap := make(map[string]*AssetIdAndAmount)
+	for _, assetTransfer := range *allAssetTransfers {
+
+		for _, input := range assetTransfer.Inputs {
+			_, ok := addressAmountMap[input.Address]
+			if !ok {
+				addressAmountMap[input.Address] = &AssetIdAndAmount{
+					AssetId: assetTransfer.AssetID,
+				}
+			}
+			if (*(addressAmountMap[input.Address])).AssetId == assetTransfer.AssetID {
+				(*(addressAmountMap[input.Address])).Amount -= input.Amount
+			}
+		}
+		for _, output := range assetTransfer.Outputs {
+			_, ok := addressAmountMap[output.Address]
+			if !ok {
+				addressAmountMap[output.Address] = &AssetIdAndAmount{
+					AssetId: assetTransfer.AssetID,
+				}
+			}
+			if (*(addressAmountMap[output.Address])).AssetId == assetTransfer.AssetID {
+				(*(addressAmountMap[output.Address])).Amount += output.Amount
+			}
+		}
+	}
+	return &addressAmountMap
+}
+
+type AssetIdAndAmount struct {
+	AssetId string `json:"asset_id"`
+	Amount  int    `json:"amount"`
+}
+
+// AllAssetTransferCombinedToAddressAmountMap
+// @Description: all asset transfer combined to address amount map
+func AllAssetTransferCombinedToAddressAmountMap() (*map[string]*AssetIdAndAmount, error) {
+	allAssetTransfers, err := GetAllAssetTransferCombinedSlice()
+	if err != nil {
+		return nil, err
+	}
+	addressAmountMap := AssetTransfersToAddressAmountMap(allAssetTransfers)
+	return addressAmountMap, nil
+}

@@ -137,6 +137,8 @@ func GetTransactionByOutpoint(network models.Network, outpoint string) (transact
 	return GetTransactionByTxid(network, txid)
 }
 
+// GetAddressesByOutpointSlice
+// @Description: Get addresses by outpoint slice
 func GetAddressesByOutpointSlice(network models.Network, outpoints []string) (addresses map[string]string, err error) {
 	return GetAddressesBatchProcess(network, outpoints)
 }

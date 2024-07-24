@@ -381,3 +381,34 @@ func GetAllAssetIdAndUserAssetReceiveAmountMap() (*[]AssetIdAndUserAssetReceiveA
 	}
 	return &assetIdAndUserAssetReceiveAmount, nil
 }
+
+func AssetReceivesToAddressAmountMap(assetReceiveEvents *[]models.AddrReceiveEvent, opMapAddress *map[string]string) *map[string]int {
+	addressAmountMap := make(map[string]int)
+	for _, assetReceive := range *assetReceiveEvents {
+		// TODO: Continue to process
+		_ = assetReceive
+	}
+	return &addressAmountMap
+}
+
+func AssetReceiveEventsToOutpointSlice(addrReceiveEvents *[]models.AddrReceiveEvent) []string {
+	var ops []string
+	for _, event := range *addrReceiveEvents {
+		ops = append(ops, event.Outpoint)
+	}
+	return ops
+}
+
+func AllAssetReceivesToAddressAmountMap(network models.Network) (*map[string]int, error) {
+	allAssetReceiveEvents, err := GetAllAddrReceiveEvents()
+	if err != nil {
+		return nil, err
+	}
+	ops := AssetReceiveEventsToOutpointSlice(allAssetReceiveEvents)
+	opMapAddress, err := api.GetAddressesByOutpointSlice(network, ops)
+	if err != nil {
+		return nil, err
+	}
+	addressAmountMap := AssetReceivesToAddressAmountMap(allAssetReceiveEvents, &opMapAddress)
+	return addressAmountMap, nil
+}
