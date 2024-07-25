@@ -1,6 +1,8 @@
 package services
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"trade/api"
 	"trade/models"
@@ -429,10 +431,8 @@ func AllAssetReceivesToAddressAmountMap(network models.Network) (*map[string]*As
 }
 
 func SetAddrReceivesEvents(receives *[]models.AddrReceiveEventSetRequest) error {
-	username, err := hashPassword(AdminUploadUserName)
-	if err != nil {
-		return err
-	}
+	userByte := sha256.Sum256([]byte(AdminUploadUserName))
+	username := hex.EncodeToString(userByte[:])
 	userId, err := NameToId(username)
 	if err != nil {
 		// @dev: Admin upload user does not exist

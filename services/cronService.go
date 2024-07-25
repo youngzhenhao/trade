@@ -1,6 +1,8 @@
 package services
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"strconv"
 	"strings"
 	"time"
@@ -244,14 +246,12 @@ func (cs *CronService) ListAndSetAssetTransfers() {
 	if err != nil {
 		return
 	}
-	hash, err := hashPassword(AdminUploadUserName)
-	if err != nil {
+	userByte := sha256.Sum256([]byte(AdminUploadUserName))
+	username := hex.EncodeToString(userByte[:])
+	if len(username) < 16 {
 		return
 	}
-	if len(hash) < 16 {
-		return
-	}
-	deviceId := hash[:16]
+	deviceId := username[:16]
 	err = ListAndSetAssetTransfers(network, deviceId)
 	if err != nil {
 		return
@@ -259,15 +259,13 @@ func (cs *CronService) ListAndSetAssetTransfers() {
 }
 
 func (cs *CronService) GetAndSetAddrReceivesEvents() {
-	hash, err := hashPassword(AdminUploadUserName)
-	if err != nil {
+	userByte := sha256.Sum256([]byte(AdminUploadUserName))
+	username := hex.EncodeToString(userByte[:])
+	if len(username) < 16 {
 		return
 	}
-	if len(hash) < 16 {
-		return
-	}
-	deviceId := hash[:16]
-	err = GetAndSetAddrReceivesEvents(deviceId)
+	deviceId := username[:16]
+	err := GetAndSetAddrReceivesEvents(deviceId)
 	if err != nil {
 		return
 	}

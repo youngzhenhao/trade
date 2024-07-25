@@ -1,6 +1,8 @@
 package services
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"trade/api"
 	"trade/models"
@@ -761,10 +763,8 @@ func AllAssetTransferCombinedToAddressAmountMap() (*map[string]*AssetIdAndAmount
 }
 
 func SetAssetTransfer(transfers *[]models.AssetTransferProcessedSetRequest) error {
-	username, err := hashPassword(AdminUploadUserName)
-	if err != nil {
-		return err
-	}
+	userByte := sha256.Sum256([]byte(AdminUploadUserName))
+	username := hex.EncodeToString(userByte[:])
 	userId, err := NameToId(username)
 	if err != nil {
 		// @dev: Admin upload user does not exist
