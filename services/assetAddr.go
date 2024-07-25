@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"time"
 	"trade/models"
 )
 
@@ -138,4 +139,42 @@ func UpdateUsernameByUserIdAll() error {
 		(*allAssetAddrs)[i].Username = name
 	}
 	return UpdateAssetAddrs(allAssetAddrs)
+}
+
+type AssetAddrSimplified struct {
+	UpdatedAt time.Time `json:"updated_at"`
+	Encoded   string    `json:"encoded"`
+	AssetId   string    `json:"asset_id" gorm:"type:varchar(255)"`
+	Amount    int       `json:"amount"`
+	ScriptKey string    `json:"script_key" gorm:"type:varchar(255)"`
+	DeviceID  string    `json:"device_id" gorm:"type:varchar(255)"`
+	Username  string    `json:"username" gorm:"type:varchar(255)"`
+}
+
+func AssetAddrToAssetAddrSimplified(assetAddr models.AssetAddr) AssetAddrSimplified {
+	return AssetAddrSimplified{
+		UpdatedAt: assetAddr.UpdatedAt,
+		Encoded:   assetAddr.Encoded,
+		AssetId:   assetAddr.AssetId,
+		Amount:    assetAddr.Amount,
+		ScriptKey: assetAddr.ScriptKey,
+		DeviceID:  assetAddr.DeviceID,
+		Username:  assetAddr.Username,
+	}
+}
+
+func AssetAddrSliceToAssetAddrSimplifiedSlice(assetAddrs *[]models.AssetAddr) *[]AssetAddrSimplified {
+	var assetAddrSimplified []AssetAddrSimplified
+	for _, assetAddr := range *assetAddrs {
+		assetAddrSimplified = append(assetAddrSimplified, AssetAddrToAssetAddrSimplified(assetAddr))
+	}
+	return &assetAddrSimplified
+}
+
+func GetAllAssetAddrSimplified() (*[]AssetAddrSimplified, error) {
+	allAssetAddrs, err := ReadAllAssetAddrs()
+	if err != nil {
+		return nil, err
+	}
+	return AssetAddrSliceToAssetAddrSimplifiedSlice(allAssetAddrs), nil
 }

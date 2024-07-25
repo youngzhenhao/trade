@@ -15,7 +15,7 @@ func CreateAssetAddrs(assetAddrs *[]models.AssetAddr) error {
 
 func ReadAllAssetAddrs() (*[]models.AssetAddr, error) {
 	var assetAddrs []models.AssetAddr
-	err := middleware.DB.Find(&assetAddrs).Error
+	err := middleware.DB.Order("updated_at desc").Find(&assetAddrs).Error
 	return &assetAddrs, err
 }
 

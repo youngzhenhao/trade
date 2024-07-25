@@ -137,3 +137,41 @@ func UpdateUsernameByUserId(c *gin.Context) {
 		Data:    nil,
 	})
 }
+
+func GetAllAssetAddrs(c *gin.Context) {
+	assetAddrs, err := services.GetAllAssetAddrs()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllAssetAddrsErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    assetAddrs,
+	})
+}
+
+func GetAllAssetAddrSimplified(c *gin.Context) {
+	assetAddrs, err := services.GetAllAssetAddrSimplified()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllAssetAddrSimplifiedErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    assetAddrs,
+	})
+}

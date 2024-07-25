@@ -246,6 +246,58 @@ func GetAllUsernameAssetBalances() (*[]UsernameAssetBalance, error) {
 	return usernameAssetBalances, nil
 }
 
+type AssetBalanceSimplifiedWithoutUsername struct {
+	Name     string `json:"name" gorm:"type:varchar(255)"`
+	AssetID  string `json:"asset_id" gorm:"type:varchar(255)"`
+	Balance  int    `json:"balance"`
+	DeviceId string `json:"device_id" gorm:"type:varchar(255)"`
+}
+
+type UsernameAssetBalanceSimplified struct {
+	Username      string                                   `json:"username"`
+	AssetBalances *[]AssetBalanceSimplifiedWithoutUsername `json:"asset_balances"`
+}
+
+func AssetBalanceToAssetBalanceSimplified(assetBalance models.AssetBalance) AssetBalanceSimplifiedWithoutUsername {
+	return AssetBalanceSimplifiedWithoutUsername{
+		Name:     assetBalance.Name,
+		AssetID:  assetBalance.AssetID,
+		Balance:  assetBalance.Balance,
+		DeviceId: assetBalance.DeviceId,
+	}
+}
+
+func AssetBalanceSliceToAssetBalanceSimplifiedSlice(assetBalances *[]models.AssetBalance) *[]AssetBalanceSimplifiedWithoutUsername {
+	if assetBalances == nil {
+		return nil
+	}
+	var assetBalanceSimplified []AssetBalanceSimplifiedWithoutUsername
+	for _, assetBalance := range *assetBalances {
+		assetBalanceSimplified = append(assetBalanceSimplified, AssetBalanceToAssetBalanceSimplified(assetBalance))
+	}
+	return &assetBalanceSimplified
+}
+
+func UsernameAssetBalanceToUsernameAssetBalanceSimplified(usernameAssetBalance UsernameAssetBalance) *UsernameAssetBalanceSimplified {
+	var usernameAssetBalanceSimplified UsernameAssetBalanceSimplified
+	usernameAssetBalanceSimplified.Username = usernameAssetBalance.Username
+	usernameAssetBalanceSimplified.AssetBalances = AssetBalanceSliceToAssetBalanceSimplifiedSlice(usernameAssetBalance.AssetBalances)
+	return &usernameAssetBalanceSimplified
+}
+
+func GetAllUsernameAssetBalanceSimplified() (*[]UsernameAssetBalanceSimplified, error) {
+	allUsernameAssetBalances, err := GetAllUsernameAssetBalances()
+	var usernameAssetBalanceSimplifiedSlice []UsernameAssetBalanceSimplified
+	if err != nil {
+		return nil, err
+	}
+	for _, usernameAssetBalance := range *allUsernameAssetBalances {
+		usernameAssetBalanceSimplified := UsernameAssetBalanceToUsernameAssetBalanceSimplified(usernameAssetBalance)
+		usernameAssetBalanceSimplifiedSlice = append(usernameAssetBalanceSimplifiedSlice, *usernameAssetBalanceSimplified)
+	}
+	return &usernameAssetBalanceSimplifiedSlice, nil
+}
+
 type AssetIdAndBalance struct {
 	AssetId       string                 `json:"asset_id"`
 	AssetBalances *[]models.AssetBalance `json:"asset_balances"`
@@ -498,6 +550,7 @@ func GetAllAddressAmountMapByRat(network models.Network) (*map[string]*AssetIdAn
 
 // GetAllAddressAmountMapByRatPositiveAmount
 // @Description: Filter zero and negative amount of asset address
+// @dev: UTXO
 func GetAllAddressAmountMapByRatPositiveAmount(network models.Network) (*map[string]*AssetIdAndAmount, error) {
 	addressAmountMap := make(map[string]*AssetIdAndAmount)
 	allAddressAmountMapByRat, err := GetAllAddressAmountMapByRat(network)
