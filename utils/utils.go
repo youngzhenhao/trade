@@ -444,3 +444,56 @@ func OutpointToTransactionAndIndex(outpoint string) (transaction string, index s
 	result := strings.Split(outpoint, ":")
 	return result[0], result[1]
 }
+
+// GetFilesNameInPathWithoutDir
+// @Description: Get name slice of files in specific path
+func GetFilesNameInPathWithoutDir(path string) ([]string, error) {
+	var fileSlice []string
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range files {
+		if !file.IsDir() {
+			fileSlice = append(fileSlice, file.Name())
+		}
+	}
+	return fileSlice, nil
+}
+
+// GetFilesNameInPathRecursive
+// @Description: Get name slice of files in specific path and recursive folders
+func GetFilesNameInPathRecursive(path string) ([]string, error) {
+	var fileSlice []string
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range files {
+		if file.IsDir() {
+			var pathFiles []string
+			// @dev: Recursive fetch
+			pathFiles, err = GetFilesNameInPathRecursive(filepath.Join(path, file.Name()))
+			if err != nil {
+				return nil, err
+			}
+			fileSlice = append(fileSlice, pathFiles...)
+		} else {
+			fileSlice = append(fileSlice, filepath.Join(path, file.Name()))
+		}
+	}
+	return fileSlice, nil
+}
+
+func RemoveStringInNameForFileSlice(fileSlice []string, s string) ([]string, error) {
+	var newSlice []string
+	for _, file := range fileSlice {
+		name := strings.ReplaceAll(file, s, "")
+		err := os.Rename(file, name)
+		if err != nil {
+			return nil, err
+		}
+		newSlice = append(newSlice, name)
+	}
+	return newSlice, nil
+}
