@@ -1906,6 +1906,54 @@ func GetOwnFairLaunchInfosByUserId(id int) (*[]models.FairLaunchInfo, error) {
 	return &fairLaunchInfos, nil
 }
 
+func GetOwnFairLaunchInfosByUserIdIssued(id int) (*[]models.FairLaunchInfo, error) {
+	var fairLaunchInfos []models.FairLaunchInfo
+	err := middleware.DB.Where("status = ? AND user_id = ? AND state = ?", models.StatusNormal, id, models.FairLaunchStateIssued).Order("set_time").Find(&fairLaunchInfos).Error
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
+	}
+	return &fairLaunchInfos, nil
+}
+
+type FairLaunchInfoSimplified struct {
+	ID                    int                    `json:"id"`
+	Name                  string                 `json:"name"`
+	ReserveTotal          int                    `json:"reserve_total"`
+	CalculationExpression string                 `json:"calculation_expression"`
+	AssetID               string                 `json:"asset_id"`
+	State                 models.FairLaunchState `json:"state"`
+}
+
+func FairLaunchInfoToFairLaunchInfoSimplified(fairLaunchInfo models.FairLaunchInfo) FairLaunchInfoSimplified {
+	return FairLaunchInfoSimplified{
+		ID:                    int(fairLaunchInfo.ID),
+		Name:                  fairLaunchInfo.Name,
+		ReserveTotal:          fairLaunchInfo.ReserveTotal,
+		CalculationExpression: fairLaunchInfo.CalculationExpression,
+		AssetID:               fairLaunchInfo.AssetID,
+		State:                 fairLaunchInfo.State,
+	}
+}
+
+func FairLaunchInfoSliceToFairLaunchInfoSimplifiedSlice(airLaunchInfos *[]models.FairLaunchInfo) *[]FairLaunchInfoSimplified {
+	var fairLaunchInfoSimplifiedSlice []FairLaunchInfoSimplified
+	if airLaunchInfos == nil {
+		return &fairLaunchInfoSimplifiedSlice
+	}
+	for _, fairLaunchInfo := range *airLaunchInfos {
+		fairLaunchInfoSimplifiedSlice = append(fairLaunchInfoSimplifiedSlice, FairLaunchInfoToFairLaunchInfoSimplified(fairLaunchInfo))
+	}
+	return &fairLaunchInfoSimplifiedSlice
+}
+
+func GetFairLaunchInfoSimplifiedByUserIdIssued(id int) (*[]FairLaunchInfoSimplified, error) {
+	fairLaunchInfos, err := GetOwnFairLaunchInfosByUserIdIssued(id)
+	if err != nil {
+		return nil, err
+	}
+	return FairLaunchInfoSliceToFairLaunchInfoSimplifiedSlice(fairLaunchInfos), nil
+}
+
 func GetOwnFairLaunchMintedInfosByUserId(id int) (*[]models.FairLaunchMintedInfo, error) {
 	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
 	err := middleware.DB.Where("status = ? AND user_id = ?", models.StatusNormal, id).Order("minted_set_time").Find(&fairLaunchMintedInfos).Error

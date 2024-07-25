@@ -511,3 +511,32 @@ func GetFairLaunchInventoryMintNumberAssetId(c *gin.Context) {
 		Data:    inventoryNumberAndAmount,
 	})
 }
+
+func GetOwnFairLaunchInfoIssuedSimplified(c *gin.Context) {
+	var fairLaunchInfos *[]services.FairLaunchInfoSimplified
+	var err error
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   "Query user id by name." + err.Error(),
+			Data:    nil,
+		})
+		return
+	}
+	fairLaunchInfos, err = services.GetFairLaunchInfoSimplifiedByUserIdIssued(userId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   "Get Own Set FairLaunchInfos By UserId. " + err.Error(),
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Data:    fairLaunchInfos,
+	})
+}
