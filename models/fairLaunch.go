@@ -83,6 +83,7 @@ type FairLaunchInfo struct {
 	ReservedCouldMint              bool             `json:"reserved_could_mint"`
 	IsReservedSent                 bool             `json:"is_reserved_sent"`
 	ReservedSentAnchorOutpointTxid string           `json:"reserved_sent_anchor_outpoint_txid" gorm:"type:varchar(255)"`
+	ReservedSentAnchorOutpoint     string           `json:"reserved_sent_anchor_outpoint" gorm:"type:varchar(255)"`
 	MintedNumber                   int              `json:"minted_number"`
 	IsMintAll                      bool             `json:"is_mint_all"`
 	Status                         FairLaunchStatus `json:"status" default:"1" gorm:"default:1"`

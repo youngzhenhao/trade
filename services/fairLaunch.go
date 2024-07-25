@@ -1988,14 +1988,16 @@ func IsMintedNumberValid(userId int, fairLaunchInfoId int, mintedNumber int) (bo
 	return true, nil
 }
 
-func ProcessSendFairLaunchReservedResponse(response *taprpc.SendAssetResponse) (txid string) {
-	txid, _ = utils.GetTransactionAndIndexByOutpoint(response.Transfer.Outputs[0].Anchor.Outpoint)
-	return txid
+func ProcessSendFairLaunchReservedResponse(response *taprpc.SendAssetResponse) string {
+	op := response.Transfer.Outputs[0].Anchor.Outpoint
+	return op
 }
 
-func UpdateFairLaunchInfoIsReservedSent(fairLaunchInfo *models.FairLaunchInfo, txid string) (err error) {
+func UpdateFairLaunchInfoIsReservedSent(fairLaunchInfo *models.FairLaunchInfo, outpoint string) (err error) {
 	fairLaunchInfo.IsReservedSent = true
+	txid, _ := utils.OutpointToTransactionAndIndex(outpoint)
 	fairLaunchInfo.ReservedSentAnchorOutpointTxid = txid
+	fairLaunchInfo.ReservedSentAnchorOutpoint = outpoint
 	fairLaunchInfo.State = models.FairLaunchStateReservedSentPending
 	f := FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)

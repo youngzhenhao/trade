@@ -370,8 +370,8 @@ func MintFairLaunchReserved(c *gin.Context) {
 		})
 		return
 	}
-	result := services.ProcessSendFairLaunchReservedResponse(response)
-	err = services.UpdateFairLaunchInfoIsReservedSent(fairLaunch, result)
+	outpoint := services.ProcessSendFairLaunchReservedResponse(response)
+	err = services.UpdateFairLaunchInfoIsReservedSent(fairLaunch, outpoint)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -384,7 +384,7 @@ func MintFairLaunchReserved(c *gin.Context) {
 		Success: true,
 		Error:   "",
 		Data: gin.H{
-			"anchor_outpoint_txid": result,
+			"anchor_outpoint": outpoint,
 		},
 	})
 }
