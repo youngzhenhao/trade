@@ -307,3 +307,11 @@ func AddrReceivesAndGetEventSetRequests(deviceId string) (*[]models.AddrReceiveE
 	}
 	return AddrReceivesResponseToAddrReceiveEventSetRequests(response, deviceId), nil
 }
+
+func GetAssetNameByAssetId(assetId string) string {
+	assetInfo, err := GetAssetInfo(assetId)
+	if err != nil {
+		return ""
+	}
+	return assetInfo.Name
+}

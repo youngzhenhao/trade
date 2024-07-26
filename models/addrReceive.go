@@ -19,6 +19,7 @@ type AddrReceiveEvent struct {
 	HasProof                bool   `json:"has_proof,omitempty"`
 	DeviceID                string `json:"device_id" gorm:"type:varchar(255)"`
 	UserID                  int    `json:"user_id"`
+	Username                string `json:"username" gorm:"type:varchar(255)"`
 	Status                  int    `json:"status" gorm:"default:1"`
 }
 

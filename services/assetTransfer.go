@@ -8,7 +8,7 @@ import (
 	"trade/models"
 )
 
-func ProcessAssetTransferProcessedSlice(userId int, assetTransferSetRequestSlice *[]models.AssetTransferProcessedSetRequest) (*[]models.AssetTransferProcessedDb, *[]models.AssetTransferProcessedInputDb, *[]models.AssetTransferProcessedOutputDb, error) {
+func ProcessAssetTransferProcessedSlice(userId int, username string, assetTransferSetRequestSlice *[]models.AssetTransferProcessedSetRequest) (*[]models.AssetTransferProcessedDb, *[]models.AssetTransferProcessedInputDb, *[]models.AssetTransferProcessedOutputDb, error) {
 	var assetTransferProcessedSlice []models.AssetTransferProcessedDb
 	var assetTransferProcessedInputsSlice []models.AssetTransferProcessedInputDb
 	var assetTransferProcessedOutputsSlice []models.AssetTransferProcessedOutputDb
@@ -25,6 +25,7 @@ func ProcessAssetTransferProcessedSlice(userId int, assetTransferSetRequestSlice
 			Outputs:            len(assetTransferSetRequest.Outputs),
 			DeviceID:           assetTransferSetRequest.DeviceID,
 			UserID:             userId,
+			Username:           username,
 		})
 		for index, input := range assetTransferSetRequest.Inputs {
 			assetTransferProcessedInputsSlice = append(assetTransferProcessedInputsSlice, models.AssetTransferProcessedInputDb{
@@ -90,6 +91,7 @@ func CheckAssetTransferProcessedIfUpdate(assetTransferProcessed *models.AssetTra
 	assetTransferProcessedByTxid.Outputs = assetTransferProcessed.Outputs
 	assetTransferProcessedByTxid.DeviceID = assetTransferProcessed.DeviceID
 	assetTransferProcessedByTxid.UserID = assetTransferProcessed.UserID
+	assetTransferProcessedByTxid.Username = assetTransferProcessed.Username
 	return assetTransferProcessedByTxid, nil
 }
 
@@ -182,6 +184,9 @@ func IsAssetTransferProcessedChanged(assetTransferProcessed *models.AssetTransfe
 		return true
 	}
 	if old.UserID != assetTransferProcessed.UserID {
+		return true
+	}
+	if old.Username != assetTransferProcessed.Username {
 		return true
 	}
 	return false
@@ -410,6 +415,7 @@ func CombineAssetTransfers(transfers *[]models.AssetTransferProcessedDb, transfe
 			Outputs:            outputs,
 			DeviceID:           transfer.DeviceID,
 			UserID:             transfer.UserID,
+			Username:           transfer.Username,
 			Status:             transfer.Status,
 		}
 		transferCombinedSlice = append(transferCombinedSlice, transferCombined)
@@ -571,10 +577,11 @@ type UserAssetTransferAmount struct {
 }
 
 type AssetTransfer struct {
-	AssetId string `json:"asset_id"`
-	Txid    string `json:"txid"`
-	Amount  int    `json:"amount"`
-	UserId  int    `json:"user_id"`
+	AssetId  string `json:"asset_id"`
+	Txid     string `json:"txid"`
+	Amount   int    `json:"amount"`
+	UserId   int    `json:"user_id"`
+	Username string `json:"username"`
 }
 
 type AssetIdAndTransfer struct {
@@ -594,10 +601,11 @@ func AssetTransferCombinedSliceToAssetTransfers(assetTransferProcessedCombined *
 	var assetTransfers []AssetTransfer
 	for _, assetTransfer := range *assetTransferProcessedCombined {
 		assetTransfers = append(assetTransfers, AssetTransfer{
-			AssetId: assetTransfer.AssetID,
-			Txid:    assetTransfer.Txid,
-			Amount:  GetTotalAmountOfOutputs(&(assetTransfer.Outputs)),
-			UserId:  assetTransfer.UserID,
+			AssetId:  assetTransfer.AssetID,
+			Txid:     assetTransfer.Txid,
+			Amount:   GetTotalAmountOfOutputs(&(assetTransfer.Outputs)),
+			UserId:   assetTransfer.UserID,
+			Username: assetTransfer.Username,
 		})
 	}
 	return &assetTransfers
@@ -787,7 +795,7 @@ func SetAssetTransfer(transfers *[]models.AssetTransferProcessedSetRequest) erro
 	var assetTransferProcessedSlice *[]models.AssetTransferProcessedDb
 	var assetTransferProcessedInputsSlice *[]models.AssetTransferProcessedInputDb
 	var assetTransferProcessedOutputsSlice *[]models.AssetTransferProcessedOutputDb
-	assetTransferProcessedSlice, assetTransferProcessedInputsSlice, assetTransferProcessedOutputsSlice, err = ProcessAssetTransferProcessedSlice(userId, transfers)
+	assetTransferProcessedSlice, assetTransferProcessedInputsSlice, assetTransferProcessedOutputsSlice, err = ProcessAssetTransferProcessedSlice(userId, username, transfers)
 	if err != nil {
 		return err
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sort"
 	"time"
+	"trade/api"
 	"trade/models"
 )
 
@@ -191,6 +192,7 @@ type BatchTransferSimplified struct {
 
 type AssetIdAndBatchTransferSimplified struct {
 	AssetId       string                     `json:"asset_id"`
+	AssetName     string                     `json:"asset_name"`
 	BatchTransfer *[]BatchTransferSimplified `json:"batch_transfer"`
 }
 
@@ -253,6 +255,7 @@ func BatchTransfersToAssetIdAndBatchTransferSimplifiedSort(batchTransfers *[]mod
 	for _, assetId := range assetIdSlice {
 		assetIdAndBatchTransfers = append(assetIdAndBatchTransfers, AssetIdAndBatchTransferSimplified{
 			AssetId:       assetId,
+			AssetName:     api.GetAssetNameByAssetId(assetId),
 			BatchTransfer: BatchTransferSliceToBatchTransferSimplifiedSlice((*assetIdMapBatchTransfers)[assetId]),
 		})
 	}

@@ -4,12 +4,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"time"
 	"trade/api"
 	"trade/models"
 	"trade/utils"
 )
 
-func ProcessAddrReceiveEventsSetRequest(userId int, addrReceiveEventsSetRequest *[]models.AddrReceiveEventSetRequest) *[]models.AddrReceiveEvent {
+func ProcessAddrReceiveEventsSetRequest(userId int, username string, addrReceiveEventsSetRequest *[]models.AddrReceiveEventSetRequest) *[]models.AddrReceiveEvent {
 	var addrReceiveEvents []models.AddrReceiveEvent
 	for _, event := range *addrReceiveEventsSetRequest {
 		addrReceiveEvents = append(addrReceiveEvents, models.AddrReceiveEvent{
@@ -28,6 +29,7 @@ func ProcessAddrReceiveEventsSetRequest(userId int, addrReceiveEventsSetRequest 
 			HasProof:                event.HasProof,
 			DeviceID:                event.DeviceID,
 			UserID:                  userId,
+			Username:                username,
 		})
 	}
 	return &addrReceiveEvents
@@ -119,6 +121,9 @@ func IsAddrReceiveEventChanged(addrReceiveEventByAddrEncoded *models.AddrReceive
 	if addrReceiveEventByAddrEncoded.UserID != old.UserID {
 		return true
 	}
+	if addrReceiveEventByAddrEncoded.Username != old.Username {
+		return true
+	}
 	return false
 }
 
@@ -148,6 +153,7 @@ func CheckAddrReceiveEventIfUpdate(addrReceiveEvent *models.AddrReceiveEvent) (*
 	addrReceiveEventByAddrEncoded.HasProof = addrReceiveEvent.HasProof
 	addrReceiveEventByAddrEncoded.DeviceID = addrReceiveEvent.DeviceID
 	addrReceiveEventByAddrEncoded.UserID = addrReceiveEvent.UserID
+	addrReceiveEventByAddrEncoded.Username = addrReceiveEvent.Username
 	return addrReceiveEventByAddrEncoded, nil
 }
 
@@ -173,11 +179,12 @@ func GetAddrReceiveEventsByAssetId(assetId string) (*[]models.AddrReceiveEvent, 
 }
 
 type AssetReceive struct {
-	AssetId string `json:"asset_id"`
-	Txid    string `json:"txid"`
-	Encoded string `json:"encoded"`
-	Amount  int    `json:"amount"`
-	UserId  int    `json:"user_id"`
+	AssetId  string `json:"asset_id"`
+	Txid     string `json:"txid"`
+	Encoded  string `json:"encoded"`
+	Amount   int    `json:"amount"`
+	UserId   int    `json:"user_id"`
+	Username string `json:"username"`
 }
 
 type UserAssetReceive struct {
@@ -209,11 +216,12 @@ func AddrReceiveEventsToAssetReceives(allAddrReceiveEvents *[]models.AddrReceive
 	for _, addrReceiveEvent := range *allAddrReceiveEvents {
 		txid, _ := utils.OutpointToTransactionAndIndex(addrReceiveEvent.Outpoint)
 		assetReceives = append(assetReceives, AssetReceive{
-			AssetId: addrReceiveEvent.AddrAssetID,
-			Txid:    txid,
-			Encoded: addrReceiveEvent.AddrEncoded,
-			Amount:  addrReceiveEvent.AddrAmount,
-			UserId:  addrReceiveEvent.UserID,
+			AssetId:  addrReceiveEvent.AddrAssetID,
+			Txid:     txid,
+			Encoded:  addrReceiveEvent.AddrEncoded,
+			Amount:   addrReceiveEvent.AddrAmount,
+			UserId:   addrReceiveEvent.UserID,
+			Username: addrReceiveEvent.Username,
 		})
 	}
 	return &assetReceives
@@ -452,7 +460,7 @@ func SetAddrReceivesEvents(receives *[]models.AddrReceiveEventSetRequest) error 
 			return err
 		}
 	}
-	addrReceiveEvents := ProcessAddrReceiveEventsSetRequest(userId, receives)
+	addrReceiveEvents := ProcessAddrReceiveEventsSetRequest(userId, username, receives)
 	err = CreateOrUpdateAddrReceiveEvents(addrReceiveEvents)
 	if err != nil {
 		return err
@@ -475,4 +483,54 @@ func GetAndSetAddrReceivesEvents(deviceId string) error {
 		return nil
 	}
 	return nil
+}
+
+type AddrReceiveSimplified struct {
+	UpdatedAt               time.Time `json:"updated_at"`
+	CreationTimeUnixSeconds int       `json:"creation_time_unix_seconds"`
+	AddrAssetID             string    `json:"addr_asset_id" gorm:"type:varchar(255)"`
+	AddrAmount              int       `json:"addr_amount"`
+	AddrScriptKey           string    `json:"addr_script_key" gorm:"type:varchar(255)"`
+	EventStatus             string    `json:"event_status" gorm:"type:varchar(255)"`
+	Outpoint                string    `json:"outpoint" gorm:"type:varchar(255)"`
+	ConfirmationHeight      int       `json:"confirmation_height"`
+	DeviceID                string    `json:"device_id" gorm:"type:varchar(255)"`
+	UserID                  int       `json:"user_id"`
+}
+
+func AddrReceiveEventToAddrReceiveSimplified(addrReceiveEvent models.AddrReceiveEvent) AddrReceiveSimplified {
+	return AddrReceiveSimplified{
+		UpdatedAt:               addrReceiveEvent.UpdatedAt,
+		CreationTimeUnixSeconds: addrReceiveEvent.CreationTimeUnixSeconds,
+		AddrAssetID:             addrReceiveEvent.AddrAssetID,
+		AddrAmount:              addrReceiveEvent.AddrAmount,
+		AddrScriptKey:           addrReceiveEvent.AddrScriptKey,
+		EventStatus:             addrReceiveEvent.EventStatus,
+		Outpoint:                addrReceiveEvent.Outpoint,
+		ConfirmationHeight:      addrReceiveEvent.ConfirmationHeight,
+		DeviceID:                addrReceiveEvent.DeviceID,
+		UserID:                  addrReceiveEvent.UserID,
+	}
+}
+
+func AddrReceiveEventSliceToAddrReceiveSimplifiedSlice(addrReceiveEvents *[]models.AddrReceiveEvent) *[]AddrReceiveSimplified {
+	if addrReceiveEvents == nil {
+		return nil
+	}
+	var addrReceiveSimplified []AddrReceiveSimplified
+	for _, addrReceiveEvent := range *addrReceiveEvents {
+		addrReceiveSimplified = append(addrReceiveSimplified, AddrReceiveEventToAddrReceiveSimplified(addrReceiveEvent))
+	}
+	return &addrReceiveSimplified
+}
+
+// GetAllAddrReceiveSimplified
+// @Description: Get all addr receive simplified
+func GetAllAddrReceiveSimplified() (*[]AddrReceiveSimplified, error) {
+	allAddrReceives, err := GetAllAddrReceiveEvents()
+	if err != nil {
+		return nil, err
+	}
+	allAddrReceiveSimplified := AddrReceiveEventSliceToAddrReceiveSimplifiedSlice(allAddrReceives)
+	return allAddrReceiveSimplified, nil
 }

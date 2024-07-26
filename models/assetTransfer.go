@@ -26,6 +26,7 @@ type AssetTransferProcessedCombined struct {
 	Outputs            []AssetTransferProcessedOutput `json:"outputs"`
 	DeviceID           string                         `json:"device_id" gorm:"type:varchar(255)"`
 	UserID             int                            `json:"user_id"`
+	Username           string                         `json:"username" gorm:"type:varchar(255)"`
 	Status             int                            `json:"status" gorm:"default:1"`
 }
 
@@ -43,6 +44,7 @@ type AssetTransferProcessedDb struct {
 	Outputs            int    `json:"outputs"`
 	DeviceID           string `json:"device_id" gorm:"type:varchar(255)"`
 	UserID             int    `json:"user_id"`
+	Username           string `json:"username" gorm:"type:varchar(255)"`
 	Status             int    `json:"status" gorm:"default:1"`
 }
 

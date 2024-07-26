@@ -30,7 +30,7 @@ func SetAddrReceive(c *gin.Context) {
 		})
 		return
 	}
-	addrReceiveEvents := services.ProcessAddrReceiveEventsSetRequest(userId, &addrReceiveEventsSetRequest)
+	addrReceiveEvents := services.ProcessAddrReceiveEventsSetRequest(userId, username, &addrReceiveEventsSetRequest)
 	err = services.CreateOrUpdateAddrReceiveEvents(addrReceiveEvents)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
@@ -97,6 +97,25 @@ func GetAddrReceiveOrigin(c *gin.Context) {
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.GetAddrReceiveEventsProcessedOriginByUserIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    addrReceiveEvents,
+	})
+}
+
+func GetAllAddrReceiveSimplified(c *gin.Context) {
+	addrReceiveEvents, err := services.GetAllAddrReceiveSimplified()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllAddrReceiveSimplifiedErr,
 			Data:    nil,
 		})
 		return

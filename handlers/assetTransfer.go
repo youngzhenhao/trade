@@ -33,7 +33,7 @@ func SetAssetTransfer(c *gin.Context) {
 	var assetTransferProcessedSlice *[]models.AssetTransferProcessedDb
 	var assetTransferProcessedInputsSlice *[]models.AssetTransferProcessedInputDb
 	var assetTransferProcessedOutputsSlice *[]models.AssetTransferProcessedOutputDb
-	assetTransferProcessedSlice, assetTransferProcessedInputsSlice, assetTransferProcessedOutputsSlice, err = services.ProcessAssetTransferProcessedSlice(userId, &assetTransferProcessedSetRequestSlice)
+	assetTransferProcessedSlice, assetTransferProcessedInputsSlice, assetTransferProcessedOutputsSlice, err = services.ProcessAssetTransferProcessedSlice(userId, username, &assetTransferProcessedSetRequestSlice)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
