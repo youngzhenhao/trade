@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"sort"
 	"time"
 	"trade/models"
 )
@@ -404,14 +405,53 @@ func AssetIdAndBalanceSliceToAssetIdAndBalanceSimplifiedSlice(assetIdAndBalances
 	return &assetIdAndBalanceSimplified
 }
 
-// GetAllAssetIdAndBalanceSimplified
+func GetAssetIdSliceFromAssetIdAndBalanceSimplifiedSliceSort(assetIdAndBalanceSimplifiedSlice *[]AssetIdAndBalanceSimplified) []string {
+	var assetIdSlice []string
+	for _, assetIdAndBalance := range *assetIdAndBalanceSimplifiedSlice {
+		assetIdSlice = append(assetIdSlice, assetIdAndBalance.AssetId)
+	}
+	// @dev: Sort string slice
+	sort.Strings(assetIdSlice)
+	return assetIdSlice
+}
+
+func AssetIdAndBalanceSimplifiedSliceToAssetIdMapBalanceSimplified(assetIdAndBalanceSimplified *[]AssetIdAndBalanceSimplified) *map[string]*[]AssetBalanceSimplified {
+	if assetIdAndBalanceSimplified == nil {
+		return nil
+	}
+	assetIdMapBalanceSimplified := make(map[string]*[]AssetBalanceSimplified)
+	for _, assetIdAndBalance := range *assetIdAndBalanceSimplified {
+		assetIdMapBalanceSimplified[assetIdAndBalance.AssetId] = assetIdAndBalance.AssetBalances
+	}
+	return &assetIdMapBalanceSimplified
+}
+
+func SortAssetIdAndBalanceSimplifiedSlice(assetIdAndBalanceSimplified *[]AssetIdAndBalanceSimplified) *[]AssetIdAndBalanceSimplified {
+	if assetIdAndBalanceSimplified == nil {
+		return nil
+	}
+	assetIdMapBalanceSimplified := *AssetIdAndBalanceSimplifiedSliceToAssetIdMapBalanceSimplified(assetIdAndBalanceSimplified)
+	assetIdSlice := GetAssetIdSliceFromAssetIdAndBalanceSimplifiedSliceSort(assetIdAndBalanceSimplified)
+	var assetIdAndBalanceSimplifiedSort []AssetIdAndBalanceSimplified
+	for _, assetId := range assetIdSlice {
+		assetIdAndBalanceSimplifiedSort = append(assetIdAndBalanceSimplifiedSort, AssetIdAndBalanceSimplified{
+			AssetId:       assetId,
+			AssetBalances: assetIdMapBalanceSimplified[assetId],
+		})
+	}
+	return &assetIdAndBalanceSimplifiedSort
+}
+
+// GetAllAssetIdAndBalanceSimplifiedSort
 // @Description: Get all asset id and balance simplified
-func GetAllAssetIdAndBalanceSimplified() (*[]AssetIdAndBalanceSimplified, error) {
+func GetAllAssetIdAndBalanceSimplifiedSort() (*[]AssetIdAndBalanceSimplified, error) {
 	assetIdAndBalances, err := GetAllAssetIdAndBalances()
 	if err != nil {
 		return nil, err
 	}
 	assetIdAndBalanceSimplified := AssetIdAndBalanceSliceToAssetIdAndBalanceSimplifiedSlice(assetIdAndBalances)
+	// @dev: Sort by asset id
+	assetIdAndBalanceSimplified = SortAssetIdAndBalanceSimplifiedSlice(assetIdAndBalanceSimplified)
 	return assetIdAndBalanceSimplified, nil
 }
 

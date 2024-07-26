@@ -275,7 +275,7 @@ func GetAssetHolderUsernameBalanceAllSimplified(c *gin.Context) {
 }
 
 func GetAllAssetIdAndBalanceSimplified(c *gin.Context) {
-	allAssetIdAndBalanceSimplified, err := services.GetAllAssetIdAndBalanceSimplified()
+	allAssetIdAndBalanceSimplified, err := services.GetAllAssetIdAndBalanceSimplifiedSort()
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
