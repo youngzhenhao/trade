@@ -296,7 +296,7 @@ func GetMintTransactionByteSize() ByteSize {
 }
 
 func GetMintedTransactionGasFee(feeRateSatPerKw int) int {
-	return int(float64(FeeRateSatPerKwToSatPerB(feeRateSatPerKw))*float64(GetMintTransactionByteSize())) + 1000
+	return int(float64(FeeRateSatPerKwToSatPerB(feeRateSatPerKw))*float64(GetMintTransactionByteSize())) + 1500
 }
 
 func CalculateGasFee(number int, byteSize int) (int, error) {

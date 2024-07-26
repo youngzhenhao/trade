@@ -14,7 +14,7 @@ func SetupAssetBalanceRouter(router *gin.Engine) *gin.Engine {
 		assetBalance.GET("/get", handlers.GetAssetBalance)
 		assetBalance.GET("/get/holder/number/:asset_id", handlers.GetAssetHolderNumber)
 		// TODO: This router should be deprecated
-		assetBalance.GET("/get/holder/balance/limit50/:asset_id", handlers.GetAssetHolderBalance)
+		assetBalance.GET("/get/holder/balance/all/:asset_id", handlers.GetAssetHolderBalance)
 		assetBalance.GET("/get/holder/balance/records/:asset_id", handlers.GetAssetHolderBalanceRecordsNumber)
 		assetBalance.POST("/get/holder/balance/limit_offset", handlers.GetAssetHolderBalanceLimitAndOffset)
 		assetBalance.POST("/set", handlers.SetAssetBalance)
