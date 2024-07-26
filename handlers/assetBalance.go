@@ -273,3 +273,22 @@ func GetAssetHolderUsernameBalanceAllSimplified(c *gin.Context) {
 		Data:    usernameBalances,
 	})
 }
+
+func GetAllAssetIdAndBalanceSimplified(c *gin.Context) {
+	allAssetIdAndBalanceSimplified, err := services.GetAllAssetIdAndBalanceSimplified()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllAssetIdAndBalanceSimplifiedErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    allAssetIdAndBalanceSimplified,
+	})
+}

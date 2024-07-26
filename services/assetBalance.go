@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"time"
 	"trade/models"
 )
 
@@ -149,6 +150,10 @@ func GetAllAssetBalances() (*[]models.AssetBalance, error) {
 	return ReadAllAssetBalances()
 }
 
+func GetAllAssetBalancesNonZeroUpdatedAtDesc() (*[]models.AssetBalance, error) {
+	return ReadAllAssetBalancesNonZeroUpdatedAtDesc()
+}
+
 func GetAllAssetBalancesNonZero() (*[]models.AssetBalance, error) {
 	return ReadAllAssetBalancesNonZero()
 }
@@ -258,7 +263,7 @@ type UsernameAssetBalanceSimplified struct {
 	AssetBalances *[]AssetBalanceSimplifiedWithoutUsername `json:"asset_balances"`
 }
 
-func AssetBalanceToAssetBalanceSimplified(assetBalance models.AssetBalance) AssetBalanceSimplifiedWithoutUsername {
+func AssetBalanceToAssetBalanceSimplifiedWithoutUsername(assetBalance models.AssetBalance) AssetBalanceSimplifiedWithoutUsername {
 	return AssetBalanceSimplifiedWithoutUsername{
 		Name:     assetBalance.Name,
 		AssetID:  assetBalance.AssetID,
@@ -267,13 +272,13 @@ func AssetBalanceToAssetBalanceSimplified(assetBalance models.AssetBalance) Asse
 	}
 }
 
-func AssetBalanceSliceToAssetBalanceSimplifiedSlice(assetBalances *[]models.AssetBalance) *[]AssetBalanceSimplifiedWithoutUsername {
+func AssetBalanceSliceToAssetBalanceSimplifiedSliceWithoutUsername(assetBalances *[]models.AssetBalance) *[]AssetBalanceSimplifiedWithoutUsername {
 	if assetBalances == nil {
 		return nil
 	}
 	var assetBalanceSimplified []AssetBalanceSimplifiedWithoutUsername
 	for _, assetBalance := range *assetBalances {
-		assetBalanceSimplified = append(assetBalanceSimplified, AssetBalanceToAssetBalanceSimplified(assetBalance))
+		assetBalanceSimplified = append(assetBalanceSimplified, AssetBalanceToAssetBalanceSimplifiedWithoutUsername(assetBalance))
 	}
 	return &assetBalanceSimplified
 }
@@ -281,7 +286,7 @@ func AssetBalanceSliceToAssetBalanceSimplifiedSlice(assetBalances *[]models.Asse
 func UsernameAssetBalanceToUsernameAssetBalanceSimplified(usernameAssetBalance UsernameAssetBalance) *UsernameAssetBalanceSimplified {
 	var usernameAssetBalanceSimplified UsernameAssetBalanceSimplified
 	usernameAssetBalanceSimplified.Username = usernameAssetBalance.Username
-	usernameAssetBalanceSimplified.AssetBalances = AssetBalanceSliceToAssetBalanceSimplifiedSlice(usernameAssetBalance.AssetBalances)
+	usernameAssetBalanceSimplified.AssetBalances = AssetBalanceSliceToAssetBalanceSimplifiedSliceWithoutUsername(usernameAssetBalance.AssetBalances)
 	return &usernameAssetBalanceSimplified
 }
 
@@ -343,6 +348,71 @@ func GetAllAssetIdAndBalances() (*[]AssetIdAndBalance, error) {
 	}
 	assetIdAndBalances := AssetBalancesToAssetIdAndBalances(allAssetBalances)
 	return assetIdAndBalances, nil
+}
+
+type AssetBalanceSimplified struct {
+	UpdatedAt time.Time
+	Name      string `json:"name" gorm:"type:varchar(255)"`
+	AssetID   string `json:"asset_id" gorm:"type:varchar(255)"`
+	Balance   int    `json:"balance"`
+	DeviceId  string `json:"device_id" gorm:"type:varchar(255)"`
+	Username  string `json:"username" gorm:"type:varchar(255)"`
+}
+
+type AssetIdAndBalanceSimplified struct {
+	AssetId       string                    `json:"asset_id"`
+	AssetBalances *[]AssetBalanceSimplified `json:"asset_balances"`
+}
+
+func AssetBalanceToAssetBalanceSimplified(assetBalance models.AssetBalance) AssetBalanceSimplified {
+	return AssetBalanceSimplified{
+		UpdatedAt: assetBalance.UpdatedAt,
+		Name:      assetBalance.Name,
+		AssetID:   assetBalance.AssetID,
+		Balance:   assetBalance.Balance,
+		DeviceId:  assetBalance.DeviceId,
+		Username:  assetBalance.Username,
+	}
+}
+
+func AssetBalanceSliceToAssetBalanceSimplifiedSlice(assetBalances *[]models.AssetBalance) *[]AssetBalanceSimplified {
+	if assetBalances == nil {
+		return nil
+	}
+	var assetBalanceSimplified []AssetBalanceSimplified
+	for _, assetBalance := range *assetBalances {
+		assetBalanceSimplified = append(assetBalanceSimplified, AssetBalanceToAssetBalanceSimplified(assetBalance))
+	}
+	return &assetBalanceSimplified
+}
+
+func AssetIdAndBalanceToAssetIdAndBalanceSimplified(assetIdAndBalance AssetIdAndBalance) AssetIdAndBalanceSimplified {
+	return AssetIdAndBalanceSimplified{
+		AssetId:       assetIdAndBalance.AssetId,
+		AssetBalances: AssetBalanceSliceToAssetBalanceSimplifiedSlice(assetIdAndBalance.AssetBalances),
+	}
+}
+
+func AssetIdAndBalanceSliceToAssetIdAndBalanceSimplifiedSlice(assetIdAndBalances *[]AssetIdAndBalance) *[]AssetIdAndBalanceSimplified {
+	if assetIdAndBalances == nil {
+		return nil
+	}
+	var assetIdAndBalanceSimplified []AssetIdAndBalanceSimplified
+	for _, assetIdAndBalance := range *assetIdAndBalances {
+		assetIdAndBalanceSimplified = append(assetIdAndBalanceSimplified, AssetIdAndBalanceToAssetIdAndBalanceSimplified(assetIdAndBalance))
+	}
+	return &assetIdAndBalanceSimplified
+}
+
+// GetAllAssetIdAndBalanceSimplified
+// @Description: Get all asset id and balance simplified
+func GetAllAssetIdAndBalanceSimplified() (*[]AssetIdAndBalanceSimplified, error) {
+	assetIdAndBalances, err := GetAllAssetIdAndBalances()
+	if err != nil {
+		return nil, err
+	}
+	assetIdAndBalanceSimplified := AssetIdAndBalanceSliceToAssetIdAndBalanceSimplifiedSlice(assetIdAndBalances)
+	return assetIdAndBalanceSimplified, nil
 }
 
 type AssetIdAndUserAssetBalance struct {
@@ -414,12 +484,30 @@ func GetAssetHolderNumberAssetBalance(assetId string) (int, error) {
 	return GetAssetHolderNumberByAssetIdWithAssetBalances(assetId)
 }
 
+func GetAssetIdAndBalanceSimplifiedByAssetIdUpdatedAtDesc(assetId string) (*AssetIdAndBalance, error) {
+	allAssetBalances, err := GetAllAssetBalancesNonZeroUpdatedAtDesc()
+	if err != nil {
+		return nil, err
+	}
+	assetIdMapAssetBalances := AssetBalancesToAssetIdMapAssetBalances(allAssetBalances)
+	assetBalances, ok := (*assetIdMapAssetBalances)[assetId]
+	if !ok {
+		return &AssetIdAndBalance{
+			AssetId:       assetId,
+			AssetBalances: &[]models.AssetBalance{},
+		}, nil
+	}
+	return &AssetIdAndBalance{
+		AssetId:       assetId,
+		AssetBalances: assetBalances,
+	}, nil
+}
+
 // GetAssetIdAndBalancesByAssetId
 // @Description: Get assetId and balances by assetId
 // @dev
 func GetAssetIdAndBalancesByAssetId(assetId string) (*AssetIdAndBalance, error) {
-	// @dev: Limit 50 records
-	allAssetBalances, err := GetAllAssetBalancesNonZeroLimit(500000)
+	allAssetBalances, err := GetAllAssetBalancesNonZero()
 	if err != nil {
 		return nil, err
 	}

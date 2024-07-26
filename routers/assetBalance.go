@@ -25,5 +25,6 @@ func SetupAssetBalanceRouter(router *gin.Engine) *gin.Engine {
 	}))
 	authorized.GET("/get/holder/username/balance/all", handlers.GetAssetHolderUsernameBalanceAll)
 	authorized.GET("/get/holder/username/balance/all/simplified", handlers.GetAssetHolderUsernameBalanceAllSimplified)
+	authorized.GET("/get/asset_id/balance/all/simplified", handlers.GetAllAssetIdAndBalanceSimplified)
 	return router
 }
