@@ -18,6 +18,6 @@ func SetupBatchTransferRouter(router *gin.Engine) *gin.Engine {
 	authorized := router.Group("/batch_transfer", gin.BasicAuth(gin.Accounts{
 		config.GetLoadConfig().AdminUser.Username: config.GetLoadConfig().AdminUser.Password,
 	}))
-	authorized.GET("/get/all/simplified", handlers.GetAllAssetIdAndBatchTransferSimplified)
+	authorized.GET("/get/asset_id/all/simplified", handlers.GetAllAssetIdAndBatchTransferSimplified)
 	return router
 }

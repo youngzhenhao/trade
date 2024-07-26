@@ -176,19 +176,17 @@ func GetAllBatchTransfersUpdatedAtDesc() (*[]models.BatchTransfer, error) {
 }
 
 type BatchTransferSimplified struct {
-	UpdatedAt          time.Time `json:"updated_at"`
-	Encoded            string    `json:"encoded"`
-	AssetID            string    `json:"asset_id" gorm:"type:varchar(255)"`
-	Amount             int       `json:"amount"`
-	ScriptKey          string    `json:"script_key" gorm:"type:varchar(255)"`
-	Txid               string    `json:"txid" gorm:"type:varchar(255)"`
-	TxTotalAmount      int       `json:"tx_total_amount"`
-	Index              int       `json:"index"`
-	TransferTimestamp  int       `json:"transfer_timestamp"`
-	AnchorTxHeightHint int       `json:"anchor_tx_height_hint"`
-	DeviceID           string    `json:"device_id" gorm:"type:varchar(255)"`
-	UserID             int       `json:"user_id"`
-	Username           string    `json:"username" gorm:"type:varchar(255)"`
+	UpdatedAt         time.Time `json:"updated_at"`
+	AssetID           string    `json:"asset_id" gorm:"type:varchar(255)"`
+	Amount            int       `json:"amount"`
+	ScriptKey         string    `json:"script_key" gorm:"type:varchar(255)"`
+	Txid              string    `json:"txid" gorm:"type:varchar(255)"`
+	TxTotalAmount     int       `json:"tx_total_amount"`
+	Index             int       `json:"index"`
+	TransferTimestamp int       `json:"transfer_timestamp"`
+	DeviceID          string    `json:"device_id" gorm:"type:varchar(255)"`
+	UserID            int       `json:"user_id"`
+	Username          string    `json:"username" gorm:"type:varchar(255)"`
 }
 
 type AssetIdAndBatchTransferSimplified struct {
@@ -198,19 +196,17 @@ type AssetIdAndBatchTransferSimplified struct {
 
 func BatchTransferToBatchTransferSimplified(batchTransfer models.BatchTransfer) BatchTransferSimplified {
 	return BatchTransferSimplified{
-		UpdatedAt:          batchTransfer.UpdatedAt,
-		Encoded:            batchTransfer.Encoded,
-		AssetID:            batchTransfer.AssetID,
-		Amount:             batchTransfer.Amount,
-		ScriptKey:          batchTransfer.ScriptKey,
-		Txid:               batchTransfer.Txid,
-		TxTotalAmount:      batchTransfer.TxTotalAmount,
-		Index:              batchTransfer.Index,
-		TransferTimestamp:  batchTransfer.TransferTimestamp,
-		AnchorTxHeightHint: batchTransfer.AnchorTxHeightHint,
-		DeviceID:           batchTransfer.DeviceID,
-		UserID:             batchTransfer.UserID,
-		Username:           batchTransfer.Username,
+		UpdatedAt:         batchTransfer.UpdatedAt,
+		AssetID:           batchTransfer.AssetID,
+		Amount:            batchTransfer.Amount,
+		ScriptKey:         batchTransfer.ScriptKey,
+		Txid:              batchTransfer.Txid,
+		TxTotalAmount:     batchTransfer.TxTotalAmount,
+		Index:             batchTransfer.Index,
+		TransferTimestamp: batchTransfer.TransferTimestamp,
+		DeviceID:          batchTransfer.DeviceID,
+		UserID:            batchTransfer.UserID,
+		Username:          batchTransfer.Username,
 	}
 }
 
@@ -241,10 +237,10 @@ func BatchTransfersToAssetIdMapBatchTransfers(batchTransfers *[]models.BatchTran
 	return &assetIdMapBatchTransfer
 }
 
-func BatchTransfersToAssetIdSliceSort(batchTransfers *[]models.BatchTransfer) []string {
+func AssetIdMapBatchTransfersToAssetIdSliceSort(assetIdMapBatchTransfers *map[string]*[]models.BatchTransfer) []string {
 	var assetIdSlice []string
-	for _, batchTransfer := range *batchTransfers {
-		assetIdSlice = append(assetIdSlice, batchTransfer.AssetID)
+	for assetId, _ := range *assetIdMapBatchTransfers {
+		assetIdSlice = append(assetIdSlice, assetId)
 	}
 	sort.Strings(assetIdSlice)
 	return assetIdSlice
@@ -252,12 +248,12 @@ func BatchTransfersToAssetIdSliceSort(batchTransfers *[]models.BatchTransfer) []
 
 func BatchTransfersToAssetIdAndBatchTransferSimplifiedSort(batchTransfers *[]models.BatchTransfer) *[]AssetIdAndBatchTransferSimplified {
 	var assetIdAndBatchTransfers []AssetIdAndBatchTransferSimplified
-	AssetIdMapBatchTransfers := BatchTransfersToAssetIdMapBatchTransfers(batchTransfers)
-	assetIdSlice := BatchTransfersToAssetIdSliceSort(batchTransfers)
+	assetIdMapBatchTransfers := BatchTransfersToAssetIdMapBatchTransfers(batchTransfers)
+	assetIdSlice := AssetIdMapBatchTransfersToAssetIdSliceSort(assetIdMapBatchTransfers)
 	for _, assetId := range assetIdSlice {
 		assetIdAndBatchTransfers = append(assetIdAndBatchTransfers, AssetIdAndBatchTransferSimplified{
 			AssetId:       assetId,
-			BatchTransfer: BatchTransferSliceToBatchTransferSimplifiedSlice((*AssetIdMapBatchTransfers)[assetId]),
+			BatchTransfer: BatchTransferSliceToBatchTransferSimplifiedSlice((*assetIdMapBatchTransfers)[assetId]),
 		})
 	}
 	return &assetIdAndBatchTransfers

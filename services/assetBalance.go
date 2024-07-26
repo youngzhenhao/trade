@@ -415,6 +415,16 @@ func GetAssetIdSliceFromAssetIdAndBalanceSimplifiedSliceSort(assetIdAndBalanceSi
 	return assetIdSlice
 }
 
+func AssetIdMapBalanceSimplifiedToAssetIdSlice(assetIdMapBalanceSimplified *map[string]*[]AssetBalanceSimplified) []string {
+	var assetIdSlice []string
+	for assetId, _ := range *assetIdMapBalanceSimplified {
+		assetIdSlice = append(assetIdSlice, assetId)
+	}
+	// @dev: Sort string slice
+	sort.Strings(assetIdSlice)
+	return assetIdSlice
+}
+
 func AssetIdAndBalanceSimplifiedSliceToAssetIdMapBalanceSimplified(assetIdAndBalanceSimplified *[]AssetIdAndBalanceSimplified) *map[string]*[]AssetBalanceSimplified {
 	if assetIdAndBalanceSimplified == nil {
 		return nil
