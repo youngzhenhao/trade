@@ -60,7 +60,7 @@ func SetBatchTransfer(c *gin.Context) {
 		})
 		return
 	}
-	batchTransfer := services.ProcessBatchTransferSetRequest(userId, &batchTransferRequest)
+	batchTransfer := services.ProcessBatchTransferSetRequest(userId, username, &batchTransferRequest)
 	err = services.CreateOrUpdateBatchTransfer(batchTransfer)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
@@ -102,7 +102,7 @@ func SetBatchTransfers(c *gin.Context) {
 		})
 		return
 	}
-	batchTransfers := services.ProcessBatchTransfersSetRequest(userId, &batchTransfersRequest)
+	batchTransfers := services.ProcessBatchTransfersSetRequest(userId, username, &batchTransfersRequest)
 	err = services.CreateOrUpdateBatchTransfers(batchTransfers)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
@@ -118,5 +118,24 @@ func SetBatchTransfers(c *gin.Context) {
 		Error:   models.SuccessErr,
 		Code:    models.SUCCESS,
 		Data:    nil,
+	})
+}
+
+func GetAllAssetIdAndBatchTransferSimplified(c *gin.Context) {
+	batchTransfers, err := services.GetAllAssetIdAndBatchTransferSimplified()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllAssetIdAndBatchTransfersErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    batchTransfers,
 	})
 }

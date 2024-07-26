@@ -22,6 +22,12 @@ func ReadAllBatchTransfers() (*[]models.BatchTransfer, error) {
 	return &batchTransfers, err
 }
 
+func ReadAllBatchTransfersUpdatedAtDesc() (*[]models.BatchTransfer, error) {
+	var batchTransfers []models.BatchTransfer
+	err := middleware.DB.Order("updated_at desc").Find(&batchTransfers).Error
+	return &batchTransfers, err
+}
+
 func ReadBatchTransfer(id uint) (*models.BatchTransfer, error) {
 	var batchTransfer models.BatchTransfer
 	err := middleware.DB.First(&batchTransfer, id).Error

@@ -352,12 +352,12 @@ func GetAllAssetIdAndBalances() (*[]AssetIdAndBalance, error) {
 }
 
 type AssetBalanceSimplified struct {
-	UpdatedAt time.Time
-	Name      string `json:"name" gorm:"type:varchar(255)"`
-	AssetID   string `json:"asset_id" gorm:"type:varchar(255)"`
-	Balance   int    `json:"balance"`
-	DeviceId  string `json:"device_id" gorm:"type:varchar(255)"`
-	Username  string `json:"username" gorm:"type:varchar(255)"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Name      string    `json:"name" gorm:"type:varchar(255)"`
+	AssetID   string    `json:"asset_id" gorm:"type:varchar(255)"`
+	Balance   int       `json:"balance"`
+	DeviceId  string    `json:"device_id" gorm:"type:varchar(255)"`
+	Username  string    `json:"username" gorm:"type:varchar(255)"`
 }
 
 type AssetIdAndBalanceSimplified struct {

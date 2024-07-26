@@ -89,6 +89,7 @@ const (
 	GetAllAssetAddrsErr
 	GetAllAssetAddrSimplifiedErr
 	GetAllAssetIdAndBalanceSimplifiedErr
+	GetAllAssetIdAndBatchTransfersErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

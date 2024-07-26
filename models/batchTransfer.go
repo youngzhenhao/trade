@@ -20,6 +20,7 @@ type BatchTransfer struct {
 	AnchorTxChainFees  int    `json:"anchor_tx_chain_fees"`
 	DeviceID           string `json:"device_id" gorm:"type:varchar(255)"`
 	UserID             int    `json:"user_id"`
+	Username           string `json:"username" gorm:"type:varchar(255)"`
 	Status             int    `json:"status" gorm:"default:1"`
 }
 

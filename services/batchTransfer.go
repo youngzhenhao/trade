@@ -2,10 +2,12 @@ package services
 
 import (
 	"errors"
+	"sort"
+	"time"
 	"trade/models"
 )
 
-func ProcessBatchTransferSetRequest(userId int, batchTransferRequest *models.BatchTransferRequest) *models.BatchTransfer {
+func ProcessBatchTransferSetRequest(userId int, username string, batchTransferRequest *models.BatchTransferRequest) *models.BatchTransfer {
 	var batchTransfer models.BatchTransfer
 	batchTransfer = models.BatchTransfer{
 		Encoded:            batchTransferRequest.Encoded,
@@ -24,11 +26,12 @@ func ProcessBatchTransferSetRequest(userId int, batchTransferRequest *models.Bat
 		AnchorTxChainFees:  batchTransferRequest.AnchorTxChainFees,
 		DeviceID:           batchTransferRequest.DeviceID,
 		UserID:             userId,
+		Username:           username,
 	}
 	return &batchTransfer
 }
 
-func ProcessBatchTransfersSetRequest(userId int, batchTransfersRequest *[]models.BatchTransferRequest) *[]models.BatchTransfer {
+func ProcessBatchTransfersSetRequest(userId int, username string, batchTransfersRequest *[]models.BatchTransferRequest) *[]models.BatchTransfer {
 	var batchTransfers []models.BatchTransfer
 	for _, batchTransferRequest := range *batchTransfersRequest {
 		batchTransfers = append(batchTransfers, models.BatchTransfer{
@@ -48,6 +51,7 @@ func ProcessBatchTransfersSetRequest(userId int, batchTransfersRequest *[]models
 			AnchorTxChainFees:  batchTransferRequest.AnchorTxChainFees,
 			DeviceID:           batchTransferRequest.DeviceID,
 			UserID:             userId,
+			Username:           username,
 		})
 	}
 	return &batchTransfers
@@ -109,6 +113,9 @@ func IsBatchTransferChanged(batchTransferByTxidAndIndex *models.BatchTransfer, o
 	if batchTransferByTxidAndIndex.UserID != old.UserID {
 		return true
 	}
+	if batchTransferByTxidAndIndex.Username != old.Username {
+		return true
+	}
 	return false
 }
 
@@ -141,6 +148,7 @@ func CheckBatchTransferIfUpdate(addrReceiveEvent *models.BatchTransfer) (*models
 	batchTransferByTxidAndIndex.AnchorTxChainFees = addrReceiveEvent.AnchorTxChainFees
 	batchTransferByTxidAndIndex.DeviceID = addrReceiveEvent.DeviceID
 	batchTransferByTxidAndIndex.UserID = addrReceiveEvent.UserID
+	batchTransferByTxidAndIndex.Username = addrReceiveEvent.Username
 	return batchTransferByTxidAndIndex, nil
 }
 
@@ -161,4 +169,105 @@ func CreateOrUpdateBatchTransfers(transfers *[]models.BatchTransfer) (err error)
 		batchTransfers = append(batchTransfers, *batchTransfer)
 	}
 	return UpdateBatchTransfers(&batchTransfers)
+}
+
+func GetAllBatchTransfersUpdatedAtDesc() (*[]models.BatchTransfer, error) {
+	return ReadAllBatchTransfersUpdatedAtDesc()
+}
+
+type BatchTransferSimplified struct {
+	UpdatedAt          time.Time `json:"updated_at"`
+	Encoded            string    `json:"encoded"`
+	AssetID            string    `json:"asset_id" gorm:"type:varchar(255)"`
+	Amount             int       `json:"amount"`
+	ScriptKey          string    `json:"script_key" gorm:"type:varchar(255)"`
+	Txid               string    `json:"txid" gorm:"type:varchar(255)"`
+	TxTotalAmount      int       `json:"tx_total_amount"`
+	Index              int       `json:"index"`
+	TransferTimestamp  int       `json:"transfer_timestamp"`
+	AnchorTxHeightHint int       `json:"anchor_tx_height_hint"`
+	DeviceID           string    `json:"device_id" gorm:"type:varchar(255)"`
+	UserID             int       `json:"user_id"`
+	Username           string    `json:"username" gorm:"type:varchar(255)"`
+}
+
+type AssetIdAndBatchTransferSimplified struct {
+	AssetId       string                     `json:"asset_id"`
+	BatchTransfer *[]BatchTransferSimplified `json:"batch_transfer"`
+}
+
+func BatchTransferToBatchTransferSimplified(batchTransfer models.BatchTransfer) BatchTransferSimplified {
+	return BatchTransferSimplified{
+		UpdatedAt:          batchTransfer.UpdatedAt,
+		Encoded:            batchTransfer.Encoded,
+		AssetID:            batchTransfer.AssetID,
+		Amount:             batchTransfer.Amount,
+		ScriptKey:          batchTransfer.ScriptKey,
+		Txid:               batchTransfer.Txid,
+		TxTotalAmount:      batchTransfer.TxTotalAmount,
+		Index:              batchTransfer.Index,
+		TransferTimestamp:  batchTransfer.TransferTimestamp,
+		AnchorTxHeightHint: batchTransfer.AnchorTxHeightHint,
+		DeviceID:           batchTransfer.DeviceID,
+		UserID:             batchTransfer.UserID,
+		Username:           batchTransfer.Username,
+	}
+}
+
+func BatchTransferSliceToBatchTransferSimplifiedSlice(batchTransfers *[]models.BatchTransfer) *[]BatchTransferSimplified {
+	if batchTransfers == nil {
+		return nil
+	}
+	var batchTransferSimplified []BatchTransferSimplified
+	for _, batchTransfer := range *batchTransfers {
+		batchTransferSimplified = append(batchTransferSimplified, BatchTransferToBatchTransferSimplified(batchTransfer))
+	}
+	return &batchTransferSimplified
+}
+
+func BatchTransfersToAssetIdMapBatchTransfers(batchTransfers *[]models.BatchTransfer) *map[string]*[]models.BatchTransfer {
+	assetIdMapBatchTransfer := make(map[string]*[]models.BatchTransfer)
+	if batchTransfers == nil {
+		return &assetIdMapBatchTransfer
+	}
+	for _, batchTransfer := range *batchTransfers {
+		transfers, ok := assetIdMapBatchTransfer[batchTransfer.AssetID]
+		if !ok {
+			assetIdMapBatchTransfer[batchTransfer.AssetID] = &[]models.BatchTransfer{batchTransfer}
+		} else {
+			*transfers = append(*transfers, batchTransfer)
+		}
+	}
+	return &assetIdMapBatchTransfer
+}
+
+func BatchTransfersToAssetIdSliceSort(batchTransfers *[]models.BatchTransfer) []string {
+	var assetIdSlice []string
+	for _, batchTransfer := range *batchTransfers {
+		assetIdSlice = append(assetIdSlice, batchTransfer.AssetID)
+	}
+	sort.Strings(assetIdSlice)
+	return assetIdSlice
+}
+
+func BatchTransfersToAssetIdAndBatchTransferSimplifiedSort(batchTransfers *[]models.BatchTransfer) *[]AssetIdAndBatchTransferSimplified {
+	var assetIdAndBatchTransfers []AssetIdAndBatchTransferSimplified
+	AssetIdMapBatchTransfers := BatchTransfersToAssetIdMapBatchTransfers(batchTransfers)
+	assetIdSlice := BatchTransfersToAssetIdSliceSort(batchTransfers)
+	for _, assetId := range assetIdSlice {
+		assetIdAndBatchTransfers = append(assetIdAndBatchTransfers, AssetIdAndBatchTransferSimplified{
+			AssetId:       assetId,
+			BatchTransfer: BatchTransferSliceToBatchTransferSimplifiedSlice((*AssetIdMapBatchTransfers)[assetId]),
+		})
+	}
+	return &assetIdAndBatchTransfers
+}
+
+func GetAllAssetIdAndBatchTransferSimplified() (*[]AssetIdAndBatchTransferSimplified, error) {
+	allBatchTransfers, err := GetAllBatchTransfersUpdatedAtDesc()
+	if err != nil {
+		return nil, err
+	}
+	assetIdAndBatchTransfers := BatchTransfersToAssetIdAndBatchTransferSimplifiedSort(allBatchTransfers)
+	return assetIdAndBatchTransfers, nil
 }
