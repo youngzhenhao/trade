@@ -161,3 +161,60 @@ func GetAssetTransferTxids(c *gin.Context) {
 		Data:    txids,
 	})
 }
+
+func GetAllAssetTransfers(c *gin.Context) {
+	assetTransferCombinedSlice, err := services.GetAllAssetTransferCombinedSlice()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllAssetTransferCombinedSliceErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    assetTransferCombinedSlice,
+	})
+}
+
+func GetAllAssetTransferSimplified(c *gin.Context) {
+	assetTransferCombinedSlice, err := services.GetAllAssetTransferCombinedSliceSimplified()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllAssetTransferSimplifiedErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    assetTransferCombinedSlice,
+	})
+}
+
+func GetAllAssetIdAndAssetTransferSimplified(c *gin.Context) {
+	assetTransferCombinedSlice, err := services.GetAllAssetIdAndAssetTransferCombinedSliceSimplified()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllAssetIdAndAssetTransferCombinedSliceSimplifiedErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    assetTransferCombinedSlice,
+	})
+}

@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"time"
 	"trade/api"
 	"trade/models"
 )
@@ -831,4 +832,154 @@ func ListAndSetAssetTransfers(network models.Network, deviceId string) error {
 		return nil
 	}
 	return nil
+}
+
+type AssetTransferProcessedInputSimplified struct {
+	Address     string `json:"address" gorm:"type:varchar(255)"`
+	Amount      int    `json:"amount"`
+	AnchorPoint string `json:"anchor_point" gorm:"type:varchar(255)"`
+	ScriptKey   string `json:"script_key" gorm:"type:varchar(255)"`
+}
+
+type AssetTransferProcessedOutputSimplified struct {
+	Address        string `json:"address" gorm:"type:varchar(255)"`
+	Amount         int    `json:"amount"`
+	AnchorOutpoint string `json:"anchor_outpoint" gorm:"type:varchar(255)"`
+	AnchorValue    int    `json:"anchor_value"`
+	ScriptKey      string `json:"script_key" gorm:"type:varchar(255)"`
+}
+
+type AssetTransferProcessedCombinedSimplified struct {
+	UpdatedAt         time.Time                                `json:"updated_at"`
+	Txid              string                                   `json:"txid" gorm:"type:varchar(255)"`
+	AssetID           string                                   `json:"asset_id" gorm:"type:varchar(255)"`
+	TransferTimestamp int                                      `json:"transfer_timestamp"`
+	Inputs            []AssetTransferProcessedInputSimplified  `json:"inputs"`
+	Outputs           []AssetTransferProcessedOutputSimplified `json:"outputs"`
+	DeviceID          string                                   `json:"device_id" gorm:"type:varchar(255)"`
+	UserID            int                                      `json:"user_id"`
+	Username          string                                   `json:"username" gorm:"type:varchar(255)"`
+}
+
+func AssetTransferProcessedInputToAssetTransferProcessedInputSimplified(input models.AssetTransferProcessedInput) AssetTransferProcessedInputSimplified {
+	return AssetTransferProcessedInputSimplified{
+		Address:     input.Address,
+		Amount:      input.Amount,
+		AnchorPoint: input.AnchorPoint,
+		ScriptKey:   input.ScriptKey,
+	}
+}
+
+func AssetTransferProcessedInputSliceToAssetTransferProcessedInputSimplifiedSlice(inputs []models.AssetTransferProcessedInput) []AssetTransferProcessedInputSimplified {
+	var assetTransferProcessedInputSimplified []AssetTransferProcessedInputSimplified
+	for _, input := range inputs {
+		assetTransferProcessedInputSimplified = append(assetTransferProcessedInputSimplified, AssetTransferProcessedInputToAssetTransferProcessedInputSimplified(input))
+	}
+	return assetTransferProcessedInputSimplified
+}
+
+func AssetTransferProcessedOutputToAssetTransferProcessedOutputSimplified(output models.AssetTransferProcessedOutput) AssetTransferProcessedOutputSimplified {
+	return AssetTransferProcessedOutputSimplified{
+		Address:        output.Address,
+		Amount:         output.Amount,
+		AnchorOutpoint: output.AnchorOutpoint,
+		AnchorValue:    output.AnchorValue,
+		ScriptKey:      output.ScriptKey,
+	}
+}
+
+func AssetTransferProcessedOutputSliceToAssetTransferProcessedOutputSimplifiedSlice(outputs []models.AssetTransferProcessedOutput) []AssetTransferProcessedOutputSimplified {
+	var assetTransferProcessedOutputSimplified []AssetTransferProcessedOutputSimplified
+	for _, output := range outputs {
+		assetTransferProcessedOutputSimplified = append(assetTransferProcessedOutputSimplified, AssetTransferProcessedOutputToAssetTransferProcessedOutputSimplified(output))
+	}
+	return assetTransferProcessedOutputSimplified
+}
+
+func AssetTransferProcessedCombinedToAssetTransferProcessedCombinedSimplified(assetTransferProcessedCombined models.AssetTransferProcessedCombined) AssetTransferProcessedCombinedSimplified {
+	return AssetTransferProcessedCombinedSimplified{
+		UpdatedAt:         assetTransferProcessedCombined.UpdatedAt,
+		Txid:              assetTransferProcessedCombined.Txid,
+		AssetID:           assetTransferProcessedCombined.AssetID,
+		TransferTimestamp: assetTransferProcessedCombined.TransferTimestamp,
+		Inputs:            AssetTransferProcessedInputSliceToAssetTransferProcessedInputSimplifiedSlice(assetTransferProcessedCombined.Inputs),
+		Outputs:           AssetTransferProcessedOutputSliceToAssetTransferProcessedOutputSimplifiedSlice(assetTransferProcessedCombined.Outputs),
+		DeviceID:          assetTransferProcessedCombined.DeviceID,
+		UserID:            assetTransferProcessedCombined.UserID,
+		Username:          assetTransferProcessedCombined.Username,
+	}
+}
+
+func AssetTransferProcessedCombinedSliceToAssetTransferProcessedCombinedSimplifiedSlice(assetTransferProcessedCombinedSlice *[]models.AssetTransferProcessedCombined) *[]AssetTransferProcessedCombinedSimplified {
+	if assetTransferProcessedCombinedSlice == nil {
+		return nil
+	}
+	var assetTransferProcessedCombinedSimplified []AssetTransferProcessedCombinedSimplified
+	for _, assetTransfer := range *assetTransferProcessedCombinedSlice {
+		assetTransferProcessedCombinedSimplified = append(assetTransferProcessedCombinedSimplified, AssetTransferProcessedCombinedToAssetTransferProcessedCombinedSimplified(assetTransfer))
+	}
+	return &assetTransferProcessedCombinedSimplified
+}
+
+// GetAllAssetTransferCombinedSliceSimplified
+// @Description: Get all asset transfer combined slice simplified
+func GetAllAssetTransferCombinedSliceSimplified() (*[]AssetTransferProcessedCombinedSimplified, error) {
+	allAssetTransfer, err := GetAllAssetTransferCombinedSlice()
+	if err != nil {
+		return nil, err
+	}
+	return AssetTransferProcessedCombinedSliceToAssetTransferProcessedCombinedSimplifiedSlice(allAssetTransfer), nil
+}
+
+type AssetIdAndAssetTransferCombinedSliceSimplified struct {
+	AssetId        string                                      `json:"asset_id"`
+	AssetName      string                                      `json:"asset_name"`
+	AssetTransfers *[]AssetTransferProcessedCombinedSimplified `json:"asset_transfers"`
+}
+
+func AssetTransferProcessedCombinedSimplifiedSliceToAssetIdMapAssetTransferProcessedCombinedSimplified(assetTransferProcessedCombinedSimplifiedSlice *[]AssetTransferProcessedCombinedSimplified) *map[string]*[]AssetTransferProcessedCombinedSimplified {
+	if assetTransferProcessedCombinedSimplifiedSlice == nil {
+		return nil
+	}
+	assetIdMapAssetTransferProcessedCombinedSimplified := make(map[string]*[]AssetTransferProcessedCombinedSimplified)
+	for _, assetTransferProcessedCombinedSimplified := range *assetTransferProcessedCombinedSimplifiedSlice {
+		assetTransfers, ok := assetIdMapAssetTransferProcessedCombinedSimplified[assetTransferProcessedCombinedSimplified.AssetID]
+		if !ok {
+			assetIdMapAssetTransferProcessedCombinedSimplified[assetTransferProcessedCombinedSimplified.AssetID] = &[]AssetTransferProcessedCombinedSimplified{assetTransferProcessedCombinedSimplified}
+		} else {
+			*assetTransfers = append(*assetTransfers, assetTransferProcessedCombinedSimplified)
+		}
+	}
+	return &assetIdMapAssetTransferProcessedCombinedSimplified
+}
+
+func AssetIdMapAssetTransferProcessedCombinedSimplifiedToAssetIdSlice(assetIdMapAssetTransferProcessedCombinedSimplified *map[string]*[]AssetTransferProcessedCombinedSimplified) []string {
+	var assetIdSlice []string
+	if assetIdMapAssetTransferProcessedCombinedSimplified == nil {
+		return assetIdSlice
+	}
+	for assetId, _ := range *assetIdMapAssetTransferProcessedCombinedSimplified {
+		assetIdSlice = append(assetIdSlice, assetId)
+	}
+	return assetIdSlice
+}
+
+// GetAllAssetIdAndAssetTransferCombinedSliceSimplified
+// @Description: Get all asset id and asset transfer combined slice simplified
+func GetAllAssetIdAndAssetTransferCombinedSliceSimplified() (*[]AssetIdAndAssetTransferCombinedSliceSimplified, error) {
+	var allAssetIdAndAssetTransferCombinedSliceSimplified []AssetIdAndAssetTransferCombinedSliceSimplified
+	allAssetTransferCombinedSliceSimplified, err := GetAllAssetTransferCombinedSliceSimplified()
+	if err != nil {
+		return nil, err
+	}
+	assetIdMapAssetTransferProcessedCombinedSimplified := AssetTransferProcessedCombinedSimplifiedSliceToAssetIdMapAssetTransferProcessedCombinedSimplified(allAssetTransferCombinedSliceSimplified)
+	assetIdSlice := AssetIdMapAssetTransferProcessedCombinedSimplifiedToAssetIdSlice(assetIdMapAssetTransferProcessedCombinedSimplified)
+	for _, assetId := range assetIdSlice {
+		allAssetIdAndAssetTransferCombinedSliceSimplified = append(allAssetIdAndAssetTransferCombinedSliceSimplified, AssetIdAndAssetTransferCombinedSliceSimplified{
+			AssetId:        assetId,
+			AssetName:      api.GetAssetNameByAssetId(assetId),
+			AssetTransfers: (*assetIdMapAssetTransferProcessedCombinedSimplified)[assetId],
+		})
+	}
+	return &allAssetIdAndAssetTransferCombinedSliceSimplified, nil
 }

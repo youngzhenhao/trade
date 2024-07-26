@@ -91,6 +91,10 @@ const (
 	GetAllAssetIdAndBalanceSimplifiedErr
 	GetAllAssetIdAndBatchTransfersErr
 	GetAllAddrReceiveSimplifiedErr
+	GetAllAssetIdAndAddrReceiveSimplifiedErr
+	GetAllAssetTransferCombinedSliceErr
+	GetAllAssetTransferSimplifiedErr
+	GetAllAssetIdAndAssetTransferCombinedSliceSimplifiedErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

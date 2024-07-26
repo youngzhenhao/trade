@@ -127,3 +127,22 @@ func GetAllAddrReceiveSimplified(c *gin.Context) {
 		Data:    addrReceiveEvents,
 	})
 }
+
+func GetAllAssetIdAndAddrReceiveSimplified(c *gin.Context) {
+	addrReceiveEvents, err := services.GetAllAssetIdAndAddrReceiveSimplified()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllAssetIdAndAddrReceiveSimplifiedErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    addrReceiveEvents,
+	})
+}

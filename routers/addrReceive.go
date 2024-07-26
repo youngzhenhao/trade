@@ -19,6 +19,6 @@ func SetupAddrReceiveRouter(router *gin.Engine) *gin.Engine {
 		config.GetLoadConfig().AdminUser.Username: config.GetLoadConfig().AdminUser.Password,
 	}))
 	authorized.GET("/get/all/simplified", handlers.GetAllAddrReceiveSimplified)
-
+	authorized.GET("/get/asset_id/all/simplified", handlers.GetAllAssetIdAndAddrReceiveSimplified)
 	return router
 }

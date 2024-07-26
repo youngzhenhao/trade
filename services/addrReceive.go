@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"sort"
 	"time"
 	"trade/api"
 	"trade/models"
@@ -533,4 +534,58 @@ func GetAllAddrReceiveSimplified() (*[]AddrReceiveSimplified, error) {
 	}
 	allAddrReceiveSimplified := AddrReceiveEventSliceToAddrReceiveSimplifiedSlice(allAddrReceives)
 	return allAddrReceiveSimplified, nil
+}
+
+type AssetIdAndAddrReceiveSimplified struct {
+	AssetId      string                   `json:"asset_id"`
+	AssetName    string                   `json:"asset_name"`
+	AddrReceives *[]AddrReceiveSimplified `json:"addr_receives"`
+}
+
+func AddrReceiveSimplifiedSliceToAssetIdMapAddrReceiveSimplified(addrReceiveSimplifiedSlice *[]AddrReceiveSimplified) *map[string]*[]AddrReceiveSimplified {
+	if addrReceiveSimplifiedSlice == nil {
+		return nil
+	}
+	assetIdMapAddrReceiveSimplified := make(map[string]*[]AddrReceiveSimplified)
+	for _, addrReceiveSimplified := range *addrReceiveSimplifiedSlice {
+		addrReceive, ok := assetIdMapAddrReceiveSimplified[addrReceiveSimplified.AddrAssetID]
+		if !ok {
+			assetIdMapAddrReceiveSimplified[addrReceiveSimplified.AddrAssetID] = &[]AddrReceiveSimplified{addrReceiveSimplified}
+		} else {
+			*addrReceive = append(*addrReceive, addrReceiveSimplified)
+		}
+	}
+	return &assetIdMapAddrReceiveSimplified
+}
+
+func AssetIdMapAddrReceiveSimplifiedToAssetIdSliceSort(assetIdMapAddrReceiveSimplified *map[string]*[]AddrReceiveSimplified) []string {
+	var assetIdSlice []string
+	if assetIdMapAddrReceiveSimplified == nil {
+		return assetIdSlice
+	}
+	for assetId, _ := range *assetIdMapAddrReceiveSimplified {
+		assetIdSlice = append(assetIdSlice, assetId)
+	}
+	sort.Strings(assetIdSlice)
+	return assetIdSlice
+}
+
+// GetAllAssetIdAndAddrReceiveSimplified
+// @Description: Get all asset id and addr receive simplified
+func GetAllAssetIdAndAddrReceiveSimplified() (*[]AssetIdAndAddrReceiveSimplified, error) {
+	var assetIdAndAddrReceiveSimplified []AssetIdAndAddrReceiveSimplified
+	allAddrReceiveSimplified, err := GetAllAddrReceiveSimplified()
+	if err != nil {
+		return nil, err
+	}
+	assetIdMapAddrReceiveSimplified := AddrReceiveSimplifiedSliceToAssetIdMapAddrReceiveSimplified(allAddrReceiveSimplified)
+	assetIdSlice := AssetIdMapAddrReceiveSimplifiedToAssetIdSliceSort(assetIdMapAddrReceiveSimplified)
+	for _, assetId := range assetIdSlice {
+		assetIdAndAddrReceiveSimplified = append(assetIdAndAddrReceiveSimplified, AssetIdAndAddrReceiveSimplified{
+			AssetId:      assetId,
+			AssetName:    api.GetAssetNameByAssetId(assetId),
+			AddrReceives: (*assetIdMapAddrReceiveSimplified)[assetId],
+		})
+	}
+	return &assetIdAndAddrReceiveSimplified, nil
 }
