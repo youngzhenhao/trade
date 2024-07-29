@@ -27,19 +27,19 @@ type AssetLocalMint struct {
 }
 
 type AssetLocalMintSetRequest struct {
-	AssetVersion    string `json:"asset_version" gorm:"type:varchar(255)"`
-	AssetType       string `json:"asset_type" gorm:"type:varchar(255)"`
-	Name            string `json:"name" gorm:"type:varchar(255)"`
+	AssetVersion    string `json:"asset_version"`
+	AssetType       string `json:"asset_type"`
+	Name            string `json:"name"`
 	AssetMetaData   string `json:"asset_meta_data"`
-	AssetMetaType   string `json:"asset_meta_type" gorm:"type:varchar(255)"`
-	AssetMetaHash   string `json:"asset_meta_hash" gorm:"type:varchar(255)"`
+	AssetMetaType   string `json:"asset_meta_type"`
+	AssetMetaHash   string `json:"asset_meta_hash"`
 	Amount          int    `json:"amount"`
 	NewGroupedAsset bool   `json:"new_grouped_asset"`
-	GroupKey        string `json:"group_key" gorm:"type:varchar(255)"`
-	GroupAnchor     string `json:"group_anchor" gorm:"type:varchar(255)"`
+	GroupKey        string `json:"group_key"`
+	GroupAnchor     string `json:"group_anchor"`
 	GroupedAsset    bool   `json:"grouped_asset"`
-	BatchKey        string `json:"batch_key" gorm:"type:varchar(255)"`
-	BatchTxid       string `json:"batch_txid" gorm:"type:varchar(255)"`
-	AssetId         string `json:"asset_id" gorm:"type:varchar(255)"`
-	DeviceId        string `json:"device_id" gorm:"type:varchar(255)"`
+	BatchKey        string `json:"batch_key"`
+	BatchTxid       string `json:"batch_txid"`
+	AssetId         string `json:"asset_id"`
+	DeviceId        string `json:"device_id"`
 }

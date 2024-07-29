@@ -178,6 +178,7 @@ func GetAllBatchTransfersUpdatedAtDesc() (*[]models.BatchTransfer, error) {
 
 type BatchTransferSimplified struct {
 	UpdatedAt         time.Time `json:"updated_at"`
+	Encoded           string    `json:"encoded"`
 	AssetID           string    `json:"asset_id" gorm:"type:varchar(255)"`
 	Amount            int       `json:"amount"`
 	ScriptKey         string    `json:"script_key" gorm:"type:varchar(255)"`
@@ -199,6 +200,7 @@ type AssetIdAndBatchTransferSimplified struct {
 func BatchTransferToBatchTransferSimplified(batchTransfer models.BatchTransfer) BatchTransferSimplified {
 	return BatchTransferSimplified{
 		UpdatedAt:         batchTransfer.UpdatedAt,
+		Encoded:           batchTransfer.Encoded,
 		AssetID:           batchTransfer.AssetID,
 		Amount:            batchTransfer.Amount,
 		ScriptKey:         batchTransfer.ScriptKey,

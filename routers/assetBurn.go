@@ -14,5 +14,6 @@ func SetupAssetBurnRouter(router *gin.Engine) *gin.Engine {
 		assetBurn.GET("/get/asset_id/:asset_id", handlers.GetAssetBurnByAssetId)
 		assetBurn.POST("/set", handlers.SetAssetBurn)
 	}
+	// TODO: Get all simplified info
 	return router
 }
