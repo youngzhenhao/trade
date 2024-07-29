@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"log"
@@ -92,4 +93,30 @@ func CheckPassword(hashedPassword, password string) bool {
 	// bcrypt.CompareHashAndPassword Compare the hashed password with the password entered by the user. If there is a match, nil is returned.
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	return err == nil
+}
+
+func UpdateUserIpByUserId(userId uint, ip string) error {
+	user, err := ReadUser(userId)
+	if err != nil {
+		return err
+	}
+	user.RecentIpAddresses = ip
+	return UpdateUser(user)
+}
+
+func UpdateUserIpByUsername(username string, ip string) (string, error) {
+	user, err := ReadUserByUsername(username)
+	if err != nil {
+		return "", err
+	}
+	user.RecentIpAddresses = ip
+	return ip, UpdateUser(user)
+}
+
+// UpdateUserIpByClientIp
+// @Description: Update user ip by client ip
+func UpdateUserIpByClientIp(c *gin.Context) (string, error) {
+	username := c.MustGet("username").(string)
+	ip := c.ClientIP()
+	return UpdateUserIpByUsername(username, ip)
 }

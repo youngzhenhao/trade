@@ -64,5 +64,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AssetLocalMint {
 		SetupAssetLocalMintRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.Ping {
+		SetupPingRouter(r)
+	}
 	return r
 }
