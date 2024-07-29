@@ -14,6 +14,7 @@ func SetupAssetLocalMintRouter(router *gin.Engine) *gin.Engine {
 		assetLocalMint.GET("/get/user", handlers.GeAssetLocalMintByUserId)
 		assetLocalMint.GET("/get/asset_id/:asset_id", handlers.GetAssetLocalMintAssetId)
 		assetLocalMint.POST("/set", handlers.SetAssetLocalMint)
+		assetLocalMint.POST("/set/slice", handlers.SetAssetLocalMints)
 	}
 	authorized := router.Group("/asset_local_mint", gin.BasicAuth(gin.Accounts{
 		config.GetLoadConfig().AdminUser.Username: config.GetLoadConfig().AdminUser.Password,

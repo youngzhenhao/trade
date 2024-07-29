@@ -6,7 +6,7 @@ import (
 	"trade/models"
 )
 
-func ProcessAssetLocalMintSetRequest(userId int, username string, assetLocalMintRequest *models.AssetLocalMintSetRequest) *models.AssetLocalMint {
+func ProcessAssetLocalMintSetRequest(userId int, username string, assetLocalMintRequest models.AssetLocalMintSetRequest) models.AssetLocalMint {
 	var assetLocalMint models.AssetLocalMint
 	assetLocalMint = models.AssetLocalMint{
 		AssetVersion:    assetLocalMintRequest.AssetVersion,
@@ -27,7 +27,16 @@ func ProcessAssetLocalMintSetRequest(userId int, username string, assetLocalMint
 		UserId:          userId,
 		Username:        username,
 	}
-	return &assetLocalMint
+	return assetLocalMint
+}
+
+func ProcessAssetLocalMintSetRequests(userId int, username string, assetLocalMintRequests *[]models.AssetLocalMintSetRequest) *[]models.AssetLocalMint {
+	var assetLocalMints []models.AssetLocalMint
+	for _, assetLocalMintRequest := range *assetLocalMintRequests {
+		assetLocalMint := ProcessAssetLocalMintSetRequest(userId, username, assetLocalMintRequest)
+		assetLocalMints = append(assetLocalMints, assetLocalMint)
+	}
+	return &assetLocalMints
 }
 
 func GetAssetLocalMintsByUserId(userId int) (*[]models.AssetLocalMint, error) {
@@ -150,6 +159,10 @@ func CreateOrUpdateAssetLocalMints(transfers *[]models.AssetLocalMint) (err erro
 // @Description: Set asset local mint
 func SetAssetLocalMint(assetLocalMint *models.AssetLocalMint) error {
 	return CreateAssetLocalMint(assetLocalMint)
+}
+
+func SetAssetLocalMints(assetLocalMints *[]models.AssetLocalMint) error {
+	return CreateAssetLocalMints(assetLocalMints)
 }
 
 func GetAllAssetLocalMintsUpdatedAtDesc() (*[]models.AssetLocalMint, error) {

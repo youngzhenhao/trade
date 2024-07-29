@@ -98,6 +98,7 @@ const (
 	GetAssetLocalMintsByUserIdErr
 	GetAssetLocalMintByAssetIdErr
 	SetAssetLocalMintErr
+	SetAssetLocalMintsErr
 	GetAllAssetLocalMintSimplifiedErr
 )
 

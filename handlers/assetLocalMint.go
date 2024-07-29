@@ -80,13 +80,55 @@ func SetAssetLocalMint(c *gin.Context) {
 		})
 		return
 	}
-	assetLocalMint := services.ProcessAssetLocalMintSetRequest(userId, username, &assetLocalMintSetRequest)
-	err = services.SetAssetLocalMint(assetLocalMint)
+	assetLocalMint := services.ProcessAssetLocalMintSetRequest(userId, username, assetLocalMintSetRequest)
+	err = services.SetAssetLocalMint(&assetLocalMint)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
 			Code:    models.SetAssetLocalMintErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    nil,
+	})
+}
+
+func SetAssetLocalMints(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	var assetLocalMintSetRequests []models.AssetLocalMintSetRequest
+	err = c.ShouldBindJSON(&assetLocalMintSetRequests)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	assetLocalMints := services.ProcessAssetLocalMintSetRequests(userId, username, &assetLocalMintSetRequests)
+	err = services.SetAssetLocalMints(assetLocalMints)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.SetAssetLocalMintsErr,
 			Data:    nil,
 		})
 		return
