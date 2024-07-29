@@ -9,7 +9,7 @@ type AssetLocalMint struct {
 	AssetVersion    string `json:"asset_version" gorm:"type:varchar(255)"`
 	AssetType       string `json:"asset_type" gorm:"type:varchar(255)"`
 	Name            string `json:"name" gorm:"type:varchar(255)"`
-	AssetMetaData   string `json:"asset_meta_data" gorm:"type:varchar(255)"`
+	AssetMetaData   string `json:"asset_meta_data"`
 	AssetMetaType   string `json:"asset_meta_type" gorm:"type:varchar(255)"`
 	AssetMetaHash   string `json:"asset_meta_hash" gorm:"type:varchar(255)"`
 	Amount          int    `json:"amount"`
@@ -30,7 +30,7 @@ type AssetLocalMintSetRequest struct {
 	AssetVersion    string `json:"asset_version" gorm:"type:varchar(255)"`
 	AssetType       string `json:"asset_type" gorm:"type:varchar(255)"`
 	Name            string `json:"name" gorm:"type:varchar(255)"`
-	AssetMetaData   string `json:"asset_meta_data" gorm:"type:varchar(255)"`
+	AssetMetaData   string `json:"asset_meta_data"`
 	AssetMetaType   string `json:"asset_meta_type" gorm:"type:varchar(255)"`
 	AssetMetaHash   string `json:"asset_meta_hash" gorm:"type:varchar(255)"`
 	Amount          int    `json:"amount"`
