@@ -61,5 +61,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AssetBurn {
 		SetupAssetBurnRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.AssetLocalMint {
+		SetupAssetLocalMintRouter(r)
+	}
 	return r
 }

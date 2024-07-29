@@ -95,6 +95,10 @@ const (
 	GetAllAssetTransferCombinedSliceErr
 	GetAllAssetTransferSimplifiedErr
 	GetAllAssetIdAndAssetTransferCombinedSliceSimplifiedErr
+	GetAssetLocalMintsByUserIdErr
+	GetAssetLocalMintByAssetIdErr
+	SetAssetLocalMintErr
+	GetAllAssetLocalMintSimplifiedErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

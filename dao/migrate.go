@@ -88,5 +88,8 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.AssetBurn{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.AssetLocalMint{}); err != nil {
+		return err
+	}
 	return err
 }

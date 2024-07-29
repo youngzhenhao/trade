@@ -38,6 +38,7 @@ router_disable:
     validate_token: false
     asset_balance: false
     asset_burn: false
+    asset_local_mint: false
 api_config:
     lnd:
         host: ""

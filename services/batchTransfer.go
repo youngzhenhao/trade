@@ -120,36 +120,36 @@ func IsBatchTransferChanged(batchTransferByTxidAndIndex *models.BatchTransfer, o
 	return false
 }
 
-func CheckBatchTransferIfUpdate(addrReceiveEvent *models.BatchTransfer) (*models.BatchTransfer, error) {
-	if addrReceiveEvent == nil {
+func CheckBatchTransferIfUpdate(batchTransfer *models.BatchTransfer) (*models.BatchTransfer, error) {
+	if batchTransfer == nil {
 		return nil, errors.New("nil batch transfer")
 	}
-	txid := addrReceiveEvent.Txid
-	index := addrReceiveEvent.Index
+	txid := batchTransfer.Txid
+	index := batchTransfer.Index
 	batchTransferByTxidAndIndex, err := ReadBatchTransferByTxidAndIndex(txid, index)
 	if err != nil {
-		return addrReceiveEvent, nil
+		return batchTransfer, nil
 	}
-	if !IsBatchTransferChanged(batchTransferByTxidAndIndex, addrReceiveEvent) {
+	if !IsBatchTransferChanged(batchTransferByTxidAndIndex, batchTransfer) {
 		return batchTransferByTxidAndIndex, nil
 	}
-	batchTransferByTxidAndIndex.Encoded = addrReceiveEvent.Encoded
-	batchTransferByTxidAndIndex.AssetID = addrReceiveEvent.AssetID
-	batchTransferByTxidAndIndex.Amount = addrReceiveEvent.Amount
-	batchTransferByTxidAndIndex.ScriptKey = addrReceiveEvent.ScriptKey
-	batchTransferByTxidAndIndex.InternalKey = addrReceiveEvent.InternalKey
-	batchTransferByTxidAndIndex.TaprootOutputKey = addrReceiveEvent.TaprootOutputKey
-	batchTransferByTxidAndIndex.ProofCourierAddr = addrReceiveEvent.ProofCourierAddr
-	batchTransferByTxidAndIndex.Txid = addrReceiveEvent.Txid
-	batchTransferByTxidAndIndex.TxTotalAmount = addrReceiveEvent.TxTotalAmount
-	batchTransferByTxidAndIndex.Index = addrReceiveEvent.Index
-	batchTransferByTxidAndIndex.TransferTimestamp = addrReceiveEvent.TransferTimestamp
-	batchTransferByTxidAndIndex.AnchorTxHash = addrReceiveEvent.AnchorTxHash
-	batchTransferByTxidAndIndex.AnchorTxHeightHint = addrReceiveEvent.AnchorTxHeightHint
-	batchTransferByTxidAndIndex.AnchorTxChainFees = addrReceiveEvent.AnchorTxChainFees
-	batchTransferByTxidAndIndex.DeviceID = addrReceiveEvent.DeviceID
-	batchTransferByTxidAndIndex.UserID = addrReceiveEvent.UserID
-	batchTransferByTxidAndIndex.Username = addrReceiveEvent.Username
+	batchTransferByTxidAndIndex.Encoded = batchTransfer.Encoded
+	batchTransferByTxidAndIndex.AssetID = batchTransfer.AssetID
+	batchTransferByTxidAndIndex.Amount = batchTransfer.Amount
+	batchTransferByTxidAndIndex.ScriptKey = batchTransfer.ScriptKey
+	batchTransferByTxidAndIndex.InternalKey = batchTransfer.InternalKey
+	batchTransferByTxidAndIndex.TaprootOutputKey = batchTransfer.TaprootOutputKey
+	batchTransferByTxidAndIndex.ProofCourierAddr = batchTransfer.ProofCourierAddr
+	batchTransferByTxidAndIndex.Txid = batchTransfer.Txid
+	batchTransferByTxidAndIndex.TxTotalAmount = batchTransfer.TxTotalAmount
+	batchTransferByTxidAndIndex.Index = batchTransfer.Index
+	batchTransferByTxidAndIndex.TransferTimestamp = batchTransfer.TransferTimestamp
+	batchTransferByTxidAndIndex.AnchorTxHash = batchTransfer.AnchorTxHash
+	batchTransferByTxidAndIndex.AnchorTxHeightHint = batchTransfer.AnchorTxHeightHint
+	batchTransferByTxidAndIndex.AnchorTxChainFees = batchTransfer.AnchorTxChainFees
+	batchTransferByTxidAndIndex.DeviceID = batchTransfer.DeviceID
+	batchTransferByTxidAndIndex.UserID = batchTransfer.UserID
+	batchTransferByTxidAndIndex.Username = batchTransfer.Username
 	return batchTransferByTxidAndIndex, nil
 }
 
