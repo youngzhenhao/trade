@@ -18,6 +18,14 @@ func LoginHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
+	// @dev: Update user ip by client ip
+	username := creds.Username
+	ip := c.ClientIP()
+	_, err = services.UpdateUserIpByUsername(username, ip)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
