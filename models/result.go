@@ -107,7 +107,7 @@ const (
 	GetAssetRecommendByAssetIdErr
 	SetAssetRecommendErr
 	GetAllAssetRecommendSimplifiedErr
-	GetAssetRecommendsByUserIdAndAssetIdErr
+	GetAssetRecommendByUserIdAndAssetIdErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

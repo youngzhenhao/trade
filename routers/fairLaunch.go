@@ -18,6 +18,8 @@ func SetupFairLaunchRouter(router *gin.Engine) *gin.Engine {
 		{
 			query.GET("/all", handlers.GetAllFairLaunchInfo)
 			query.GET("/issued", handlers.GetIssuedFairLaunchInfo)
+			query.GET("/closed", handlers.GetClosedFairLaunchInfo)
+			query.GET("/not_started", handlers.GetNotStartedFairLaunchInfo)
 			query.GET("/own_set", handlers.GetOwnFairLaunchInfo)
 			query.GET("/own_set/issued/simplified", handlers.GetOwnFairLaunchInfoIssuedSimplified)
 			query.GET("/own_mint", handlers.GetOwnFairLaunchMintedInfo)

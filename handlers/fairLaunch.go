@@ -540,3 +540,12 @@ func GetOwnFairLaunchInfoIssuedSimplified(c *gin.Context) {
 		Data:    fairLaunchInfos,
 	})
 }
+
+func GetClosedFairLaunchInfo(c *gin.Context) {
+	// TODO:
+}
+
+func GetNotStartedFairLaunchInfo(c *gin.Context) {
+	// TODO:
+
+}

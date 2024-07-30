@@ -13,7 +13,7 @@ func SetupAssetRecommendRouter(router *gin.Engine) *gin.Engine {
 	{
 		assetLocalMint.GET("/get/user", handlers.GetAssetRecommendByUserId)
 		assetLocalMint.GET("/get/asset_id/:asset_id", handlers.GetAssetRecommendAssetId)
-		assetLocalMint.GET("/get/user/asset_id/:asset_id", handlers.GetAssetRecommendsByUserIdAndAssetId)
+		assetLocalMint.GET("/get/user/asset_id/:asset_id", handlers.GetAssetRecommendByUserIdAndAssetId)
 		assetLocalMint.POST("/set", handlers.SetAssetRecommend)
 	}
 	authorized := router.Group("/asset_recommend", gin.BasicAuth(gin.Accounts{

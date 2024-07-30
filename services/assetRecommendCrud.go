@@ -43,7 +43,7 @@ func ReadAssetRecommendsByAssetId(assetId string) (*[]models.AssetRecommend, err
 	return &assetRecommends, err
 }
 
-func ReadAssetRecommendsByUserIdAndAssetId(userId int, assetId string) (*models.AssetRecommend, error) {
+func ReadAssetRecommendByUserIdAndAssetId(userId int, assetId string) (*models.AssetRecommend, error) {
 	var assetRecommend models.AssetRecommend
 	err := middleware.DB.Where("user_id = ? AND AND asset_id = ? status = ?", userId, assetId, 1).First(&assetRecommend).Error
 	return &assetRecommend, err
