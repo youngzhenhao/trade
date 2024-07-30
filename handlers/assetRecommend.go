@@ -57,6 +57,37 @@ func GetAssetRecommendAssetId(c *gin.Context) {
 	})
 }
 
+func GetAssetRecommendsByUserIdAndAssetId(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	assetId := c.Param("asset_id")
+	assetRecommends, err := services.GetAssetRecommendsByUserIdAndAssetId(userId, assetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetRecommendsByUserIdAndAssetIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    assetRecommends,
+	})
+}
+
 func SetAssetRecommend(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)

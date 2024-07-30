@@ -39,8 +39,14 @@ func ReadAssetRecommendsByUserId(userId int) (*[]models.AssetRecommend, error) {
 
 func ReadAssetRecommendsByAssetId(assetId string) (*[]models.AssetRecommend, error) {
 	var assetRecommends []models.AssetRecommend
-	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).First(&assetRecommends).Error
+	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Find(&assetRecommends).Error
 	return &assetRecommends, err
+}
+
+func ReadAssetRecommendsByUserIdAndAssetId(userId int, assetId string) (*models.AssetRecommend, error) {
+	var assetRecommend models.AssetRecommend
+	err := middleware.DB.Where("user_id = ? AND AND asset_id = ? status = ?", userId, assetId, 1).First(&assetRecommend).Error
+	return &assetRecommend, err
 }
 
 func UpdateAssetRecommend(assetRecommend *models.AssetRecommend) error {

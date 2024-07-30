@@ -13,6 +13,10 @@ func GetAssetRecommendsByAssetId(assetId string) (*[]models.AssetRecommend, erro
 	return ReadAssetRecommendsByAssetId(assetId)
 }
 
+func GetAssetRecommendsByUserIdAndAssetId(userId int, assetId string) (*models.AssetRecommend, error) {
+	return ReadAssetRecommendsByUserIdAndAssetId(userId, assetId)
+}
+
 func ProcessAssetRecommendSetRequest(userId int, username string, assetRecommendSetRequest models.AssetRecommendSetRequest) models.AssetRecommend {
 	return models.AssetRecommend{
 		AssetId:           assetRecommendSetRequest.AssetId,
