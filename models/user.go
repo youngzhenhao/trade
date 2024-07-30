@@ -10,6 +10,7 @@ type User struct {
 	Password          string `gorm:"column:password" json:"password"`
 	Status            int16  `gorm:"column:status;type:smallint" json:"status"`
 	RecentIpAddresses string `json:"recent_ip_addresses" gorm:"type:varchar(255)"`
+	RecentLoginTime   int    `json:"recent_login_time"`
 }
 
 func (User) TableName() string {

@@ -9,6 +9,7 @@ import (
 	"log"
 	"trade/middleware"
 	"trade/models"
+	"trade/utils"
 )
 
 const (
@@ -46,7 +47,7 @@ func ReadUser(id uint) (*models.User, error) {
 // ReadUserByUsername retrieves a user by username
 func ReadUserByUsername(username string) (*models.User, error) {
 	var user models.User
-	err := middleware.DB.Where("user_name =?", username).First(&user).Error
+	err := middleware.DB.Where("user_name = ?", username).First(&user).Error
 	return &user, err
 }
 
@@ -110,6 +111,7 @@ func UpdateUserIpByUsername(username string, ip string) (string, error) {
 		return "", err
 	}
 	user.RecentIpAddresses = ip
+	user.RecentLoginTime = utils.GetTimestamp()
 	return ip, UpdateUser(user)
 }
 
