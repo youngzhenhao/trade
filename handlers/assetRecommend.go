@@ -7,7 +7,7 @@ import (
 	"trade/services"
 )
 
-func GetAssetBurnByUserId(c *gin.Context) {
+func GetAssetRecommendByUserId(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)
 	if err != nil {
@@ -19,12 +19,12 @@ func GetAssetBurnByUserId(c *gin.Context) {
 		})
 		return
 	}
-	assetBurns, err := services.GetAssetBurnsByUserId(userId)
+	assetRecommends, err := services.GetAssetRecommendsByUserId(userId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAssetBurnsByUserIdErr,
+			Code:    models.GetAssetRecommendsByUserIdErr,
 			Data:    nil,
 		})
 		return
@@ -33,11 +33,31 @@ func GetAssetBurnByUserId(c *gin.Context) {
 		Success: true,
 		Error:   models.SuccessErr,
 		Code:    models.SUCCESS,
-		Data:    assetBurns,
+		Data:    assetRecommends,
 	})
 }
 
-func SetAssetBurn(c *gin.Context) {
+func GetAssetRecommendAssetId(c *gin.Context) {
+	assetId := c.Param("asset_id")
+	assetRecommends, err := services.GetAssetRecommendsByAssetId(assetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetRecommendByAssetIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    assetRecommends,
+	})
+}
+
+func SetAssetRecommend(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)
 	if err != nil {
@@ -49,8 +69,8 @@ func SetAssetBurn(c *gin.Context) {
 		})
 		return
 	}
-	var assetBurnSetRequest models.AssetBurnSetRequest
-	err = c.ShouldBindJSON(&assetBurnSetRequest)
+	var assetRecommendSetRequest models.AssetRecommendSetRequest
+	err = c.ShouldBindJSON(&assetRecommendSetRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -60,13 +80,13 @@ func SetAssetBurn(c *gin.Context) {
 		})
 		return
 	}
-	assetBurn := services.ProcessAssetBurnSetRequest(userId, username, &assetBurnSetRequest)
-	err = services.CreateAssetBurn(assetBurn)
+	assetRecommend := services.ProcessAssetRecommendSetRequest(userId, username, assetRecommendSetRequest)
+	err = services.SetAssetRecommend(&assetRecommend)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.CreateAssetBurnErr,
+			Code:    models.SetAssetRecommendErr,
 			Data:    nil,
 		})
 		return
@@ -79,14 +99,13 @@ func SetAssetBurn(c *gin.Context) {
 	})
 }
 
-func GetAssetBurnByAssetId(c *gin.Context) {
-	assetId := c.Param("asset_id")
-	assetBurnTotal, err := services.GetAssetBurnTotal(assetId)
+func GetAllAssetRecommendSimplified(c *gin.Context) {
+	assetRecommendSimplified, err := services.GetAllAssetRecommendSimplified()
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAssetBurnTotalErr,
+			Code:    models.GetAllAssetRecommendSimplifiedErr,
 			Data:    nil,
 		})
 		return
@@ -95,25 +114,6 @@ func GetAssetBurnByAssetId(c *gin.Context) {
 		Success: true,
 		Error:   models.SuccessErr,
 		Code:    models.SUCCESS,
-		Data:    assetBurnTotal.TotalAmount,
-	})
-}
-
-func GetAllAssetBurnSimplified(c *gin.Context) {
-	assetBurnSimplified, err := services.GetAllAssetBurnSimplified()
-	if err != nil {
-		c.JSON(http.StatusOK, models.JsonResult{
-			Success: false,
-			Error:   err.Error(),
-			Code:    models.GetAllAssetBurnSimplifiedErr,
-			Data:    nil,
-		})
-		return
-	}
-	c.JSON(http.StatusOK, models.JsonResult{
-		Success: true,
-		Error:   models.SuccessErr,
-		Code:    models.SUCCESS,
-		Data:    assetBurnSimplified,
+		Data:    assetRecommendSimplified,
 	})
 }

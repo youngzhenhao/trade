@@ -39,6 +39,8 @@ router_disable:
     asset_balance: false
     asset_burn: false
     asset_local_mint: false
+    user: false
+    asset_recommend: false
 api_config:
     lnd:
         host: ""

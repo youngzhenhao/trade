@@ -52,6 +52,8 @@ type Config struct {
 		AssetBalance   bool `yaml:"asset_balance" json:"asset_balance"`
 		AssetBurn      bool `yaml:"asset_burn" json:"asset_burn"`
 		AssetLocalMint bool `yaml:"asset_local_mint" json:"asset_local_mint"`
+		User           bool `yaml:"user" json:"user"`
+		AssetRecommend bool `yaml:"asset_recommend" json:"asset_recommend"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {

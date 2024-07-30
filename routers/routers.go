@@ -67,5 +67,11 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.Ping {
 		SetupPingRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.User {
+		SetupUserRouter(r)
+	}
+	if !config.GetLoadConfig().RouterDisable.AssetRecommend {
+		SetupAssetRecommendRouter(r)
+	}
 	return r
 }

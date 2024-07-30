@@ -1,6 +1,7 @@
 package services
 
 import (
+	"time"
 	"trade/models"
 )
 
@@ -55,4 +56,49 @@ func GetAssetBurnTotal(assetId string) (*AssetBurnTotal, error) {
 		}, nil
 	}
 	return assetBurnTotal, nil
+}
+
+type AssetBurnSimplified struct {
+	UpdatedAt time.Time `json:"updated_at"`
+	AssetId   string    `json:"asset_id" gorm:"type:varchar(255)"`
+	Amount    int       `json:"amount"`
+	DeviceId  string    `json:"device_id" gorm:"type:varchar(255)"`
+	Username  string    `json:"username" gorm:"type:varchar(255)"`
+}
+
+func AssetBurnToAssetBurnSimplified(assetBurn models.AssetBurn) AssetBurnSimplified {
+	return AssetBurnSimplified{
+		UpdatedAt: assetBurn.UpdatedAt,
+		AssetId:   assetBurn.AssetId,
+		Amount:    assetBurn.Amount,
+		DeviceId:  assetBurn.DeviceId,
+		Username:  assetBurn.Username,
+	}
+}
+
+func AssetBurnSliceToAssetBurnSimplifiedSlice(assetBurns *[]models.AssetBurn) *[]AssetBurnSimplified {
+	if assetBurns == nil {
+		return nil
+	}
+	var assetBurnSimplified []AssetBurnSimplified
+	for _, assetBurn := range *assetBurns {
+		assetBurnSimplified = append(assetBurnSimplified, AssetBurnToAssetBurnSimplified(assetBurn))
+	}
+	return &assetBurnSimplified
+}
+
+func GetAllAssetBurns() (*[]models.AssetBurn, error) {
+	return ReadAllAssetBurns()
+}
+
+func GetAllAssetBurnsUpdatedAt() (*[]models.AssetBurn, error) {
+	return ReadAllAssetBurnsUpdatedAt()
+}
+
+func GetAllAssetBurnSimplified() (*[]AssetBurnSimplified, error) {
+	assetBurns, err := GetAllAssetBurnsUpdatedAt()
+	if err != nil {
+		return nil, err
+	}
+	return AssetBurnSliceToAssetBurnSimplifiedSlice(assetBurns), nil
 }

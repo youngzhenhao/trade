@@ -7,6 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"log"
+	"time"
 	"trade/middleware"
 	"trade/models"
 	"trade/utils"
@@ -30,36 +31,6 @@ func ValidateUser(creds models.User) (string, error) {
 		return "", err
 	}
 	return token, nil
-}
-
-// CreateUser creates a new user record
-func CreateUser(user *models.User) error {
-	return middleware.DB.Create(user).Error
-}
-
-// ReadUser retrieves a user by Id
-func ReadUser(id uint) (*models.User, error) {
-	var user models.User
-	err := middleware.DB.First(&user, id).Error
-	return &user, err
-}
-
-// ReadUserByUsername retrieves a user by username
-func ReadUserByUsername(username string) (*models.User, error) {
-	var user models.User
-	err := middleware.DB.Where("user_name = ?", username).First(&user).Error
-	return &user, err
-}
-
-// UpdateUser updates an existing user
-func UpdateUser(user *models.User) error {
-	return middleware.DB.Save(user).Error
-}
-
-// DeleteUser soft deletes a user by Id
-func DeleteUser(id uint) error {
-	var user models.User
-	return middleware.DB.Delete(&user, id).Error
 }
 
 func (cs *CronService) SixSecondTask() {
@@ -121,4 +92,43 @@ func UpdateUserIpByClientIp(c *gin.Context) (string, error) {
 	username := c.MustGet("username").(string)
 	ip := c.ClientIP()
 	return UpdateUserIpByUsername(username, ip)
+}
+
+type UserSimplified struct {
+	UpdatedAt         time.Time `json:"updated_at"`
+	Username          string    `json:"userName"`
+	RecentIpAddresses string    `json:"recent_ip_addresses"`
+	RecentLoginTime   int       `json:"recent_login_time"`
+}
+
+func UserToUserSimplified(user models.User) UserSimplified {
+	return UserSimplified{
+		UpdatedAt:         user.UpdatedAt,
+		Username:          user.Username,
+		RecentIpAddresses: user.RecentIpAddresses,
+		RecentLoginTime:   user.RecentLoginTime,
+	}
+}
+
+func UserSliceToUserSimplifiedSlice(users *[]models.User) *[]UserSimplified {
+	if users == nil {
+		return nil
+	}
+	var userSimplified []UserSimplified
+	for _, user := range *users {
+		userSimplified = append(userSimplified, UserToUserSimplified(user))
+	}
+	return &userSimplified
+}
+
+func GetAllUser() (*[]models.User, error) {
+	return ReadAllUser()
+}
+
+func GetAllUserSimplified() (*[]UserSimplified, error) {
+	allUsers, err := ReadAllUser()
+	if err != nil {
+		return nil, err
+	}
+	return UserSliceToUserSimplifiedSlice(allUsers), nil
 }

@@ -7,7 +7,7 @@ import (
 	"trade/services"
 )
 
-func GeAssetLocalMintByUserId(c *gin.Context) {
+func GetAssetLocalMintByUserId(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)
 	if err != nil {

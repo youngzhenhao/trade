@@ -19,6 +19,12 @@ func ReadAllAssetBurns() (*[]models.AssetBurn, error) {
 	return &assetBurns, err
 }
 
+func ReadAllAssetBurnsUpdatedAt() (*[]models.AssetBurn, error) {
+	var assetBurns []models.AssetBurn
+	err := middleware.DB.Order("updated_at desc").Find(&assetBurns).Error
+	return &assetBurns, err
+}
+
 func ReadAssetBurn(id uint) (*models.AssetBurn, error) {
 	var assetBurn models.AssetBurn
 	err := middleware.DB.First(&assetBurn, id).Error

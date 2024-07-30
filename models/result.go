@@ -101,6 +101,12 @@ const (
 	SetAssetLocalMintsErr
 	GetAllAssetLocalMintSimplifiedErr
 	UpdateUserIpByClientIpErr
+	GetAllUserSimplifiedErr
+	GetAllAssetBurnSimplifiedErr
+	GetAssetRecommendsByUserIdErr
+	GetAssetRecommendByAssetIdErr
+	SetAssetRecommendErr
+	GetAllAssetRecommendSimplifiedErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
