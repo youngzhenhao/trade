@@ -10,6 +10,7 @@ import (
 	"time"
 	"trade/middleware"
 	"trade/models"
+	"trade/services/btldb"
 	"trade/utils"
 )
 
@@ -45,7 +46,7 @@ func NameToId(name string) (int, error) {
 }
 
 func IdToName(id int) (string, error) {
-	user, err := ReadUser(uint(id))
+	user, err := btldb.ReadUser(uint(id))
 	if err != nil {
 		return "", err
 	}
@@ -68,22 +69,22 @@ func CheckPassword(hashedPassword, password string) bool {
 }
 
 func UpdateUserIpByUserId(userId uint, ip string) error {
-	user, err := ReadUser(userId)
+	user, err := btldb.ReadUser(userId)
 	if err != nil {
 		return err
 	}
 	user.RecentIpAddresses = ip
-	return UpdateUser(user)
+	return btldb.UpdateUser(user)
 }
 
 func UpdateUserIpByUsername(username string, ip string) (string, error) {
-	user, err := ReadUserByUsername(username)
+	user, err := btldb.ReadUserByUsername(username)
 	if err != nil {
 		return "", err
 	}
 	user.RecentIpAddresses = ip
 	user.RecentLoginTime = utils.GetTimestamp()
-	return ip, UpdateUser(user)
+	return ip, btldb.UpdateUser(user)
 }
 
 // UpdateUserIpByClientIp
@@ -122,11 +123,11 @@ func UserSliceToUserSimplifiedSlice(users *[]models.User) *[]UserSimplified {
 }
 
 func GetAllUser() (*[]models.User, error) {
-	return ReadAllUser()
+	return btldb.ReadAllUser()
 }
 
 func GetAllUserSimplified() (*[]UserSimplified, error) {
-	allUsers, err := ReadAllUser()
+	allUsers, err := btldb.ReadAllUser()
 	if err != nil {
 		return nil, err
 	}

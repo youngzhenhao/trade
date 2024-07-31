@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"trade/models"
 	"trade/services"
+	"trade/services/btldb"
 )
 
 func GetAssetBurnByUserId(c *gin.Context) {
@@ -61,7 +62,7 @@ func SetAssetBurn(c *gin.Context) {
 		return
 	}
 	assetBurn := services.ProcessAssetBurnSetRequest(userId, username, &assetBurnSetRequest)
-	err = services.CreateAssetBurn(assetBurn)
+	err = btldb.CreateAssetBurn(assetBurn)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,

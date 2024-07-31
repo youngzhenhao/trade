@@ -12,6 +12,7 @@ import (
 	"trade/api"
 	"trade/middleware"
 	"trade/models"
+	"trade/services/btldb"
 	"trade/utils"
 )
 
@@ -137,24 +138,24 @@ func RemoveMintedInventories() {
 }
 
 func GetAllFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	var fairLaunchInfos []models.FairLaunchInfo
 	err := f.DB.Find(&fairLaunchInfos).Error
 	return &fairLaunchInfos, err
 }
 
 func GetFairLaunchInfo(id int) (*models.FairLaunchInfo, error) {
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.ReadFairLaunchInfo(uint(id))
 }
 
 func GetFairLaunchMintedInfo(id int) (*models.FairLaunchMintedInfo, error) {
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.ReadFairLaunchMintedInfo(uint(id))
 }
 
 func GetFairLaunchMintedInfosByFairLaunchId(fairLaunchId int) (*[]models.FairLaunchMintedInfo, error) {
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
 	//err := f.DB.Where("fair_launch_info_id = ?", int(uint(id))).Find(&fairLaunchMintedInfos).Error
 	err := f.DB.Where(&models.FairLaunchMintedInfo{FairLaunchInfoID: int(uint(fairLaunchId))}).Find(&fairLaunchMintedInfos).Error
@@ -162,12 +163,12 @@ func GetFairLaunchMintedInfosByFairLaunchId(fairLaunchId int) (*[]models.FairLau
 }
 
 func SetFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.CreateFairLaunchInfo(fairLaunchInfo)
 }
 
 func SetFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.CreateFairLaunchMintedInfo(fairLaunchMintedInfo)
 }
 
@@ -430,7 +431,7 @@ func CreateInventoryInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) 
 		FairLaunchInfoID: int(fairLaunchInfo.ID),
 		Quantity:         fairLaunchInfo.FinalQuantity,
 	})
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.CreateFairLaunchInventoryInfos(&FairLaunchInventoryInfos)
 }
 
@@ -447,7 +448,7 @@ func CreateAssetIssuanceInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchIn
 		FairLaunchID:   int(fairLaunchInfo.ID),
 		State:          models.AssetIssuanceStatePending,
 	}
-	a := AssetIssuanceStore{DB: middleware.DB}
+	a := btldb.AssetIssuanceStore{DB: middleware.DB}
 	return a.CreateAssetIssuance(&assetIssuance)
 }
 
@@ -1042,39 +1043,39 @@ func ProcessAllFairLaunchStateReservedSentPending() (*[]ProcessionResult, error)
 func UpdateFairLaunchInfoPaidId(fairLaunchInfo *models.FairLaunchInfo, paidId int) (err error) {
 	fairLaunchInfo.IssuanceFeePaidID = paidId
 	fairLaunchInfo.PayMethod = models.FeePaymentMethodCustodyAccount
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
 
 func ChangeFairLaunchInfoState(fairLaunchInfo *models.FairLaunchInfo, state models.FairLaunchState) (err error) {
 	fairLaunchInfo.State = state
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
 
 func ClearFairLaunchInfoProcessNumber(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	fairLaunchInfo.ProcessNumber = 0
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
 
 func IncreaseFairLaunchInfoProcessNumber(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	fairLaunchInfo.ProcessNumber += 1
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
 
 func ChangeFairLaunchInfoStateAndUpdatePaidSuccessTime(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	fairLaunchInfo.State = models.FairLaunchStatePaidNoIssue
 	fairLaunchInfo.PaidSuccessTime = utils.GetTimestamp()
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
 
 func UpdateFairLaunchInfoBatchKeyAndBatchState(fairLaunchInfo *models.FairLaunchInfo, batchKey string, batchState string) (err error) {
 	fairLaunchInfo.BatchKey = batchKey
 	fairLaunchInfo.BatchState = batchState
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
 
@@ -1082,7 +1083,7 @@ func UpdateFairLaunchInfoBatchTxidAndAssetId(fairLaunchInfo *models.FairLaunchIn
 	fairLaunchInfo.BatchTxidAnchor = batchTxidAnchor
 	fairLaunchInfo.BatchState = batchState
 	fairLaunchInfo.AssetID = assetId
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
 
@@ -1159,7 +1160,7 @@ func IsTransactionConfirmed(txid string) bool {
 func UpdateFairLaunchInfoReservedCouldMintAndState(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	fairLaunchInfo.ReservedCouldMint = true
 	fairLaunchInfo.State = models.FairLaunchStateIssued
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
 
@@ -1183,7 +1184,7 @@ func IsFairLaunchIssued(fairLaunchId int) bool {
 func UpdateFairLaunchInfoStateAndIssuanceTime(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	fairLaunchInfo.State = models.FairLaunchStateIssuedPending
 	fairLaunchInfo.IssuanceTime = utils.GetTimestamp()
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
 
@@ -1337,7 +1338,7 @@ func ProcessFairLaunchStateIssuedPendingInfoService(fairLaunchInfo *models.FairL
 			return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoReservedCouldMintAndState")
 		}
 		// @dev: Update Asset Issuance
-		var a = AssetIssuanceStore{DB: middleware.DB}
+		var a = btldb.AssetIssuanceStore{DB: middleware.DB}
 		var assetIssuance *models.AssetIssuance
 		assetIssuance, err = a.ReadAssetIssuanceByFairLaunchId(fairLaunchInfo.ID)
 		if err != nil {
@@ -1543,20 +1544,20 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 func UpdateFairLaunchMintedInfoPaidId(fairLaunchMintedInfo *models.FairLaunchMintedInfo, paidId int) (err error) {
 	fairLaunchMintedInfo.MintFeePaidID = paidId
 	fairLaunchMintedInfo.PayMethod = models.FeePaymentMethodCustodyAccount
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
 }
 
 func ChangeFairLaunchMintedInfoState(fairLaunchMintedInfo *models.FairLaunchMintedInfo, state models.FairLaunchMintedState) (err error) {
 	fairLaunchMintedInfo.State = state
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
 }
 
 func ChangeFairLaunchMintedInfoStateAndUpdatePaidSuccessTime(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	fairLaunchMintedInfo.State = models.FairLaunchMintedStatePaidNoSend
 	fairLaunchMintedInfo.PaidSuccessTime = utils.GetTimestamp()
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
 }
 
@@ -1729,13 +1730,13 @@ func UpdateMintedNumberAndIsMintAllOfFairLaunchInfoByFairLaunchMintedInfo(fairLa
 
 func ClearFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	fairLaunchMintedInfo.ProcessNumber = 0
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
 }
 
 func IncreaseFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	fairLaunchMintedInfo.ProcessNumber += 1
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
 }
 
@@ -1869,7 +1870,7 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 			return utils.AppendErrorInfo(err, "UpdateLockedInventoryByFairLaunchMintedInfo")
 		}
 		// @dev: Update minted user
-		f := FairLaunchStore{DB: middleware.DB}
+		f := btldb.FairLaunchStore{DB: middleware.DB}
 		err = f.CreateFairLaunchMintedUserInfo(&models.FairLaunchMintedUserInfo{
 			UserID:                 fairLaunchMintedInfo.UserID,
 			FairLaunchMintedInfoID: int(fairLaunchMintedInfo.ID),
@@ -1879,7 +1880,7 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 		if err != nil {
 			return utils.AppendErrorInfo(err, "CreateFairLaunchMintedUserInfo")
 		}
-		err = CreateBalance(&models.Balance{
+		err = btldb.CreateBalance(&models.Balance{
 			AccountId:   AdminAccountId,
 			BillType:    models.BILL_TYPE_ASSET_MINTED_SEND,
 			Away:        models.AWAY_OUT,
@@ -2040,7 +2041,7 @@ func UpdateFairLaunchInfoIsReservedSent(fairLaunchInfo *models.FairLaunchInfo, o
 	fairLaunchInfo.ReservedSentAnchorOutpointTxid = txid
 	fairLaunchInfo.ReservedSentAnchorOutpoint = outpoint
 	fairLaunchInfo.State = models.FairLaunchStateReservedSentPending
-	f := FairLaunchStore{DB: middleware.DB}
+	f := btldb.FairLaunchStore{DB: middleware.DB}
 	return f.UpdateFairLaunchInfo(fairLaunchInfo)
 }
 
@@ -2088,11 +2089,11 @@ func RemoveFairLaunchInventoryStateMintedInfos() error {
 }
 
 func GetClosedFairLaunchInfo() (*[]models.FairLaunchInfo, error) {
-	return ReadClosedFairLaunchInfo()
+	return btldb.ReadClosedFairLaunchInfo()
 }
 
 func GetNotStartedFairLaunchInfo() (*[]models.FairLaunchInfo, error) {
-	return ReadNotStartedFairLaunchInfo()
+	return btldb.ReadNotStartedFairLaunchInfo()
 }
 
 // TODO: Consider adding: When a fair launch is successful,

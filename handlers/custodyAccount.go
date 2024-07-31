@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"trade/services"
+	"trade/services/btldb"
 )
 
 // CreateCustodyAccount 创建托管账户
@@ -15,13 +16,13 @@ func CreateCustodyAccount(c *gin.Context) {
 	userName := c.MustGet("username").(string)
 
 	// 校验登录用户信息
-	user, err := services.ReadUserByUsername(userName)
+	user, err := btldb.ReadUserByUsername(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在"})
 		return
 	}
 	// 判断用户是否已经创建账户
-	accounts, _ := services.ReadAccountByUserIds(user.ID)
+	accounts, _ := btldb.ReadAccountByUserIds(user.ID)
 	if len(accounts) > 0 {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "托管账户已存在"})
 		return
@@ -39,13 +40,13 @@ func CreateCustodyAccount(c *gin.Context) {
 func ApplyInvoice(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
-	user, err := services.ReadUserByUsername(userName)
+	user, err := btldb.ReadUserByUsername(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在"})
 		return
 	}
 
-	account, err := services.ReadAccountByUserId(user.ID)
+	account, err := btldb.ReadAccountByUserId(user.ID)
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "service is default"})
@@ -80,7 +81,7 @@ func ApplyInvoice(c *gin.Context) {
 func QueryInvoice(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
-	user, err := services.ReadUserByUsername(userName)
+	user, err := btldb.ReadUserByUsername(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在"})
 		return
@@ -108,13 +109,13 @@ func QueryInvoice(c *gin.Context) {
 func PayInvoice(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
-	user, err := services.ReadUserByUsername(userName)
+	user, err := btldb.ReadUserByUsername(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在"})
 		return
 	}
 	// 选择托管账户
-	account, err := services.ReadAccountByUserId(user.ID)
+	account, err := btldb.ReadAccountByUserId(user.ID)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -144,7 +145,7 @@ func PayInvoice(c *gin.Context) {
 func QueryBalance(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
-	user, err := services.ReadUserByUsername(userName)
+	user, err := btldb.ReadUserByUsername(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在"})
 		return
@@ -163,7 +164,7 @@ func QueryBalance(c *gin.Context) {
 func QueryPayment(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
-	user, err := services.ReadUserByUsername(userName)
+	user, err := btldb.ReadUserByUsername(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在"})
 		return
@@ -190,13 +191,13 @@ func QueryPayment(c *gin.Context) {
 func LookupInvoice(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
-	user, err := services.ReadUserByUsername(userName)
+	user, err := btldb.ReadUserByUsername(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在"})
 		return
 	}
 	// 选择托管账户
-	account, err := services.ReadAccountByUserId(user.ID)
+	account, err := btldb.ReadAccountByUserId(user.ID)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

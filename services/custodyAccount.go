@@ -14,6 +14,7 @@ import (
 	"trade/config"
 	"trade/middleware"
 	"trade/models"
+	"trade/services/btldb"
 	"trade/services/servicesrpc"
 )
 
@@ -53,7 +54,7 @@ func CreateCustodyAccount(user *models.User) (*models.Account, error) {
 	// Write to the database
 	CMutex.Lock()
 	defer CMutex.Unlock()
-	err = CreateAccount(&accountModel)
+	err = btldb.CreateAccount(&accountModel)
 	if err != nil {
 		CUST.Error(err.Error())
 		return nil, err
@@ -310,7 +311,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 // QueryAccountBalanceByUserId 查询用户账户余额
 func QueryAccountBalanceByUserId(userId uint) (uint64, error) {
 	// 查询账户
-	account, err := ReadAccountByUserId(userId)
+	account, err := btldb.ReadAccountByUserId(userId)
 	if err != nil {
 		fmt.Println(err.Error())
 		return 0, err
@@ -325,7 +326,7 @@ func QueryAccountBalanceByUserId(userId uint) (uint64, error) {
 }
 
 func QueryAccountBalanceByUsername(username string) (uint64, error) {
-	user, err := ReadUserByUsername(username)
+	user, err := btldb.ReadUserByUsername(username)
 	if err != nil {
 		return 0, err
 	}
@@ -398,7 +399,7 @@ type PaymentResponse struct {
 
 // QueryPaymentByUserId 查询用户支付记录
 func QueryPaymentByUserId(userId uint, assetId string) ([]PaymentResponse, error) {
-	accountId, err := ReadAccountByUserId(userId)
+	accountId, err := btldb.ReadAccountByUserId(userId)
 	if err != nil {
 		return nil, fmt.Errorf("not find account info")
 	}
@@ -578,7 +579,7 @@ func pollInvoice() {
 // PayAmountInside 内部转账比特币
 func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, invoice string) (uint, error) {
 	amount := gasFee + serveFee
-	payAccount, err := ReadAccountByUserId(payUserId)
+	payAccount, err := btldb.ReadAccountByUserId(payUserId)
 	if err != nil {
 		CUST.Error("ReadAccountByUserId error:%v", err)
 		return 0, err
@@ -595,13 +596,13 @@ func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, inv
 			BalanceId:   Id,
 			BillExtDesc: &remark,
 		}
-		err = CreateBalanceExt(&Ext)
+		err = btldb.CreateBalanceExt(&Ext)
 		if err != nil {
 			CUST.Error("CreateBalanceExt error:%v", err)
 		}
 	}
 	mark(outId, gasFee, serveFee)
-	receiveAccount, err := ReadAccountByUserId(receiveUserId)
+	receiveAccount, err := btldb.ReadAccountByUserId(receiveUserId)
 	if err != nil {
 		CUST.Error("ReadAccountByUserId error:%v", err)
 		return 0, err
@@ -619,7 +620,7 @@ func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, inv
 // CreatePayInsideMission 创建内部转账任务
 func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint64, assetType string) (uint, error) {
 	//获取支付账户信息
-	payAccount, err := ReadAccountByUserId(payUserId)
+	payAccount, err := btldb.ReadAccountByUserId(payUserId)
 	if err != nil {
 		CUST.Error("Not find pay account info(UserId=%v):%v", payUserId, err)
 		return 0, fmt.Errorf("not find pay account info")
@@ -660,7 +661,7 @@ func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint
 		payType = models.PayInsideToAdmin
 	default:
 		//获取非管理员账户信息
-		receiveAccount, err = ReadAccountByUserId(receiveUserId)
+		receiveAccount, err = btldb.ReadAccountByUserId(receiveUserId)
 		if err != nil {
 			CUST.Error("Not find receive account info(UserId=%v):%v", receiveUserId, err)
 			return 0, fmt.Errorf("not find receive account info")
@@ -685,7 +686,7 @@ func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint
 		Status:        models.PayInsideStatusPending,
 	}
 	//写入数据库
-	err = CreatePayInside(&payInside)
+	err = btldb.CreatePayInside(&payInside)
 	if err != nil {
 		CUST.Error("CreatePayInside error:%v", err)
 		return 0, err
@@ -712,7 +713,7 @@ func pollPayInsideMission() {
 	for _, v := range a {
 		if v.AssetType == "00" {
 			//获取支付账户信息
-			payAccount, err := ReadAccountByUserId(v.PayUserId)
+			payAccount, err := btldb.ReadAccountByUserId(v.PayUserId)
 			if err != nil {
 				CUST.Error("pollPayInsideMission find pay account error:%v", err)
 				continue
@@ -730,7 +731,7 @@ func pollPayInsideMission() {
 			}
 			//更新数据库状态
 			v.Status = models.PayInsideStatusSuccess
-			err = UpdatePayInside(v)
+			err = btldb.UpdatePayInside(v)
 			if err != nil {
 				CUST.Error("UpdatePayInside database error(id=%v):%v", v.ID, err)
 				continue
@@ -741,7 +742,7 @@ func pollPayInsideMission() {
 
 // CheckPayInsideStatus 检查内部转账任务状态是否成功
 func CheckPayInsideStatus(id uint) (bool, error) {
-	p, err := ReadPayInside(id)
+	p, err := btldb.ReadPayInside(id)
 	if err != nil {
 		return false, err
 	}

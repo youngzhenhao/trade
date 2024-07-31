@@ -2,6 +2,7 @@ package services
 
 import (
 	"trade/models"
+	"trade/services/btldb"
 )
 
 func CreateOrUpdateBtcBalance(btcBalance *models.BtcBalance) (err error) {
@@ -10,9 +11,9 @@ func CreateOrUpdateBtcBalance(btcBalance *models.BtcBalance) (err error) {
 
 func CreateBtcBalanceIfNotExistOrUpdate(btcBalance *models.BtcBalance) (err error) {
 	var readBtcBalance *models.BtcBalance
-	readBtcBalance, err = ReadBtcBalanceByUsername(btcBalance.Username)
+	readBtcBalance, err = btldb.ReadBtcBalanceByUsername(btcBalance.Username)
 	if err != nil {
-		err = CreateBtcBalance(btcBalance)
+		err = btldb.CreateBtcBalance(btcBalance)
 		if err != nil {
 			return err
 		}
@@ -23,17 +24,17 @@ func CreateBtcBalanceIfNotExistOrUpdate(btcBalance *models.BtcBalance) (err erro
 	readBtcBalance.UnconfirmedBalance = btcBalance.UnconfirmedBalance
 	readBtcBalance.LockedBalance = btcBalance.LockedBalance
 	readBtcBalance.DeviceID = btcBalance.DeviceID
-	return UpdateBtcBalance(readBtcBalance)
+	return btldb.UpdateBtcBalance(readBtcBalance)
 }
 
 func GetBtcBalanceByUsername(username string) (btcBalance *models.BtcBalance, err error) {
-	btcBalance, err = ReadBtcBalanceByUsername(username)
+	btcBalance, err = btldb.ReadBtcBalanceByUsername(username)
 	if err != nil {
-		err = CreateBtcBalance(&models.BtcBalance{Username: username})
+		err = btldb.CreateBtcBalance(&models.BtcBalance{Username: username})
 		if err != nil {
 			return nil, err
 		}
-		btcBalance, err = ReadBtcBalanceByUsername(username)
+		btcBalance, err = btldb.ReadBtcBalanceByUsername(username)
 		if err != nil {
 			return nil, err
 		}

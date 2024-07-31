@@ -3,18 +3,19 @@ package services
 import (
 	"time"
 	"trade/models"
+	"trade/services/btldb"
 )
 
 func GetAssetRecommendsByUserId(userId int) (*[]models.AssetRecommend, error) {
-	return ReadAssetRecommendsByUserId(userId)
+	return btldb.ReadAssetRecommendsByUserId(userId)
 }
 
 func GetAssetRecommendsByAssetId(assetId string) (*[]models.AssetRecommend, error) {
-	return ReadAssetRecommendsByAssetId(assetId)
+	return btldb.ReadAssetRecommendsByAssetId(assetId)
 }
 
 func GetAssetRecommendByUserIdAndAssetId(userId int, assetId string) (*models.AssetRecommend, error) {
-	return ReadAssetRecommendByUserIdAndAssetId(userId, assetId)
+	return btldb.ReadAssetRecommendByUserIdAndAssetId(userId, assetId)
 }
 
 func ProcessAssetRecommendSetRequest(userId int, username string, assetRecommendSetRequest models.AssetRecommendSetRequest) models.AssetRecommend {
@@ -31,11 +32,11 @@ func ProcessAssetRecommendSetRequest(userId int, username string, assetRecommend
 }
 
 func SetAssetRecommend(assetRecommend *models.AssetRecommend) error {
-	return CreateAssetRecommend(assetRecommend)
+	return btldb.CreateAssetRecommend(assetRecommend)
 }
 
 func GetAllAssetRecommendsUpdatedAtDesc() (*[]models.AssetRecommend, error) {
-	return ReadAllAssetRecommendsUpdatedAtDesc()
+	return btldb.ReadAllAssetRecommendsUpdatedAtDesc()
 }
 
 type AssetRecommendSimplified struct {

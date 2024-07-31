@@ -7,6 +7,7 @@ import (
 	"time"
 	"trade/api"
 	"trade/models"
+	"trade/services/btldb"
 )
 
 func ProcessAssetTransferProcessedSlice(userId int, username string, assetTransferSetRequestSlice *[]models.AssetTransferProcessedSetRequest) (*[]models.AssetTransferProcessedDb, *[]models.AssetTransferProcessedInputDb, *[]models.AssetTransferProcessedOutputDb, error) {
@@ -68,14 +69,14 @@ func ProcessAssetTransferProcessedSlice(userId int, username string, assetTransf
 }
 
 func GetAssetTransferProcessedSliceByUserId(userId int) (*[]models.AssetTransferProcessedDb, error) {
-	return ReadAssetTransferProcessedSliceByUserId(userId)
+	return btldb.ReadAssetTransferProcessedSliceByUserId(userId)
 }
 
 func CheckAssetTransferProcessedIfUpdate(assetTransferProcessed *models.AssetTransferProcessedDb) (*models.AssetTransferProcessedDb, error) {
 	if assetTransferProcessed == nil {
 		return nil, errors.New("nil asset transfer process")
 	}
-	assetTransferProcessedByTxid, err := ReadAssetTransferProcessedByTxid(assetTransferProcessed.Txid)
+	assetTransferProcessedByTxid, err := btldb.ReadAssetTransferProcessedByTxid(assetTransferProcessed.Txid)
 	if err != nil {
 		return assetTransferProcessed, nil
 	}
@@ -100,7 +101,7 @@ func CheckAssetTransferProcessedInputIfUpdate(assetTransferProcessedInput *model
 	if assetTransferProcessedInput == nil {
 		return nil, errors.New("nil asset transfer process input")
 	}
-	assetTransferProcessedInputByTxidAndIndex, err := ReadAssetTransferProcessedInputByTxidAndIndex(assetTransferProcessedInput.Txid, assetTransferProcessedInput.Index)
+	assetTransferProcessedInputByTxidAndIndex, err := btldb.ReadAssetTransferProcessedInputByTxidAndIndex(assetTransferProcessedInput.Txid, assetTransferProcessedInput.Index)
 	if err != nil {
 		return assetTransferProcessedInput, nil
 	}
@@ -122,7 +123,7 @@ func CheckAssetTransferProcessedOutputIfUpdate(assetTransferProcessedOutput *mod
 	if assetTransferProcessedOutput == nil {
 		return nil, errors.New("nil asset transfer process input")
 	}
-	assetTransferProcessedOutputByTxidAndIndex, err := ReadAssetTransferProcessedOutputByTxidAndIndex(assetTransferProcessedOutput.Txid, assetTransferProcessedOutput.Index)
+	assetTransferProcessedOutputByTxidAndIndex, err := btldb.ReadAssetTransferProcessedOutputByTxidAndIndex(assetTransferProcessedOutput.Txid, assetTransferProcessedOutput.Index)
 	if err != nil {
 		return assetTransferProcessedOutput, nil
 	}
@@ -298,7 +299,7 @@ func CreateOrUpdateAssetTransferProcessedSlice(assetTransferProcessedSlice *[]mo
 		}
 		assetTransferSlice = append(assetTransferSlice, *transfer)
 	}
-	return UpdateAssetTransferProcessedSlice(&assetTransferSlice)
+	return btldb.UpdateAssetTransferProcessedSlice(&assetTransferSlice)
 }
 
 func CreateOrUpdateAssetTransferProcessedInputSlice(assetTransferProcessedInputSlice *[]models.AssetTransferProcessedInputDb) (err error) {
@@ -311,7 +312,7 @@ func CreateOrUpdateAssetTransferProcessedInputSlice(assetTransferProcessedInputS
 		}
 		assetTransferInputSlice = append(assetTransferInputSlice, *input)
 	}
-	return UpdateAssetTransferProcessedInputSlice(&assetTransferInputSlice)
+	return btldb.UpdateAssetTransferProcessedInputSlice(&assetTransferInputSlice)
 }
 
 func CreateOrUpdateAssetTransferProcessedOutputSlice(assetTransferProcessedOutputSlice *[]models.AssetTransferProcessedOutputDb) (err error) {
@@ -324,7 +325,7 @@ func CreateOrUpdateAssetTransferProcessedOutputSlice(assetTransferProcessedOutpu
 		}
 		assetTransferOutputSlice = append(assetTransferOutputSlice, *input)
 	}
-	return UpdateAssetTransferProcessedOutputSlice(&assetTransferOutputSlice)
+	return btldb.UpdateAssetTransferProcessedOutputSlice(&assetTransferOutputSlice)
 }
 
 func GetTxidsByAssetTransfers(transfers *[]models.AssetTransferProcessedDb) []string {
@@ -344,11 +345,11 @@ func GetAssetTransferTxidsByUserId(userId int) ([]string, error) {
 }
 
 func GetAssetTransferProcessedInputSliceByUserId(userId int) (*[]models.AssetTransferProcessedInputDb, error) {
-	return ReadAssetTransferProcessedInputSliceByUserId(userId)
+	return btldb.ReadAssetTransferProcessedInputSliceByUserId(userId)
 }
 
 func GetAssetTransferProcessedOutputSliceByUserId(userId int) (*[]models.AssetTransferProcessedOutputDb, error) {
-	return ReadAssetTransferProcessedOutputSliceByUserId(userId)
+	return btldb.ReadAssetTransferProcessedOutputSliceByUserId(userId)
 }
 
 func GetInputsByTxidWithTransfersInputs(transfersInputs *[]models.AssetTransferProcessedInputDb, inputLength int, txid string) ([]models.AssetTransferProcessedInput, error) {
@@ -451,15 +452,15 @@ func GetAssetTransferCombinedSliceByUserId(userId int) (*[]models.AssetTransferP
 }
 
 func GetAllAssetTransferProcessedSlice() (*[]models.AssetTransferProcessedDb, error) {
-	return ReadAllAssetTransferProcessedSlice()
+	return btldb.ReadAllAssetTransferProcessedSlice()
 }
 
 func GetAllAssetTransferProcessedInputSlice() (*[]models.AssetTransferProcessedInputDb, error) {
-	return ReadAllAssetTransferProcessedInputSlice()
+	return btldb.ReadAllAssetTransferProcessedInputSlice()
 }
 
 func GetAllAssetTransferProcessedOutputSlice() (*[]models.AssetTransferProcessedOutputDb, error) {
-	return ReadAllAssetTransferProcessedOutputSlice()
+	return btldb.ReadAllAssetTransferProcessedOutputSlice()
 }
 
 // GetAllAssetTransferCombinedSlice
@@ -491,30 +492,30 @@ func GetAllAssetTransferCombinedSlice() (*[]models.AssetTransferProcessedCombine
 }
 
 func GetAssetTransferProcessedSliceByAssetId(assetId string) (*[]models.AssetTransferProcessedDb, error) {
-	return ReadAssetTransferProcessedSliceByAssetId(assetId)
+	return btldb.ReadAssetTransferProcessedSliceByAssetId(assetId)
 }
 
 func GetAssetTransferProcessedInputSliceByAssetId(assetId string) (*[]models.AssetTransferProcessedInputDb, error) {
-	return ReadAssetTransferProcessedInputSliceByAssetId(assetId)
+	return btldb.ReadAssetTransferProcessedInputSliceByAssetId(assetId)
 }
 
 func GetAssetTransferProcessedOutputSliceByAssetId(assetId string) (*[]models.AssetTransferProcessedOutputDb, error) {
-	return ReadAssetTransferProcessedOutputSliceByAssetId(assetId)
+	return btldb.ReadAssetTransferProcessedOutputSliceByAssetId(assetId)
 }
 
 // @dev: Use this
 func GetAssetTransferProcessedSliceByAssetIdLimit(assetId string, limit int) (*[]models.AssetTransferProcessedDb, error) {
-	return ReadAssetTransferProcessedSliceByAssetIdLimit(assetId, limit)
+	return btldb.ReadAssetTransferProcessedSliceByAssetIdLimit(assetId, limit)
 }
 
 // Deprecated
 func GetAssetTransferProcessedInputSliceByAssetIdLimit(assetId string, limit int) (*[]models.AssetTransferProcessedInputDb, error) {
-	return ReadAssetTransferProcessedInputSliceByAssetIdLimit(assetId, limit)
+	return btldb.ReadAssetTransferProcessedInputSliceByAssetIdLimit(assetId, limit)
 }
 
 // Deprecated
 func GetAssetTransferProcessedOutputSliceByAssetIdLimit(assetId string, limit int) (*[]models.AssetTransferProcessedOutputDb, error) {
-	return ReadAssetTransferProcessedOutputSliceByAssetIdLimit(assetId, limit)
+	return btldb.ReadAssetTransferProcessedOutputSliceByAssetIdLimit(assetId, limit)
 }
 
 func GetAssetTransferCombinedSliceByAssetId(assetId string) (*[]models.AssetTransferProcessedCombined, error) {
@@ -781,7 +782,7 @@ func SetAssetTransfer(transfers *[]models.AssetTransferProcessedSetRequest) erro
 		if password == "" {
 			password = username
 		}
-		err = CreateUser(&models.User{
+		err = btldb.CreateUser(&models.User{
 			Username: username,
 			Password: password,
 		})

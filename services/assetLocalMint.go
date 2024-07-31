@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 	"trade/models"
+	"trade/services/btldb"
 )
 
 func ProcessAssetLocalMintSetRequest(userId int, username string, assetLocalMintRequest models.AssetLocalMintSetRequest) models.AssetLocalMint {
@@ -40,11 +41,11 @@ func ProcessAssetLocalMintSetRequests(userId int, username string, assetLocalMin
 }
 
 func GetAssetLocalMintsByUserId(userId int) (*[]models.AssetLocalMint, error) {
-	return ReadAssetLocalMintsByUserId(userId)
+	return btldb.ReadAssetLocalMintsByUserId(userId)
 }
 
 func GetAssetLocalMintByAssetId(assetId string) (*models.AssetLocalMint, error) {
-	return ReadAssetLocalMintByAssetId(assetId)
+	return btldb.ReadAssetLocalMintByAssetId(assetId)
 }
 
 func IsAssetLocalMintChanged(assetLocalMintByTxidAndIndex *models.AssetLocalMint, old *models.AssetLocalMint) bool {
@@ -139,7 +140,7 @@ func CheckAssetLocalMintIfUpdate(assetLocalMint *models.AssetLocalMint) (*models
 func CreateOrUpdateAssetLocalMint(transfer *models.AssetLocalMint) (err error) {
 	var assetLocalMint *models.AssetLocalMint
 	assetLocalMint, err = CheckAssetLocalMintIfUpdate(transfer)
-	return UpdateAssetLocalMint(assetLocalMint)
+	return btldb.UpdateAssetLocalMint(assetLocalMint)
 }
 
 func CreateOrUpdateAssetLocalMints(transfers *[]models.AssetLocalMint) (err error) {
@@ -152,21 +153,21 @@ func CreateOrUpdateAssetLocalMints(transfers *[]models.AssetLocalMint) (err erro
 		}
 		assetLocalMints = append(assetLocalMints, *assetLocalMint)
 	}
-	return UpdateAssetLocalMints(&assetLocalMints)
+	return btldb.UpdateAssetLocalMints(&assetLocalMints)
 }
 
 // SetAssetLocalMint
 // @Description: Set asset local mint
 func SetAssetLocalMint(assetLocalMint *models.AssetLocalMint) error {
-	return CreateAssetLocalMint(assetLocalMint)
+	return btldb.CreateAssetLocalMint(assetLocalMint)
 }
 
 func SetAssetLocalMints(assetLocalMints *[]models.AssetLocalMint) error {
-	return CreateAssetLocalMints(assetLocalMints)
+	return btldb.CreateAssetLocalMints(assetLocalMints)
 }
 
 func GetAllAssetLocalMintsUpdatedAtDesc() (*[]models.AssetLocalMint, error) {
-	return ReadAllAssetLocalMintsUpdatedAtDesc()
+	return btldb.ReadAllAssetLocalMintsUpdatedAtDesc()
 }
 
 type AssetLocalMintSimplified struct {

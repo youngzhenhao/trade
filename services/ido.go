@@ -7,27 +7,28 @@ import (
 	"trade/api"
 	"trade/middleware"
 	"trade/models"
+	"trade/services/btldb"
 	"trade/utils"
 )
 
 func GetOwnIdoPublishInfosByUserId(UserId int) (*[]models.IdoPublishInfo, error) {
-	return ReadIdoPublishInfosByUserId(UserId)
+	return btldb.ReadIdoPublishInfosByUserId(UserId)
 }
 
 func GetOwnIdoParticipateInfosByUserId(UserId int) (*[]models.IdoParticipateInfo, error) {
-	return ReadIdoParticipateInfosByUserId(UserId)
+	return btldb.ReadIdoParticipateInfosByUserId(UserId)
 }
 
 func GetIdoPublishInfo(id int) (*models.IdoPublishInfo, error) {
-	return ReadIdoPublishInfo(uint(id))
+	return btldb.ReadIdoPublishInfo(uint(id))
 }
 
 func GetIdoPublishInfosByAssetId(assetId string) (*[]models.IdoPublishInfo, error) {
-	return ReadIdoPublishInfosByAssetId(assetId)
+	return btldb.ReadIdoPublishInfosByAssetId(assetId)
 }
 
 func GetIdoParticipateInfo(id int) (*models.IdoParticipateInfo, error) {
-	return ReadIdoParticipateInfo(uint(id))
+	return btldb.ReadIdoParticipateInfo(uint(id))
 }
 
 func GetIdoPublishedInfos() (*[]models.IdoPublishInfo, error) {
@@ -60,7 +61,7 @@ func IsDuringParticipateTime(start int, end int) bool {
 }
 
 func GetAllIdoPublishInfos() (*[]models.IdoPublishInfo, error) {
-	return ReadAllIdoPublishInfos()
+	return btldb.ReadAllIdoPublishInfos()
 }
 
 func ProcessIdoPublishInfo(userId int, assetID string, totalAmount int, minimumQuantity int, unitPrice int, startTime int, endTime int, feeRate int) (*models.IdoPublishInfo, error) {
@@ -98,7 +99,7 @@ func ProcessIdoPublishInfo(userId int, assetID string, totalAmount int, minimumQ
 }
 
 func SetIdoPublishInfo(idoPublishInfo *models.IdoPublishInfo) error {
-	return CreateIdoPublishInfo(idoPublishInfo)
+	return btldb.CreateIdoPublishInfo(idoPublishInfo)
 }
 
 func IsIdoParticipateTimeValid(idoPublishInfo *models.IdoPublishInfo) bool {
@@ -133,7 +134,7 @@ func GetIdoPublishInfoState(idoPublishInfoId int) (idoPublishInfoState models.Id
 }
 
 func SetIdoParticipateInfo(idoParticipateInfo *models.IdoParticipateInfo) error {
-	return CreateIdoParticipateInfo(idoParticipateInfo)
+	return btldb.CreateIdoParticipateInfo(idoParticipateInfo)
 }
 
 func ProcessIdoParticipateInfo(userId int, idoPublishInfoID int, boughtAmount int, feeRate int, encodedAddr string) (*models.IdoParticipateInfo, error) {
