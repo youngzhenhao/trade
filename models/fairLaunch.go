@@ -76,6 +76,7 @@ type FairLaunchInfo struct {
 	BatchTxidAnchor                string           `json:"batch_txid_anchor" gorm:"type:varchar(255)"`
 	AssetID                        string           `json:"asset_id" gorm:"type:varchar(255)"`
 	UserID                         int              `json:"user_id"`
+	Username                       string           `json:"username" gorm:"type:varchar(255)"`
 	PayMethod                      FeePaymentMethod `json:"pay_method"`
 	PaidSuccessTime                int              `json:"paid_success_time"`
 	IssuanceFeePaidID              int              `json:"issuance_fee_paid_id"`
@@ -115,6 +116,7 @@ type FairLaunchMintedInfo struct {
 	PayMethod             FeePaymentMethod      `json:"pay_method"`
 	PaidSuccessTime       int                   `json:"paid_success_time"`
 	UserID                int                   `json:"user_id"`
+	Username              string                `json:"username" gorm:"type:varchar(255)"`
 	AssetID               string                `json:"asset_id" gorm:"type:varchar(255)"`
 	AssetName             string                `json:"asset_name" gorm:"type:varchar(255)"`
 	AssetType             int                   `json:"asset_type"`

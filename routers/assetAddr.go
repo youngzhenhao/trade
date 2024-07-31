@@ -22,5 +22,6 @@ func SetupAssetAddrRouter(router *gin.Engine) *gin.Engine {
 	}))
 	authorized.GET("/get/all", handlers.GetAllAssetAddrs)
 	authorized.GET("/get/all/simplified", handlers.GetAllAssetAddrSimplified)
+	authorized.GET("/get/username/asset_id/all/simplified", handlers.GetAllUsernameAndAssetIdAssetAddrs)
 	return router
 }

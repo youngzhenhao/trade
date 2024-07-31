@@ -489,14 +489,15 @@ func GetAndSetAddrReceivesEvents(deviceId string) error {
 type AddrReceiveSimplified struct {
 	UpdatedAt               time.Time `json:"updated_at"`
 	CreationTimeUnixSeconds int       `json:"creation_time_unix_seconds"`
-	AddrAssetID             string    `json:"addr_asset_id" gorm:"type:varchar(255)"`
+	AddrAssetID             string    `json:"addr_asset_id"`
 	AddrAmount              int       `json:"addr_amount"`
-	AddrScriptKey           string    `json:"addr_script_key" gorm:"type:varchar(255)"`
-	EventStatus             string    `json:"event_status" gorm:"type:varchar(255)"`
-	Outpoint                string    `json:"outpoint" gorm:"type:varchar(255)"`
+	AddrScriptKey           string    `json:"addr_script_key"`
+	EventStatus             string    `json:"event_status"`
+	Outpoint                string    `json:"outpoint"`
 	ConfirmationHeight      int       `json:"confirmation_height"`
-	DeviceID                string    `json:"device_id" gorm:"type:varchar(255)"`
+	DeviceID                string    `json:"device_id"`
 	UserID                  int       `json:"user_id"`
+	Username                string    `json:"username"`
 }
 
 func AddrReceiveEventToAddrReceiveSimplified(addrReceiveEvent models.AddrReceiveEvent) AddrReceiveSimplified {
@@ -511,6 +512,7 @@ func AddrReceiveEventToAddrReceiveSimplified(addrReceiveEvent models.AddrReceive
 		ConfirmationHeight:      addrReceiveEvent.ConfirmationHeight,
 		DeviceID:                addrReceiveEvent.DeviceID,
 		UserID:                  addrReceiveEvent.UserID,
+		Username:                addrReceiveEvent.Username,
 	}
 }
 

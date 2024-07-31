@@ -175,3 +175,22 @@ func GetAllAssetAddrSimplified(c *gin.Context) {
 		Data:    assetAddrs,
 	})
 }
+
+func GetAllUsernameAndAssetIdAssetAddrs(c *gin.Context) {
+	usernameAndAssetIdAssetAddrs, err := services.GetAllUsernameAndAssetIdAssetAddrs()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllUsernameAndAssetIdAssetAddrsErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    usernameAndAssetIdAssetAddrs,
+	})
+}

@@ -144,11 +144,11 @@ func UpdateUsernameByUserIdAll() error {
 type AssetAddrSimplified struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	Encoded   string    `json:"encoded"`
-	AssetId   string    `json:"asset_id" gorm:"type:varchar(255)"`
+	AssetId   string    `json:"asset_id"`
 	Amount    int       `json:"amount"`
-	ScriptKey string    `json:"script_key" gorm:"type:varchar(255)"`
-	DeviceID  string    `json:"device_id" gorm:"type:varchar(255)"`
-	Username  string    `json:"username" gorm:"type:varchar(255)"`
+	ScriptKey string    `json:"script_key"`
+	DeviceID  string    `json:"device_id"`
+	Username  string    `json:"username"`
 }
 
 func AssetAddrToAssetAddrSimplified(assetAddr models.AssetAddr) AssetAddrSimplified {
@@ -177,4 +177,122 @@ func GetAllAssetAddrSimplified() (*[]AssetAddrSimplified, error) {
 		return nil, err
 	}
 	return AssetAddrSliceToAssetAddrSimplifiedSlice(allAssetAddrs), nil
+}
+
+type UsernameAssetAddr struct {
+	Username   string                 `json:"username"`
+	AssetAddrs *[]AssetAddrSimplified `json:"asset_addrs"`
+}
+
+type AssetIdAssetAddr struct {
+	AssetId    string                 `json:"asset_id"`
+	AssetAddrs *[]AssetAddrSimplified `json:"asset_addrs"`
+}
+
+type UsernameAndAssetIdAssetAddr struct {
+	Username          string              `json:"username"`
+	AssetIdAssetAddrs *[]AssetIdAssetAddr `json:"asset_id_asset_addrs"`
+}
+
+func AssetAddrSimplifiedSliceToUsernameMapAssetAddrs(assetAddrSimplified *[]AssetAddrSimplified) *map[string]*[]AssetAddrSimplified {
+	if assetAddrSimplified == nil {
+		return nil
+	}
+	usernameMapAssetAddrs := make(map[string]*[]AssetAddrSimplified)
+	for _, assetAddr := range *assetAddrSimplified {
+		assetAddrs, ok := usernameMapAssetAddrs[assetAddr.Username]
+		if !ok {
+			usernameMapAssetAddrs[assetAddr.Username] = &[]AssetAddrSimplified{assetAddr}
+		} else {
+			*assetAddrs = append(*assetAddrs, assetAddr)
+		}
+	}
+	return &usernameMapAssetAddrs
+}
+
+func UsernameMapAssetAddrsToUsernameAssetAddrs(usernameMapAssetAddrs *map[string]*[]AssetAddrSimplified) *[]UsernameAssetAddr {
+	if usernameMapAssetAddrs == nil {
+		return nil
+	}
+	var usernameAssetAddrs []UsernameAssetAddr
+	for username, assetAddrs := range *usernameMapAssetAddrs {
+		usernameAssetAddrs = append(usernameAssetAddrs, UsernameAssetAddr{
+			Username:   username,
+			AssetAddrs: assetAddrs,
+		})
+	}
+	return &usernameAssetAddrs
+}
+
+func AssetAddrSimplifiedSliceToUsernameAssetAddrs(assetAddrSimplified *[]AssetAddrSimplified) *[]UsernameAssetAddr {
+	if assetAddrSimplified == nil {
+		return nil
+	}
+	usernameMapAssetAddrs := AssetAddrSimplifiedSliceToUsernameMapAssetAddrs(assetAddrSimplified)
+	usernameAssetAddrs := UsernameMapAssetAddrsToUsernameAssetAddrs(usernameMapAssetAddrs)
+	return usernameAssetAddrs
+}
+
+func AssetAddrSimplifiedSliceToAssetIdMapAssetAddrs(assetAddrSimplified *[]AssetAddrSimplified) *map[string]*[]AssetAddrSimplified {
+	if assetAddrSimplified == nil {
+		return nil
+	}
+	assetIdMapAssetAddrs := make(map[string]*[]AssetAddrSimplified)
+	for _, assetAddr := range *assetAddrSimplified {
+		assetAddrs, ok := assetIdMapAssetAddrs[assetAddr.AssetId]
+		if !ok {
+			assetIdMapAssetAddrs[assetAddr.AssetId] = &[]AssetAddrSimplified{assetAddr}
+		} else {
+			*assetAddrs = append(*assetAddrs, assetAddr)
+		}
+	}
+	return &assetIdMapAssetAddrs
+}
+
+func AssetIdMapAssetAddrsToAssetIdAssetAddrs(assetIdMapAssetAddrs *map[string]*[]AssetAddrSimplified) *[]AssetIdAssetAddr {
+	if assetIdMapAssetAddrs == nil {
+		return nil
+	}
+	var assetIdAssetAddrs []AssetIdAssetAddr
+	for assetId, assetAddrs := range *assetIdMapAssetAddrs {
+		assetIdAssetAddrs = append(assetIdAssetAddrs, AssetIdAssetAddr{
+			AssetId:    assetId,
+			AssetAddrs: assetAddrs,
+		})
+	}
+	return &assetIdAssetAddrs
+}
+
+func AssetAddrSimplifiedSliceToAssetIdAssetAddrs(assetAddrSimplified *[]AssetAddrSimplified) *[]AssetIdAssetAddr {
+	if assetAddrSimplified == nil {
+		return nil
+	}
+	assetIdMapAssetAddrs := AssetAddrSimplifiedSliceToAssetIdMapAssetAddrs(assetAddrSimplified)
+	assetIdAssetAddrs := AssetIdMapAssetAddrsToAssetIdAssetAddrs(assetIdMapAssetAddrs)
+	return assetIdAssetAddrs
+}
+
+func AssetAddrSimplifiedSliceToUsernameAndAssetIdAssetAddrs(assetAddrSimplified *[]AssetAddrSimplified) *[]UsernameAndAssetIdAssetAddr {
+	if assetAddrSimplified == nil {
+		return nil
+	}
+	var usernameAndAssetIdAssetAddrs []UsernameAndAssetIdAssetAddr
+	usernameAssetAddrs := AssetAddrSimplifiedSliceToUsernameAssetAddrs(assetAddrSimplified)
+	for _, usernameAssetAddr := range *usernameAssetAddrs {
+		assetIdAssetAddrs := AssetAddrSimplifiedSliceToAssetIdAssetAddrs(usernameAssetAddr.AssetAddrs)
+		usernameAndAssetIdAssetAddrs = append(usernameAndAssetIdAssetAddrs, UsernameAndAssetIdAssetAddr{
+			Username:          usernameAssetAddr.Username,
+			AssetIdAssetAddrs: assetIdAssetAddrs,
+		})
+	}
+	return &usernameAndAssetIdAssetAddrs
+}
+
+func GetAllUsernameAndAssetIdAssetAddrs() (*[]UsernameAndAssetIdAssetAddr, error) {
+	allAssetAddrSimplified, err := GetAllAssetAddrSimplified()
+	if err != nil {
+		return nil, err
+	}
+	usernameAndAssetIdAssetAddrs := AssetAddrSimplifiedSliceToUsernameAndAssetIdAssetAddrs(allAssetAddrSimplified)
+	return usernameAndAssetIdAssetAddrs, nil
 }

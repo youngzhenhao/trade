@@ -173,7 +173,7 @@ func SetFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) 
 
 // ProcessFairLaunchInfo
 // @Description: Process fairLaunchInfo
-func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount int, reserved int, mintQuantity int, startTime int, endTime int, description string, feeRate int, userId int) (*models.FairLaunchInfo, error) {
+func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount int, reserved int, mintQuantity int, startTime int, endTime int, description string, feeRate int, userId int, username string) (*models.FairLaunchInfo, error) {
 	if FeeRateSatPerKwToSatPerB(feeRate) > 500 {
 		return nil, errors.New("fee rate exceeds max(500)")
 	}
@@ -218,6 +218,7 @@ func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount 
 		ActualMintTotalPercent: calculateSeparateAmount.ActualMintTotalPercent,
 		CalculationExpression:  calculateSeparateAmount.CalculationExpression,
 		UserID:                 userId,
+		Username:               username,
 		State:                  models.FairLaunchStateNoPay,
 	}
 	return &fairLaunchInfo, nil
@@ -267,7 +268,7 @@ func ValidateStartAndEndTime(startTime int, endTime int) error {
 
 // ProcessFairLaunchMintedInfo
 // @Description: Process fairLaunchMintedInfo
-func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedFeeRateSatPerKw int, addr string, userId int) (*models.FairLaunchMintedInfo, error) {
+func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedFeeRateSatPerKw int, addr string, userId int, username string) (*models.FairLaunchMintedInfo, error) {
 	if FeeRateSatPerKwToSatPerB(mintedFeeRateSatPerKw) > 500 {
 		return nil, errors.New("fee rate exceeds max(500)")
 	}
@@ -315,6 +316,7 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 		MintedGasFee:          mintedGasFee,
 		EncodedAddr:           addr,
 		UserID:                userId,
+		Username:              username,
 		AssetID:               hex.EncodeToString(decodedAddrInfo.AssetId),
 		AssetName:             fairLaunchInfo.Name,
 		AssetType:             int(decodedAddrInfo.AssetType),
@@ -2092,3 +2094,8 @@ func GetClosedFairLaunchInfo() (*[]models.FairLaunchInfo, error) {
 func GetNotStartedFairLaunchInfo() (*[]models.FairLaunchInfo, error) {
 	return ReadNotStartedFairLaunchInfo()
 }
+
+// TODO: Consider adding: When a fair launch is successful,
+// 		forward the asset to the server self three different asset addresses (split UTXO)
+
+// TODO: Calculate minted rate

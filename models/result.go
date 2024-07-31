@@ -133,6 +133,7 @@ const (
 	GetFairLaunchInfoSimplifiedByUserIdIssuedErr
 	GetClosedFairLaunchInfoErr
 	GetNotStartedFairLaunchInfoErr
+	GetAllUsernameAndAssetIdAssetAddrsErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

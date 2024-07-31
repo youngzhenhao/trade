@@ -126,7 +126,7 @@ func SetFairLaunchInfo(c *gin.Context) {
 	feeRate := setFairLaunchInfoRequest.FeeRate
 	// @dev: Process struct, update later
 	// @notice: State is 0 now
-	fairLaunchInfo, err = services.ProcessFairLaunchInfo(imageData, name, assetType, amount, reserved, mintQuantity, startTime, endTime, description, feeRate, userId)
+	fairLaunchInfo, err = services.ProcessFairLaunchInfo(imageData, name, assetType, amount, reserved, mintQuantity, startTime, endTime, description, feeRate, userId, username)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -218,7 +218,7 @@ func SetFairLaunchMintedInfo(c *gin.Context) {
 	mintedNumber := mintFairLaunchRequest.MintedNumber
 	addr := mintFairLaunchRequest.EncodedAddr
 	mintedFeeRateSatPerKw := mintFairLaunchRequest.MintedFeeRateSatPerKw
-	fairLaunchMintedInfo, err = services.ProcessFairLaunchMintedInfo(fairLaunchInfoID, mintedNumber, mintedFeeRateSatPerKw, addr, userId)
+	fairLaunchMintedInfo, err = services.ProcessFairLaunchMintedInfo(fairLaunchInfoID, mintedNumber, mintedFeeRateSatPerKw, addr, userId, username)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -425,6 +425,7 @@ func MintFairLaunchReserved(c *gin.Context) {
 	})
 }
 
+// TODO: Sort by minted rate
 func GetIssuedFairLaunchInfo(c *gin.Context) {
 	var fairLaunchInfos *[]models.FairLaunchInfo
 	var err error
@@ -633,4 +634,24 @@ func GetNotStartedFairLaunchInfo(c *gin.Context) {
 		Code:    models.SUCCESS,
 		Data:    fairLaunchInfos,
 	})
+}
+
+func GetHotFairLaunchInfo(c *gin.Context) {
+	// TODO:
+
+}
+
+func GetFollowedFairLaunchInfo(c *gin.Context) {
+	// TODO:
+
+}
+
+func SetFollowFairLaunchInfo(c *gin.Context) {
+	// TODO:
+
+}
+
+func SetUnfollowFairLaunchInfo(c *gin.Context) {
+	// TODO:
+
 }
