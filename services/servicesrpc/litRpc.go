@@ -267,12 +267,11 @@ func InvoicePay(macaroonPath string, invoice string, amt, feeLimit int64) (*lnrp
 		//FeeLimitSat:    feeLimit,
 		TimeoutSeconds: 10,
 	}
-	if feeLimit > 0 {
+	if feeLimit > 1 {
 		request.FeeLimitSat = feeLimit
 	} else {
 		amtMsat := lnwire.NewMSatFromSatoshis(btcutil.Amount(amt))
 		request.FeeLimitSat = int64(lnwallet.DefaultRoutingFeeLimitForAmount(amtMsat).ToSatoshis())
-
 	}
 	client := routerrpc.NewRouterClient(conn)
 	stream, err := client.SendPaymentV2(context.Background(), request)
