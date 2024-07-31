@@ -407,6 +407,10 @@ func CreateTestMainFile(testPath string, testFuncName string) {
 }
 
 func BuildTestMainFile(testPath string, testFuncName string) {
+	if strings.HasPrefix(testFuncName, ".\\") && strings.HasSuffix(testFuncName, ".exe") {
+		testFuncName, _ = strings.CutPrefix(testFuncName, ".\\")
+		testFuncName, _ = strings.CutSuffix(testFuncName, ".exe")
+	}
 	dirPath := path.Join(testPath, ToLowerWordsWithHyphens(testFuncName))
 	filePath := path.Join(dirPath, "main.go")
 	executableFileName := testFuncName + ".exe"

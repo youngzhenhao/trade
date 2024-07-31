@@ -7,6 +7,7 @@ import (
 	"github.com/lightninglabs/taproot-assets/taprpc"
 	"math"
 	"reflect"
+	"sort"
 	"strconv"
 	"time"
 	"trade/api"
@@ -1929,13 +1930,11 @@ func SendFairLaunchReserved(fairLaunchInfo *models.FairLaunchInfo, addr string) 
 }
 
 func GetIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
-	var fairLaunchInfos []models.FairLaunchInfo
-	// @dev: Add more condition
-	err := middleware.DB.Where("status = ? AND is_mint_all = ? AND state >= ?", models.StatusNormal, false, models.FairLaunchStateIssued).Order("set_time").Find(&fairLaunchInfos).Error
-	if err != nil {
-		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
-	}
-	return &fairLaunchInfos, nil
+	return ReadIssuedFairLaunchInfos()
+}
+
+func GetIssuedAndTimeValidFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
+	return ReadIssuedAndTimeValidFairLaunchInfos()
 }
 
 func GetOwnFairLaunchInfosByUserId(id int) (*[]models.FairLaunchInfo, error) {
@@ -2095,7 +2094,83 @@ func GetNotStartedFairLaunchInfo() (*[]models.FairLaunchInfo, error) {
 	return ReadNotStartedFairLaunchInfo()
 }
 
+func FairLaunchInfosToAssetIdMapMintedRate(fairLaunchInfos *[]models.FairLaunchInfo) *map[string]float64 {
+	if fairLaunchInfos == nil {
+		return nil
+	}
+	assetIdMapMintedRate := make(map[string]float64)
+	for _, fairLaunchInfo := range *fairLaunchInfos {
+		if fairLaunchInfo.AssetID == "" {
+			continue
+		}
+		assetIdMapMintedRate[fairLaunchInfo.AssetID] = float64(fairLaunchInfo.MintedNumber) / float64(fairLaunchInfo.MintNumber)
+	}
+
+	return &assetIdMapMintedRate
+}
+
+type FairLaunchAssetIdAndMintedRate struct {
+	AssetId    string  `json:"asset_id"`
+	MintedRate float64 `json:"minted_rate"`
+}
+
+func FairLaunchAssetIdAndMintedRateSortByMintedRate(fairLaunchAssetIdAndMintedRates *[]FairLaunchAssetIdAndMintedRate) {
+	if fairLaunchAssetIdAndMintedRates == nil {
+		return
+	}
+	sort.Slice(*fairLaunchAssetIdAndMintedRates, func(i, j int) bool {
+		return (*fairLaunchAssetIdAndMintedRates)[i].MintedRate > (*fairLaunchAssetIdAndMintedRates)[j].MintedRate
+	})
+}
+
+func AssetIdMapMintedRateToFairLaunchAssetIdAndMintedRates(assetIdMapMintedRate *map[string]float64) *[]FairLaunchAssetIdAndMintedRate {
+	if assetIdMapMintedRate == nil {
+		return nil
+	}
+	fairLaunchAssetIdAndMintedRates := make([]FairLaunchAssetIdAndMintedRate, len(*assetIdMapMintedRate))
+	for assetId, mintedRate := range *assetIdMapMintedRate {
+		fairLaunchAssetIdAndMintedRates = append(fairLaunchAssetIdAndMintedRates, FairLaunchAssetIdAndMintedRate{
+			AssetId:    assetId,
+			MintedRate: mintedRate,
+		})
+	}
+	return &fairLaunchAssetIdAndMintedRates
+}
+
+func FairLaunchInfosToAssetIdMapFairLaunchInfo(fairLaunchInfos *[]models.FairLaunchInfo) *map[string]*models.FairLaunchInfo {
+	if fairLaunchInfos == nil {
+		return nil
+	}
+	assetIdMapFairLaunchInfo := make(map[string]*models.FairLaunchInfo)
+	for _, fairLaunchInfo := range *fairLaunchInfos {
+		if fairLaunchInfo.AssetID == "" {
+			continue
+		}
+		assetIdMapFairLaunchInfo[fairLaunchInfo.AssetID] = &fairLaunchInfo
+	}
+	return &assetIdMapFairLaunchInfo
+}
+
+// GetSortedFairLaunchInfosByMintedRate
+// @Description: Sot by minted rate
+func GetSortedFairLaunchInfosByMintedRate(fairLaunchInfos *[]models.FairLaunchInfo) *[]models.FairLaunchInfo {
+	if fairLaunchInfos == nil {
+		return nil
+	}
+	var sortedFairLaunchInfos []models.FairLaunchInfo
+	assetIdMapMintedRate := FairLaunchInfosToAssetIdMapMintedRate(fairLaunchInfos)
+	fairLaunchAssetIdAndMintedRates := AssetIdMapMintedRateToFairLaunchAssetIdAndMintedRates(assetIdMapMintedRate)
+	FairLaunchAssetIdAndMintedRateSortByMintedRate(fairLaunchAssetIdAndMintedRates)
+	assetIdMapFairLaunchInfo := FairLaunchInfosToAssetIdMapFairLaunchInfo(fairLaunchInfos)
+	for _, fairLaunchAssetIdAndMintedRate := range *fairLaunchAssetIdAndMintedRates {
+		fairLaunchInfo, ok := (*assetIdMapFairLaunchInfo)[fairLaunchAssetIdAndMintedRate.AssetId]
+		if !ok {
+			continue
+		}
+		sortedFairLaunchInfos = append(sortedFairLaunchInfos, *fairLaunchInfo)
+	}
+	return &sortedFairLaunchInfos
+}
+
 // TODO: Consider adding: When a fair launch is successful,
 // 		forward the asset to the server self three different asset addresses (split UTXO)
-
-// TODO: Calculate minted rate

@@ -26,15 +26,38 @@ func (f *FairLaunchStore) ReadFairLaunchInfo(id uint) (*models.FairLaunchInfo, e
 func ReadClosedFairLaunchInfo() (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
 	now := utils.GetTimestamp()
-	err := middleware.DB.Where("end_time < ?", now).Find(&fairLaunchInfos).Error
+	err := middleware.DB.Where("end_time < ?", now).Order("set_time").Find(&fairLaunchInfos).Error
 	return &fairLaunchInfos, err
 }
 
 func ReadNotStartedFairLaunchInfo() (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
 	now := utils.GetTimestamp()
-	err := middleware.DB.Where("start_time > ?", now).Find(&fairLaunchInfos).Error
+	err := middleware.DB.Where("start_time > ?", now).Order("set_time").Find(&fairLaunchInfos).Error
 	return &fairLaunchInfos, err
+}
+
+func ReadIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
+	var fairLaunchInfos []models.FairLaunchInfo
+	// @dev: Add more condition
+	// @dev: Remove `AND is_mint_all = ?`
+	err := middleware.DB.Where("status = ? AND state >= ?", models.StatusNormal, models.FairLaunchStateIssued).Order("set_time").Find(&fairLaunchInfos).Error
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
+	}
+	return &fairLaunchInfos, nil
+}
+
+// ReadIssuedAndTimeValidFairLaunchInfos
+// @Description: Order by MintedNumber desc, SetTime
+func ReadIssuedAndTimeValidFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
+	var fairLaunchInfos []models.FairLaunchInfo
+	now := utils.GetTimestamp()
+	err := middleware.DB.Where("state >= ? AND start_time <= ? AND end_time >= ? AND status = ?", models.FairLaunchStateIssued, now, now, models.StatusNormal).Order("minted_number desc, set_time").Find(&fairLaunchInfos).Error
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
+	}
+	return &fairLaunchInfos, nil
 }
 
 func (f *FairLaunchStore) UpdateFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {

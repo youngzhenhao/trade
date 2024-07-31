@@ -425,7 +425,6 @@ func MintFairLaunchReserved(c *gin.Context) {
 	})
 }
 
-// TODO: Sort by minted rate
 func GetIssuedFairLaunchInfo(c *gin.Context) {
 	var fairLaunchInfos *[]models.FairLaunchInfo
 	var err error
@@ -440,6 +439,7 @@ func GetIssuedFairLaunchInfo(c *gin.Context) {
 		return
 	}
 	fairLaunchInfos = services.ProcessIssuedFairLaunchInfos(fairLaunchInfos)
+	fairLaunchInfos = services.GetSortedFairLaunchInfosByMintedRate(fairLaunchInfos)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SuccessErr,
@@ -637,8 +637,25 @@ func GetNotStartedFairLaunchInfo(c *gin.Context) {
 }
 
 func GetHotFairLaunchInfo(c *gin.Context) {
-	// TODO:
-
+	var fairLaunchInfos *[]models.FairLaunchInfo
+	var err error
+	fairLaunchInfos, err = services.GetIssuedFairLaunchInfos()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   "Get Issued FairLaunchInfos. " + err.Error(),
+			Code:    models.GetAllFairLaunchInfosErr,
+			Data:    nil,
+		})
+		return
+	}
+	fairLaunchInfos = services.GetSortedFairLaunchInfosByMintedRate(fairLaunchInfos)
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    fairLaunchInfos,
+	})
 }
 
 func GetFollowedFairLaunchInfo(c *gin.Context) {
