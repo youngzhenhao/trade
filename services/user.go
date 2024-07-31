@@ -77,14 +77,14 @@ func UpdateUserIpByUserId(userId uint, ip string) error {
 	return btldb.UpdateUser(user)
 }
 
-func UpdateUserIpByUsername(username string, ip string) (string, error) {
+func UpdateUserIpByUsername(username string, ip string) (*models.User, error) {
 	user, err := btldb.ReadUserByUsername(username)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	user.RecentIpAddresses = ip
 	user.RecentLoginTime = utils.GetTimestamp()
-	return ip, btldb.UpdateUser(user)
+	return user, btldb.UpdateUser(user)
 }
 
 // UpdateUserIpByClientIp
@@ -92,7 +92,8 @@ func UpdateUserIpByUsername(username string, ip string) (string, error) {
 func UpdateUserIpByClientIp(c *gin.Context) (string, error) {
 	username := c.MustGet("username").(string)
 	ip := c.ClientIP()
-	return UpdateUserIpByUsername(username, ip)
+	user, err := UpdateUserIpByUsername(username, ip)
+	return user.RecentIpAddresses, err
 }
 
 type UserSimplified struct {
