@@ -258,6 +258,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 		if err != nil {
 			CUST.Error("取消发票失败")
 		}
+		CUST.Info("inside transfer success: paymenthash=%v,amount=%v", info.PaymentHash, info.NumSatoshis)
 		return true, nil
 	}
 	//获取马卡龙路径
@@ -274,7 +275,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 		return false, fmt.Errorf("macaroon file not found")
 	}
 
-	payment, err := servicesrpc.InvoicePay(macaroonFile, PayInvoiceRequest.Invoice, PayInvoiceRequest.FeeLimit)
+	payment, err := servicesrpc.InvoicePay(macaroonFile, PayInvoiceRequest.Invoice, info.NumSatoshis, PayInvoiceRequest.FeeLimit)
 	if err != nil {
 		CUST.Error("pay invoice fail")
 		return false, fmt.Errorf("pay invoice fail")
@@ -591,7 +592,7 @@ func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, inv
 	mark := func(Id uint, gasFee, serveFee uint64) {
 		remark := fmt.Sprintf("gasFee:%v ,serverFee:%v ,local: true", gasFee, serveFee)
 		Ext := models.BalanceExt{
-			BalanceId:   outId,
+			BalanceId:   Id,
 			BillExtDesc: &remark,
 		}
 		err = CreateBalanceExt(&Ext)
@@ -752,4 +753,44 @@ func CheckPayInsideStatus(id uint) (bool, error) {
 
 func SetMemoSign() string {
 	return "internal transfer"
+}
+
+type LookupInvoiceRequest struct {
+	InvoiceHash string `json:"invoice_hash"`
+}
+
+type LookupInvoiceResponse struct {
+	Invoice *lnrpc.Invoice `json:"invoice"`
+}
+
+// LookupInvoice 查询发票状态
+func LookupInvoice(req *LookupInvoiceRequest) (*LookupInvoiceResponse, error) {
+	//查看发票状态
+	balance := models.Balance{
+		Away:        0,
+		PaymentHash: &req.InvoiceHash,
+		State:       models.STATE_SUCCESS,
+	}
+	err := middleware.DB.Where(balance).First(&balance).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		CUST.Error("LookupInvoice database error:%v", err.Error())
+		return nil, err
+	}
+
+	//查找发票信息
+	invoiceHash, err := hex.DecodeString(req.InvoiceHash)
+	if err != nil {
+		CUST.Error("Decode invoice hash error:%v", err.Error())
+		return nil, err
+	}
+	invoice, err := FindInvoice(invoiceHash)
+	if err != nil {
+		CUST.Error("FindInvoice error:%v", err.Error())
+		return nil, err
+	}
+	//返回结果
+	result := LookupInvoiceResponse{
+		Invoice: invoice,
+	}
+	return &result, nil
 }

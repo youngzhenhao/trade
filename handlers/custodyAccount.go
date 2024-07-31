@@ -185,3 +185,41 @@ func QueryPayment(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"payments": payments})
 
 }
+
+// LookupInvoice 查询发票状态
+func LookupInvoice(c *gin.Context) {
+	// 获取登录用户信息
+	userName := c.MustGet("username").(string)
+	user, err := services.ReadUserByUsername(userName)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在"})
+		return
+	}
+	// 选择托管账户
+	account, err := services.ReadAccountByUserId(user.ID)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	if account.UserAccountCode == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "未找到账户信息"})
+		return
+	}
+
+	//获取发票查询请求
+	lookup := services.LookupInvoiceRequest{}
+	if err := c.ShouldBindJSON(&lookup); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	// 查询发票状态
+	invoice, err := services.LookupInvoice(&lookup)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"invoice": invoice})
+}
+
+// LookupPayment 查看支付记录
+func LookupPayment(c *gin.Context) {}

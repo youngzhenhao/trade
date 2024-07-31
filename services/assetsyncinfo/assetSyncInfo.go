@@ -14,7 +14,10 @@ import (
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	"gorm.io/gorm"
 	"net"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"trade/api"
 	"trade/config"
 	"trade/models"
@@ -447,4 +450,54 @@ func (d *decodeProofOffline) marshalChainAsset(ctx context.Context, a *asset.Cha
 	}
 
 	return rpcAsset, nil
+}
+
+// InsertIssuanceProof TODO: Insert locally issued proof of assets
+func InsertIssuanceProof(id string) {
+	Id := asset.ID{}
+	copy(Id[:], id)
+	proofs, _ := FetchProofs(Id)
+	for _, p := range proofs {
+		err := servicesrpc.InsertProof(p)
+		if err != nil {
+			return
+		}
+	}
+}
+
+func FetchProofs(id asset.ID) ([]*proof.AnnotatedProof, error) {
+	assetID := hex.EncodeToString(id[:])
+	assetPath := filepath.Join(config.GetConfig().ApiConfig.Tapd.Dir, "data", config.GetConfig().NetWork, "proofs", assetID)
+	entries, err := os.ReadDir(assetPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read dir %s: %w", assetPath,
+			err)
+	}
+	proofs := make([]*proof.AnnotatedProof, len(entries))
+	for idx := range entries {
+		// We'll skip any files that don't end with our suffix, this
+		// will include directories as well, so we don't need to check
+		// for those.
+		fileName := entries[idx].Name()
+		if !strings.HasSuffix(fileName, proof.TaprootAssetsFileSuffix) {
+			continue
+		}
+		parts := strings.Split(strings.ReplaceAll(
+			fileName, proof.TaprootAssetsFileSuffix, "",
+		), "-")
+		if len(parts) != 3 {
+			return nil, fmt.Errorf("malformed proof file name "+
+				"'%s', expected two parts, got %d", fileName,
+				len(parts))
+		}
+		fullPath := filepath.Join(assetPath, fileName)
+		proofFile, err := os.ReadFile(fullPath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read proof: %w", err)
+		}
+		proofs[idx] = &proof.AnnotatedProof{
+			Blob: proofFile,
+		}
+	}
+	return proofs, nil
 }
