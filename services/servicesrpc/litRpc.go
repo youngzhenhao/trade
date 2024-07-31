@@ -3,10 +3,13 @@ package servicesrpc
 import (
 	"context"
 	"encoding/hex"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/lightninglabs/lightning-terminal/litrpc"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lnrpc/invoicesrpc"
 	"github.com/lightningnetwork/lnd/lnrpc/routerrpc"
+	"github.com/lightningnetwork/lnd/lnwallet"
+	"github.com/lightningnetwork/lnd/lnwire"
 	"strconv"
 	"trade/config"
 	"trade/utils"
@@ -250,7 +253,7 @@ func InvoiceFind(rHash []byte) (*lnrpc.Invoice, error) {
 }
 
 // 支付非0发票
-func InvoicePay(macaroonPath string, invoice string, feeLimit int64) (*lnrpc.Payment, error) {
+func InvoicePay(macaroonPath string, invoice string, amt, feeLimit int64) (*lnrpc.Payment, error) {
 	lndconf := config.GetConfig().ApiConfig.Lnd
 
 	grpcHost := lndconf.Host + ":" + strconv.Itoa(lndconf.Port)
@@ -261,10 +264,15 @@ func InvoicePay(macaroonPath string, invoice string, feeLimit int64) (*lnrpc.Pay
 
 	request := &routerrpc.SendPaymentRequest{
 		PaymentRequest: invoice,
-		FeeLimitSat:    feeLimit,
+		//FeeLimitSat:    feeLimit,
 		TimeoutSeconds: 10,
 	}
-
+	if feeLimit > 1 {
+		request.FeeLimitSat = feeLimit
+	} else {
+		amtMsat := lnwire.NewMSatFromSatoshis(btcutil.Amount(amt))
+		request.FeeLimitSat = int64(lnwallet.DefaultRoutingFeeLimitForAmount(amtMsat).ToSatoshis())
+	}
 	client := routerrpc.NewRouterClient(conn)
 	stream, err := client.SendPaymentV2(context.Background(), request)
 	if err != nil {

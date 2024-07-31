@@ -1,8 +1,11 @@
 package servicesrpc
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/lightninglabs/taproot-assets/proof"
 	"github.com/lightninglabs/taproot-assets/taprpc"
 	"github.com/lightninglabs/taproot-assets/taprpc/universerpc"
 	"strconv"
@@ -100,6 +103,75 @@ func SyncAsset(universe string, id string, isGroupKey bool, proofType string) (*
 	return response, nil
 }
 
+func InsertProof(annotatedProof *proof.AnnotatedProof) error {
+	// Decode annotated proof into proof file.
+	proofFile := &proof.File{}
+	err := proofFile.Decode(bytes.NewReader(annotatedProof.Blob))
+	if err != nil {
+		return err
+	}
+	// Iterate over each proof in the proof file and submit to the courier
+	// service.
+	for i := 0; i < proofFile.NumProofs(); i++ {
+		transitionProof, err := proofFile.ProofAt(uint32(i))
+		if err != nil {
+			return err
+		}
+		proofAsset := transitionProof.Asset
+
+		// Construct asset leaf.
+		rpcAsset, err := taprpc.MarshalAsset(
+			context.Background(), &proofAsset, true, true, nil,
+		)
+		if err != nil {
+			return err
+		}
+
+		var proofBuf bytes.Buffer
+		if err := transitionProof.Encode(&proofBuf); err != nil {
+			return fmt.Errorf("error encoding proof file: %w", err)
+		}
+
+		assetLeaf := universerpc.AssetLeaf{
+			Asset: rpcAsset,
+			Proof: proofBuf.Bytes(),
+		}
+
+		// Construct universe key.
+		outPoint := transitionProof.OutPoint()
+		assetKey := universerpc.MarshalAssetKey(
+			outPoint, proofAsset.ScriptKey.PubKey,
+		)
+		assetID := proofAsset.ID()
+
+		var (
+			groupPubKey      *btcec.PublicKey
+			groupPubKeyBytes []byte
+		)
+		if proofAsset.GroupKey != nil {
+			groupPubKey = &proofAsset.GroupKey.GroupPubKey
+			groupPubKeyBytes = groupPubKey.SerializeCompressed()
+		}
+
+		universeID := universerpc.MarshalUniverseID(
+			assetID[:], groupPubKeyBytes,
+		)
+		universeKey := universerpc.UniverseKey{
+			Id:      universeID,
+			LeafKey: assetKey,
+		}
+		// Submit proof to courier.
+		err = insertProof(&universerpc.AssetProof{
+			Key:       &universeKey,
+			AssetLeaf: &assetLeaf,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func getAssetLeaves(request *universerpc.ID) (*universerpc.AssetLeafResponse, error) {
 	tapdconf := config.GetConfig().ApiConfig.Tapd
 
@@ -143,4 +215,22 @@ func syncAsset(request *universerpc.SyncRequest) (*universerpc.SyncResponse, err
 	client := universerpc.NewUniverseClient(conn)
 	response, err := client.SyncUniverse(context.Background(), request)
 	return response, err
+}
+
+func insertProof(request *universerpc.AssetProof) error {
+	tapdconf := config.GetConfig().ApiConfig.Tapd
+
+	grpcHost := tapdconf.Host + ":" + strconv.Itoa(tapdconf.Port)
+	tlsCertPath := tapdconf.TlsCertPath
+	macaroonPath := tapdconf.MacaroonPath
+
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+
+	client := universerpc.NewUniverseClient(conn)
+	_, err := client.InsertProof(context.Background(), request)
+	if err != nil {
+		return err
+	}
+	return nil
 }

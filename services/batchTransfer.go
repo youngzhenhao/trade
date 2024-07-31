@@ -6,6 +6,7 @@ import (
 	"time"
 	"trade/api"
 	"trade/models"
+	"trade/services/btldb"
 )
 
 func ProcessBatchTransferSetRequest(userId int, username string, batchTransferRequest *models.BatchTransferRequest) *models.BatchTransfer {
@@ -59,7 +60,7 @@ func ProcessBatchTransfersSetRequest(userId int, username string, batchTransfers
 }
 
 func GetBatchTransfersByUserId(userId int) (*[]models.BatchTransfer, error) {
-	return ReadBatchTransfersByUserId(userId)
+	return btldb.ReadBatchTransfersByUserId(userId)
 }
 
 func IsBatchTransferChanged(batchTransferByTxidAndIndex *models.BatchTransfer, old *models.BatchTransfer) bool {
@@ -126,7 +127,7 @@ func CheckBatchTransferIfUpdate(batchTransfer *models.BatchTransfer) (*models.Ba
 	}
 	txid := batchTransfer.Txid
 	index := batchTransfer.Index
-	batchTransferByTxidAndIndex, err := ReadBatchTransferByTxidAndIndex(txid, index)
+	batchTransferByTxidAndIndex, err := btldb.ReadBatchTransferByTxidAndIndex(txid, index)
 	if err != nil {
 		return batchTransfer, nil
 	}
@@ -156,7 +157,7 @@ func CheckBatchTransferIfUpdate(batchTransfer *models.BatchTransfer) (*models.Ba
 func CreateOrUpdateBatchTransfer(transfer *models.BatchTransfer) (err error) {
 	var batchTransfer *models.BatchTransfer
 	batchTransfer, err = CheckBatchTransferIfUpdate(transfer)
-	return UpdateBatchTransfer(batchTransfer)
+	return btldb.UpdateBatchTransfer(batchTransfer)
 }
 
 func CreateOrUpdateBatchTransfers(transfers *[]models.BatchTransfer) (err error) {
@@ -169,11 +170,11 @@ func CreateOrUpdateBatchTransfers(transfers *[]models.BatchTransfer) (err error)
 		}
 		batchTransfers = append(batchTransfers, *batchTransfer)
 	}
-	return UpdateBatchTransfers(&batchTransfers)
+	return btldb.UpdateBatchTransfers(&batchTransfers)
 }
 
 func GetAllBatchTransfersUpdatedAtDesc() (*[]models.BatchTransfer, error) {
-	return ReadAllBatchTransfersUpdatedAtDesc()
+	return btldb.ReadAllBatchTransfersUpdatedAtDesc()
 }
 
 type BatchTransferSimplified struct {

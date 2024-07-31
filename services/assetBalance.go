@@ -5,14 +5,15 @@ import (
 	"sort"
 	"time"
 	"trade/models"
+	"trade/services/btldb"
 )
 
 func GetAssetBalancesByUserId(userId int) (*[]models.AssetBalance, error) {
-	return ReadAssetBalancesByUserId(userId)
+	return btldb.ReadAssetBalancesByUserId(userId)
 }
 
 func GetAssetBalancesByUserIdNonZero(userId int) (*[]models.AssetBalance, error) {
-	return ReadAssetBalancesByUserIdNonZero(userId)
+	return btldb.ReadAssetBalancesByUserIdNonZero(userId)
 }
 
 func ProcessAssetBalanceSetRequest(userId int, username string, assetBalanceSetRequest *models.AssetBalanceSetRequest) *models.AssetBalance {
@@ -77,7 +78,7 @@ func CheckAssetBalanceIfUpdate(assetBalance *models.AssetBalance, userId int) (*
 	if assetBalance == nil {
 		return nil, errors.New("nil asset balance")
 	}
-	assetBalanceByAssetId, err := ReadAssetBalanceByAssetIdAndUserId(assetBalance.AssetID, userId)
+	assetBalanceByAssetId, err := btldb.ReadAssetBalanceByAssetIdAndUserId(assetBalance.AssetID, userId)
 	if err != nil {
 		return assetBalance, nil
 	}
@@ -101,7 +102,7 @@ func CheckAssetBalanceIfUpdate(assetBalance *models.AssetBalance, userId int) (*
 func CreateOrUpdateAssetBalance(balance *models.AssetBalance, userId int) (err error) {
 	var assetBalance *models.AssetBalance
 	assetBalance, err = CheckAssetBalanceIfUpdate(balance, userId)
-	return UpdateAssetBalance(assetBalance)
+	return btldb.UpdateAssetBalance(assetBalance)
 }
 
 func ProcessAssetBalanceSetRequestSlice(userId int, username string, assetBalanceSetRequestSlice *[]models.AssetBalanceSetRequest) *[]models.AssetBalance {
@@ -134,7 +135,7 @@ func CreateOrUpdateAssetBalances(balances *[]models.AssetBalance, userId int) (e
 		}
 		assetBalances = append(assetBalances, *assetBalance)
 	}
-	return UpdateAssetBalances(&assetBalances)
+	return btldb.UpdateAssetBalances(&assetBalances)
 }
 
 type UserAssetBalance struct {
@@ -148,24 +149,24 @@ type UsernameAssetBalance struct {
 }
 
 func GetAllAssetBalances() (*[]models.AssetBalance, error) {
-	return ReadAllAssetBalances()
+	return btldb.ReadAllAssetBalances()
 }
 
 func GetAllAssetBalancesNonZeroUpdatedAtDesc() (*[]models.AssetBalance, error) {
-	return ReadAllAssetBalancesNonZeroUpdatedAtDesc()
+	return btldb.ReadAllAssetBalancesNonZeroUpdatedAtDesc()
 }
 
 func GetAllAssetBalancesNonZero() (*[]models.AssetBalance, error) {
-	return ReadAllAssetBalancesNonZero()
+	return btldb.ReadAllAssetBalancesNonZero()
 }
 
 // Deprecated: Use GetAssetIdAndBalancesByAssetIdLimitAndOffset instead
 func GetAllAssetBalancesNonZeroLimit(limit int) (*[]models.AssetBalance, error) {
-	return ReadAllAssetBalancesNonZeroLimit(limit)
+	return btldb.ReadAllAssetBalancesNonZeroLimit(limit)
 }
 
 func GetAllAssetBalancesNonZeroLimitAndOffset(limit int, offset int) (*[]models.AssetBalance, error) {
-	return ReadAllAssetBalancesNonZeroLimitAndOffset(limit, offset)
+	return btldb.ReadAllAssetBalancesNonZeroLimitAndOffset(limit, offset)
 }
 
 func AssetBalancesToUserMapAssetBalances(assetBalances *[]models.AssetBalance) *map[int]*[]models.AssetBalance {
@@ -578,7 +579,7 @@ func GetAssetIdAndBalancesByAssetId(assetId string) (*AssetIdAndBalance, error) 
 func GetAssetIdAndBalancesByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*AssetIdAndBalance, error) {
 	// @dev: Do not use GetAllAssetBalancesNonZeroLimitAndOffset(limit, offset)
 	// @dev: Do not use AssetBalancesToAssetIdMapAssetBalances(allAssetBalances)
-	assetBalances, err := ReadAssetBalanceByAssetIdNonZeroLimitAndOffset(assetId, limit, offset)
+	assetBalances, err := btldb.ReadAssetBalanceByAssetIdNonZeroLimitAndOffset(assetId, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -595,7 +596,7 @@ func GetAssetIdAndBalancesByAssetIdLimitAndOffset(assetId string, limit int, off
 }
 
 func GetAssetBalanceByAssetIdNonZero(assetId string) (*[]models.AssetBalance, error) {
-	return ReadAssetBalanceByAssetIdNonZero(assetId)
+	return btldb.ReadAssetBalanceByAssetIdNonZero(assetId)
 }
 
 // GetAssetBalanceByAssetIdNonZeroLength

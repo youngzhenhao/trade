@@ -3,10 +3,11 @@ package services
 import (
 	"time"
 	"trade/models"
+	"trade/services/btldb"
 )
 
 func GetAssetBurnsByUserId(userId int) (*[]models.AssetBurn, error) {
-	return ReadAssetBurnsByUserId(userId)
+	return btldb.ReadAssetBurnsByUserId(userId)
 }
 
 func ProcessAssetBurnSetRequest(userId int, username string, assetBurnSetRequest *models.AssetBurnSetRequest) *models.AssetBurn {
@@ -22,7 +23,7 @@ func ProcessAssetBurnSetRequest(userId int, username string, assetBurnSetRequest
 }
 
 func GetAssetBurnsByAssetId(assetId string) (*[]models.AssetBurn, error) {
-	return ReadAssetBurnsByAssetId(assetId)
+	return btldb.ReadAssetBurnsByAssetId(assetId)
 }
 
 type AssetBurnTotal struct {
@@ -88,11 +89,11 @@ func AssetBurnSliceToAssetBurnSimplifiedSlice(assetBurns *[]models.AssetBurn) *[
 }
 
 func GetAllAssetBurns() (*[]models.AssetBurn, error) {
-	return ReadAllAssetBurns()
+	return btldb.ReadAllAssetBurns()
 }
 
 func GetAllAssetBurnsUpdatedAt() (*[]models.AssetBurn, error) {
-	return ReadAllAssetBurnsUpdatedAt()
+	return btldb.ReadAllAssetBurnsUpdatedAt()
 }
 
 func GetAllAssetBurnSimplified() (*[]AssetBurnSimplified, error) {

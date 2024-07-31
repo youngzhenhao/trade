@@ -3,15 +3,16 @@ package services
 import (
 	"trade/middleware"
 	"trade/models"
+	"trade/services/btldb"
 )
 
 func CreateScheduledTask(scheduledTask *models.ScheduledTask) (err error) {
-	s := ScheduledTaskStore{DB: middleware.DB}
+	s := btldb.ScheduledTaskStore{DB: middleware.DB}
 	return s.CreateScheduledTask(scheduledTask)
 }
 
 func CreateScheduledTasks(scheduledTasks *[]models.ScheduledTask) (err error) {
-	s := ScheduledTaskStore{DB: middleware.DB}
+	s := btldb.ScheduledTaskStore{DB: middleware.DB}
 	return s.CreateScheduledTasks(scheduledTasks)
 }
 
@@ -46,7 +47,7 @@ func CreateScheduledTaskIfNotExistOrUpdate(scheduledTask *models.ScheduledTask) 
 	scheduledTaskByName.CronExpression = scheduledTask.CronExpression
 	scheduledTaskByName.FunctionName = scheduledTask.FunctionName
 	scheduledTaskByName.Package = scheduledTask.Package
-	s := ScheduledTaskStore{DB: middleware.DB}
+	s := btldb.ScheduledTaskStore{DB: middleware.DB}
 	return s.UpdateScheduledTask(scheduledTaskByName)
 }
 

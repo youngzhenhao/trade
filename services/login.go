@@ -7,6 +7,7 @@ import (
 	"log"
 	"trade/middleware"
 	"trade/models"
+	"trade/services/btldb"
 )
 
 func Login(creds models.User) (string, error) {
@@ -23,7 +24,7 @@ func Login(creds models.User) (string, error) {
 				return "", err
 			}
 			user.Password = password
-			err = CreateUser(&user)
+			err = btldb.CreateUser(&user)
 			if err != nil {
 				return "", err
 			}

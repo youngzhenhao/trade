@@ -4,10 +4,11 @@ import (
 	"errors"
 	"time"
 	"trade/models"
+	"trade/services/btldb"
 )
 
 func GetAssetAddrsByUserId(userId int) (*[]models.AssetAddr, error) {
-	return ReadAssetAddrsByUserId(userId)
+	return btldb.ReadAssetAddrsByUserId(userId)
 }
 
 func ProcessAssetAddrSetRequest(userId int, username string, assetAddrSetRequest *models.AssetAddrSetRequest) *models.AssetAddr {
@@ -81,7 +82,7 @@ func CheckAssetAddrIfUpdate(assetAddr *models.AssetAddr) (*models.AssetAddr, err
 	if assetAddr == nil {
 		return nil, errors.New("nil asset addr")
 	}
-	assetAddrByAddrEncoded, err := ReadAssetAddrByAddrEncoded(assetAddr.Encoded)
+	assetAddrByAddrEncoded, err := btldb.ReadAssetAddrByAddrEncoded(assetAddr.Encoded)
 	if err != nil {
 		return assetAddr, nil
 	}
@@ -107,19 +108,19 @@ func CheckAssetAddrIfUpdate(assetAddr *models.AssetAddr) (*models.AssetAddr, err
 func CreateOrUpdateAssetAddr(addr *models.AssetAddr) (err error) {
 	var assetAddr *models.AssetAddr
 	assetAddr, err = CheckAssetAddrIfUpdate(addr)
-	return UpdateAssetAddr(assetAddr)
+	return btldb.UpdateAssetAddr(assetAddr)
 }
 
 func GetAssetAddrsByScriptKey(scriptKey string) (*[]models.AssetAddr, error) {
-	return ReadAssetAddrsByScriptKey(scriptKey)
+	return btldb.ReadAssetAddrsByScriptKey(scriptKey)
 }
 
 func GetAssetAddrsByEncoded(encoded string) (*models.AssetAddr, error) {
-	return ReadAssetAddrByAddrEncoded(encoded)
+	return btldb.ReadAssetAddrByAddrEncoded(encoded)
 }
 
 func GetAllAssetAddrs() (*[]models.AssetAddr, error) {
-	return ReadAllAssetAddrs()
+	return btldb.ReadAllAssetAddrs()
 }
 
 func UpdateUsernameByUserIdAll() error {
@@ -138,7 +139,7 @@ func UpdateUsernameByUserIdAll() error {
 		}
 		(*allAssetAddrs)[i].Username = name
 	}
-	return UpdateAssetAddrs(allAssetAddrs)
+	return btldb.UpdateAssetAddrs(allAssetAddrs)
 }
 
 type AssetAddrSimplified struct {
@@ -172,7 +173,7 @@ func AssetAddrSliceToAssetAddrSimplifiedSlice(assetAddrs *[]models.AssetAddr) *[
 }
 
 func GetAllAssetAddrSimplified() (*[]AssetAddrSimplified, error) {
-	allAssetAddrs, err := ReadAllAssetAddrs()
+	allAssetAddrs, err := btldb.ReadAllAssetAddrs()
 	if err != nil {
 		return nil, err
 	}

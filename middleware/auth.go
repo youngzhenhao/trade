@@ -24,6 +24,10 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
+		if claims.Username == "admin" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Illegal login"})
+			return
+		}
 		// Store the username in the context of the request
 		c.Set("username", claims.Username)
 		c.Next()

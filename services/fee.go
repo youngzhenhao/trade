@@ -7,6 +7,7 @@ import (
 	"trade/config"
 	"trade/middleware"
 	"trade/models"
+	"trade/services/btldb"
 	"trade/utils"
 )
 
@@ -381,7 +382,7 @@ func GetFeeRateInfoEstimateSmartFeeRateByName(name string) (estimateSmartFeeRate
 
 func UpdateFeeRateInfoByBitcoind(network models.Network) (err error) {
 	var feeRateInfo *models.FeeRateInfo
-	var f = FeeRateInfoStore{DB: middleware.DB}
+	var f = btldb.FeeRateInfoStore{DB: middleware.DB}
 	feeRateInfo, err = GetFeeRateInfoByName(string(GasFeeRateNameBitcoind))
 	if err != nil {
 		// @dev: Create FeeRateInfo
@@ -408,7 +409,7 @@ func UpdateFeeRateInfoByBitcoind(network models.Network) (err error) {
 
 func UpdateFeeRateInfoByBlock(network models.Network, block int) (err error) {
 	var feeRateInfo *models.FeeRateInfo
-	var f = FeeRateInfoStore{DB: middleware.DB}
+	var f = btldb.FeeRateInfoStore{DB: middleware.DB}
 	name := strconv.Itoa(block)
 	feeRateInfo, err = GetFeeRateInfoByName(name)
 	if err != nil {
@@ -647,7 +648,7 @@ func GetFeeRateInfoByNameAndUnit(name string, unit models.FeeRateType) (*models.
 }
 
 func UpdateFeeRateInfoByNameAndUnitIfNotExistThenCreate(name string, unit models.FeeRateType, feeRate int) error {
-	f := FeeRateInfoStore{DB: middleware.DB}
+	f := btldb.FeeRateInfoStore{DB: middleware.DB}
 	feeRateInfo, err := GetFeeRateInfoByNameAndUnit(name, unit)
 	if err != nil {
 		feeRateInfo = &models.FeeRateInfo{

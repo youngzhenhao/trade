@@ -3,10 +3,11 @@ package services
 import (
 	"errors"
 	"trade/models"
+	"trade/services/btldb"
 )
 
 func GetAssetLocksByUserId(userId int) (*[]models.AssetLock, error) {
-	return ReadAssetLocksByUserId(userId)
+	return btldb.ReadAssetLocksByUserId(userId)
 }
 
 func ProcessAssetLockSetRequest(userId int, assetLockSetRequest *models.AssetLockSetRequest) *models.AssetLock {
@@ -67,7 +68,7 @@ func CheckAssetLockIfUpdate(assetLock *models.AssetLock) (*models.AssetLock, err
 	if assetLock == nil {
 		return nil, errors.New("nil asset lock")
 	}
-	assetLockByInvoice, err := ReadAssetLockByInvoice(assetLock.Invoice)
+	assetLockByInvoice, err := btldb.ReadAssetLockByInvoice(assetLock.Invoice)
 	if err != nil {
 		return assetLock, nil
 	}
@@ -90,5 +91,5 @@ func CheckAssetLockIfUpdate(assetLock *models.AssetLock) (*models.AssetLock, err
 func CreateOrUpdateAssetLock(lock *models.AssetLock) (err error) {
 	var assetLock *models.AssetLock
 	assetLock, err = CheckAssetLockIfUpdate(lock)
-	return UpdateAssetLock(assetLock)
+	return btldb.UpdateAssetLock(assetLock)
 }

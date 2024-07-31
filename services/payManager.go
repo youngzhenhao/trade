@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"trade/models"
+	"trade/services/btldb"
 )
 
 var (
@@ -27,7 +28,7 @@ func PayAmountToAdmin(payUserId uint, gasFee, serveFee uint64) (uint, error) {
 }
 
 func CheckAdminAccount() bool {
-	adminUser, err := ReadUserByUsername("admin")
+	adminUser, err := btldb.ReadUserByUsername("admin")
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			CUST.Error("CheckAdminAccount failed:%s", err)
@@ -37,14 +38,14 @@ func CheckAdminAccount() bool {
 		adminUser.Username = "admin"
 		adminUser.Password = "admin"
 		adminUser.Status = 1
-		err = CreateUser(adminUser)
+		err = btldb.CreateUser(adminUser)
 		if err != nil {
 			CUST.Error("create AdminUser failed:%s", err)
 			return false
 		}
 	}
 
-	adminAccount, err := ReadAccountByUserId(adminUser.ID)
+	adminAccount, err := btldb.ReadAccountByUserId(adminUser.ID)
 
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -56,7 +57,7 @@ func CheckAdminAccount() bool {
 		adminAccount.UserName = adminUser.Username
 		adminAccount.UserAccountCode = "admin"
 		adminAccount.Status = 1
-		err = CreateAccount(adminAccount)
+		err = btldb.CreateAccount(adminAccount)
 		if err != nil {
 			CUST.Error("create AdminAccount failed:%s", err)
 			return false

@@ -8,6 +8,7 @@ import (
 	"time"
 	"trade/api"
 	"trade/models"
+	"trade/services/btldb"
 	"trade/utils"
 )
 
@@ -37,7 +38,7 @@ func ProcessAddrReceiveEventsSetRequest(userId int, username string, addrReceive
 }
 
 func GetAddrReceiveEventsByUserId(userId int) (*[]models.AddrReceiveEvent, error) {
-	return ReadAddrReceiveEventsByUserId(userId)
+	return btldb.ReadAddrReceiveEventsByUserId(userId)
 }
 
 func ProcessGetAddrReceiveEvents(addrReceiveEvents *[]models.AddrReceiveEvent) *[]models.AddrReceiveEventSetRequest {
@@ -66,7 +67,7 @@ func ProcessGetAddrReceiveEvents(addrReceiveEvents *[]models.AddrReceiveEvent) *
 }
 
 func GetAddrReceiveEventsProcessedOriginByUserId(userId int) (*[]models.AddrReceiveEventSetRequest, error) {
-	addrReceiveEvents, err := ReadAddrReceiveEventsByUserId(userId)
+	addrReceiveEvents, err := btldb.ReadAddrReceiveEventsByUserId(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +133,7 @@ func CheckAddrReceiveEventIfUpdate(addrReceiveEvent *models.AddrReceiveEvent) (*
 	if addrReceiveEvent == nil {
 		return nil, errors.New("nil addr receive")
 	}
-	addrReceiveEventByAddrEncoded, err := ReadAddrReceiveEventByAddrEncoded(addrReceiveEvent.AddrEncoded)
+	addrReceiveEventByAddrEncoded, err := btldb.ReadAddrReceiveEventByAddrEncoded(addrReceiveEvent.AddrEncoded)
 	if err != nil {
 		return addrReceiveEvent, nil
 	}
@@ -168,15 +169,15 @@ func CreateOrUpdateAddrReceiveEvents(addrReceiveEvents *[]models.AddrReceiveEven
 		}
 		addrReceives = append(addrReceives, *addrReceive)
 	}
-	return UpdateAddrReceiveEvents(&addrReceives)
+	return btldb.UpdateAddrReceiveEvents(&addrReceives)
 }
 
 func GetAllAddrReceiveEvents() (*[]models.AddrReceiveEvent, error) {
-	return ReadAllAddrReceiveEvents()
+	return btldb.ReadAllAddrReceiveEvents()
 }
 
 func GetAddrReceiveEventsByAssetId(assetId string) (*[]models.AddrReceiveEvent, error) {
-	return ReadAddrReceiveEventsByAssetId(assetId)
+	return btldb.ReadAddrReceiveEventsByAssetId(assetId)
 }
 
 type AssetReceive struct {
@@ -449,7 +450,7 @@ func SetAddrReceivesEvents(receives *[]models.AddrReceiveEventSetRequest) error 
 		if password == "" {
 			password = username
 		}
-		err = CreateUser(&models.User{
+		err = btldb.CreateUser(&models.User{
 			Username: username,
 			Password: password,
 		})
