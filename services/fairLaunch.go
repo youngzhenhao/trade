@@ -1931,11 +1931,11 @@ func SendFairLaunchReserved(fairLaunchInfo *models.FairLaunchInfo, addr string) 
 }
 
 func GetIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
-	return ReadIssuedFairLaunchInfos()
+	return btldb.ReadIssuedFairLaunchInfos()
 }
 
 func GetIssuedAndTimeValidFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
-	return ReadIssuedAndTimeValidFairLaunchInfos()
+	return btldb.ReadIssuedAndTimeValidFairLaunchInfos()
 }
 
 func GetOwnFairLaunchInfosByUserId(id int) (*[]models.FairLaunchInfo, error) {
