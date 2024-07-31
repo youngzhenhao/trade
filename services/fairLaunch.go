@@ -1207,6 +1207,39 @@ func IsAssetBalanceEnough(assetId string, amount int) bool {
 	return false
 }
 
+// IsAssetUtxoEnough
+// @dev: If amount is negative, return false as error
+func IsAssetUtxoEnough(assetId string, amount int) bool {
+	// @dev: Amount can not be negative number
+	if amount < 0 {
+		return false
+	}
+	response, err := api.ListUtxosAndGetResponse()
+	if err != nil {
+		return false
+	}
+	for _, managedUtxo := range response.ManagedUtxos {
+		if managedUtxo == nil {
+			// @dev: Utxo not found
+			continue
+		}
+		assets := managedUtxo.Assets
+		if assets == nil || len(assets) == 0 {
+			// @dev: Anchor assets is null
+			continue
+		}
+		// @dev: Find asset in assets
+		for _, asset := range assets {
+			if hex.EncodeToString(asset.AssetGenesis.AssetId) == assetId {
+				return asset.Amount >= uint64(amount)
+			}
+		}
+		// @dev: Did not find asset in assets
+	}
+	// @dev: Did not find asset in ManagedUtxos
+	return false
+}
+
 func ProcessIssuedFairLaunchInfos(fairLaunchInfos *[]models.FairLaunchInfo) *[]models.FairLaunchInfo {
 	var result []models.FairLaunchInfo
 	for _, fairLaunchInfo := range *fairLaunchInfos {
@@ -1615,7 +1648,7 @@ func SendFairLaunchMintedAssetLocked() error {
 	var feeRate *FeeRateResponseTransformed
 	var response *taprpc.SendAssetResponse
 	for assetId, addrs := range assetIdToAddrs {
-		// @dev: Check if confirmed balance enough
+		// @dev: Check if confirmed btc balance enough
 		if !IsWalletBalanceEnough(assetIdToGasFeeTotal[assetId]) {
 			err = errors.New("lnd wallet balance is not enough")
 			return err
@@ -1625,11 +1658,17 @@ func SendFairLaunchMintedAssetLocked() error {
 			err = errors.New("tapd asset balance is not enough")
 			return err
 		}
+		// @dev: Check if asset utxo is enough
+		if !IsAssetUtxoEnough(assetId, assetIdToAmount[assetId]) {
+			err = errors.New("tapd asset utxo is not enough")
+			return err
+		}
 		feeRate, err = UpdateAndGetFeeRateResponseTransformed()
 		if err != nil {
 			return utils.AppendErrorInfo(err, "UpdateAndGetFeeRateResponseTransformed")
 		}
-		feeRateSatPerKw := feeRate.SatPerKw.FastestFee
+		// @dev: Append fee of 2 sat per b
+		feeRateSatPerKw := feeRate.SatPerKw.FastestFee + FeeRateSatPerBToSatPerKw(2)
 		if len(addrs) == 0 {
 			//err = errors.New("length of addrs slice is zero, can't send assets and update")
 			//return err
@@ -2044,4 +2083,12 @@ func DeleteFairLaunchInventoryInfosByState(fairLaunchInventoryState models.FairL
 
 func RemoveFairLaunchInventoryStateMintedInfos() error {
 	return DeleteFairLaunchInventoryInfosByState(models.FairLaunchInventoryStateMinted)
+}
+
+func GetClosedFairLaunchInfo() (*[]models.FairLaunchInfo, error) {
+	return ReadClosedFairLaunchInfo()
+}
+
+func GetNotStartedFairLaunchInfo() (*[]models.FairLaunchInfo, error) {
+	return ReadNotStartedFairLaunchInfo()
 }

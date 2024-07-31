@@ -108,6 +108,31 @@ const (
 	SetAssetRecommendErr
 	GetAllAssetRecommendSimplifiedErr
 	GetAssetRecommendByUserIdAndAssetIdErr
+	GetAllFairLaunchInfosErr
+	FairLaunchInfoIdInvalidErr
+	GetFairLaunchInfoErr
+	FairLaunchMintedInfoIdInvalidErr
+	GetFairLaunchMintedInfosByFairLaunchIdErr
+	ProcessFairLaunchInfoErr
+	SetFairLaunchInfoErr
+	IsFairLaunchMintTimeRightErr
+	IsTimeRightErr
+	IsFairLaunchIssued
+	ProcessFairLaunchMintedInfoErr
+	SetFairLaunchMintedInfoErr
+	GetInventoryCouldBeMintedByFairLaunchInfoIdErr
+	UpdateAndCalculateGasFeeRateByMempoolErr
+	GetNumberAndAmountOfInventoryCouldBeMintedErr
+	GetFairLaunchInfoByAssetIdErr
+	InvalidUserIdErr
+	SendFairLaunchReservedErr
+	UpdateFairLaunchInfoIsReservedSentErr
+	GetIssuedFairLaunchInfosErr
+	GetOwnFairLaunchInfosByUserIdErr
+	GetOwnFairLaunchMintedInfosByUserIdErr
+	GetFairLaunchInfoSimplifiedByUserIdIssuedErr
+	GetClosedFairLaunchInfoErr
+	GetNotStartedFairLaunchInfoErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

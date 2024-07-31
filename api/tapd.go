@@ -315,3 +315,7 @@ func GetAssetNameByAssetId(assetId string) string {
 	}
 	return assetInfo.Name
 }
+
+func ListUtxosAndGetResponse() (*taprpc.ListUtxosResponse, error) {
+	return listUtxos()
+}

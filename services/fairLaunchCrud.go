@@ -2,7 +2,9 @@ package services
 
 import (
 	"gorm.io/gorm"
+	"trade/middleware"
 	"trade/models"
+	"trade/utils"
 )
 
 type FairLaunchStore struct {
@@ -19,6 +21,20 @@ func (f *FairLaunchStore) ReadFairLaunchInfo(id uint) (*models.FairLaunchInfo, e
 	var fairLaunchInfo models.FairLaunchInfo
 	err := f.DB.First(&fairLaunchInfo, id).Error
 	return &fairLaunchInfo, err
+}
+
+func ReadClosedFairLaunchInfo() (*[]models.FairLaunchInfo, error) {
+	var fairLaunchInfos []models.FairLaunchInfo
+	now := utils.GetTimestamp()
+	err := middleware.DB.Where("end_time < ?", now).Find(&fairLaunchInfos).Error
+	return &fairLaunchInfos, err
+}
+
+func ReadNotStartedFairLaunchInfo() (*[]models.FairLaunchInfo, error) {
+	var fairLaunchInfos []models.FairLaunchInfo
+	now := utils.GetTimestamp()
+	err := middleware.DB.Where("start_time > ?", now).Find(&fairLaunchInfos).Error
+	return &fairLaunchInfos, err
 }
 
 func (f *FairLaunchStore) UpdateFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {

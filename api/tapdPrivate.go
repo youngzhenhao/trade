@@ -338,3 +338,15 @@ func addrReceives() (*taprpc.AddrReceivesResponse, error) {
 	response, err := client.AddrReceives(context.Background(), request)
 	return response, err
 }
+
+func listUtxos() (*taprpc.ListUtxosResponse, error) {
+	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
+	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
+	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	request := &taprpc.ListUtxosRequest{}
+	client := taprpc.NewTaprootAssetsClient(conn)
+	response, err := client.ListUtxos(context.Background(), request)
+	return response, err
+}
