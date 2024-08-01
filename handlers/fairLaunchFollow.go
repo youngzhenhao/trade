@@ -7,7 +7,7 @@ import (
 	"trade/services"
 )
 
-func GetFollowedFairLaunchInfo(c *gin.Context) {
+func GetFairLaunchFollowByUserId(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)
 	if err != nil {

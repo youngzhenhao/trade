@@ -140,6 +140,7 @@ const (
 	SetFollowFairLaunchInfoErr
 	SetUnfollowFairLaunchInfoErr
 	GetAllFairLaunchFollowSimplifiedErr
+	GetFollowedFairLaunchInfoErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

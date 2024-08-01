@@ -135,3 +135,9 @@ func (f *FairLaunchStore) DeleteFairLaunchMintedUserInfo(id uint) error {
 	var fairLaunchMintedUserInfo models.FairLaunchMintedUserInfo
 	return f.DB.Delete(&fairLaunchMintedUserInfo, id).Error
 }
+
+func GetFairLaunchInfosByIds(fairLaunchInfoIds *[]int) (*[]models.FairLaunchInfo, error) {
+	var fairLaunchInfos []models.FairLaunchInfo
+	err := middleware.DB.Where(fairLaunchInfoIds).Find(&fairLaunchInfos).Error
+	return &fairLaunchInfos, err
+}

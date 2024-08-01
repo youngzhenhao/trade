@@ -657,3 +657,33 @@ func GetHotFairLaunchInfo(c *gin.Context) {
 		Data:    fairLaunchInfos,
 	})
 }
+
+func GetFollowedFairLaunchInfo(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	fairLaunchInfos, err := services.GetFollowedFairLaunchInfo(userId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetFollowedFairLaunchInfoErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    fairLaunchInfos,
+	})
+}
