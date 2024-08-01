@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"trade/models"
@@ -56,6 +57,25 @@ func SetFollowFairLaunchInfo(c *gin.Context) {
 			Success: false,
 			Error:   "Should Bind JSON setFairLaunchInfoRequest. " + err.Error(),
 			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	isValid, err := services.IsFairLaunchInfoIdAndAssetIdValid(fairLaunchFollowSetRequest.FairLaunchInfoId, fairLaunchFollowSetRequest.AssetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.IsFairLaunchInfoIdAndAssetIdValidErr,
+			Data:    nil,
+		})
+		return
+	}
+	if !isValid {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   errors.New("fair launch info asset id is invalid").Error(),
+			Code:    models.FairLaunchInfoAssetIdInvalidErr,
 			Data:    nil,
 		})
 		return

@@ -177,3 +177,14 @@ func SetUnfollowFairLaunchInfo(userId int, assetId string) error {
 	}
 	return btldb.DeleteFairLaunchFollow(fairLaunchFollow.ID)
 }
+
+func IsFairLaunchInfoIdAndAssetIdValid(fairLaunchInfoId int, assetId string) (bool, error) {
+	fairLaunchInfo, err := GetFairLaunchInfo(fairLaunchInfoId)
+	if err != nil {
+		return false, err
+	}
+	if fairLaunchInfo.AssetID != assetId {
+		return false, nil
+	}
+	return true, nil
+}
