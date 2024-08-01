@@ -32,6 +32,18 @@ func GetFairLaunchFollowsByUserId(userId int) (*[]models.FairLaunchFollow, error
 	return btldb.ReadFairLaunchFollowsByUserId(userId)
 }
 
+func GetFairLaunchFollowByUserIdAndAssetId(userId int, assetId string) (*models.FairLaunchFollow, error) {
+	return btldb.ReadFairLaunchFollowByUserIdAndAssetId(userId, assetId)
+}
+
+func IsFairLaunchFollowed(userId int, assetId string) bool {
+	fairLaunchFollow, err := GetFairLaunchFollowByUserIdAndAssetId(userId, assetId)
+	if err != nil || fairLaunchFollow == nil {
+		return false
+	}
+	return true
+}
+
 func GetFairLaunchFollowByAssetId(assetId string) (*models.FairLaunchFollow, error) {
 	return btldb.ReadFairLaunchFollowByAssetId(assetId)
 }
@@ -146,4 +158,22 @@ func GetAllFairLaunchFollowSimplified() (*[]FairLaunchFollowSimplified, error) {
 	}
 	allFairLaunchFollowSimplified := FairLaunchFollowSliceToFairLaunchFollowSimplifiedSlice(allFairLaunchFollows)
 	return allFairLaunchFollowSimplified, nil
+}
+
+func SetFollowFairLaunchInfo(fairLaunchFollow *models.FairLaunchFollow) error {
+	if IsFairLaunchFollowed(fairLaunchFollow.UserId, fairLaunchFollow.AssetId) {
+		return errors.New("already followed")
+	}
+	return SetFairLaunchFollow(fairLaunchFollow)
+}
+
+func SetUnfollowFairLaunchInfo(userId int, assetId string) error {
+	if !IsFairLaunchFollowed(userId, assetId) {
+		return errors.New("not followed yet")
+	}
+	fairLaunchFollow, err := GetFairLaunchFollowByUserIdAndAssetId(userId, assetId)
+	if err != nil {
+		return err
+	}
+	return btldb.DeleteFairLaunchFollow(fairLaunchFollow.ID)
 }

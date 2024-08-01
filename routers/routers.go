@@ -73,5 +73,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AssetRecommend {
 		SetupAssetRecommendRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.FairLaunchFollow {
+		SetupFairLaunchFollowRouter(r)
+	}
 	return r
 }

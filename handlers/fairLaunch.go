@@ -657,18 +657,3 @@ func GetHotFairLaunchInfo(c *gin.Context) {
 		Data:    fairLaunchInfos,
 	})
 }
-
-func GetFollowedFairLaunchInfo(c *gin.Context) {
-	// TODO:
-
-}
-
-func SetFollowFairLaunchInfo(c *gin.Context) {
-	// TODO:
-
-}
-
-func SetUnfollowFairLaunchInfo(c *gin.Context) {
-	// TODO:
-
-}

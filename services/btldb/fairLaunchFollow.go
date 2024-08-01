@@ -49,6 +49,12 @@ func ReadFairLaunchFollowByAssetId(assetId string) (*models.FairLaunchFollow, er
 	return &fairLaunchFollow, err
 }
 
+func ReadFairLaunchFollowByUserIdAndAssetId(userId int, assetId string) (*models.FairLaunchFollow, error) {
+	var fairLaunchFollow models.FairLaunchFollow
+	err := middleware.DB.Where("user_id = ? AND asset_id = ? AND status = ?", userId, assetId, 1).First(&fairLaunchFollow).Error
+	return &fairLaunchFollow, err
+}
+
 func UpdateFairLaunchFollow(fairLaunchFollow *models.FairLaunchFollow) error {
 	return middleware.DB.Save(fairLaunchFollow).Error
 }

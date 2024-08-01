@@ -7,7 +7,7 @@ import (
 	"trade/services"
 )
 
-func GetAssetRecommendByUserId(c *gin.Context) {
+func GetFollowedFairLaunchInfo(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)
 	if err != nil {
@@ -19,12 +19,12 @@ func GetAssetRecommendByUserId(c *gin.Context) {
 		})
 		return
 	}
-	assetRecommends, err := services.GetAssetRecommendsByUserId(userId)
+	fairLaunchFollows, err := services.GetFairLaunchFollowsByUserId(userId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAssetRecommendsByUserIdErr,
+			Code:    models.GetFairLaunchFollowsByUserIdErr,
 			Data:    nil,
 		})
 		return
@@ -33,31 +33,11 @@ func GetAssetRecommendByUserId(c *gin.Context) {
 		Success: true,
 		Error:   models.SuccessErr,
 		Code:    models.SUCCESS,
-		Data:    assetRecommends,
+		Data:    fairLaunchFollows,
 	})
 }
 
-func GetAssetRecommendByAssetId(c *gin.Context) {
-	assetId := c.Param("asset_id")
-	assetRecommends, err := services.GetAssetRecommendsByAssetId(assetId)
-	if err != nil {
-		c.JSON(http.StatusOK, models.JsonResult{
-			Success: false,
-			Error:   err.Error(),
-			Code:    models.GetAssetRecommendByAssetIdErr,
-			Data:    nil,
-		})
-		return
-	}
-	c.JSON(http.StatusOK, models.JsonResult{
-		Success: true,
-		Error:   models.SuccessErr,
-		Code:    models.SUCCESS,
-		Data:    assetRecommends,
-	})
-}
-
-func GetAssetRecommendByUserIdAndAssetId(c *gin.Context) {
+func SetFollowFairLaunchInfo(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)
 	if err != nil {
@@ -69,55 +49,24 @@ func GetAssetRecommendByUserIdAndAssetId(c *gin.Context) {
 		})
 		return
 	}
-	assetId := c.Param("asset_id")
-	assetRecommend, err := services.GetAssetRecommendByUserIdAndAssetId(userId, assetId)
+	var fairLaunchFollowSetRequest models.FairLaunchFollowSetRequest
+	err = c.BindJSON(&fairLaunchFollowSetRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
-			Error:   err.Error(),
-			Code:    models.GetAssetRecommendByUserIdAndAssetIdErr,
-			Data:    nil,
-		})
-		return
-	}
-	c.JSON(http.StatusOK, models.JsonResult{
-		Success: true,
-		Error:   models.SuccessErr,
-		Code:    models.SUCCESS,
-		Data:    assetRecommend,
-	})
-}
-
-func SetAssetRecommend(c *gin.Context) {
-	username := c.MustGet("username").(string)
-	userId, err := services.NameToId(username)
-	if err != nil {
-		c.JSON(http.StatusOK, models.JsonResult{
-			Success: false,
-			Error:   err.Error(),
-			Code:    models.NameToIdErr,
-			Data:    nil,
-		})
-		return
-	}
-	var assetRecommendSetRequest models.AssetRecommendSetRequest
-	err = c.ShouldBindJSON(&assetRecommendSetRequest)
-	if err != nil {
-		c.JSON(http.StatusOK, models.JsonResult{
-			Success: false,
-			Error:   err.Error(),
+			Error:   "Should Bind JSON setFairLaunchInfoRequest. " + err.Error(),
 			Code:    models.ShouldBindJsonErr,
 			Data:    nil,
 		})
 		return
 	}
-	assetRecommend := services.ProcessAssetRecommendSetRequest(userId, username, assetRecommendSetRequest)
-	err = services.SetAssetRecommend(&assetRecommend)
+	fairLaunchFollow := services.ProcessFairLaunchFollowSetRequest(userId, username, fairLaunchFollowSetRequest)
+	err = services.SetFollowFairLaunchInfo(&fairLaunchFollow)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.SetAssetRecommendErr,
+			Code:    models.SetFollowFairLaunchInfoErr,
 			Data:    nil,
 		})
 		return
@@ -130,13 +79,25 @@ func SetAssetRecommend(c *gin.Context) {
 	})
 }
 
-func GetAllAssetRecommendSimplified(c *gin.Context) {
-	assetRecommendSimplified, err := services.GetAllAssetRecommendSimplified()
+func SetUnfollowFairLaunchInfo(c *gin.Context) {
+	assetId := c.Param("asset_id")
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAllAssetRecommendSimplifiedErr,
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	err = services.SetUnfollowFairLaunchInfo(userId, assetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.SetUnfollowFairLaunchInfoErr,
 			Data:    nil,
 		})
 		return
@@ -145,6 +106,25 @@ func GetAllAssetRecommendSimplified(c *gin.Context) {
 		Success: true,
 		Error:   models.SuccessErr,
 		Code:    models.SUCCESS,
-		Data:    assetRecommendSimplified,
+		Data:    nil,
+	})
+}
+
+func GetAllFairLaunchFollowSimplified(c *gin.Context) {
+	fairLaunchFollows, err := services.GetAllFairLaunchFollowSimplified()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllFairLaunchFollowSimplifiedErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    fairLaunchFollows,
 	})
 }

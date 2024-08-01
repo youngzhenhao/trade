@@ -136,6 +136,10 @@ const (
 	GetAllUsernameAndAssetIdAssetAddrsErr
 	FeeRateAtoiErr
 	FeeRateInvalidErr
+	GetFairLaunchFollowsByUserIdErr
+	SetFollowFairLaunchInfoErr
+	SetUnfollowFairLaunchInfoErr
+	GetAllFairLaunchFollowSimplifiedErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

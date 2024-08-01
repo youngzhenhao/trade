@@ -353,6 +353,23 @@ func ToLowerWordsWithHyphens(s string) string {
 	return strings.ToLower(result.String())
 }
 
+func ToLowerWordsWithUnderscores(s string) string {
+	var result strings.Builder
+	for i, char := range s {
+		if char == ' ' {
+			continue
+		}
+		if i > 0 && char >= 'A' && char <= 'Z' {
+			temp := result.String()
+			if len(temp) > 0 && temp[len(temp)-1] != ' ' {
+				result.WriteRune('_')
+			}
+		}
+		result.WriteRune(char)
+	}
+	return strings.ToLower(result.String())
+}
+
 func FirstUpper(s string) string {
 	if s == "" {
 		return ""
