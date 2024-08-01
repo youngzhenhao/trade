@@ -15,6 +15,11 @@ func SetupFeeRouter(router *gin.Engine) *gin.Engine {
 		{
 			query.GET("/rate", handlers.QueryFeeRate)
 			query.GET("/recommended", handlers.QueryRecommendedFeeRate)
+			fairLaunch := query.Group("/fair_launch")
+			{
+				fairLaunch.GET("/issuance", handlers.QueryFairLaunchIssuanceFee)
+				fairLaunch.GET("/mint", handlers.QueryFairLaunchMintFee)
+			}
 			//query.GET("/all", handlers.QueryAllFeeRate)
 		}
 	}

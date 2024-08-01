@@ -134,6 +134,8 @@ const (
 	GetClosedFairLaunchInfoErr
 	GetNotStartedFairLaunchInfoErr
 	GetAllUsernameAndAssetIdAssetAddrsErr
+	FeeRateAtoiErr
+	FeeRateInvalidErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

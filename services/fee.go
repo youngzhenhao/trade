@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"math"
 	"strconv"
 	"trade/api"
 	"trade/config"
@@ -62,18 +63,18 @@ func CalculateGasFeeRateByMempool(number int) (*FeeRateResponseTransformed, erro
 	}
 	return &FeeRateResponseTransformed{
 		SatPerB: MempoolFeeRate{
-			FastestFee:  int(float64(feeRate.SatPerB.FastestFee) * rate),
-			HalfHourFee: int(float64(feeRate.SatPerB.HalfHourFee) * rate),
-			HourFee:     int(float64(feeRate.SatPerB.HourFee) * rate),
-			EconomyFee:  int(float64(feeRate.SatPerB.EconomyFee) * rate),
-			MinimumFee:  int(float64(feeRate.SatPerB.MinimumFee) * rate),
+			FastestFee:  int(math.Ceil(float64(feeRate.SatPerB.FastestFee) * rate)),
+			HalfHourFee: int(math.Ceil(float64(feeRate.SatPerB.HalfHourFee) * rate)),
+			HourFee:     int(math.Ceil(float64(feeRate.SatPerB.HourFee) * rate)),
+			EconomyFee:  int(math.Ceil(float64(feeRate.SatPerB.EconomyFee) * rate)),
+			MinimumFee:  int(math.Ceil(float64(feeRate.SatPerB.MinimumFee) * rate)),
 		},
 		SatPerKw: MempoolFeeRate{
-			FastestFee:  int(float64(feeRate.SatPerKw.FastestFee) * rate),
-			HalfHourFee: int(float64(feeRate.SatPerKw.HalfHourFee) * rate),
-			HourFee:     int(float64(feeRate.SatPerKw.HourFee) * rate),
-			EconomyFee:  int(float64(feeRate.SatPerKw.EconomyFee) * rate),
-			MinimumFee:  int(float64(feeRate.SatPerKw.MinimumFee) * rate),
+			FastestFee:  int(math.Ceil(float64(feeRate.SatPerKw.FastestFee) * rate)),
+			HalfHourFee: int(math.Ceil(float64(feeRate.SatPerKw.HalfHourFee) * rate)),
+			HourFee:     int(math.Ceil(float64(feeRate.SatPerKw.HourFee) * rate)),
+			EconomyFee:  int(math.Ceil(float64(feeRate.SatPerKw.EconomyFee) * rate)),
+			MinimumFee:  int(math.Ceil(float64(feeRate.SatPerKw.MinimumFee) * rate)),
 		},
 	}, nil
 }
@@ -276,12 +277,14 @@ func GetIssuanceTransactionByteSize() int {
 
 func GetTapdMintAssetAndFinalizeTransactionByteSize() ByteSize {
 	// TODO: need to complete
+	// @dev: 0x1p-2 is equal 0.25
 	byteSize := BaseTransactionByteSize * (1 + 0x1p-2)
 	return ByteSize(byteSize)
 }
 
 func GetTapdSendReservedAssetTransactionByteSize() ByteSize {
 	// TODO: need to complete
+	// @dev: 0x1p-2 is equal 0.25
 	byteSize := BaseTransactionByteSize * (1 + 0x1p-2)
 	return ByteSize(byteSize)
 }
@@ -292,12 +295,13 @@ func GetIssuanceTransactionGasFee(feeRateSatPerKw int) int {
 
 func GetMintTransactionByteSize() ByteSize {
 	// TODO: need to complete
+	// @dev: 0e0 is equal 0
 	byteSize := BaseTransactionByteSize * (1 + 0e0)
 	return ByteSize(byteSize)
 }
 
 func GetMintedTransactionGasFee(feeRateSatPerKw int) int {
-	return int(float64(FeeRateSatPerKwToSatPerB(feeRateSatPerKw))*float64(GetMintTransactionByteSize())) + 1500
+	return int(math.Ceil(float64(FeeRateSatPerKwToSatPerB(feeRateSatPerKw))*float64(GetMintTransactionByteSize()))) + 2000
 }
 
 func CalculateGasFee(number int, byteSize int) (int, error) {
@@ -310,21 +314,23 @@ func CalculateGasFee(number int, byteSize int) (int, error) {
 }
 
 func GetIdoPublishTransactionGasFee(feeRateSatPerKw int) int {
-	return int(float64(FeeRateSatPerKwToSatPerB(feeRateSatPerKw)) * float64(GetIdoPublishTransactionByteSize()))
+	return int(math.Ceil(float64(FeeRateSatPerKwToSatPerB(feeRateSatPerKw)) * float64(GetIdoPublishTransactionByteSize())))
 }
 
 func GetIdoPublishTransactionByteSize() ByteSize {
 	// TODO: need to complete
+	// @dev: 0e0 is equal 0
 	byteSize := BaseTransactionByteSize * (1 + 0e0)
 	return ByteSize(byteSize)
 }
 
 func GetIdoParticipateTransactionGasFee(feeRateSatPerKw int) int {
-	return int(float64(FeeRateSatPerKwToSatPerB(feeRateSatPerKw)) * float64(GetIdoParticipateTransactionByteSize()))
+	return int(math.Ceil(float64(FeeRateSatPerKwToSatPerB(feeRateSatPerKw)) * float64(GetIdoParticipateTransactionByteSize())))
 }
 
 func GetIdoParticipateTransactionByteSize() ByteSize {
 	// TODO: need to complete
+	// @dev: 0e0 is equal 0
 	byteSize := BaseTransactionByteSize * (1 + 0e0)
 	return ByteSize(byteSize)
 }
@@ -346,16 +352,27 @@ func IsIssuanceFeePaid(paidId int) bool {
 }
 
 func PayMintFee(userId int, feeRateSatPerKw int) (mintFeePaidId int, err error) {
+	if feeRateSatPerKw < FeeRateSatPerBToSatPerKw(1) {
+		return 0, errors.New("fee rate too small for mint")
+	}
+	// @dev: Do not add fee rate when pay
+	// feeRateSatPerKw = feeRateSatPerKw + FeeRateSatPerBToSatPerKw(2)
 	fee := GetMintedTransactionGasFee(feeRateSatPerKw)
 	return PayGasFee(userId, fee)
 }
 
 func PayIssuanceFee(userId int, feeRateSatPerKw int) (IssuanceFeePaidId int, err error) {
+	if feeRateSatPerKw < FeeRateSatPerBToSatPerKw(1) {
+		return 0, errors.New("fee rate too small for issuance")
+	}
 	fee := GetIssuanceTransactionGasFee(feeRateSatPerKw)
 	return PayGasFee(userId, fee)
 }
 
 func PayGasFee(payUserId int, gasFee int) (int, error) {
+	if gasFee < 0 {
+		return 0, errors.New("gas fee is negative")
+	}
 	id, err := PayAmountToAdmin(uint(payUserId), uint64(gasFee), 0)
 	if err != nil {
 		return 0, utils.AppendErrorInfo(err, "PayAmountToAdmin")

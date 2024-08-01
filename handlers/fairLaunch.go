@@ -302,8 +302,8 @@ func QueryMintIsAvailable(c *gin.Context) {
 		})
 		return
 	}
-	calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee
-	calculatedFeeRateSatPerB := feeRate.SatPerB.FastestFee
+	calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee + services.FeeRateSatPerBToSatPerKw(2)
+	calculatedFeeRateSatPerB := feeRate.SatPerB.FastestFee + 2
 	inventoryAmount, err := services.GetAmountOfInventoryCouldBeMintedByMintedNumber(fairLaunchInfoID, mintedNumber)
 	isMintAvailable := inventoryAmount > 0
 	inventoryNumberAndAmount, err := services.GetNumberAndAmountOfInventoryCouldBeMinted(fairLaunchInfoID)
