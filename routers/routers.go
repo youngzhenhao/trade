@@ -76,5 +76,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.FairLaunchFollow {
 		SetupFairLaunchFollowRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.AssetLocalMintHistory {
+		SetupAssetLocalMintHistoryRouter(r)
+	}
 	return r
 }

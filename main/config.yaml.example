@@ -42,6 +42,7 @@ router_disable:
     user: false
     asset_recommend: false
     fair_launch_follow: false
+    asset_local_mint_history: false
 api_config:
     lnd:
         host: ""

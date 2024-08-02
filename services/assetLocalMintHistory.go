@@ -7,17 +7,26 @@ import (
 	"trade/services/btldb"
 )
 
-// TODO:
-
 func ProcessAssetLocalMintHistorySetRequest(userId int, username string, assetLocalMintHistoryRequest models.AssetLocalMintHistorySetRequest) models.AssetLocalMintHistory {
 	var assetLocalMintHistory models.AssetLocalMintHistory
 	assetLocalMintHistory = models.AssetLocalMintHistory{
-		// TODO:
-		AssetId:  "",
-		DeviceId: "",
-		UserId:   0,
-		Username: "",
-		Status:   0,
+		AssetVersion:    assetLocalMintHistoryRequest.AssetVersion,
+		AssetType:       assetLocalMintHistoryRequest.AssetMetaType,
+		Name:            assetLocalMintHistoryRequest.Name,
+		AssetMetaData:   assetLocalMintHistoryRequest.AssetMetaData,
+		AssetMetaType:   assetLocalMintHistoryRequest.AssetMetaType,
+		AssetMetaHash:   assetLocalMintHistoryRequest.AssetMetaHash,
+		Amount:          assetLocalMintHistoryRequest.Amount,
+		NewGroupedAsset: assetLocalMintHistoryRequest.NewGroupedAsset,
+		GroupKey:        assetLocalMintHistoryRequest.GroupKey,
+		GroupAnchor:     assetLocalMintHistoryRequest.GroupAnchor,
+		GroupedAsset:    assetLocalMintHistoryRequest.GroupedAsset,
+		BatchKey:        assetLocalMintHistoryRequest.BatchKey,
+		BatchTxid:       assetLocalMintHistoryRequest.BatchTxid,
+		AssetId:         assetLocalMintHistoryRequest.AssetId,
+		DeviceId:        assetLocalMintHistoryRequest.DeviceId,
+		UserId:          userId,
+		Username:        username,
 	}
 	return assetLocalMintHistory
 }
@@ -43,8 +52,45 @@ func IsAssetLocalMintHistoryChanged(assetLocalMintHistoryByTxidAndIndex *models.
 	if assetLocalMintHistoryByTxidAndIndex == nil || old == nil {
 		return true
 	}
-	// TODO:
-
+	if assetLocalMintHistoryByTxidAndIndex.AssetVersion != old.AssetVersion {
+		return true
+	}
+	if assetLocalMintHistoryByTxidAndIndex.AssetType != old.AssetType {
+		return true
+	}
+	if assetLocalMintHistoryByTxidAndIndex.Name != old.Name {
+		return true
+	}
+	if assetLocalMintHistoryByTxidAndIndex.AssetMetaData != old.AssetMetaData {
+		return true
+	}
+	if assetLocalMintHistoryByTxidAndIndex.AssetMetaType != old.AssetMetaType {
+		return true
+	}
+	if assetLocalMintHistoryByTxidAndIndex.AssetMetaHash != old.AssetMetaHash {
+		return true
+	}
+	if assetLocalMintHistoryByTxidAndIndex.Amount != old.Amount {
+		return true
+	}
+	if assetLocalMintHistoryByTxidAndIndex.NewGroupedAsset != old.NewGroupedAsset {
+		return true
+	}
+	if assetLocalMintHistoryByTxidAndIndex.GroupKey != old.GroupKey {
+		return true
+	}
+	if assetLocalMintHistoryByTxidAndIndex.GroupAnchor != old.GroupAnchor {
+		return true
+	}
+	if assetLocalMintHistoryByTxidAndIndex.GroupedAsset != old.GroupedAsset {
+		return true
+	}
+	if assetLocalMintHistoryByTxidAndIndex.BatchKey != old.BatchKey {
+		return true
+	}
+	if assetLocalMintHistoryByTxidAndIndex.BatchTxid != old.BatchTxid {
+		return true
+	}
 	if assetLocalMintHistoryByTxidAndIndex.AssetId != old.AssetId {
 		return true
 	}
@@ -71,7 +117,19 @@ func CheckAssetLocalMintHistoryIfUpdate(assetLocalMintHistory *models.AssetLocal
 	if !IsAssetLocalMintHistoryChanged(assetLocalMintHistoryByAssetId, assetLocalMintHistory) {
 		return assetLocalMintHistoryByAssetId, nil
 	}
-	// TODO:
+	assetLocalMintHistoryByAssetId.AssetVersion = assetLocalMintHistory.AssetVersion
+	assetLocalMintHistoryByAssetId.AssetType = assetLocalMintHistory.AssetType
+	assetLocalMintHistoryByAssetId.Name = assetLocalMintHistory.Name
+	assetLocalMintHistoryByAssetId.AssetMetaData = assetLocalMintHistory.AssetMetaData
+	assetLocalMintHistoryByAssetId.AssetMetaType = assetLocalMintHistory.AssetMetaType
+	assetLocalMintHistoryByAssetId.AssetMetaHash = assetLocalMintHistory.AssetMetaHash
+	assetLocalMintHistoryByAssetId.Amount = assetLocalMintHistory.Amount
+	assetLocalMintHistoryByAssetId.NewGroupedAsset = assetLocalMintHistory.NewGroupedAsset
+	assetLocalMintHistoryByAssetId.GroupKey = assetLocalMintHistory.GroupKey
+	assetLocalMintHistoryByAssetId.GroupAnchor = assetLocalMintHistory.GroupAnchor
+	assetLocalMintHistoryByAssetId.GroupedAsset = assetLocalMintHistory.GroupedAsset
+	assetLocalMintHistoryByAssetId.BatchKey = assetLocalMintHistory.BatchKey
+	assetLocalMintHistoryByAssetId.BatchTxid = assetLocalMintHistory.BatchTxid
 	assetLocalMintHistoryByAssetId.AssetId = assetLocalMintHistory.AssetId
 	assetLocalMintHistoryByAssetId.DeviceId = assetLocalMintHistory.DeviceId
 	assetLocalMintHistoryByAssetId.UserId = assetLocalMintHistory.UserId
@@ -85,6 +143,8 @@ func CreateOrUpdateAssetLocalMintHistory(transfer *models.AssetLocalMintHistory)
 	return btldb.UpdateAssetLocalMintHistory(assetLocalMintHistory)
 }
 
+// CreateOrUpdateAssetLocalMintHistories
+// @Description: create or update asset local mint histories
 func CreateOrUpdateAssetLocalMintHistories(transfers *[]models.AssetLocalMintHistory) (err error) {
 	var assetLocalMintHistories []models.AssetLocalMintHistory
 	var assetLocalMintHistory *models.AssetLocalMintHistory
@@ -113,24 +173,34 @@ func GetAllAssetLocalMintHistoriesUpdatedAtDesc() (*[]models.AssetLocalMintHisto
 }
 
 type AssetLocalMintHistorySimplified struct {
-	UpdatedAt time.Time `json:"updated_at"`
-	AssetType string    `json:"asset_type" gorm:"type:varchar(255)"`
-	Name      string    `json:"name" gorm:"type:varchar(255)"`
-	// TODO:
-
-	AssetId  string `json:"asset_id" gorm:"type:varchar(255)"`
-	DeviceId string `json:"device_id" gorm:"type:varchar(255)"`
-	Username string `json:"username" gorm:"type:varchar(255)"`
+	UpdatedAt       time.Time `json:"updated_at"`
+	AssetType       string    `json:"asset_type" gorm:"type:varchar(255)"`
+	Name            string    `json:"name" gorm:"type:varchar(255)"`
+	AssetMetaHash   string    `json:"asset_meta_hash" gorm:"type:varchar(255)"`
+	Amount          int       `json:"amount"`
+	NewGroupedAsset bool      `json:"new_grouped_asset"`
+	GroupKey        string    `json:"group_key" gorm:"type:varchar(255)"`
+	GroupedAsset    bool      `json:"grouped_asset"`
+	BatchTxid       string    `json:"batch_txid" gorm:"type:varchar(255)"`
+	AssetId         string    `json:"asset_id" gorm:"type:varchar(255)"`
+	DeviceId        string    `json:"device_id" gorm:"type:varchar(255)"`
+	Username        string    `json:"username" gorm:"type:varchar(255)"`
 }
 
 func AssetLocalMintHistoryToAssetLocalMintHistorySimplified(assetLocalMintHistory models.AssetLocalMintHistory) AssetLocalMintHistorySimplified {
 	return AssetLocalMintHistorySimplified{
-		UpdatedAt: assetLocalMintHistory.UpdatedAt,
-		// TODO:
-
-		AssetId:  assetLocalMintHistory.AssetId,
-		DeviceId: assetLocalMintHistory.DeviceId,
-		Username: assetLocalMintHistory.Username,
+		UpdatedAt:       assetLocalMintHistory.UpdatedAt,
+		AssetType:       assetLocalMintHistory.AssetType,
+		Name:            assetLocalMintHistory.Name,
+		AssetMetaHash:   assetLocalMintHistory.AssetMetaHash,
+		Amount:          assetLocalMintHistory.Amount,
+		NewGroupedAsset: assetLocalMintHistory.NewGroupedAsset,
+		GroupKey:        assetLocalMintHistory.GroupKey,
+		GroupedAsset:    assetLocalMintHistory.GroupedAsset,
+		BatchTxid:       assetLocalMintHistory.BatchTxid,
+		AssetId:         assetLocalMintHistory.AssetId,
+		DeviceId:        assetLocalMintHistory.DeviceId,
+		Username:        assetLocalMintHistory.Username,
 	}
 }
 

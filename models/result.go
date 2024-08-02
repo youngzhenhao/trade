@@ -143,6 +143,11 @@ const (
 	GetFollowedFairLaunchInfoErr
 	IsFairLaunchInfoIdAndAssetIdValidErr
 	FairLaunchInfoAssetIdInvalidErr
+	GetAssetLocalMintHistoriesByUserIdErr
+	GetAssetLocalMintHistoryByAssetIdErr
+	SetAssetLocalMintHistoryErr
+	SetAssetLocalMintHistoriesErr
+	GetAllAssetLocalMintHistorySimplifiedErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
