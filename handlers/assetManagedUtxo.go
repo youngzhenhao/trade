@@ -37,6 +37,26 @@ func GetAssetManagedUtxoByUserId(c *gin.Context) {
 	})
 }
 
+func GetAssetManagedUtxoAssetId(c *gin.Context) {
+	assetId := c.Param("asset_id")
+	assetManagedUtxos, err := services.GetAssetManagedUtxosByAssetId(assetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetManagedUtxoByAssetIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    assetManagedUtxos,
+	})
+}
+
 func GetAssetManagedUtxoIdsByUserId(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)
@@ -68,23 +88,34 @@ func GetAssetManagedUtxoIdsByUserId(c *gin.Context) {
 	})
 }
 
-func GetAssetManagedUtxoAssetId(c *gin.Context) {
-	assetId := c.Param("asset_id")
-	assetManagedUtxos, err := services.GetAssetManagedUtxosByAssetId(assetId)
+func GetAssetManagedUtxoAssetIdsByUserId(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAssetManagedUtxoByAssetIdErr,
+			Code:    models.NameToIdErr,
 			Data:    nil,
 		})
 		return
 	}
+	assetManagedUtxos, err := services.GetAssetManagedUtxosByUserId(userId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetManagedUtxosByUserIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	assetIds := services.AssetManagedUtxosToAssetIds(assetManagedUtxos)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SuccessErr,
 		Code:    models.SUCCESS,
-		Data:    assetManagedUtxos,
+		Data:    assetIds,
 	})
 }
 

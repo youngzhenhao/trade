@@ -12,7 +12,11 @@ func SetupAssetManagedUtxoRouter(router *gin.Engine) *gin.Engine {
 	assetManagedUtxo.Use(middleware.AuthMiddleware())
 	{
 		assetManagedUtxo.GET("/get/user", handlers.GetAssetManagedUtxoByUserId)
-		assetManagedUtxo.GET("/get/user/ids", handlers.GetAssetManagedUtxoIdsByUserId)
+		// @dev: This two routers may be useless
+		{
+			assetManagedUtxo.GET("/get/user/ids", handlers.GetAssetManagedUtxoIdsByUserId)
+			assetManagedUtxo.GET("/get/user/asset_ids", handlers.GetAssetManagedUtxoAssetIdsByUserId)
+		}
 		assetManagedUtxo.GET("/get/asset_id/:asset_id", handlers.GetAssetManagedUtxoAssetId)
 		assetManagedUtxo.POST("/set", handlers.SetAssetManagedUtxos)
 		assetManagedUtxo.POST("/remove", handlers.RemoveAssetManagedUtxos)

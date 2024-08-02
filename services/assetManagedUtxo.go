@@ -360,6 +360,17 @@ func AssetManagedUtxosToAssetManagedUtxoIds(assetManagedUtxos *[]models.AssetMan
 	return &assetManagedUtxoIds
 }
 
+func AssetManagedUtxosToAssetIds(assetManagedUtxos *[]models.AssetManagedUtxo) *[]string {
+	if assetManagedUtxos == nil {
+		return nil
+	}
+	var assetIds []string
+	for _, assetManagedUtxo := range *assetManagedUtxos {
+		assetIds = append(assetIds, assetManagedUtxo.AssetGenesisAssetID)
+	}
+	return &assetIds
+}
+
 func GetAssetManagedUtxosByIds(assetManagedUtxoIds *[]int) (*[]models.AssetManagedUtxo, error) {
 	return btldb.ReadAssetManagedUtxosByIds(assetManagedUtxoIds)
 }
