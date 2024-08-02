@@ -70,5 +70,5 @@ func DeleteAssetManagedUtxo(id uint) error {
 
 func DeleteAssetManagedUtxoByIds(assetManagedUtxoIds *[]int) error {
 	var assetManagedUtxo models.AssetManagedUtxo
-	return middleware.DB.Where(assetManagedUtxoIds).Delete(&assetManagedUtxo).Error
+	return middleware.DB.Delete(&assetManagedUtxo, assetManagedUtxoIds).Error
 }
