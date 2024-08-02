@@ -12,8 +12,10 @@ func SetupAssetManagedUtxoRouter(router *gin.Engine) *gin.Engine {
 	assetManagedUtxo.Use(middleware.AuthMiddleware())
 	{
 		assetManagedUtxo.GET("/get/user", handlers.GetAssetManagedUtxoByUserId)
+		assetManagedUtxo.GET("/get/user/ids", handlers.GetAssetManagedUtxoIdsByUserId)
 		assetManagedUtxo.GET("/get/asset_id/:asset_id", handlers.GetAssetManagedUtxoAssetId)
 		assetManagedUtxo.POST("/set", handlers.SetAssetManagedUtxos)
+		assetManagedUtxo.POST("/remove", handlers.RemoveAssetManagedUtxos)
 	}
 	authorized := router.Group("/asset_managed_utxo", gin.BasicAuth(gin.Accounts{
 		config.GetLoadConfig().AdminUser.Username: config.GetLoadConfig().AdminUser.Password,

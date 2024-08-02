@@ -152,6 +152,7 @@ const (
 	GetAssetManagedUtxoByAssetIdErr
 	SetAssetManagedUtxosErr
 	GetAllAssetManagedUtxoSimplifiedErr
+	ValidateUserIdAndAssetManagedUtxoIdsErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

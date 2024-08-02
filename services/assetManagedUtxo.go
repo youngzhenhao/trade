@@ -344,3 +344,35 @@ func GetAllAssetManagedUtxoSimplified() (*[]AssetManagedUtxoSimplified, error) {
 	allAssetManagedUtxoSimplified := AssetManagedUtxoSliceToAssetManagedUtxoSimplifiedSlice(allAssetManagedUtxos)
 	return allAssetManagedUtxoSimplified, nil
 }
+
+func RemoveAssetManagedUtxoByIds(assetManagedUtxoIds *[]int) error {
+	return btldb.DeleteAssetManagedUtxoByIds(assetManagedUtxoIds)
+}
+
+func AssetManagedUtxosToAssetManagedUtxoIds(assetManagedUtxos *[]models.AssetManagedUtxo) *[]int {
+	if assetManagedUtxos == nil {
+		return nil
+	}
+	var assetManagedUtxoIds []int
+	for _, assetManagedUtxo := range *assetManagedUtxos {
+		assetManagedUtxoIds = append(assetManagedUtxoIds, int(assetManagedUtxo.ID))
+	}
+	return &assetManagedUtxoIds
+}
+
+func GetAssetManagedUtxosByIds(assetManagedUtxoIds *[]int) (*[]models.AssetManagedUtxo, error) {
+	return btldb.ReadAssetManagedUtxosByIds(assetManagedUtxoIds)
+}
+
+func ValidateUserIdAndAssetManagedUtxoIds(userId int, assetManagedUtxoIds *[]int) error {
+	assetManagedUtxos, err := GetAssetManagedUtxosByIds(assetManagedUtxoIds)
+	if err != nil {
+		return err
+	}
+	for _, assetManagedUtxo := range *assetManagedUtxos {
+		if assetManagedUtxo.UserId != userId {
+			return errors.New("user id does not match")
+		}
+	}
+	return nil
+}

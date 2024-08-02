@@ -31,6 +31,12 @@ func ReadAssetManagedUtxo(id uint) (*models.AssetManagedUtxo, error) {
 	return &assetManagedUtxo, err
 }
 
+func ReadAssetManagedUtxosByIds(assetManagedUtxoIds *[]int) (*[]models.AssetManagedUtxo, error) {
+	var assetManagedUtxos []models.AssetManagedUtxo
+	err := middleware.DB.Where(assetManagedUtxoIds).Find(&assetManagedUtxos).Error
+	return &assetManagedUtxos, err
+}
+
 func ReadAssetManagedUtxosByUserId(userId int) (*[]models.AssetManagedUtxo, error) {
 	var assetManagedUtxos []models.AssetManagedUtxo
 	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&assetManagedUtxos).Error
@@ -60,4 +66,9 @@ func UpdateAssetManagedUtxos(assetManagedUtxos *[]models.AssetManagedUtxo) error
 func DeleteAssetManagedUtxo(id uint) error {
 	var assetManagedUtxo models.AssetManagedUtxo
 	return middleware.DB.Delete(&assetManagedUtxo, id).Error
+}
+
+func DeleteAssetManagedUtxoByIds(assetManagedUtxoIds *[]int) error {
+	var assetManagedUtxo models.AssetManagedUtxo
+	return middleware.DB.Where(assetManagedUtxoIds).Delete(&assetManagedUtxo).Error
 }
