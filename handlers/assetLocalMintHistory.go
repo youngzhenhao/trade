@@ -81,7 +81,7 @@ func SetAssetLocalMintHistory(c *gin.Context) {
 		return
 	}
 	assetLocalMintHistory := services.ProcessAssetLocalMintHistorySetRequest(userId, username, assetLocalMintHistorySetRequest)
-	err = services.CreateOrUpdateAssetLocalMintHistory(&assetLocalMintHistory)
+	err = services.CreateOrUpdateAssetLocalMintHistory(userId, &assetLocalMintHistory)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -123,7 +123,7 @@ func SetAssetLocalMintHistories(c *gin.Context) {
 		return
 	}
 	assetLocalMintHistories := services.ProcessAssetLocalMintHistorySetRequests(userId, username, &assetLocalMintHistorySetRequests)
-	err = services.CreateOrUpdateAssetLocalMintHistories(assetLocalMintHistories)
+	err = services.CreateOrUpdateAssetLocalMintHistories(userId, assetLocalMintHistories)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,

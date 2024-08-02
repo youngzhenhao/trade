@@ -48,6 +48,9 @@ func GetAssetLocalMintHistoryByAssetId(assetId string) (*models.AssetLocalMintHi
 	return btldb.ReadAssetLocalMintHistoryByAssetId(assetId)
 }
 
+func GetAssetLocalMintHistoryByUserIdAndAssetId(userId int, assetId string) (*models.AssetLocalMintHistory, error) {
+	return btldb.ReadAssetLocalMintHistoryByUserIdAndAssetId(userId, assetId)
+}
 func IsAssetLocalMintHistoryChanged(assetLocalMintHistoryByTxidAndIndex *models.AssetLocalMintHistory, old *models.AssetLocalMintHistory) bool {
 	if assetLocalMintHistoryByTxidAndIndex == nil || old == nil {
 		return true
@@ -106,50 +109,50 @@ func IsAssetLocalMintHistoryChanged(assetLocalMintHistoryByTxidAndIndex *models.
 	return false
 }
 
-func CheckAssetLocalMintHistoryIfUpdate(assetLocalMintHistory *models.AssetLocalMintHistory) (*models.AssetLocalMintHistory, error) {
+func CheckAssetLocalMintHistoryIfUpdate(userId int, assetLocalMintHistory *models.AssetLocalMintHistory) (*models.AssetLocalMintHistory, error) {
 	if assetLocalMintHistory == nil {
 		return nil, errors.New("nil asset local mint history")
 	}
-	assetLocalMintHistoryByAssetId, err := GetAssetLocalMintHistoryByAssetId(assetLocalMintHistory.AssetId)
+	assetLocalMintHistoryByUserIdAndAssetId, err := GetAssetLocalMintHistoryByUserIdAndAssetId(userId, assetLocalMintHistory.AssetId)
 	if err != nil {
 		return assetLocalMintHistory, nil
 	}
-	if !IsAssetLocalMintHistoryChanged(assetLocalMintHistoryByAssetId, assetLocalMintHistory) {
-		return assetLocalMintHistoryByAssetId, nil
+	if !IsAssetLocalMintHistoryChanged(assetLocalMintHistoryByUserIdAndAssetId, assetLocalMintHistory) {
+		return assetLocalMintHistoryByUserIdAndAssetId, nil
 	}
-	assetLocalMintHistoryByAssetId.AssetVersion = assetLocalMintHistory.AssetVersion
-	assetLocalMintHistoryByAssetId.AssetType = assetLocalMintHistory.AssetType
-	assetLocalMintHistoryByAssetId.Name = assetLocalMintHistory.Name
-	assetLocalMintHistoryByAssetId.AssetMetaData = assetLocalMintHistory.AssetMetaData
-	assetLocalMintHistoryByAssetId.AssetMetaType = assetLocalMintHistory.AssetMetaType
-	assetLocalMintHistoryByAssetId.AssetMetaHash = assetLocalMintHistory.AssetMetaHash
-	assetLocalMintHistoryByAssetId.Amount = assetLocalMintHistory.Amount
-	assetLocalMintHistoryByAssetId.NewGroupedAsset = assetLocalMintHistory.NewGroupedAsset
-	assetLocalMintHistoryByAssetId.GroupKey = assetLocalMintHistory.GroupKey
-	assetLocalMintHistoryByAssetId.GroupAnchor = assetLocalMintHistory.GroupAnchor
-	assetLocalMintHistoryByAssetId.GroupedAsset = assetLocalMintHistory.GroupedAsset
-	assetLocalMintHistoryByAssetId.BatchKey = assetLocalMintHistory.BatchKey
-	assetLocalMintHistoryByAssetId.BatchTxid = assetLocalMintHistory.BatchTxid
-	assetLocalMintHistoryByAssetId.AssetId = assetLocalMintHistory.AssetId
-	assetLocalMintHistoryByAssetId.DeviceId = assetLocalMintHistory.DeviceId
-	assetLocalMintHistoryByAssetId.UserId = assetLocalMintHistory.UserId
-	assetLocalMintHistoryByAssetId.Username = assetLocalMintHistory.Username
-	return assetLocalMintHistoryByAssetId, nil
+	assetLocalMintHistoryByUserIdAndAssetId.AssetVersion = assetLocalMintHistory.AssetVersion
+	assetLocalMintHistoryByUserIdAndAssetId.AssetType = assetLocalMintHistory.AssetType
+	assetLocalMintHistoryByUserIdAndAssetId.Name = assetLocalMintHistory.Name
+	assetLocalMintHistoryByUserIdAndAssetId.AssetMetaData = assetLocalMintHistory.AssetMetaData
+	assetLocalMintHistoryByUserIdAndAssetId.AssetMetaType = assetLocalMintHistory.AssetMetaType
+	assetLocalMintHistoryByUserIdAndAssetId.AssetMetaHash = assetLocalMintHistory.AssetMetaHash
+	assetLocalMintHistoryByUserIdAndAssetId.Amount = assetLocalMintHistory.Amount
+	assetLocalMintHistoryByUserIdAndAssetId.NewGroupedAsset = assetLocalMintHistory.NewGroupedAsset
+	assetLocalMintHistoryByUserIdAndAssetId.GroupKey = assetLocalMintHistory.GroupKey
+	assetLocalMintHistoryByUserIdAndAssetId.GroupAnchor = assetLocalMintHistory.GroupAnchor
+	assetLocalMintHistoryByUserIdAndAssetId.GroupedAsset = assetLocalMintHistory.GroupedAsset
+	assetLocalMintHistoryByUserIdAndAssetId.BatchKey = assetLocalMintHistory.BatchKey
+	assetLocalMintHistoryByUserIdAndAssetId.BatchTxid = assetLocalMintHistory.BatchTxid
+	assetLocalMintHistoryByUserIdAndAssetId.AssetId = assetLocalMintHistory.AssetId
+	assetLocalMintHistoryByUserIdAndAssetId.DeviceId = assetLocalMintHistory.DeviceId
+	assetLocalMintHistoryByUserIdAndAssetId.UserId = assetLocalMintHistory.UserId
+	assetLocalMintHistoryByUserIdAndAssetId.Username = assetLocalMintHistory.Username
+	return assetLocalMintHistoryByUserIdAndAssetId, nil
 }
 
-func CreateOrUpdateAssetLocalMintHistory(transfer *models.AssetLocalMintHistory) (err error) {
+func CreateOrUpdateAssetLocalMintHistory(userId int, transfer *models.AssetLocalMintHistory) (err error) {
 	var assetLocalMintHistory *models.AssetLocalMintHistory
-	assetLocalMintHistory, err = CheckAssetLocalMintHistoryIfUpdate(transfer)
+	assetLocalMintHistory, err = CheckAssetLocalMintHistoryIfUpdate(userId, transfer)
 	return btldb.UpdateAssetLocalMintHistory(assetLocalMintHistory)
 }
 
 // CreateOrUpdateAssetLocalMintHistories
 // @Description: create or update asset local mint histories
-func CreateOrUpdateAssetLocalMintHistories(transfers *[]models.AssetLocalMintHistory) (err error) {
+func CreateOrUpdateAssetLocalMintHistories(userId int, transfers *[]models.AssetLocalMintHistory) (err error) {
 	var assetLocalMintHistories []models.AssetLocalMintHistory
 	var assetLocalMintHistory *models.AssetLocalMintHistory
 	for _, transfer := range *transfers {
-		assetLocalMintHistory, err = CheckAssetLocalMintHistoryIfUpdate(&transfer)
+		assetLocalMintHistory, err = CheckAssetLocalMintHistoryIfUpdate(userId, &transfer)
 		if err != nil {
 			return err
 		}

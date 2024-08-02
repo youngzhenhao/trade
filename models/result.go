@@ -148,6 +148,10 @@ const (
 	SetAssetLocalMintHistoryErr
 	SetAssetLocalMintHistoriesErr
 	GetAllAssetLocalMintHistorySimplifiedErr
+	GetAssetManagedUtxosByUserIdErr
+	GetAssetManagedUtxoByAssetIdErr
+	SetAssetManagedUtxosErr
+	GetAllAssetManagedUtxoSimplifiedErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {

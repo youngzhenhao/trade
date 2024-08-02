@@ -7,7 +7,6 @@ import (
 	"trade/middleware"
 )
 
-// TODO: need to test
 func SetupAssetLocalMintHistoryRouter(router *gin.Engine) *gin.Engine {
 	assetLocalMint := router.Group("/asset_local_mint_history")
 	assetLocalMint.Use(middleware.AuthMiddleware())

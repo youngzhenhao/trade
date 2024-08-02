@@ -56,6 +56,7 @@ type Config struct {
 		AssetRecommend        bool `yaml:"asset_recommend" json:"asset_recommend"`
 		FairLaunchFollow      bool `yaml:"fair_launch_follow" json:"fair_launch_follow"`
 		AssetLocalMintHistory bool `yaml:"asset_local_mint_history" json:"asset_local_mint_history"`
+		AssetManagedUtxo      bool `yaml:"asset_managed_utxo" json:"asset_managed_utxo"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {

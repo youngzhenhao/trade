@@ -79,5 +79,8 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AssetLocalMintHistory {
 		SetupAssetLocalMintHistoryRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.AssetManagedUtxo {
+		SetupAssetManagedUtxoRouter(r)
+	}
 	return r
 }

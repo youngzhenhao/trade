@@ -43,6 +43,12 @@ func ReadAssetLocalMintHistoryByAssetId(assetId string) (*models.AssetLocalMintH
 	return &assetLocalMintHistory, err
 }
 
+func ReadAssetLocalMintHistoryByUserIdAndAssetId(userId int, assetId string) (*models.AssetLocalMintHistory, error) {
+	var assetLocalMintHistory models.AssetLocalMintHistory
+	err := middleware.DB.Where("user_id = ? AND asset_id = ? AND status = ?", userId, assetId, 1).First(&assetLocalMintHistory).Error
+	return &assetLocalMintHistory, err
+}
+
 func UpdateAssetLocalMintHistory(assetLocalMintHistory *models.AssetLocalMintHistory) error {
 	return middleware.DB.Save(assetLocalMintHistory).Error
 }
