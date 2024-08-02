@@ -15,6 +15,7 @@ func SetupFairLaunchFollowRouter(router *gin.Engine) *gin.Engine {
 		fairLaunchFollow.POST("/unfollow/asset_id/:asset_id", handlers.SetUnfollowFairLaunchInfo)
 		query := fairLaunchFollow.Group("/query")
 		query.GET("/user/followed", handlers.GetFairLaunchFollowByUserId)
+		query.GET("/user/is_followed/asset_id/:asset_id", handlers.GetFairLaunchInfoIsFollowed)
 	}
 	authorized := router.Group("/fair_launch_follow", gin.BasicAuth(gin.Accounts{
 		config.GetLoadConfig().AdminUser.Username: config.GetLoadConfig().AdminUser.Password,

@@ -148,3 +148,25 @@ func GetAllFairLaunchFollowSimplified(c *gin.Context) {
 		Data:    fairLaunchFollows,
 	})
 }
+
+func GetFairLaunchInfoIsFollowed(c *gin.Context) {
+	assetId := c.Param("asset_id")
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	isFairLaunchFollowed := services.IsFairLaunchFollowed(userId, assetId)
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    isFairLaunchFollowed,
+	})
+}
