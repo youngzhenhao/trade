@@ -18,9 +18,22 @@ var (
 	SuccessErr = errors.New("").Error()
 )
 
+// Err type:CustodyAccount
 const (
-	SUCCESS     ErrCode = 200
-	DefaultErr  ErrCode = -1
+	CustodyAccountCreateErr ErrCode = iota + 1000
+	CustodyAccountUpdateErr
+	CustodyAccountGetErr
+	CustodyAccountDeleteErr
+)
+
+// Err type:Normal
+const (
+	SUCCESS    ErrCode = 200
+	DefaultErr ErrCode = -1
+)
+
+// Err type:Unknown
+const (
 	NameToIdErr ErrCode = iota + 500
 	IdAtoiErr
 	ShouldBindJsonErr
