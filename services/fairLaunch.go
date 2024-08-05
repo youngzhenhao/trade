@@ -20,7 +20,7 @@ import (
 func PrintProcessionResult(processionResult *[]ProcessionResult) {
 	for _, result := range *processionResult {
 		if !result.Success {
-			FairLaunchDebugLogger.Info("%v", utils.ValueJsonString(result.Error))
+			FairLaunchDebugLogger.Info("%d:%v", result.id, utils.ValueJsonString(result.Error))
 		}
 	}
 }
@@ -1828,7 +1828,7 @@ func ProcessFairLaunchMintedStatePaidNoSendInfo(fairLaunchMintedInfo *models.Fai
 	// @dev: Calculate mint amount
 	calculatedMintAmount := CalculateMintAmountByFairLaunchInventoryInfos(lockedInventory)
 	if calculatedMintAmount != fairLaunchMintedInfo.AddrAmount {
-		err = errors.New("calculated amount is not equal fairLaunchMintedInfo's addr amount")
+		err = errors.New("calculated amount " + strconv.Itoa(calculatedMintAmount) + " is not equal fairLaunchMintedInfo's addr amount")
 		return err
 	}
 	// @dev: Change state
