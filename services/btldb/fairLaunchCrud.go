@@ -100,6 +100,10 @@ func (f *FairLaunchStore) CreateFairLaunchInventoryInfos(fairLaunchInventoryInfo
 	return f.DB.Create(fairLaunchInventoryInfos).Error
 }
 
+func CreateFairLaunchInventoryInfos(fairLaunchInventoryInfos *[]models.FairLaunchInventoryInfo) error {
+	return middleware.DB.Create(fairLaunchInventoryInfos).Error
+}
+
 func (f *FairLaunchStore) ReadFairLaunchInventoryInfo(id uint) (*models.FairLaunchInventoryInfo, error) {
 	var fairLaunchInventoryInfo models.FairLaunchInventoryInfo
 	err := f.DB.First(&fairLaunchInventoryInfo, id).Error
