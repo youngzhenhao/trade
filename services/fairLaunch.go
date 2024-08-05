@@ -432,8 +432,7 @@ func CreateInventoryInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) 
 		FairLaunchInfoID: int(fairLaunchInfo.ID),
 		Quantity:         fairLaunchInfo.FinalQuantity,
 	})
-	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.CreateFairLaunchInventoryInfos(&FairLaunchInventoryInfos)
+	return CreateFairLaunchInventoryInfosBatchProcess(&FairLaunchInventoryInfos)
 }
 
 // CreateAssetIssuanceInfoByFairLaunchInfo
@@ -2221,4 +2220,39 @@ func ProcessToFairLaunchPlusInfo(fairLaunchInfo *models.FairLaunchInfo, holderNu
 		FeeRateOfMintNumberOne: feeRate,
 		FeeOfMintNumberOne:     fee,
 	}
+}
+
+func SplitFairLaunchInventoryInfos(fairLaunchInventoryInfos *[]models.FairLaunchInventoryInfo) *[][]models.FairLaunchInventoryInfo {
+	if fairLaunchInventoryInfos == nil {
+		return nil
+	}
+	var fairLaunchInventoryInfoSlilces [][]models.FairLaunchInventoryInfo
+	totalLength := len(*fairLaunchInventoryInfos)
+	twoDimensionalSliceLength := int(math.Ceil(float64(totalLength) / 1000))
+	for i := 0; i < twoDimensionalSliceLength; i++ {
+		var inventory []models.FairLaunchInventoryInfo
+		if i != twoDimensionalSliceLength-1 {
+			inventory = (*fairLaunchInventoryInfos)[i*1000 : i*1000+1000]
+		} else {
+			inventory = (*fairLaunchInventoryInfos)[i*1000 : totalLength]
+		}
+		fairLaunchInventoryInfoSlilces = append(fairLaunchInventoryInfoSlilces, inventory)
+	}
+	return &fairLaunchInventoryInfoSlilces
+}
+
+func SetFairLaunchInventoryInfos(fairLaunchInventoryInfos *[]models.FairLaunchInventoryInfo) error {
+	return btldb.CreateFairLaunchInventoryInfos(fairLaunchInventoryInfos)
+}
+
+func CreateFairLaunchInventoryInfosBatchProcess(fairLaunchInventoryInfos *[]models.FairLaunchInventoryInfo) error {
+	splitFairLaunchInventoryInfos := SplitFairLaunchInventoryInfos(fairLaunchInventoryInfos)
+	var err error
+	for _, inventories := range *splitFairLaunchInventoryInfos {
+		err = SetFairLaunchInventoryInfos(&inventories)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
