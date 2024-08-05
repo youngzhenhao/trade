@@ -2206,3 +2206,19 @@ func GetFollowedFairLaunchInfo(userId int) (*[]models.FairLaunchInfo, error) {
 
 // TODO: Consider adding: When a fair launch is successful,
 // 		forward the asset to the server self three different asset addresses (split UTXO)
+
+type FairLaunchPlusInfo struct {
+	FairLaunchInfo         *models.FairLaunchInfo      `json:"fair_launch_info"`
+	HolderNumber           int                         `json:"holder_number"`
+	FeeRateOfMintNumberOne *FeeRateResponseTransformed `json:"fee_rate_of_mint_number_one"`
+	FeeOfMintNumberOne     int                         `json:"fee_of_mint_number_one"`
+}
+
+func ProcessToFairLaunchPlusInfo(fairLaunchInfo *models.FairLaunchInfo, holderNumber int, feeRate *FeeRateResponseTransformed, fee int) *FairLaunchPlusInfo {
+	return &FairLaunchPlusInfo{
+		FairLaunchInfo:         fairLaunchInfo,
+		HolderNumber:           holderNumber,
+		FeeRateOfMintNumberOne: feeRate,
+		FeeOfMintNumberOne:     fee,
+	}
+}
