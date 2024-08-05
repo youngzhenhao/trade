@@ -369,18 +369,17 @@ func QueryInvoiceByUserId(userId uint, assetId string) ([]InvoiceResponce, error
 	}
 	if len(a) > 0 {
 		var invoices []InvoiceResponce
-		for _, v := range a {
+		for j := len(a) - 1; j >= 0; j-- {
 			var i InvoiceResponce
-			i.Invoice = v.Invoice
-			i.AssetId = v.AssetId
-			i.Amount = int64(v.Amount)
-			i.Status = v.Status
+			i.Invoice = a[j].Invoice
+			i.AssetId = a[j].AssetId
+			i.Amount = int64(a[j].Amount)
+			i.Status = a[j].Status
 			invoices = append(invoices, i)
 		}
 		return invoices, nil
 	}
 	return nil, nil
-
 }
 
 type PaymentRequest struct {
