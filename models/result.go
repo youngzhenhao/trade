@@ -15,12 +15,25 @@ type JsonResult struct {
 type ErrCode int
 
 var (
-	SuccessErr = errors.New("").Error()
+	SuccessErr = SUCCESS.Error()
 )
 
+// Err type:CustodyAccount
 const (
-	SUCCESS     ErrCode = 200
-	DefaultErr  ErrCode = -1
+	CustodyAccountCreateErr ErrCode = iota + 1000
+	CustodyAccountUpdateErr
+	CustodyAccountGetErr
+	CustodyAccountDeleteErr
+)
+
+// Err type:Normal
+const (
+	SUCCESS    ErrCode = 200
+	DefaultErr ErrCode = -1
+)
+
+// Err type:Unknown
+const (
 	NameToIdErr ErrCode = iota + 500
 	IdAtoiErr
 	ShouldBindJsonErr
@@ -155,13 +168,23 @@ const (
 	ValidateUserIdAndAssetManagedUtxoIdsErr
 )
 
+func (e ErrCode) Error() string {
+	switch {
+	case errors.Is(e, SUCCESS):
+		return ""
+	case errors.Is(e, DefaultErr):
+		return "error"
+	default:
+		return ""
+	}
+}
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
 	jsonResult := JsonResult{
 		Error: errorString,
 		Code:  code,
 		Data:  data,
 	}
-	if code == SUCCESS {
+	if errors.Is(code, SUCCESS) {
 		jsonResult.Success = true
 	} else {
 		jsonResult.Success = false
