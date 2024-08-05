@@ -15,7 +15,7 @@ type JsonResult struct {
 type ErrCode int
 
 var (
-	SuccessErr = errors.New("").Error()
+	SuccessErr = SUCCESS.Error()
 )
 
 // Err type:CustodyAccount
@@ -168,13 +168,23 @@ const (
 	ValidateUserIdAndAssetManagedUtxoIdsErr
 )
 
+func (e ErrCode) Error() string {
+	switch {
+	case errors.Is(e, SUCCESS):
+		return ""
+	case errors.Is(e, DefaultErr):
+		return "error"
+	default:
+		return ""
+	}
+}
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
 	jsonResult := JsonResult{
 		Error: errorString,
 		Code:  code,
 		Data:  data,
 	}
-	if code == SUCCESS {
+	if errors.Is(code, SUCCESS) {
 		jsonResult.Success = true
 	} else {
 		jsonResult.Success = false
