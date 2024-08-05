@@ -116,8 +116,9 @@ func PayInvoice(c *gin.Context) {
 	}
 	// 选择托管账户
 	account, err := btldb.ReadAccountByUserId(user.ID)
-	if err != nil {
-		fmt.Println(err.Error())
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		services.CUST.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询账户信息失败"})
 		return
 	}
 	if account.UserAccountCode == "" {
