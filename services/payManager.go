@@ -13,13 +13,9 @@ var (
 	AdminAccountId uint = 1
 )
 
-func NewRecharge() {
-
-}
-
 // 托管账户划扣费用
-func PayAmountToAdmin(payUserId uint, gasFee, serveFee uint64) (uint, error) {
-	id, err := CreatePayInsideMission(payUserId, AdminUserId, gasFee, serveFee, "00")
+func PayAmountToAdmin(payUserId uint, gasFee uint64) (uint, error) {
+	id, err := CreatePayInsideMission(payUserId, AdminUserId, gasFee, 0, "00")
 	if err != nil {
 		CUST.Error("PayAmountToAdmin failed:%s", err)
 		return 0, err

@@ -373,7 +373,7 @@ func PayGasFee(payUserId int, gasFee int) (int, error) {
 	if gasFee < 0 {
 		return 0, errors.New("gas fee is negative")
 	}
-	id, err := PayAmountToAdmin(uint(payUserId), uint64(gasFee), 0)
+	id, err := PayAmountToAdmin(uint(payUserId), uint64(gasFee))
 	if err != nil {
 		return 0, utils.AppendErrorInfo(err, "PayAmountToAdmin")
 	}

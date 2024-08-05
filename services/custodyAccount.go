@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/lightninglabs/lightning-terminal/litrpc"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"gorm.io/gorm"
 	"os"
@@ -17,6 +16,25 @@ import (
 	"trade/services/btldb"
 	"trade/services/servicesrpc"
 )
+
+var ServerFee uint64 = 100
+
+func GetServerFee() uint64 {
+	return ServerFee
+}
+
+func PayServerFee(account *models.Account) error {
+	acc, err := servicesrpc.AccountInfo(account.UserAccountCode)
+	if err != nil {
+		return err
+	}
+	// Change the escrow account balance
+	_, err = servicesrpc.AccountUpdate(account.UserAccountCode, acc.CurrentBalance-int64(ServerFee), -1)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 var CMutex sync.Mutex
 
@@ -64,33 +82,36 @@ func CreateCustodyAccount(user *models.User) (*models.Account, error) {
 }
 
 // Update  托管账户更新
-func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, balance uint64, invoice string) (uint, error) {
+func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, balance uint64, invoice string, HasServerFee bool) (uint, error) {
 	var err error
-	if account.UserAccountCode != "admin" {
-		acc, err := servicesrpc.AccountInfo(account.UserAccountCode)
-		if err != nil {
-			return 0, err
-		}
-		var amount int64
-		switch away {
-		case models.AWAY_IN:
-			amount = acc.CurrentBalance + int64(balance)
-		case models.AWAY_OUT:
-			amount = acc.CurrentBalance - int64(balance)
-		default:
-			return 0, fmt.Errorf("away error")
-		}
-
-		if amount < 0 {
-			return 0, errors.New("balance not enough")
-		}
-
-		// Change the escrow account balance
-		_, err = servicesrpc.AccountUpdate(account.UserAccountCode, amount, -1)
-		if err != nil {
-			return 0, err
-		}
+	if account.UserAccountCode == "admin" {
+		CUST.Info("admin receive %v amount from userId %v", balance, account.UserId)
+		return 0, nil
 	}
+
+	acc, err := servicesrpc.AccountInfo(account.UserAccountCode)
+	if err != nil {
+		return 0, err
+	}
+	var amount int64
+	switch away {
+	case models.AWAY_IN:
+		amount = acc.CurrentBalance + int64(balance)
+	case models.AWAY_OUT:
+		amount = acc.CurrentBalance - int64(balance)
+	default:
+		return 0, fmt.Errorf("away error")
+	}
+
+	if amount < 0 {
+		return 0, errors.New("balance not enough")
+	}
+	// Change the escrow account balance
+	_, err = servicesrpc.AccountUpdate(account.UserAccountCode, amount, -1)
+	if err != nil {
+		return 0, err
+	}
+
 	// Build a database storage object
 	ba := models.Balance{}
 	ba.AccountId = account.ID
@@ -101,9 +122,13 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 	ba.State = models.STATE_SUCCESS
 	ba.Invoice = nil
 	ba.PaymentHash = nil
+	if HasServerFee {
+		err = PayServerFee(account)
+		ba.ServerFee = GetServerFee()
+	}
 	if invoice != "" {
 		ba.Invoice = &invoice
-		i, _ := DecodeInvoice(invoice)
+		i, _ := servicesrpc.InvoiceDecode(invoice)
 		if i.PaymentHash != "" {
 			ba.PaymentHash = &i.PaymentHash
 		}
@@ -118,24 +143,6 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 		return 0, err
 	}
 	return ba.ID, nil
-}
-
-// QueryCustodyAccount  托管账户查询
-func QueryCustodyAccount(accountCode string) (*litrpc.Account, error) {
-	return servicesrpc.AccountInfo(accountCode)
-}
-
-// DeleteCustodianAccount 托管账户删除
-func DeleteCustodianAccount() error {
-	//TODO: 获取托管账户ID
-	id := "test"
-	//删除Lit节点托管账户
-	err := servicesrpc.AccountRemove(id)
-	//TODO: 更新数据库相关信息
-
-	//TODO: 返回删除结果
-
-	return err
 }
 
 type ApplyRequest struct {
@@ -165,7 +172,7 @@ func ApplyInvoice(userId uint, account *models.Account, applyRequest *ApplyReque
 		return nil, err
 	}
 	//获取发票信息
-	info, _ := FindInvoice(invoice.RHash)
+	info, _ := servicesrpc.InvoiceFind(invoice.RHash)
 
 	//构建invoice对象
 	var invoiceModel models.Invoice
@@ -198,7 +205,7 @@ type PayInvoiceRequest struct {
 }
 
 // PayInvoice 使用指定账户支付发票
-func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (bool, error) {
+func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest, HasServerFee bool) (bool, error) {
 	//检查数据库中是否有该发票的记录
 	a, err := GenericQueryByObject(&models.Balance{
 		Invoice: &PayInvoiceRequest.Invoice,
@@ -220,20 +227,26 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 		}
 	}
 	// 判断账户余额是否足够
-	info, err := DecodeInvoice(PayInvoiceRequest.Invoice)
+	info, err := servicesrpc.InvoiceDecode(PayInvoiceRequest.Invoice)
 	if err != nil {
 		//CUST.Error("发票解析失败")
 		return false, fmt.Errorf("发票解析失败(pay_request=%s)", PayInvoiceRequest.Invoice)
 	}
-
-	userBalance, err := QueryCustodyAccount(account.UserAccountCode)
+	userBalance, err := servicesrpc.AccountInfo(account.UserAccountCode)
 	if err != nil {
-		//CUST.Error("查询账户余额失败")
+		CUST.Error("查询账户余额失败")
 		return false, fmt.Errorf("查询账户余额失败（UserId=%d）", account.UserId)
 	}
-	if info.NumSatoshis > userBalance.CurrentBalance {
-		//CUST.Info("账户余额不足")
-		return false, fmt.Errorf("账户余额不足（UserId=%d）", account.UserId)
+	if HasServerFee {
+		if info.NumSatoshis+int64(GetServerFee()) > userBalance.CurrentBalance {
+			CUST.Info("账户余额不足")
+			return false, fmt.Errorf("账户余额不足（UserId=%d）", account.UserId)
+		}
+	} else {
+		if info.NumSatoshis > userBalance.CurrentBalance {
+			CUST.Info("账户余额不足")
+			return false, fmt.Errorf("账户余额不足（UserId=%d）", account.UserId)
+		}
 	}
 
 	//判断是否为节点内部转账
@@ -243,7 +256,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 		return false, fmt.Errorf("数据库错误")
 	}
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		_, err = PayAmountInside(account.UserId, i.UserID, uint64(info.NumSatoshis), 0, PayInvoiceRequest.Invoice)
+		_, err = PayAmountInside(account.UserId, i.UserID, uint64(info.NumSatoshis), 0, PayInvoiceRequest.Invoice, HasServerFee)
 		if err != nil {
 			CUST.Error("转账失败")
 			return false, fmt.Errorf("转账失败")
@@ -255,7 +268,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 		}
 		//更改发票状态
 		h, _ := hex.DecodeString(info.PaymentHash)
-		err = CancelInvoice(h)
+		err = servicesrpc.InvoiceCancel(h)
 		if err != nil {
 			CUST.Error("取消发票失败")
 		}
@@ -281,6 +294,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 		CUST.Error("pay invoice fail")
 		return false, fmt.Errorf("pay invoice fail")
 	}
+
 	var balanceModel models.Balance
 	balanceModel.AccountId = account.ID
 	balanceModel.BillType = models.BILL_TYPE_PAYMENT
@@ -289,6 +303,10 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 	balanceModel.Unit = models.UNIT_SATOSHIS
 	balanceModel.Invoice = &payment.PaymentRequest
 	balanceModel.PaymentHash = &payment.PaymentHash
+	if HasServerFee {
+		err = PayServerFee(account)
+		balanceModel.ServerFee = GetServerFee() + uint64(payment.FeeSat)
+	}
 	if payment.Status == lnrpc.Payment_SUCCEEDED {
 		balanceModel.State = models.STATE_SUCCESS
 	} else if payment.Status == lnrpc.Payment_FAILED {
@@ -308,7 +326,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest) (
 	return true, nil
 }
 
-// QueryAccountBalanceByUserId 查询用户账户余额
+// QueryAccountBalanceByUserId 通过用户ID查询账户余额
 func QueryAccountBalanceByUserId(userId uint) (uint64, error) {
 	// 查询账户
 	account, err := btldb.ReadAccountByUserId(userId)
@@ -317,7 +335,7 @@ func QueryAccountBalanceByUserId(userId uint) (uint64, error) {
 		return 0, err
 	}
 	// 查询账户余额
-	userBalance, err := QueryCustodyAccount(account.UserAccountCode)
+	userBalance, err := servicesrpc.AccountInfo(account.UserAccountCode)
 	if err != nil {
 		CUST.Error("Query failed: %s", err)
 		return 0, err
@@ -325,6 +343,7 @@ func QueryAccountBalanceByUserId(userId uint) (uint64, error) {
 	return uint64(userBalance.CurrentBalance), nil
 }
 
+// QueryAccountBalanceByUsername 通过用户名查询账户余额
 func QueryAccountBalanceByUsername(username string) (uint64, error) {
 	user, err := btldb.ReadUserByUsername(username)
 	if err != nil {
@@ -333,16 +352,9 @@ func QueryAccountBalanceByUsername(username string) (uint64, error) {
 	return QueryAccountBalanceByUserId(user.ID)
 }
 
+// IsAccountBalanceEnoughByUserId  判断账户余额是否足够
 func IsAccountBalanceEnoughByUserId(userId uint, value uint64) bool {
 	balance, err := QueryAccountBalanceByUserId(userId)
-	if err != nil {
-		return false
-	}
-	return balance >= value
-}
-
-func IsAccountBalanceEnoughByUsername(username string, value uint64) bool {
-	balance, err := QueryAccountBalanceByUsername(username)
 	if err != nil {
 		return false
 	}
@@ -394,6 +406,7 @@ type PaymentResponse struct {
 	Amount    float64             `json:"amount"`
 	AssetId   *string             `json:"asset_id"`
 	State     models.BalanceState `json:"state"`
+	Fee       uint64              `json:"fee"`
 }
 
 // QueryPaymentByUserId 查询用户支付记录
@@ -424,30 +437,11 @@ func QueryPaymentByUserId(userId uint, assetId string) ([]PaymentResponse, error
 			btcAssetId := "00"
 			r.AssetId = &btcAssetId
 			r.State = v.State
+			r.Fee = v.ServerFee
 			results = append(results, r)
 		}
 	}
 	return results, nil
-}
-
-// DecodeInvoice  解析发票信息
-func DecodeInvoice(invoice string) (*lnrpc.PayReq, error) {
-	return servicesrpc.InvoiceDecode(invoice)
-}
-
-// FindInvoice 查询节点内部发票
-func FindInvoice(rHash []byte) (*lnrpc.Invoice, error) {
-	return servicesrpc.InvoiceFind(rHash)
-}
-
-// CancelInvoice 取消发票
-func CancelInvoice(hash []byte) error {
-	return servicesrpc.InvoiceCancel(hash)
-}
-
-// TrackPayment 跟踪支付状态
-func TrackPayment(paymentHash string) (*lnrpc.Payment, error) {
-	return servicesrpc.PaymentTrack(paymentHash)
 }
 
 // saveMacaroon 保存macaroon字节切片到指定文件
@@ -493,7 +487,7 @@ func pollPayment() {
 			if v.Invoice == nil {
 				continue
 			}
-			temp, err := TrackPayment(*v.PaymentHash)
+			temp, err := servicesrpc.PaymentTrack(*v.PaymentHash)
 			if err != nil {
 				CUST.Warning(err.Error())
 				continue
@@ -533,7 +527,7 @@ func pollInvoice() {
 	}
 	if len(a) > 0 {
 		for _, v := range a {
-			invoice, err := DecodeInvoice(v.Invoice)
+			invoice, err := servicesrpc.InvoiceDecode(v.Invoice)
 			if err != nil {
 				CUST.Warning(err.Error())
 				continue
@@ -543,7 +537,7 @@ func pollInvoice() {
 				CUST.Warning(err.Error())
 				continue
 			}
-			temp, err := FindInvoice(rHash)
+			temp, err := servicesrpc.InvoiceFind(rHash)
 			if err != nil {
 				CUST.Warning(err.Error())
 				continue
@@ -576,21 +570,25 @@ func pollInvoice() {
 }
 
 // PayAmountInside 内部转账比特币
-func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, invoice string) (uint, error) {
+func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, invoice string, HasServerFee bool) (uint, error) {
 	amount := gasFee + serveFee
 	payAccount, err := btldb.ReadAccountByUserId(payUserId)
 	if err != nil {
 		CUST.Error("ReadAccountByUserId error:%v", err)
 		return 0, err
 	}
-	outId, err := UpdateCustodyAccount(payAccount, models.AWAY_OUT, amount, invoice)
+	outId, err := UpdateCustodyAccount(payAccount, models.AWAY_OUT, amount, invoice, HasServerFee)
 	if err != nil {
 		CUST.Error("UpdateCustodyAccount error(payUserId:%v):%v", payUserId, err)
 		return 0, err
 	}
 
-	mark := func(Id uint, gasFee, serveFee uint64) {
-		remark := fmt.Sprintf("gasFee:%v ,serverFee:%v ,local: true", gasFee, serveFee)
+	mark := func(Id uint, gasFee uint64, HasServerFee bool) {
+		var fee uint64
+		if HasServerFee {
+			fee = GetServerFee()
+		}
+		remark := fmt.Sprintf("gasFee:%v ,serverFee:%v ,local: true", gasFee, fee)
 		Ext := models.BalanceExt{
 			BalanceId:   Id,
 			BillExtDesc: &remark,
@@ -600,20 +598,19 @@ func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, inv
 			CUST.Error("CreateBalanceExt error:%v", err)
 		}
 	}
-	mark(outId, gasFee, serveFee)
+	mark(outId, gasFee, HasServerFee)
+
 	receiveAccount, err := btldb.ReadAccountByUserId(receiveUserId)
 	if err != nil {
 		CUST.Error("ReadAccountByUserId error:%v", err)
 		return 0, err
 	}
-	Id, err := UpdateCustodyAccount(receiveAccount, models.AWAY_IN, amount, invoice)
+	_, err = UpdateCustodyAccount(receiveAccount, models.AWAY_IN, amount, invoice, false)
 	if err != nil {
 		CUST.Error("UpdateCustodyAccount error(receiveUserId:%v):%v", receiveUserId, err)
 		return 0, err
 	}
-	mark(Id, gasFee, serveFee)
-
-	return Id, nil
+	return outId, nil
 }
 
 // CreatePayInsideMission 创建内部转账任务
@@ -633,7 +630,7 @@ func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint
 
 	//检查账户余额是否足够
 	if assetType == "00" {
-		if acc.CurrentBalance < int64(gasFee+serveFee) {
+		if acc.CurrentBalance < int64(gasFee) {
 			CUST.Error("Account balance not enough(UserId=%v)", payUserId)
 			return 0, fmt.Errorf("account balance not enough")
 		}
@@ -648,7 +645,7 @@ func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint
 		receiveAccount *models.Account
 	)
 	apply := ApplyRequest{
-		Amount: int64(gasFee + serveFee),
+		Amount: int64(gasFee),
 		Memo:   SetMemoSign(),
 	}
 
@@ -722,8 +719,13 @@ func pollPayInsideMission() {
 				Invoice:  *v.PayReq,
 				FeeLimit: 0,
 			}
+			//检测是否有服务费
+			HasServerFee := false
+			if v.ServeFee > 0 {
+				HasServerFee = true
+			}
 			//支付接口调用
-			_, err = PayInvoice(payAccount, &payReq)
+			_, err = PayInvoice(payAccount, &payReq, HasServerFee)
 			if err != nil {
 				CUST.Error("pollPayInsideMission:%v", err)
 				continue
@@ -783,7 +785,7 @@ func LookupInvoice(req *LookupInvoiceRequest) (*LookupInvoiceResponse, error) {
 		CUST.Error("Decode invoice hash error:%v", err.Error())
 		return nil, err
 	}
-	invoice, err := FindInvoice(invoiceHash)
+	invoice, err := servicesrpc.InvoiceFind(invoiceHash)
 	if err != nil {
 		CUST.Error("FindInvoice error:%v", err.Error())
 		return nil, err

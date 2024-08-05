@@ -134,7 +134,7 @@ func PayInvoice(c *gin.Context) {
 	}
 
 	// 支付发票
-	_, err = services.PayInvoice(account, &pay)
+	_, err = services.PayInvoice(account, &pay, true)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
