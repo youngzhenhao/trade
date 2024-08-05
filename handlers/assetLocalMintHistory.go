@@ -7,7 +7,7 @@ import (
 	"trade/services"
 )
 
-func GetAssetRecommendByUserId(c *gin.Context) {
+func GetAssetLocalMintHistoryByUserId(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)
 	if err != nil {
@@ -19,12 +19,12 @@ func GetAssetRecommendByUserId(c *gin.Context) {
 		})
 		return
 	}
-	assetRecommends, err := services.GetAssetRecommendsByUserId(userId)
+	assetLocalMintHistories, err := services.GetAssetLocalMintHistoriesByUserId(userId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAssetRecommendsByUserIdErr,
+			Code:    models.GetAssetLocalMintHistoriesByUserIdErr,
 			Data:    nil,
 		})
 		return
@@ -33,18 +33,18 @@ func GetAssetRecommendByUserId(c *gin.Context) {
 		Success: true,
 		Error:   models.SuccessErr,
 		Code:    models.SUCCESS,
-		Data:    assetRecommends,
+		Data:    assetLocalMintHistories,
 	})
 }
 
-func GetAssetRecommendByAssetId(c *gin.Context) {
+func GetAssetLocalMintHistoryAssetId(c *gin.Context) {
 	assetId := c.Param("asset_id")
-	assetRecommends, err := services.GetAssetRecommendsByAssetId(assetId)
+	assetLocalMintHistory, err := services.GetAssetLocalMintHistoryByAssetId(assetId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAssetRecommendByAssetIdErr,
+			Code:    models.GetAssetLocalMintHistoryByAssetIdErr,
 			Data:    nil,
 		})
 		return
@@ -53,11 +53,11 @@ func GetAssetRecommendByAssetId(c *gin.Context) {
 		Success: true,
 		Error:   models.SuccessErr,
 		Code:    models.SUCCESS,
-		Data:    assetRecommends,
+		Data:    assetLocalMintHistory,
 	})
 }
 
-func GetAssetRecommendByUserIdAndAssetId(c *gin.Context) {
+func SetAssetLocalMintHistory(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)
 	if err != nil {
@@ -69,39 +69,8 @@ func GetAssetRecommendByUserIdAndAssetId(c *gin.Context) {
 		})
 		return
 	}
-	assetId := c.Param("asset_id")
-	assetRecommend, err := services.GetAssetRecommendByUserIdAndAssetId(userId, assetId)
-	if err != nil {
-		c.JSON(http.StatusOK, models.JsonResult{
-			Success: false,
-			Error:   err.Error(),
-			Code:    models.GetAssetRecommendByUserIdAndAssetIdErr,
-			Data:    nil,
-		})
-		return
-	}
-	c.JSON(http.StatusOK, models.JsonResult{
-		Success: true,
-		Error:   models.SuccessErr,
-		Code:    models.SUCCESS,
-		Data:    assetRecommend,
-	})
-}
-
-func SetAssetRecommend(c *gin.Context) {
-	username := c.MustGet("username").(string)
-	userId, err := services.NameToId(username)
-	if err != nil {
-		c.JSON(http.StatusOK, models.JsonResult{
-			Success: false,
-			Error:   err.Error(),
-			Code:    models.NameToIdErr,
-			Data:    nil,
-		})
-		return
-	}
-	var assetRecommendSetRequest models.AssetRecommendSetRequest
-	err = c.ShouldBindJSON(&assetRecommendSetRequest)
+	var assetLocalMintHistorySetRequest models.AssetLocalMintHistorySetRequest
+	err = c.ShouldBindJSON(&assetLocalMintHistorySetRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -111,13 +80,13 @@ func SetAssetRecommend(c *gin.Context) {
 		})
 		return
 	}
-	assetRecommend := services.ProcessAssetRecommendSetRequest(userId, username, assetRecommendSetRequest)
-	err = services.SetAssetRecommend(&assetRecommend)
+	assetLocalMintHistory := services.ProcessAssetLocalMintHistorySetRequest(userId, username, assetLocalMintHistorySetRequest)
+	err = services.CreateOrUpdateAssetLocalMintHistory(userId, &assetLocalMintHistory)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.SetAssetRecommendErr,
+			Code:    models.SetAssetLocalMintHistoryErr,
 			Data:    nil,
 		})
 		return
@@ -130,13 +99,36 @@ func SetAssetRecommend(c *gin.Context) {
 	})
 }
 
-func GetAllAssetRecommendSimplified(c *gin.Context) {
-	assetRecommendSimplified, err := services.GetAllAssetRecommendSimplified()
+func SetAssetLocalMintHistories(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAllAssetRecommendSimplifiedErr,
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	var assetLocalMintHistorySetRequests []models.AssetLocalMintHistorySetRequest
+	err = c.ShouldBindJSON(&assetLocalMintHistorySetRequests)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	assetLocalMintHistories := services.ProcessAssetLocalMintHistorySetRequests(userId, username, &assetLocalMintHistorySetRequests)
+	err = services.CreateOrUpdateAssetLocalMintHistories(userId, assetLocalMintHistories)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.SetAssetLocalMintHistoriesErr,
 			Data:    nil,
 		})
 		return
@@ -145,6 +137,25 @@ func GetAllAssetRecommendSimplified(c *gin.Context) {
 		Success: true,
 		Error:   models.SuccessErr,
 		Code:    models.SUCCESS,
-		Data:    assetRecommendSimplified,
+		Data:    nil,
+	})
+}
+
+func GetAllAssetLocalMintHistorySimplified(c *gin.Context) {
+	assetLocalMintHistorySimplified, err := services.GetAllAssetLocalMintHistorySimplified()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllAssetLocalMintHistorySimplifiedErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    assetLocalMintHistorySimplified,
 	})
 }

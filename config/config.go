@@ -32,28 +32,31 @@ type Config struct {
 		RedisSetTimeMinute   int    `yaml:"redis_set_time_minute" json:"redis_set_time_minute"`
 	} `yaml:"redis" json:"redis"`
 	RouterDisable struct {
-		Login          bool `yaml:"login" json:"login"`
-		FairLaunch     bool `yaml:"fair_launch" json:"fair_launch"`
-		Fee            bool `yaml:"fee" json:"fee"`
-		CustodyAccount bool `yaml:"custody_account" json:"custody_account"`
-		Ping           bool `yaml:"ping" json:"ping"`
-		Proof          bool `yaml:"proof" json:"proof"`
-		Ido            bool `yaml:"ido" json:"ido"`
-		Snapshot       bool `yaml:"snapshot" json:"snapshot"`
-		BtcBalance     bool `yaml:"btc_balance" json:"btc_balance"`
-		AssetTransfer  bool `yaml:"asset_transfer" json:"asset_transfer"`
-		Bitcoind       bool `yaml:"bitcoind" json:"bitcoind"`
-		Shell          bool `yaml:"shell" json:"shell"`
-		AddrReceive    bool `yaml:"addr_receive" json:"addr_receive"`
-		BatchTransfer  bool `yaml:"batch_transfer" json:"batch_transfer"`
-		AssetAddr      bool `yaml:"asset_addr" json:"asset_addr"`
-		AssetLock      bool `yaml:"asset_lock" json:"asset_lock"`
-		ValidateToken  bool `yaml:"validate_token" json:"validate_token"`
-		AssetBalance   bool `yaml:"asset_balance" json:"asset_balance"`
-		AssetBurn      bool `yaml:"asset_burn" json:"asset_burn"`
-		AssetLocalMint bool `yaml:"asset_local_mint" json:"asset_local_mint"`
-		User           bool `yaml:"user" json:"user"`
-		AssetRecommend bool `yaml:"asset_recommend" json:"asset_recommend"`
+		Login                 bool `yaml:"login" json:"login"`
+		FairLaunch            bool `yaml:"fair_launch" json:"fair_launch"`
+		Fee                   bool `yaml:"fee" json:"fee"`
+		CustodyAccount        bool `yaml:"custody_account" json:"custody_account"`
+		Ping                  bool `yaml:"ping" json:"ping"`
+		Proof                 bool `yaml:"proof" json:"proof"`
+		Ido                   bool `yaml:"ido" json:"ido"`
+		Snapshot              bool `yaml:"snapshot" json:"snapshot"`
+		BtcBalance            bool `yaml:"btc_balance" json:"btc_balance"`
+		AssetTransfer         bool `yaml:"asset_transfer" json:"asset_transfer"`
+		Bitcoind              bool `yaml:"bitcoind" json:"bitcoind"`
+		Shell                 bool `yaml:"shell" json:"shell"`
+		AddrReceive           bool `yaml:"addr_receive" json:"addr_receive"`
+		BatchTransfer         bool `yaml:"batch_transfer" json:"batch_transfer"`
+		AssetAddr             bool `yaml:"asset_addr" json:"asset_addr"`
+		AssetLock             bool `yaml:"asset_lock" json:"asset_lock"`
+		ValidateToken         bool `yaml:"validate_token" json:"validate_token"`
+		AssetBalance          bool `yaml:"asset_balance" json:"asset_balance"`
+		AssetBurn             bool `yaml:"asset_burn" json:"asset_burn"`
+		AssetLocalMint        bool `yaml:"asset_local_mint" json:"asset_local_mint"`
+		User                  bool `yaml:"user" json:"user"`
+		AssetRecommend        bool `yaml:"asset_recommend" json:"asset_recommend"`
+		FairLaunchFollow      bool `yaml:"fair_launch_follow" json:"fair_launch_follow"`
+		AssetLocalMintHistory bool `yaml:"asset_local_mint_history" json:"asset_local_mint_history"`
+		AssetManagedUtxo      bool `yaml:"asset_managed_utxo" json:"asset_managed_utxo"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {

@@ -302,8 +302,8 @@ func QueryMintIsAvailable(c *gin.Context) {
 		})
 		return
 	}
-	calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee
-	calculatedFeeRateSatPerB := feeRate.SatPerB.FastestFee
+	calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee + services.FeeRateSatPerBToSatPerKw(2)
+	calculatedFeeRateSatPerB := feeRate.SatPerB.FastestFee + 2
 	inventoryAmount, err := services.GetAmountOfInventoryCouldBeMintedByMintedNumber(fairLaunchInfoID, mintedNumber)
 	isMintAvailable := inventoryAmount > 0
 	inventoryNumberAndAmount, err := services.GetNumberAndAmountOfInventoryCouldBeMinted(fairLaunchInfoID)
@@ -659,16 +659,31 @@ func GetHotFairLaunchInfo(c *gin.Context) {
 }
 
 func GetFollowedFairLaunchInfo(c *gin.Context) {
-	// TODO:
-
-}
-
-func SetFollowFairLaunchInfo(c *gin.Context) {
-	// TODO:
-
-}
-
-func SetUnfollowFairLaunchInfo(c *gin.Context) {
-	// TODO:
-
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	fairLaunchInfos, err := services.GetFollowedFairLaunchInfo(userId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetFollowedFairLaunchInfoErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    fairLaunchInfos,
+	})
 }

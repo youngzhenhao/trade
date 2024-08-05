@@ -2173,5 +2173,36 @@ func GetSortedFairLaunchInfosByMintedRate(fairLaunchInfos *[]models.FairLaunchIn
 	return &sortedFairLaunchInfos
 }
 
+func FairLaunchFollowsToFairLaunchInfoIdSlice(fairLaunchFollows *[]models.FairLaunchFollow) *[]int {
+	if fairLaunchFollows == nil {
+		return nil
+	}
+	var fairLaunchInfoIds []int
+	for _, fairLaunchFollow := range *fairLaunchFollows {
+		fairLaunchInfoIds = append(fairLaunchInfoIds, fairLaunchFollow.FairLaunchInfoId)
+	}
+	return &fairLaunchInfoIds
+}
+
+func GetFairLaunchInfosByIds(fairLaunchInfoIds *[]int) (*[]models.FairLaunchInfo, error) {
+	if fairLaunchInfoIds == nil || len(*fairLaunchInfoIds) == 0 {
+		return &[]models.FairLaunchInfo{}, nil
+	}
+	return btldb.GetFairLaunchInfosByIds(fairLaunchInfoIds)
+}
+
+func GetFollowedFairLaunchInfo(userId int) (*[]models.FairLaunchInfo, error) {
+	fairLaunchFollows, err := GetFairLaunchFollowsByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+	fairLaunchInfoIds := FairLaunchFollowsToFairLaunchInfoIdSlice(fairLaunchFollows)
+	fairLaunchInfos, err := GetFairLaunchInfosByIds(fairLaunchInfoIds)
+	if err != nil {
+		return nil, err
+	}
+	return fairLaunchInfos, nil
+}
+
 // TODO: Consider adding: When a fair launch is successful,
 // 		forward the asset to the server self three different asset addresses (split UTXO)

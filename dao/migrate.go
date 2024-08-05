@@ -97,5 +97,14 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.LoginRecord{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.FairLaunchFollow{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&models.AssetLocalMintHistory{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&models.AssetManagedUtxo{}); err != nil {
+		return err
+	}
 	return err
 }

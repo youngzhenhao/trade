@@ -12,7 +12,7 @@ func SetupAssetRecommendRouter(router *gin.Engine) *gin.Engine {
 	assetLocalMint.Use(middleware.AuthMiddleware())
 	{
 		assetLocalMint.GET("/get/user", handlers.GetAssetRecommendByUserId)
-		assetLocalMint.GET("/get/asset_id/:asset_id", handlers.GetAssetRecommendAssetId)
+		assetLocalMint.GET("/get/asset_id/:asset_id", handlers.GetAssetRecommendByAssetId)
 		assetLocalMint.GET("/get/user/asset_id/:asset_id", handlers.GetAssetRecommendByUserIdAndAssetId)
 		assetLocalMint.POST("/set", handlers.SetAssetRecommend)
 	}

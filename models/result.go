@@ -147,6 +147,25 @@ const (
 	GetClosedFairLaunchInfoErr
 	GetNotStartedFairLaunchInfoErr
 	GetAllUsernameAndAssetIdAssetAddrsErr
+	FeeRateAtoiErr
+	FeeRateInvalidErr
+	GetFairLaunchFollowsByUserIdErr
+	SetFollowFairLaunchInfoErr
+	SetUnfollowFairLaunchInfoErr
+	GetAllFairLaunchFollowSimplifiedErr
+	GetFollowedFairLaunchInfoErr
+	IsFairLaunchInfoIdAndAssetIdValidErr
+	FairLaunchInfoAssetIdInvalidErr
+	GetAssetLocalMintHistoriesByUserIdErr
+	GetAssetLocalMintHistoryByAssetIdErr
+	SetAssetLocalMintHistoryErr
+	SetAssetLocalMintHistoriesErr
+	GetAllAssetLocalMintHistorySimplifiedErr
+	GetAssetManagedUtxosByUserIdErr
+	GetAssetManagedUtxoByAssetIdErr
+	SetAssetManagedUtxosErr
+	GetAllAssetManagedUtxoSimplifiedErr
+	ValidateUserIdAndAssetManagedUtxoIdsErr
 )
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
