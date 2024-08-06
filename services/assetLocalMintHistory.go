@@ -149,6 +149,9 @@ func CreateOrUpdateAssetLocalMintHistory(userId int, transfer *models.AssetLocal
 // CreateOrUpdateAssetLocalMintHistories
 // @Description: create or update asset local mint histories
 func CreateOrUpdateAssetLocalMintHistories(userId int, transfers *[]models.AssetLocalMintHistory) (err error) {
+	if transfers == nil {
+		return nil
+	}
 	var assetLocalMintHistories []models.AssetLocalMintHistory
 	var assetLocalMintHistory *models.AssetLocalMintHistory
 	for _, transfer := range *transfers {
