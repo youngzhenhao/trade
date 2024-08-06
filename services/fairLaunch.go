@@ -1351,6 +1351,7 @@ func ProcessFairLaunchStateIssuedPendingInfoService(fairLaunchInfo *models.FairL
 		}
 		// TODO: 	After the issued assets are confirmed on-chain,
 		// 			the server directly inserts the proof into the local universe
+		// @dev: Maybe do not need to process here
 		return nil
 	}
 	// @dev: Transaction has not been Confirmed
@@ -1638,6 +1639,7 @@ func SendFairLaunchMintedAssetLocked() error {
 	assetIdToAddrs := make(map[string][]string)
 	assetIdToAmount := make(map[string]int)
 	assetIdToGasFeeTotal := make(map[string]int)
+	assetIdToGasFeeRateTotal := make(map[string]int)
 	// @dev: addr Slice
 	for _, fairLaunchMintedInfo := range *unsentFairLaunchMintedInfos {
 		assetId := fairLaunchMintedInfo.AssetID
@@ -1647,6 +1649,11 @@ func SendFairLaunchMintedAssetLocked() error {
 		assetIdToAddrs[assetId] = append(assetIdToAddrs[assetId], fairLaunchMintedInfo.EncodedAddr)
 		assetIdToAmount[assetId] += fairLaunchMintedInfo.AddrAmount
 		assetIdToGasFeeTotal[assetId] += fairLaunchMintedInfo.MintedGasFee
+		assetIdToGasFeeRateTotal[assetId] += fairLaunchMintedInfo.MintedFeeRateSatPerKw
+	}
+	assetIdToGasFeeRateAverage := make(map[string]int)
+	for assetId, feeRateTotal := range assetIdToGasFeeTotal {
+		assetIdToGasFeeRateAverage[assetId] = int(math.Ceil(float64(feeRateTotal) / float64(len(assetIdToAddrs[assetId]))))
 	}
 	var feeRate *FeeRateResponseTransformed
 	var response *taprpc.SendAssetResponse
@@ -1672,6 +1679,11 @@ func SendFairLaunchMintedAssetLocked() error {
 		}
 		// @dev: Append fee of 2 sat per b
 		feeRateSatPerKw := feeRate.SatPerKw.FastestFee + FeeRateSatPerBToSatPerKw(2)
+		// TODO;
+		// @dev: Make sure fee rate is less than average
+		if assetIdToGasFeeRateAverage[assetId]+FeeRateSatPerBToSatPerKw(1) < feeRateSatPerKw {
+			return errors.New("too high fee rate to send minted asset now")
+		}
 		if len(addrs) == 0 {
 			//err = errors.New("length of addrs slice is zero, can't send assets and update")
 			//return err

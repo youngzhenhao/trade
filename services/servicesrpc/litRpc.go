@@ -140,10 +140,10 @@ func AccountUpdate(id string, balance int64, expirationDate int64) (*litrpc.Acco
 	return response, err
 }
 
-// TODO:开通通道
+// TODO: 开通通道
 func channelOpen() {}
 
-// TODO:关闭通道
+// TODO: 关闭通道
 func channelClose() {}
 
 func LitdInfo() string {
