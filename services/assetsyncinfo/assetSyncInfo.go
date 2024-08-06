@@ -466,6 +466,7 @@ func InsertIssuanceProof(id string) error {
 			return fmt.Errorf("failed to insert proof: %w", err)
 		}
 	}
+	return nil
 }
 
 func FetchProofs(id asset.ID) ([]*proof.AnnotatedProof, error) {
