@@ -1370,6 +1370,30 @@ func ProcessFairLaunchStateReservedSentPending(fairLaunchInfo *models.FairLaunch
 		if err != nil {
 			return utils.AppendErrorInfo(err, "ChangeFairLaunchInfoState")
 		}
+		// @dev: Create tow asset addrs
+		var splitAssetAddrOne string
+		var splitAssetAddrTwo string
+		assetId := fairLaunchInfo.AssetID
+		oneThirdAmount := fairLaunchInfo.Amount / 3
+		splitAssetAddrOne, err = api.NewAddrAndGetStringResponse(assetId, oneThirdAmount)
+		if err != nil {
+			return err
+		}
+		splitAssetAddrTwo, err = api.NewAddrAndGetStringResponse(assetId, oneThirdAmount)
+		if err != nil {
+			return err
+		}
+		// @dev: Get fee rate
+		var feeRate *FeeRateResponseTransformed
+		feeRate, err = UpdateAndGetFeeRateResponseTransformed()
+		if err != nil {
+			return err
+		}
+		feeRateSatPerKw := feeRate.SatPerKw.FastestFee
+		_, err = api.SendAssetAddrSliceAndGetResponse([]string{splitAssetAddrOne, splitAssetAddrTwo}, feeRateSatPerKw)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 	// @dev: Transaction has not been Confirmed
@@ -2214,9 +2238,6 @@ func GetFollowedFairLaunchInfo(userId int) (*[]models.FairLaunchInfo, error) {
 	}
 	return fairLaunchInfos, nil
 }
-
-// TODO: Consider adding: When a fair launch is successful,
-// 		forward the asset to the server self three different asset addresses (split UTXO)
 
 type FairLaunchPlusInfo struct {
 	FairLaunchInfo         *models.FairLaunchInfo      `json:"fair_launch_info"`

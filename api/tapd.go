@@ -50,6 +50,18 @@ func NewAddr(assetId string, amt int) string {
 	return utils.MakeJsonResult(true, "", response)
 }
 
+func NewAddrAndGetResponse(assetId string, amt int) (*taprpc.Addr, error) {
+	return newAddr(assetId, amt)
+}
+
+func NewAddrAndGetStringResponse(assetId string, amt int) (string, error) {
+	response, err := newAddr(assetId, amt)
+	if err != nil {
+		return "", err
+	}
+	return response.Encoded, nil
+}
+
 func SendAsset(addr string, feeRate int) string {
 	response, err := sendAsset(addr, feeRate)
 	if err != nil {
