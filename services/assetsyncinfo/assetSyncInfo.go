@@ -452,17 +452,21 @@ func (d *decodeProofOffline) marshalChainAsset(ctx context.Context, a *asset.Cha
 	return rpcAsset, nil
 }
 
-// InsertIssuanceProof TODO: Insert locally issued proof of assets
-func InsertIssuanceProof(id string) {
+// InsertIssuanceProof 向本地数据库插入资产所有证明
+func InsertIssuanceProof(id string) error {
 	Id := asset.ID{}
 	copy(Id[:], id)
-	proofs, _ := FetchProofs(Id)
+	proofs, err := FetchProofs(Id)
+	if err != nil {
+		return fmt.Errorf("failed to fetch proofs: %w", err)
+	}
 	for _, p := range proofs {
 		err := servicesrpc.InsertProof(p)
 		if err != nil {
-			return
+			return fmt.Errorf("failed to insert proof: %w", err)
 		}
 	}
+	return nil
 }
 
 func FetchProofs(id asset.ID) ([]*proof.AnnotatedProof, error) {
