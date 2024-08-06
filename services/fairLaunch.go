@@ -1354,7 +1354,37 @@ func ProcessFairLaunchStateIssuedPendingInfoService(fairLaunchInfo *models.FairL
 		// @dev: Maybe do not need to process here
 		return nil
 	}
-	// @dev: Transaction has not been Confirmed
+
+	//// @dev: Split asset
+	//// TODO: Insert proof to universe before do this operation
+	//{
+	//	// @dev: Create tow asset addrs
+	//	var splitAssetAddrOne string
+	//	var splitAssetAddrTwo string
+	//	assetId := fairLaunchInfo.AssetID
+	//	oneThirdAmount := fairLaunchInfo.Amount / 3
+	//	splitAssetAddrOne, err = api.NewAddrAndGetStringResponse(assetId, oneThirdAmount)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	splitAssetAddrTwo, err = api.NewAddrAndGetStringResponse(assetId, oneThirdAmount)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	// @dev: Get fee rate
+	//	var feeRate *FeeRateResponseTransformed
+	//	feeRate, err = UpdateAndGetFeeRateResponseTransformed()
+	//	if err != nil {
+	//		return err
+	//	}
+	//	feeRateSatPerKw := feeRate.SatPerKw.FastestFee
+	//	_, err = api.SendAssetAddrSliceAndGetResponse([]string{splitAssetAddrOne, splitAssetAddrTwo}, feeRateSatPerKw)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+
+	//@dev: Transaction has not been Confirmed
 	err = ClearFairLaunchInfoProcessNumber(fairLaunchInfo)
 	if err != nil {
 		// @dev: Do nothing
@@ -1369,30 +1399,6 @@ func ProcessFairLaunchStateReservedSentPending(fairLaunchInfo *models.FairLaunch
 		err = ChangeFairLaunchInfoState(fairLaunchInfo, models.FairLaunchStateReservedSent)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "ChangeFairLaunchInfoState")
-		}
-		// @dev: Create tow asset addrs
-		var splitAssetAddrOne string
-		var splitAssetAddrTwo string
-		assetId := fairLaunchInfo.AssetID
-		oneThirdAmount := fairLaunchInfo.Amount / 3
-		splitAssetAddrOne, err = api.NewAddrAndGetStringResponse(assetId, oneThirdAmount)
-		if err != nil {
-			return err
-		}
-		splitAssetAddrTwo, err = api.NewAddrAndGetStringResponse(assetId, oneThirdAmount)
-		if err != nil {
-			return err
-		}
-		// @dev: Get fee rate
-		var feeRate *FeeRateResponseTransformed
-		feeRate, err = UpdateAndGetFeeRateResponseTransformed()
-		if err != nil {
-			return err
-		}
-		feeRateSatPerKw := feeRate.SatPerKw.FastestFee
-		_, err = api.SendAssetAddrSliceAndGetResponse([]string{splitAssetAddrOne, splitAssetAddrTwo}, feeRateSatPerKw)
-		if err != nil {
-			return err
 		}
 		return nil
 	}
