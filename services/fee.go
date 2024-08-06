@@ -610,6 +610,7 @@ func GetFeeRateResponseTransformed() (*FeeRateResponseTransformed, error) {
 			feeRateInfo, err := GetFeeRateInfoByNameAndUnit(name, unit)
 			if err != nil {
 				// @dev: Do not return
+				return nil, err
 			}
 			feeRateInfos = append(feeRateInfos, *feeRateInfo)
 		}

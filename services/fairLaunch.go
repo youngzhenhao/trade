@@ -2245,19 +2245,44 @@ func GetFollowedFairLaunchInfo(userId int) (*[]models.FairLaunchInfo, error) {
 	return fairLaunchInfos, nil
 }
 
-type FairLaunchPlusInfo struct {
-	FairLaunchInfo         *models.FairLaunchInfo      `json:"fair_launch_info"`
-	HolderNumber           int                         `json:"holder_number"`
-	FeeRateOfMintNumberOne *FeeRateResponseTransformed `json:"fee_rate_of_mint_number_one"`
-	FeeOfMintNumberOne     int                         `json:"fee_of_mint_number_one"`
+type FairLaunchMintFeeInfo struct {
+	FeeRateOfMintNumber *FeeRateResponseTransformed `json:"fee_rate_of_mint_number"`
+	FeeOfMintNumber     int                         `json:"fee_of_mint_number"`
 }
 
-func ProcessToFairLaunchPlusInfo(fairLaunchInfo *models.FairLaunchInfo, holderNumber int, feeRate *FeeRateResponseTransformed, fee int) *FairLaunchPlusInfo {
+type FairLaunchPlusInfo struct {
+	FairLaunchInfo             *models.FairLaunchInfo        `json:"fair_launch_info"`
+	HolderNumber               int                           `json:"holder_number"`
+	FairLaunchMintNumberMapFee map[int]FairLaunchMintFeeInfo `json:"fair_launch_mint_number_map_fee"`
+}
+
+func UpdateAndGetAllCalculateGasFee() (map[int]FairLaunchMintFeeInfo, error) {
+	UpdateFeeRateByMempool()
+	fairLaunchMintNumberMapFee := make(map[int]FairLaunchMintFeeInfo)
+	for number := 1; number < 11; number++ {
+		feeRate, err := CalculateGasFeeRateByMempool(number)
+		if err != nil {
+			return nil, err
+		}
+		calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee + FeeRateSatPerBToSatPerKw(2)
+		fee := GetMintedTransactionGasFee(calculatedFeeRateSatPerKw)
+		fairLaunchMintNumberMapFee[number] = FairLaunchMintFeeInfo{
+			FeeRateOfMintNumber: feeRate,
+			FeeOfMintNumber:     fee,
+		}
+	}
+	return fairLaunchMintNumberMapFee, nil
+}
+
+func ProcessToFairLaunchPlusInfo(fairLaunchInfo *models.FairLaunchInfo, holderNumber int) *FairLaunchPlusInfo {
+	fairLaunchMintNumberMapFee, err := UpdateAndGetAllCalculateGasFee()
+	if err != nil {
+		return nil
+	}
 	return &FairLaunchPlusInfo{
-		FairLaunchInfo:         fairLaunchInfo,
-		HolderNumber:           holderNumber,
-		FeeRateOfMintNumberOne: feeRate,
-		FeeOfMintNumberOne:     fee,
+		FairLaunchInfo:             fairLaunchInfo,
+		HolderNumber:               holderNumber,
+		FairLaunchMintNumberMapFee: fairLaunchMintNumberMapFee,
 	}
 }
 
