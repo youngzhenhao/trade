@@ -179,7 +179,21 @@ func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount 
 	if FeeRateSatPerKwToSatPerB(feeRate) > 500 {
 		return nil, errors.New("fee rate exceeds max(500)")
 	}
-	err := ValidateStartAndEndTime(startTime, endTime)
+	// @dev: Validate fee rate
+	feeRateResponse, err := UpdateAndGetFeeRateResponseTransformed()
+	if err != nil {
+		return nil, err
+	}
+	feeRateSatPerKw := feeRateResponse.SatPerKw.FastestFee
+	// @dev: The allowable fee rate error is minus one sat per b
+	if feeRate+FeeRateSatPerBToSatPerKw(1) < feeRateSatPerKw {
+		return nil, errors.New("set fee rate not enough, it has changed")
+	}
+	lowest := feeRateResponse.SatPerKw.MinimumFee
+	if feeRate < lowest {
+		return nil, errors.New("set fee rate is less than lowest, it may not be confirmed forever")
+	}
+	err = ValidateStartAndEndTime(startTime, endTime)
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "ValidateStartAndEndTime")
 	}
@@ -273,6 +287,20 @@ func ValidateStartAndEndTime(startTime int, endTime int) error {
 func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedFeeRateSatPerKw int, addr string, userId int, username string) (*models.FairLaunchMintedInfo, error) {
 	if FeeRateSatPerKwToSatPerB(mintedFeeRateSatPerKw) > 500 {
 		return nil, errors.New("fee rate exceeds max(500)")
+	}
+	// @dev: Validate fee rate
+	feeRateResponse, err := UpdateAndCalculateGasFeeRateByMempool(mintedNumber)
+	if err != nil {
+		return nil, err
+	}
+	calculatedFeeRateSatPerKw := feeRateResponse.SatPerKw.FastestFee + FeeRateSatPerBToSatPerKw(2)
+	// @dev: The allowable fee rate error is minus one sat per b
+	if mintedFeeRateSatPerKw+FeeRateSatPerBToSatPerKw(1) < calculatedFeeRateSatPerKw {
+		return nil, errors.New("mint fee rate not enough, it has changed")
+	}
+	lowest := feeRateResponse.SatPerKw.MinimumFee
+	if mintedFeeRateSatPerKw < lowest {
+		return nil, errors.New("set fee rate is less than lowest, it may not be confirmed forever")
 	}
 	var fairLaunchMintedInfo models.FairLaunchMintedInfo
 	isFairLaunchMintTimeRight, err := IsFairLaunchMintTimeRight(fairLaunchInfoID)
