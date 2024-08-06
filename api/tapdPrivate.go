@@ -180,7 +180,7 @@ func fetchAssetMeta(isHash bool, data string) (*taprpc.AssetMeta, error) {
 	return response, nil
 }
 
-func newAddr(assetId string, amt int) (*taprpc.Addr, error) {
+func newAddr(assetId string, amt int, proofCourierAddr string) (*taprpc.Addr, error) {
 	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
 	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
 	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
@@ -188,9 +188,13 @@ func newAddr(assetId string, amt int) (*taprpc.Addr, error) {
 	defer connClose()
 	client := taprpc.NewTaprootAssetsClient(conn)
 	_assetIdByteSlice, _ := hex.DecodeString(assetId)
+	if !strings.HasPrefix(proofCourierAddr, "universerpc://") {
+		proofCourierAddr = "universerpc://" + proofCourierAddr
+	}
 	request := &taprpc.NewAddrRequest{
-		AssetId: _assetIdByteSlice,
-		Amt:     uint64(amt),
+		AssetId:          _assetIdByteSlice,
+		Amt:              uint64(amt),
+		ProofCourierAddr: proofCourierAddr,
 	}
 	response, err := client.NewAddr(context.Background(), request)
 	if err != nil {

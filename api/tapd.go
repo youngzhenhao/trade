@@ -43,11 +43,26 @@ func AddGroupAsset(name string, assetTypeIsCollectible bool, assetMetaData *Meta
 }
 
 func NewAddr(assetId string, amt int) string {
-	response, err := newAddr(assetId, amt)
+	proofCourierAddr := config.GetLoadConfig().ApiConfig.Tapd.UniverseHost
+	response, err := newAddr(assetId, amt, proofCourierAddr)
 	if err != nil {
 		return utils.MakeJsonResult(false, err.Error(), "")
 	}
 	return utils.MakeJsonResult(true, "", response)
+}
+
+func NewAddrAndGetResponse(assetId string, amt int) (*taprpc.Addr, error) {
+	proofCourierAddr := config.GetLoadConfig().ApiConfig.Tapd.UniverseHost
+	return newAddr(assetId, amt, proofCourierAddr)
+}
+
+func NewAddrAndGetStringResponse(assetId string, amt int) (string, error) {
+	proofCourierAddr := config.GetLoadConfig().ApiConfig.Tapd.UniverseHost
+	response, err := newAddr(assetId, amt, proofCourierAddr)
+	if err != nil {
+		return "", err
+	}
+	return response.Encoded, nil
 }
 
 func SendAsset(addr string, feeRate int) string {

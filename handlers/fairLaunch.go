@@ -711,21 +711,7 @@ func GetFairLaunchInfoPlusByAssetId(c *gin.Context) {
 		})
 		return
 	}
-	// @dev: Get fee rate
-	MintedFeeRate, err := services.UpdateAndCalculateGasFeeRateByMempool(1)
-	if err != nil {
-		c.JSON(http.StatusOK, models.JsonResult{
-			Success: false,
-			Error:   "Calculate Gas FeeRate. " + err.Error(),
-			Code:    models.UpdateAndCalculateGasFeeRateByMempoolErr,
-			Data:    nil,
-		})
-		return
-	}
-	calculatedFeeRateSatPerKw := MintedFeeRate.SatPerKw.FastestFee + services.FeeRateSatPerBToSatPerKw(2)
-	// @dev: Get fee
-	fee := services.GetMintedTransactionGasFee(calculatedFeeRateSatPerKw)
-	fairLaunchPlusInfo := services.ProcessToFairLaunchPlusInfo(fairLaunch, holderNumber, MintedFeeRate, fee)
+	fairLaunchPlusInfo := services.ProcessToFairLaunchPlusInfo(fairLaunch, holderNumber)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SuccessErr,

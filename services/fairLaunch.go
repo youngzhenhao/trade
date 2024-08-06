@@ -1351,9 +1351,40 @@ func ProcessFairLaunchStateIssuedPendingInfoService(fairLaunchInfo *models.FairL
 		}
 		// TODO: 	After the issued assets are confirmed on-chain,
 		// 			the server directly inserts the proof into the local universe
+		// @dev: Maybe do not need to process here
 		return nil
 	}
-	// @dev: Transaction has not been Confirmed
+
+	//// @dev: Split asset
+	//// TODO: Insert proof to universe before do this operation
+	//{
+	//	// @dev: Create tow asset addrs
+	//	var splitAssetAddrOne string
+	//	var splitAssetAddrTwo string
+	//	assetId := fairLaunchInfo.AssetID
+	//	oneThirdAmount := fairLaunchInfo.Amount / 3
+	//	splitAssetAddrOne, err = api.NewAddrAndGetStringResponse(assetId, oneThirdAmount)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	splitAssetAddrTwo, err = api.NewAddrAndGetStringResponse(assetId, oneThirdAmount)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	// @dev: Get fee rate
+	//	var feeRate *FeeRateResponseTransformed
+	//	feeRate, err = UpdateAndGetFeeRateResponseTransformed()
+	//	if err != nil {
+	//		return err
+	//	}
+	//	feeRateSatPerKw := feeRate.SatPerKw.FastestFee
+	//	_, err = api.SendAssetAddrSliceAndGetResponse([]string{splitAssetAddrOne, splitAssetAddrTwo}, feeRateSatPerKw)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+
+	//@dev: Transaction has not been Confirmed
 	err = ClearFairLaunchInfoProcessNumber(fairLaunchInfo)
 	if err != nil {
 		// @dev: Do nothing
@@ -1638,6 +1669,7 @@ func SendFairLaunchMintedAssetLocked() error {
 	assetIdToAddrs := make(map[string][]string)
 	assetIdToAmount := make(map[string]int)
 	assetIdToGasFeeTotal := make(map[string]int)
+	assetIdToGasFeeRateTotal := make(map[string]int)
 	// @dev: addr Slice
 	for _, fairLaunchMintedInfo := range *unsentFairLaunchMintedInfos {
 		assetId := fairLaunchMintedInfo.AssetID
@@ -1647,6 +1679,11 @@ func SendFairLaunchMintedAssetLocked() error {
 		assetIdToAddrs[assetId] = append(assetIdToAddrs[assetId], fairLaunchMintedInfo.EncodedAddr)
 		assetIdToAmount[assetId] += fairLaunchMintedInfo.AddrAmount
 		assetIdToGasFeeTotal[assetId] += fairLaunchMintedInfo.MintedGasFee
+		assetIdToGasFeeRateTotal[assetId] += fairLaunchMintedInfo.MintedFeeRateSatPerKw
+	}
+	assetIdToGasFeeRateAverage := make(map[string]int)
+	for assetId, feeRateTotal := range assetIdToGasFeeTotal {
+		assetIdToGasFeeRateAverage[assetId] = int(math.Ceil(float64(feeRateTotal) / float64(len(assetIdToAddrs[assetId]))))
 	}
 	var feeRate *FeeRateResponseTransformed
 	var response *taprpc.SendAssetResponse
@@ -1672,6 +1709,11 @@ func SendFairLaunchMintedAssetLocked() error {
 		}
 		// @dev: Append fee of 2 sat per b
 		feeRateSatPerKw := feeRate.SatPerKw.FastestFee + FeeRateSatPerBToSatPerKw(2)
+		// TODO;
+		// @dev: Make sure fee rate is less than average
+		if assetIdToGasFeeRateAverage[assetId]+FeeRateSatPerBToSatPerKw(1) < feeRateSatPerKw {
+			return errors.New("too high fee rate to send minted asset now")
+		}
 		if len(addrs) == 0 {
 			//err = errors.New("length of addrs slice is zero, can't send assets and update")
 			//return err
@@ -2203,22 +2245,44 @@ func GetFollowedFairLaunchInfo(userId int) (*[]models.FairLaunchInfo, error) {
 	return fairLaunchInfos, nil
 }
 
-// TODO: Consider adding: When a fair launch is successful,
-// 		forward the asset to the server self three different asset addresses (split UTXO)
-
-type FairLaunchPlusInfo struct {
-	FairLaunchInfo         *models.FairLaunchInfo      `json:"fair_launch_info"`
-	HolderNumber           int                         `json:"holder_number"`
-	FeeRateOfMintNumberOne *FeeRateResponseTransformed `json:"fee_rate_of_mint_number_one"`
-	FeeOfMintNumberOne     int                         `json:"fee_of_mint_number_one"`
+type FairLaunchMintFeeInfo struct {
+	FeeRateOfMintNumber *FeeRateResponseTransformed `json:"fee_rate_of_mint_number"`
+	FeeOfMintNumber     int                         `json:"fee_of_mint_number"`
 }
 
-func ProcessToFairLaunchPlusInfo(fairLaunchInfo *models.FairLaunchInfo, holderNumber int, feeRate *FeeRateResponseTransformed, fee int) *FairLaunchPlusInfo {
+type FairLaunchPlusInfo struct {
+	FairLaunchInfo             *models.FairLaunchInfo        `json:"fair_launch_info"`
+	HolderNumber               int                           `json:"holder_number"`
+	FairLaunchMintNumberMapFee map[int]FairLaunchMintFeeInfo `json:"fair_launch_mint_number_map_fee"`
+}
+
+func UpdateAndGetAllCalculateGasFee() (map[int]FairLaunchMintFeeInfo, error) {
+	UpdateFeeRateByMempool()
+	fairLaunchMintNumberMapFee := make(map[int]FairLaunchMintFeeInfo)
+	for number := 1; number < 11; number++ {
+		feeRate, err := CalculateGasFeeRateByMempool(number)
+		if err != nil {
+			return nil, err
+		}
+		calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee + FeeRateSatPerBToSatPerKw(2)
+		fee := GetMintedTransactionGasFee(calculatedFeeRateSatPerKw)
+		fairLaunchMintNumberMapFee[number] = FairLaunchMintFeeInfo{
+			FeeRateOfMintNumber: feeRate,
+			FeeOfMintNumber:     fee,
+		}
+	}
+	return fairLaunchMintNumberMapFee, nil
+}
+
+func ProcessToFairLaunchPlusInfo(fairLaunchInfo *models.FairLaunchInfo, holderNumber int) *FairLaunchPlusInfo {
+	fairLaunchMintNumberMapFee, err := UpdateAndGetAllCalculateGasFee()
+	if err != nil {
+		return nil
+	}
 	return &FairLaunchPlusInfo{
-		FairLaunchInfo:         fairLaunchInfo,
-		HolderNumber:           holderNumber,
-		FeeRateOfMintNumberOne: feeRate,
-		FeeOfMintNumberOne:     fee,
+		FairLaunchInfo:             fairLaunchInfo,
+		HolderNumber:               holderNumber,
+		FairLaunchMintNumberMapFee: fairLaunchMintNumberMapFee,
 	}
 }
 

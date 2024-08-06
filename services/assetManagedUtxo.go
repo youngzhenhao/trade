@@ -255,6 +255,9 @@ func CreateOrUpdateAssetManagedUtxo(userId int, transfer *models.AssetManagedUtx
 // CreateOrUpdateAssetManagedUtxos
 // @Description: create or update asset managed utxos
 func CreateOrUpdateAssetManagedUtxos(userId int, transfers *[]models.AssetManagedUtxo) (err error) {
+	if transfers == nil || len(*transfers) == 0 {
+		return nil
+	}
 	var assetManagedUtxos []models.AssetManagedUtxo
 	var assetManagedUtxo *models.AssetManagedUtxo
 	for _, transfer := range *transfers {
