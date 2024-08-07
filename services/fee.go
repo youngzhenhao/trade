@@ -214,19 +214,19 @@ func FeeRateSatPerKwToBtcPerKb(feeRateSatPerKw int) (feeRateBtcPerKb float64) {
 // FeeRateSatPerKwToSatPerB
 // @Description: sat/kw to sat/b
 func FeeRateSatPerKwToSatPerB(feeRateSatPerKw int) (feeRateSatPerB int) {
-	return feeRateSatPerKw * 4 / 1000
+	return int(math.Ceil(float64(feeRateSatPerKw) * 4 / 1000))
 }
 
 // FeeRateSatPerBToBtcPerKb
 // @Description: sat/b to BTC/Kb
 func FeeRateSatPerBToBtcPerKb(feeRateSatPerB int) (feeRateBtcPerKb float64) {
-	return utils.RoundToDecimalPlace(float64(feeRateSatPerB)/100000, 8)
+	return utils.RoundToDecimalPlace(math.Ceil(float64(feeRateSatPerB)/100000), 8)
 }
 
 // FeeRateSatPerBToSatPerKw
 // @Description: sat/b to sat/kw
 func FeeRateSatPerBToSatPerKw(feeRateSatPerB int) (feeRateSatPerKw int) {
-	return feeRateSatPerB * 1000 / 4
+	return int(math.Ceil(float64(feeRateSatPerB) * 1000 / 4))
 }
 
 // CalculateGasFeeRateSatPerKw
