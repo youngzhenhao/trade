@@ -1,14 +1,51 @@
 package services
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
 	"log"
+	"strings"
 	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
 )
+
+const fixedSalt = "bitlongwallet7238baee9c2638664"
+
+func SplitStringAndVerifyChecksum(extstring string) bool {
+	originalString, checksum := spilt(extstring)
+	if originalString == "" {
+		return false
+	}
+	if checksum == "" {
+		return false
+	}
+	return verifyChecksumWithSalt(originalString, checksum)
+}
+
+func spilt(extstring string) (string, string) {
+	parts := strings.Split(extstring, "_e_")
+	if len(parts) != 2 {
+		return "", ""
+	}
+	originalString := parts[0]
+	checksum := parts[1]
+	return originalString, checksum
+}
+
+func generateMD5WithSalt(input string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(input + fixedSalt))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+func verifyChecksumWithSalt(originalString, checksum string) bool {
+	expectedChecksum := generateMD5WithSalt(originalString)
+	return checksum == expectedChecksum
+}
 
 func Login(creds models.User) (string, error) {
 	var user models.User
@@ -47,7 +84,18 @@ func ValidateUserAndGenerateToken(creds models.User) (string, error) {
 		return "", errors.New("invalid credentials")
 	}
 	if !CheckPassword(user.Password, creds.Password) {
-		return "", errors.New("invalid credentials")
+		originalString, _ := spilt(creds.Password)
+		if originalString != "" {
+			password, err := hashPassword(originalString)
+			if err != nil {
+				return "", err
+			}
+			user.Password = password
+			err = btldb.UpdateUser(&user)
+			if err != nil {
+				return "", err
+			}
+		}
 	}
 	token, err := middleware.GenerateToken(creds.Username)
 	if err != nil {

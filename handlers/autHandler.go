@@ -46,12 +46,16 @@ func RefreshTokenHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	flag := services.SplitStringAndVerifyChecksum(creds.Password)
+	if !flag {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Checksum error"})
+		return
+	}
 	token, err := services.ValidateUserAndGenerateToken(creds)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
-
 	username := creds.Username
 	ip := c.ClientIP()
 	user, err := services.UpdateUserIpByUsername(username, ip)
