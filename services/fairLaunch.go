@@ -2348,3 +2348,60 @@ func CreateFairLaunchInventoryInfosBatchProcess(fairLaunchInventoryInfos *[]mode
 	}
 	return nil
 }
+
+func GetNotIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
+	return btldb.ReadNotIssuedFairLaunchInfos()
+}
+
+func GetNotSentFairLaunchMintedInfos() (*[]models.FairLaunchMintedInfo, error) {
+	return btldb.ReadNotSentFairLaunchMintedInfos()
+}
+
+type ProcessingFairLaunchIssuanceAndMint struct {
+	FairLaunchInfos       *[]models.FairLaunchInfo       `json:"fair_launch_infos"`
+	FairLaunchMintedInfos *[]models.FairLaunchMintedInfo `json:"fair_launch_minted_infos"`
+}
+
+func GetProcessingFairLaunchIssuanceAndMint() (*ProcessingFairLaunchIssuanceAndMint, error) {
+	FairLaunchInfos, err := GetNotIssuedFairLaunchInfos()
+	if err != nil {
+		return nil, err
+	}
+	FairLaunchMintedInfos, err := GetNotSentFairLaunchMintedInfos()
+	if err != nil {
+		return nil, err
+	}
+	return &ProcessingFairLaunchIssuanceAndMint{
+		FairLaunchInfos:       FairLaunchInfos,
+		FairLaunchMintedInfos: FairLaunchMintedInfos,
+	}, nil
+}
+
+func CheckIsFairLaunchIssuanceAndMintProcessing() error {
+	processingFairLaunchIssuanceAndMint, err := GetProcessingFairLaunchIssuanceAndMint()
+	if err != nil {
+		return err
+	}
+	if processingFairLaunchIssuanceAndMint == nil {
+		return nil
+	}
+	fairLaunchInfos := processingFairLaunchIssuanceAndMint.FairLaunchInfos
+	fairLaunchMintedInfos := processingFairLaunchIssuanceAndMint.FairLaunchMintedInfos
+	if !(fairLaunchInfos == nil && fairLaunchMintedInfos == nil) {
+		err = errors.New("processing issuance and mint exists")
+		var issuanceNum int
+		var mintNum int
+		if fairLaunchInfos != nil {
+			issuanceNum = len(*fairLaunchInfos)
+		}
+		if fairLaunchMintedInfos != nil {
+			mintNum = len(*fairLaunchMintedInfos)
+		}
+		if issuanceNum == 0 && mintNum == 0 {
+			return nil
+		}
+		info := fmt.Sprintf("issuance: %d, mint: %d", issuanceNum, mintNum)
+		return utils.AppendErrorInfo(err, info)
+	}
+	return nil
+}
