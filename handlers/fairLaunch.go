@@ -304,6 +304,7 @@ func QueryMintIsAvailable(c *gin.Context) {
 	}
 	calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee + services.FeeRateSatPerBToSatPerKw(2)
 	calculatedFeeRateSatPerB := feeRate.SatPerB.FastestFee + 2
+	calculatedFee := services.GetMintedTransactionGasFee(calculatedFeeRateSatPerKw)
 	inventoryAmount, err := services.GetAmountOfInventoryCouldBeMintedByMintedNumber(fairLaunchInfoID, mintedNumber)
 	isMintAvailable := inventoryAmount > 0
 	inventoryNumberAndAmount, err := services.GetNumberAndAmountOfInventoryCouldBeMinted(fairLaunchInfoID)
@@ -324,6 +325,7 @@ func QueryMintIsAvailable(c *gin.Context) {
 			"inventory_amount":               inventoryAmount,
 			"calculated_fee_rate_sat_per_kw": calculatedFeeRateSatPerKw,
 			"calculated_fee_rate_sat_per_b":  calculatedFeeRateSatPerB,
+			"calculated_fee":                 calculatedFee,
 			"available_number":               inventoryNumberAndAmount.Number,
 		},
 	})
