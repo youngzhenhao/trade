@@ -2516,7 +2516,7 @@ func GetAllFairLaunchInventoryInfo() (*[]models.FairLaunchInventoryInfo, error) 
 func FairLaunchInventoryToMintedAndAvailableInfo() (*[]models.FairLaunchMintedAndAvailableInfo, error) {
 	inventory, err := GetAllFairLaunchInventoryInfo()
 	if err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "GetAllFairLaunchInventoryInfo")
 	}
 	fairLaunchInfoIdMapExists := make(map[int]bool)
 	for _, item := range *inventory {
@@ -2529,11 +2529,11 @@ func FairLaunchInventoryToMintedAndAvailableInfo() (*[]models.FairLaunchMintedAn
 			var fairLaunchInfo *models.FairLaunchInfo
 			fairLaunchInfo, err = GetFairLaunchInfo(id)
 			if err != nil {
-				return nil, err
+				return nil, utils.AppendErrorInfo(err, "GetFairLaunchInfo")
 			}
 			err = CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo(fairLaunchInfo)
 			if err != nil {
-				return nil, err
+				return nil, utils.AppendErrorInfo(err, "CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo")
 			}
 			fmt.Println("Created")
 		}
@@ -2546,7 +2546,7 @@ func FairLaunchInventoryToMintedAndAvailableInfo() (*[]models.FairLaunchMintedAn
 		fairLaunchMintedInfo, err = GetFairLaunchMintedInfo(item.FairLaunchMintedInfoID)
 		err = UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(fairLaunchMintedInfo)
 		if err != nil {
-			return nil, err
+			return nil, utils.AppendErrorInfo(err, "UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo")
 		}
 	}
 	var mintedAndAvailableInfos []models.FairLaunchMintedAndAvailableInfo
@@ -2554,7 +2554,7 @@ func FairLaunchInventoryToMintedAndAvailableInfo() (*[]models.FairLaunchMintedAn
 		var mintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo
 		mintedAndAvailableInfo, err = GetFairLaunchMintedAndAvailableInfoByFairLaunchInfoId(id)
 		if err != nil {
-			return nil, err
+			return nil, utils.AppendErrorInfo(err, "GetFairLaunchMintedAndAvailableInfoByFairLaunchInfoId")
 		}
 		mintedAndAvailableInfos = append(mintedAndAvailableInfos, *mintedAndAvailableInfo)
 	}
