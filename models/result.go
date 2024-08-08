@@ -166,6 +166,7 @@ const (
 	SetAssetManagedUtxosErr
 	GetAllAssetManagedUtxoSimplifiedErr
 	ValidateUserIdAndAssetManagedUtxoIdsErr
+	GetAmountCouldBeMintByMintedNumberErr
 )
 
 func (e ErrCode) Error() string {
