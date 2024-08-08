@@ -1,9 +1,13 @@
 package middleware
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+	"sync"
+	"trade/models"
+	"trade/utils"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
@@ -28,8 +32,45 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Illegal login"})
 			return
 		}
+		// Update user's recent IP address
+		ip := c.ClientIP()
+		path := c.Request.URL.Path
+		go InsertLoginInfo(claims.Username, ip, path)
 		// Store the username in the context of the request
 		c.Set("username", claims.Username)
 		c.Next()
+	}
+}
+
+// InsertLoginInfo 记录登录信息
+var LoginInfoMutex = sync.Mutex{}
+
+func InsertLoginInfo(userName, ip, path string) {
+	LoginInfoMutex.Lock()
+	defer LoginInfoMutex.Unlock()
+
+	var user models.User
+	err := DB.Where("user_name = ?", userName).First(&user).Error
+	if err != nil {
+		fmt.Println("InsertLoginInfo Query Error:", err)
+		return
+	}
+	user.RecentIpAddresses = ip
+	user.RecentLoginTime = utils.GetTimestamp()
+	err = DB.Save(&user).Error
+	if err != nil {
+		fmt.Println("InsertLoginInfo Save Error:", err)
+		return
+	}
+
+	record := models.LoginRecord{
+		UserId:            user.ID,
+		RecentIpAddresses: user.RecentIpAddresses,
+		Path:              path,
+		LoginTime:         user.RecentLoginTime,
+	}
+	err = DB.Create(&record).Error
+	if err != nil {
+		fmt.Println(err, "insertLoginInfo", user.ID, ",", ip, ",", path)
 	}
 }
