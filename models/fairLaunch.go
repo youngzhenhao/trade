@@ -170,14 +170,15 @@ type FairLaunchInventoryInfo struct {
 
 type FairLaunchMintedAndAvailableInfo struct {
 	gorm.Model
-	FairLaunchInfoID int `json:"fair_launch_info_id" gorm:"not null;index"`
-	MintedNumber     int `json:"minted_number"`
-	MintedAmount     int `json:"minted_amount"`
-	AvailableNumber  int `json:"available_number"`
-	AvailableAmount  int `json:"available_amount"`
-	ReserveTotal     int `json:"reserve_total"`
-	MintTotal        int `json:"mint_total"`
-	MintNumber       int `json:"mint_number"`
-	MintQuantity     int `json:"mint_quantity"`
-	FinalQuantity    int `json:"final_quantity"`
+	FairLaunchInfoID      int    `json:"fair_launch_info_id" gorm:"not null;index"`
+	MintedNumber          int    `json:"minted_number"`
+	MintedAmount          int    `json:"minted_amount"`
+	AvailableNumber       int    `json:"available_number"`
+	AvailableAmount       int    `json:"available_amount"`
+	ReserveTotal          int    `json:"reserve_total"`
+	MintTotal             int    `json:"mint_total"`
+	MintNumber            int    `json:"mint_number"`
+	MintQuantity          int    `json:"mint_quantity"`
+	FinalQuantity         int    `json:"final_quantity"`
+	CalculationExpression string `json:"calculation_expression" gorm:"type:varchar(255)"`
 }

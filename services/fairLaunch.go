@@ -2412,16 +2412,17 @@ func UpdateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo *mo
 
 func CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
 	return CreateFairLaunchMintedAndAvailableInfo(&models.FairLaunchMintedAndAvailableInfo{
-		FairLaunchInfoID: int(fairLaunchInfo.ID),
-		MintedNumber:     0,
-		MintedAmount:     0,
-		AvailableNumber:  fairLaunchInfo.MintNumber,
-		AvailableAmount:  fairLaunchInfo.MintTotal,
-		ReserveTotal:     fairLaunchInfo.ReserveTotal,
-		MintTotal:        fairLaunchInfo.MintTotal,
-		MintNumber:       fairLaunchInfo.MintNumber,
-		MintQuantity:     fairLaunchInfo.MintQuantity,
-		FinalQuantity:    fairLaunchInfo.FinalQuantity,
+		FairLaunchInfoID:      int(fairLaunchInfo.ID),
+		MintedNumber:          0,
+		MintedAmount:          0,
+		AvailableNumber:       fairLaunchInfo.MintNumber,
+		AvailableAmount:       fairLaunchInfo.MintTotal,
+		ReserveTotal:          fairLaunchInfo.ReserveTotal,
+		MintTotal:             fairLaunchInfo.MintTotal,
+		MintNumber:            fairLaunchInfo.MintNumber,
+		MintQuantity:          fairLaunchInfo.MintQuantity,
+		FinalQuantity:         fairLaunchInfo.FinalQuantity,
+		CalculationExpression: fairLaunchInfo.CalculationExpression,
 	})
 }
 
@@ -2438,6 +2439,8 @@ func UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(fairLaunchMint
 		return err
 	}
 	number := fairLaunchMintedInfo.MintedNumber
+	// TODO: only for test
+	fmt.Println(number)
 	var amount int
 	if number > mintedAndAvailableInfo.AvailableNumber {
 		return errors.New("minted number " + strconv.Itoa(number) + " exceeds available number")
@@ -2446,6 +2449,8 @@ func UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(fairLaunchMint
 	} else {
 		amount = number * mintedAndAvailableInfo.MintQuantity
 	}
+	// TODO: only for test
+	fmt.Println(number)
 	if amount != fairLaunchMintedInfo.AddrAmount {
 		return errors.New("minted amount " + strconv.Itoa(amount) + " is not equal minted info's addr amount " + strconv.Itoa(fairLaunchMintedInfo.AddrAmount))
 	}
@@ -2465,6 +2470,8 @@ func UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(fairLaunchMint
 	if mintedAndAvailableInfo.AvailableAmount < 0 {
 		return errors.New("available amount " + strconv.Itoa(mintedAndAvailableInfo.AvailableAmount) + " is less than zero")
 	}
+	// TODO: only for test
+	fmt.Println(utils.ValueJsonString(mintedAndAvailableInfo))
 	return btldb.UpdateFairLaunchMintedAndAvailableInfo(mintedAndAvailableInfo)
 }
 
@@ -2542,6 +2549,7 @@ func FairLaunchInventoryToMintedAndAvailableInfo() (*[]models.FairLaunchMintedAn
 		if item.State == models.FairLaunchInventoryStateOpen && item.FairLaunchMintedInfoID == 0 {
 			continue
 		}
+		fmt.Println(item.State, item.FairLaunchMintedInfoID)
 		var fairLaunchMintedInfo *models.FairLaunchMintedInfo
 		fairLaunchMintedInfo, err = GetFairLaunchMintedInfo(item.FairLaunchMintedInfoID)
 		err = UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(fairLaunchMintedInfo)
