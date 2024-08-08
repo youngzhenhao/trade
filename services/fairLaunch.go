@@ -2520,7 +2520,7 @@ func FairLaunchInventoryToMintedAndAvailableInfo() (*[]models.FairLaunchMintedAn
 	}
 	fairLaunchInfoIdMapExists := make(map[int]bool)
 	for _, item := range *inventory {
-		fairLaunchInfoIdMapExists[item.FairLaunchMintedInfoID] = true
+		fairLaunchInfoIdMapExists[item.FairLaunchInfoID] = true
 	}
 	for id := range fairLaunchInfoIdMapExists {
 		fmt.Print(id)
