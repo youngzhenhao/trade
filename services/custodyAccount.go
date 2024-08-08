@@ -85,7 +85,7 @@ func CreateCustodyAccount(user *models.User) (*models.Account, error) {
 func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, balance uint64, invoice string, HasServerFee bool) (uint, error) {
 	var err error
 	if account.UserAccountCode == "admin" {
-		CUST.Info("admin receive %v amount from userId %v", balance, account.UserId)
+		CUST.Info("admin receive %v amount", balance)
 		return 0, nil
 	}
 
