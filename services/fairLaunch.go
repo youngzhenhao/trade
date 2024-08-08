@@ -495,7 +495,7 @@ func GetAllInventoryInfoByFairLaunchInfoId(fairLaunchInfoId int) (*[]models.Fair
 // @Description: Get all Inventory Could Be Minted By FairLaunchInfoId
 func GetInventoryCouldBeMintedByFairLaunchInfoId(fairLaunchInfoId int) (*[]models.FairLaunchInventoryInfo, error) {
 	var fairLaunchInventoryInfos []models.FairLaunchInventoryInfo
-	err := middleware.DB.Where("fair_launch_info_id = ? AND status = ? AND is_minted = ? AND state = ?", fairLaunchInfoId, models.StatusNormal, false, models.FairLaunchInventoryStateOpen).Find(&fairLaunchInventoryInfos).Error
+	err := middleware.DB.Where("fair_launch_info_id = ? AND is_minted = ? AND state = ?", fairLaunchInfoId, false, models.FairLaunchInventoryStateOpen).Find(&fairLaunchInventoryInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInventoryInfos")
 	}
