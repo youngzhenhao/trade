@@ -74,8 +74,8 @@ type FairLaunchInfo struct {
 	BatchKey                       string           `json:"batch_key" gorm:"type:varchar(255)"`
 	BatchState                     string           `json:"batch_state" gorm:"type:varchar(255)"`
 	BatchTxidAnchor                string           `json:"batch_txid_anchor" gorm:"type:varchar(255)"`
-	AssetID                        string           `json:"asset_id" gorm:"type:varchar(255)"`
-	UserID                         int              `json:"user_id"`
+	AssetID                        string           `json:"asset_id" gorm:"type:varchar(255);index"`
+	UserID                         int              `json:"user_id" gorm:"index"`
 	Username                       string           `json:"username" gorm:"type:varchar(255)"`
 	PayMethod                      FeePaymentMethod `json:"pay_method"`
 	PaidSuccessTime                int              `json:"paid_success_time"`
@@ -87,7 +87,7 @@ type FairLaunchInfo struct {
 	ReservedSentAnchorOutpoint     string           `json:"reserved_sent_anchor_outpoint" gorm:"type:varchar(255)"`
 	MintedNumber                   int              `json:"minted_number"`
 	IsMintAll                      bool             `json:"is_mint_all"`
-	Status                         FairLaunchStatus `json:"status" default:"1" gorm:"default:1"`
+	Status                         FairLaunchStatus `json:"status" default:"1" gorm:"default:1;index"`
 	State                          FairLaunchState  `json:"state"`
 	ProcessNumber                  int              `json:"process_number"`
 }
@@ -107,7 +107,7 @@ type SetFairLaunchInfoRequest struct {
 
 type FairLaunchMintedInfo struct {
 	gorm.Model
-	FairLaunchInfoID      int                   `json:"fair_launch_info_id" gorm:"not null"`
+	FairLaunchInfoID      int                   `json:"fair_launch_info_id" gorm:"not null;index"`
 	MintedNumber          int                   `json:"minted_number"`
 	MintedFeeRateSatPerKw int                   `json:"minted_fee_rate_sat_per_kw"`
 	MintedGasFee          int                   `json:"minted_gas_fee"`
@@ -115,9 +115,9 @@ type FairLaunchMintedInfo struct {
 	MintFeePaidID         int                   `json:"mint_fee_paid_id"`
 	PayMethod             FeePaymentMethod      `json:"pay_method"`
 	PaidSuccessTime       int                   `json:"paid_success_time"`
-	UserID                int                   `json:"user_id"`
+	UserID                int                   `json:"user_id" gorm:"index"`
 	Username              string                `json:"username" gorm:"type:varchar(255)"`
-	AssetID               string                `json:"asset_id" gorm:"type:varchar(255)"`
+	AssetID               string                `json:"asset_id" gorm:"type:varchar(255)" gorm:"index"`
 	AssetName             string                `json:"asset_name" gorm:"type:varchar(255)"`
 	AssetType             int                   `json:"asset_type"`
 	AddrAmount            int                   `json:"amount_addr"`
@@ -157,6 +157,7 @@ type FairLaunchMintedUserInfo struct {
 	Status                 FairLaunchStatus `json:"status" default:"1" gorm:"default:1"`
 }
 
+// Deprecated: Use FairLaunchMintedAndAvailableInfo instead
 type FairLaunchInventoryInfo struct {
 	gorm.Model
 	FairLaunchInfoID       int                      `json:"fair_launch_info_id" gorm:"not null;index"`
@@ -165,4 +166,19 @@ type FairLaunchInventoryInfo struct {
 	FairLaunchMintedInfoID int                      `json:"fair_launch_minted_info_id" gorm:"index"`
 	Status                 FairLaunchStatus         `json:"status" gorm:"default:1;index"`
 	State                  FairLaunchInventoryState `json:"state" gorm:"index"`
+}
+
+type FairLaunchMintedAndAvailableInfo struct {
+	gorm.Model
+	FairLaunchInfoID      int    `json:"fair_launch_info_id" gorm:"not null;index"`
+	MintedNumber          int    `json:"minted_number"`
+	MintedAmount          int    `json:"minted_amount"`
+	AvailableNumber       int    `json:"available_number"`
+	AvailableAmount       int    `json:"available_amount"`
+	ReserveTotal          int    `json:"reserve_total"`
+	MintTotal             int    `json:"mint_total"`
+	MintNumber            int    `json:"mint_number"`
+	MintQuantity          int    `json:"mint_quantity"`
+	FinalQuantity         int    `json:"final_quantity"`
+	CalculationExpression string `json:"calculation_expression" gorm:"type:varchar(255)"`
 }

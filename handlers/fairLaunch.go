@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"trade/models"
 	"trade/services"
+	"trade/utils"
 )
 
 func GetAllFairLaunchInfo(c *gin.Context) {
@@ -305,9 +306,12 @@ func QueryMintIsAvailable(c *gin.Context) {
 	calculatedFeeRateSatPerKw := feeRate.SatPerKw.FastestFee + services.FeeRateSatPerBToSatPerKw(2)
 	calculatedFeeRateSatPerB := feeRate.SatPerB.FastestFee + 2
 	calculatedFee := services.GetMintedTransactionGasFee(calculatedFeeRateSatPerKw)
-	inventoryAmount, err := services.GetAmountOfInventoryCouldBeMintedByMintedNumber(fairLaunchInfoID, mintedNumber)
-	isMintAvailable := inventoryAmount > 0
-	inventoryNumberAndAmount, err := services.GetNumberAndAmountOfInventoryCouldBeMinted(fairLaunchInfoID)
+	mintedAmount, err := services.GetAmountCouldBeMintByMintedNumber(fairLaunchInfoID, mintedNumber)
+	if err != nil {
+		// @dev: Do not return
+	}
+	isMintAvailable := mintedAmount > 0
+	numberAndAmountCouldBeMint, err := services.GetNumberAndAmountCouldBeMint(fairLaunchInfoID)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -319,14 +323,15 @@ func QueryMintIsAvailable(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
-		Error:   "",
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
 		Data: gin.H{
 			"is_mint_available":              isMintAvailable,
-			"inventory_amount":               inventoryAmount,
+			"inventory_amount":               mintedAmount,
 			"calculated_fee_rate_sat_per_kw": calculatedFeeRateSatPerKw,
 			"calculated_fee_rate_sat_per_b":  calculatedFeeRateSatPerB,
 			"calculated_fee":                 calculatedFee,
-			"available_number":               inventoryNumberAndAmount.Number,
+			"available_number":               numberAndAmountCouldBeMint.Number,
 		},
 	})
 }
@@ -413,6 +418,18 @@ func MintFairLaunchReserved(c *gin.Context) {
 			Success: false,
 			Error:   "Update FairLaunchInfo IsReservedSent. " + err.Error(),
 			Code:    models.UpdateFairLaunchInfoIsReservedSentErr,
+			Data:    nil,
+		})
+		return
+	}
+	// @dev: Record paid fee
+	txid, _ := utils.OutpointToTransactionAndIndex(outpoint)
+	err = services.CreateFairLaunchIncomeOfServerPaySendReservedFee(fairLaunchInfo.AssetID, int(fairLaunchInfo.ID), txid)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   "Create FairLaunch Income Of Server Pay Send Reserved Fee. " + err.Error(),
+			Code:    models.CreateFairLaunchIncomeOfServerPaySendReservedFeeErr,
 			Data:    nil,
 		})
 		return

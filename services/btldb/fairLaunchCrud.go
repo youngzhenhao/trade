@@ -163,3 +163,34 @@ func GetFairLaunchInfosByIds(fairLaunchInfoIds *[]int) (*[]models.FairLaunchInfo
 	err := middleware.DB.Where(fairLaunchInfoIds).Find(&fairLaunchInfos).Error
 	return &fairLaunchInfos, err
 }
+
+// FairLaunchMintedAndAvailableInfo
+
+func CreateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo) error {
+	return middleware.DB.Create(fairLaunchMintedAndAvailableInfo).Error
+}
+
+func CreateFairLaunchMintedAndAvailableInfos(fairLaunchMintedAndAvailableInfos *[]models.FairLaunchMintedAndAvailableInfo) error {
+	return middleware.DB.Create(fairLaunchMintedAndAvailableInfos).Error
+}
+
+func ReadFairLaunchMintedAndAvailableInfo(id uint) (*models.FairLaunchMintedAndAvailableInfo, error) {
+	var fairLaunchMintedAndAvailableInfo models.FairLaunchMintedAndAvailableInfo
+	err := middleware.DB.First(&fairLaunchMintedAndAvailableInfo, id).Error
+	return &fairLaunchMintedAndAvailableInfo, err
+}
+
+func ReadFairLaunchMintedAndAvailableInfoByFairLaunchInfoId(fairLaunchInfoId int) (*models.FairLaunchMintedAndAvailableInfo, error) {
+	var fairLaunchMintedAndAvailableInfo models.FairLaunchMintedAndAvailableInfo
+	err := middleware.DB.Where("fair_launch_info_id = ?", fairLaunchInfoId).First(&fairLaunchMintedAndAvailableInfo).Error
+	return &fairLaunchMintedAndAvailableInfo, err
+}
+
+func UpdateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo) error {
+	return middleware.DB.Save(fairLaunchMintedAndAvailableInfo).Error
+}
+
+func DeleteFairLaunchMintedAndAvailableInfo(id uint) error {
+	var fairLaunchMintedAndAvailableInfo models.FairLaunchMintedAndAvailableInfo
+	return middleware.DB.Delete(&fairLaunchMintedAndAvailableInfo, id).Error
+}

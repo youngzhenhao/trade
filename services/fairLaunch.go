@@ -1152,6 +1152,11 @@ func FairLaunchTapdMintFinalize(fairLaunchInfo *models.FairLaunchInfo) (err erro
 	if err != nil {
 		return utils.AppendErrorInfo(err, "BatchTxidAnchorToAssetId")
 	}
+	// @dev: Record paid fee
+	err = CreateFairLaunchIncomeOfServerPayIssuanceFinalizeFee(int(fairLaunchInfo.ID), batchTxidAnchor)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfServerPayIssuanceFinalizeFee")
+	}
 	err = UpdateFairLaunchInfoBatchTxidAndAssetId(fairLaunchInfo, batchTxidAnchor, batchState, assetId)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoBatchTxidAndAssetId")
@@ -1285,12 +1290,17 @@ func ProcessIssuedFairLaunchInfos(fairLaunchInfos *[]models.FairLaunchInfo) *[]m
 
 func ProcessFairLaunchStateNoPayInfoService(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	// @dev: 1.pay fee
-	paidId, err := PayIssuanceFee(fairLaunchInfo.UserID, fairLaunchInfo.FeeRate)
+	payIssuanceFeeResult, err := PayIssuanceFee(fairLaunchInfo.UserID, fairLaunchInfo.FeeRate)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "PayIssuanceFee")
 	}
+	// @dev: Record paid fee
+	err = CreateFairLaunchIncomeOfUserPayIssuanceFee(int(fairLaunchInfo.ID), payIssuanceFeeResult.PaidId, payIssuanceFeeResult.Fee, fairLaunchInfo.UserID, fairLaunchInfo.Username)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfUserPayIssuanceFee")
+	}
 	// @dev: 2.Store paidId
-	err = UpdateFairLaunchInfoPaidId(fairLaunchInfo, paidId)
+	err = UpdateFairLaunchInfoPaidId(fairLaunchInfo, payIssuanceFeeResult.PaidId)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoPaidId")
 	}
@@ -1343,8 +1353,14 @@ func ProcessFairLaunchStatePaidNoIssueInfoService(fairLaunchInfo *models.FairLau
 	}
 	// @dev: 2.Update asset issuance table
 	err = CreateAssetIssuanceInfoByFairLaunchInfo(fairLaunchInfo)
-	// @dev: 3.update inventory
-	err = CreateInventoryInfoByFairLaunchInfo(fairLaunchInfo)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "CreateAssetIssuanceInfoByFairLaunchInfo")
+	}
+	// @dev: 3.update MintedAndAvailableInfo
+	err = CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo(fairLaunchInfo)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo")
+	}
 	// @dev: Update state and issuance time
 	err = UpdateFairLaunchInfoStateAndIssuanceTime(fairLaunchInfo)
 	if err != nil {
@@ -1694,6 +1710,7 @@ func SendFairLaunchMintedAssetLocked() error {
 	if err != nil {
 		return utils.AppendErrorInfo(err, "GetAllUnsentFairLaunchMintedInfos")
 	}
+	assetIdToFairLaunchInfoId := make(map[string]int)
 	assetIdToAddrs := make(map[string][]string)
 	assetIdToAmount := make(map[string]int)
 	assetIdToGasFeeTotal := make(map[string]int)
@@ -1708,6 +1725,7 @@ func SendFairLaunchMintedAssetLocked() error {
 		assetIdToAmount[assetId] += fairLaunchMintedInfo.AddrAmount
 		assetIdToGasFeeTotal[assetId] += fairLaunchMintedInfo.MintedGasFee
 		assetIdToGasFeeRateTotal[assetId] += fairLaunchMintedInfo.MintedFeeRateSatPerKw
+		assetIdToFairLaunchInfoId[assetId] = fairLaunchMintedInfo.FairLaunchInfoID
 	}
 	assetIdToGasFeeRateAverage := make(map[string]int)
 	for assetId, feeRateTotal := range assetIdToGasFeeTotal {
@@ -1752,6 +1770,14 @@ func SendFairLaunchMintedAssetLocked() error {
 		if err != nil {
 			return utils.AppendErrorInfo(err, "SendAssetAddrSliceAndGetResponse")
 		}
+		// @dev: Record paid fee
+		outpoint := response.Transfer.Outputs[0].Anchor.Outpoint
+		txid, _ := utils.OutpointToTransactionAndIndex(outpoint)
+		addrsStr := AddrsToString(addrs)
+		err = CreateFairLaunchIncomeOfServerPaySendAssetFee(assetId, assetIdToFairLaunchInfoId[assetId], txid, addrsStr)
+		if err != nil {
+			return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfServerPaySendAssetFee")
+		}
 		// @dev: Update minted info
 		err = UpdateFairLaunchMintedInfosBySendAssetResponse(unsentFairLaunchMintedInfos, response)
 		if err != nil {
@@ -1759,6 +1785,18 @@ func SendFairLaunchMintedAssetLocked() error {
 		}
 	}
 	return nil
+}
+
+func AddrsToString(addrs []string) string {
+	var addrsStr string
+	for i, addr := range addrs {
+		if i == 0 {
+			addrsStr = addr
+		} else {
+			addrsStr += ", " + addr
+		}
+	}
+	return addrsStr
 }
 
 func GetAllLockedInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (*[]models.FairLaunchInventoryInfo, error) {
@@ -1849,12 +1887,17 @@ func ProcessSentButNotUpdatedMintedInfo(fairLaunchMintedInfo *models.FairLaunchM
 
 func ProcessFairLaunchMintedStateNoPayInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	// @dev: 1.pay fee
-	paidId, err := PayMintFee(fairLaunchMintedInfo.UserID, fairLaunchMintedInfo.MintedFeeRateSatPerKw)
+	payMintedFeeResult, err := PayMintFee(fairLaunchMintedInfo.UserID, fairLaunchMintedInfo.MintedFeeRateSatPerKw)
 	if err != nil {
 		return nil
 	}
+	// @dev: Record paid fee
+	err = CreateFairLaunchIncomeOfUserPayMintedFee(fairLaunchMintedInfo.AssetID, fairLaunchMintedInfo.FairLaunchInfoID, int(fairLaunchMintedInfo.ID), payMintedFeeResult.PaidId, payMintedFeeResult.Fee, fairLaunchMintedInfo.UserID, fairLaunchMintedInfo.Username)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfUserPayMintedFee")
+	}
 	// @dev: 2.Store paidId
-	err = UpdateFairLaunchMintedInfoPaidId(fairLaunchMintedInfo, paidId)
+	err = UpdateFairLaunchMintedInfoPaidId(fairLaunchMintedInfo, payMintedFeeResult.PaidId)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchMintedInfoPaidId")
 	}
@@ -1889,16 +1932,10 @@ func ProcessFairLaunchMintedStatePaidPendingInfo(fairLaunchMintedInfo *models.Fa
 }
 
 func ProcessFairLaunchMintedStatePaidNoSendInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
-	// @dev: Locked Inventory
-	lockedInventory, err := LockInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo)
+	// @dev: 1. Update MintedAndAvailableInfo
+	err = UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(fairLaunchMintedInfo)
 	if err != nil {
-		return utils.AppendErrorInfo(err, "LockInventoryByFairLaunchMintedInfo")
-	}
-	// @dev: Calculate mint amount
-	calculatedMintAmount := CalculateMintAmountByFairLaunchInventoryInfos(lockedInventory)
-	if calculatedMintAmount != fairLaunchMintedInfo.AddrAmount {
-		err = errors.New("calculated amount " + strconv.Itoa(calculatedMintAmount) + " is not equal fairLaunchMintedInfo's addr amount")
-		return err
+		return utils.AppendErrorInfo(err, "UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo")
 	}
 	// @dev: Change state
 	err = ChangeFairLaunchMintedInfoState(fairLaunchMintedInfo, models.FairLaunchMintedStateSentPending)
@@ -1934,11 +1971,7 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 		if err != nil {
 			return utils.AppendErrorInfo(err, "UpdateMintedNumberAndIsMintAllOfFairLaunchInfoByFairLaunchMintedInfo")
 		}
-		// @dev: Update Inventory
-		err = UpdateLockedInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo)
-		if err != nil {
-			return utils.AppendErrorInfo(err, "UpdateLockedInventoryByFairLaunchMintedInfo")
-		}
+		// @dev: Do not update fairLaunchMintedInfo here
 		// @dev: Update minted user
 		f := btldb.FairLaunchStore{DB: middleware.DB}
 		err = f.CreateFairLaunchMintedUserInfo(&models.FairLaunchMintedUserInfo{
@@ -2404,4 +2437,171 @@ func CheckIsFairLaunchIssuanceAndMintProcessing() error {
 		return utils.AppendErrorInfo(err, info)
 	}
 	return nil
+}
+
+func CreateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo) error {
+	return btldb.CreateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo)
+}
+
+func UpdateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo) error {
+	return btldb.UpdateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo)
+}
+
+func CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
+	return CreateFairLaunchMintedAndAvailableInfo(&models.FairLaunchMintedAndAvailableInfo{
+		FairLaunchInfoID:      int(fairLaunchInfo.ID),
+		MintedNumber:          0,
+		MintedAmount:          0,
+		AvailableNumber:       fairLaunchInfo.MintNumber,
+		AvailableAmount:       fairLaunchInfo.MintTotal,
+		ReserveTotal:          fairLaunchInfo.ReserveTotal,
+		MintTotal:             fairLaunchInfo.MintTotal,
+		MintNumber:            fairLaunchInfo.MintNumber,
+		MintQuantity:          fairLaunchInfo.MintQuantity,
+		FinalQuantity:         fairLaunchInfo.FinalQuantity,
+		CalculationExpression: fairLaunchInfo.CalculationExpression,
+	})
+}
+
+func GetFairLaunchMintedAndAvailableInfoByFairLaunchInfoId(fairLaunchInfoId int) (*models.FairLaunchMintedAndAvailableInfo, error) {
+	return btldb.ReadFairLaunchMintedAndAvailableInfoByFairLaunchInfoId(fairLaunchInfoId)
+}
+
+func UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
+	if fairLaunchMintedInfo == nil || fairLaunchMintedInfo.MintedNumber == 0 {
+		return errors.New("invalid fair launch minted info or minted number is zero")
+	}
+	mintedAndAvailableInfo, err := GetFairLaunchMintedAndAvailableInfoByFairLaunchInfoId(fairLaunchMintedInfo.FairLaunchInfoID)
+	if err != nil {
+		return err
+	}
+	number := fairLaunchMintedInfo.MintedNumber
+	// TODO: only for test
+	fmt.Println(number)
+	var amount int
+	if number > mintedAndAvailableInfo.AvailableNumber {
+		return errors.New("minted number " + strconv.Itoa(number) + " exceeds available number")
+	} else if number == mintedAndAvailableInfo.AvailableNumber {
+		amount = (number-1)*mintedAndAvailableInfo.MintQuantity + mintedAndAvailableInfo.FinalQuantity
+	} else {
+		amount = number * mintedAndAvailableInfo.MintQuantity
+	}
+	// TODO: only for test
+	fmt.Println(number)
+	if amount != fairLaunchMintedInfo.AddrAmount {
+		return errors.New("minted amount " + strconv.Itoa(amount) + " is not equal minted info's addr amount " + strconv.Itoa(fairLaunchMintedInfo.AddrAmount))
+	}
+	mintedAndAvailableInfo.MintedNumber += number
+	if mintedAndAvailableInfo.MintedNumber > mintedAndAvailableInfo.MintNumber {
+		return errors.New("minted number " + strconv.Itoa(mintedAndAvailableInfo.MintedNumber) + " exceeds mint number")
+	}
+	mintedAndAvailableInfo.MintedAmount += amount
+	if mintedAndAvailableInfo.MintedAmount > mintedAndAvailableInfo.MintTotal {
+		return errors.New("minted amount " + strconv.Itoa(mintedAndAvailableInfo.MintedAmount) + " exceeds mint total")
+	}
+	mintedAndAvailableInfo.AvailableNumber -= number
+	if mintedAndAvailableInfo.AvailableNumber < 0 {
+		return errors.New("available number " + strconv.Itoa(mintedAndAvailableInfo.AvailableNumber) + " is less than zero")
+	}
+	mintedAndAvailableInfo.AvailableAmount -= amount
+	if mintedAndAvailableInfo.AvailableAmount < 0 {
+		return errors.New("available amount " + strconv.Itoa(mintedAndAvailableInfo.AvailableAmount) + " is less than zero")
+	}
+	// TODO: only for test
+	fmt.Println(utils.ValueJsonString(mintedAndAvailableInfo))
+	return btldb.UpdateFairLaunchMintedAndAvailableInfo(mintedAndAvailableInfo)
+}
+
+func GetAmountCouldBeMintByMintedNumber(fairLaunchInfoID int, mintedNumber int) (int, error) {
+	if mintedNumber == 0 {
+		return 0, errors.New("invalid minted number(0)")
+	}
+	mintedAndAvailableInfo, err := GetFairLaunchMintedAndAvailableInfoByFairLaunchInfoId(fairLaunchInfoID)
+	if err != nil {
+		return 0, err
+	}
+	var amount int
+	if mintedNumber > mintedAndAvailableInfo.AvailableNumber {
+		return 0, errors.New("minted number " + strconv.Itoa(mintedNumber) + " exceeds available number")
+	} else if mintedNumber == mintedAndAvailableInfo.AvailableNumber {
+		amount = (mintedNumber-1)*mintedAndAvailableInfo.MintQuantity + mintedAndAvailableInfo.FinalQuantity
+	} else {
+		amount = mintedNumber * mintedAndAvailableInfo.MintQuantity
+	}
+	return amount, nil
+}
+
+type NumberAndAmountCouldBeMint struct {
+	Number int `json:"number"`
+	Amount int `json:"amount"`
+}
+
+func GetNumberAndAmountCouldBeMint(fairLaunchInfoID int) (*NumberAndAmountCouldBeMint, error) {
+	mintedAndAvailableInfo, err := GetFairLaunchMintedAndAvailableInfoByFairLaunchInfoId(fairLaunchInfoID)
+	if err != nil {
+		return nil, err
+	}
+	return &NumberAndAmountCouldBeMint{
+		Number: mintedAndAvailableInfo.AvailableNumber,
+		Amount: mintedAndAvailableInfo.AvailableAmount,
+	}, nil
+}
+
+func GetAllFairLaunchInventoryInfo() (*[]models.FairLaunchInventoryInfo, error) {
+	var fairLaunchInventoryInfos []models.FairLaunchInventoryInfo
+	err := middleware.DB.Find(&fairLaunchInventoryInfos).Error
+	if err != nil {
+		return nil, err
+	}
+	return &fairLaunchInventoryInfos, nil
+}
+
+// TODO: Fix
+func FairLaunchInventoryToMintedAndAvailableInfo() (*[]models.FairLaunchMintedAndAvailableInfo, error) {
+	inventory, err := GetAllFairLaunchInventoryInfo()
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "GetAllFairLaunchInventoryInfo")
+	}
+	fairLaunchInfoIdMapExists := make(map[int]bool)
+	for _, item := range *inventory {
+		fairLaunchInfoIdMapExists[item.FairLaunchInfoID] = true
+	}
+	for id := range fairLaunchInfoIdMapExists {
+		fmt.Print(id)
+		_, err = GetFairLaunchMintedAndAvailableInfoByFairLaunchInfoId(id)
+		if err != nil {
+			var fairLaunchInfo *models.FairLaunchInfo
+			fairLaunchInfo, err = GetFairLaunchInfo(id)
+			if err != nil {
+				return nil, utils.AppendErrorInfo(err, "GetFairLaunchInfo")
+			}
+			err = CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo(fairLaunchInfo)
+			if err != nil {
+				return nil, utils.AppendErrorInfo(err, "CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo")
+			}
+			fmt.Println("Created")
+		}
+	}
+	for _, item := range *inventory {
+		if item.State == models.FairLaunchInventoryStateOpen && item.FairLaunchMintedInfoID == 0 {
+			continue
+		}
+		fmt.Println(item.State, item.FairLaunchMintedInfoID)
+		var fairLaunchMintedInfo *models.FairLaunchMintedInfo
+		fairLaunchMintedInfo, err = GetFairLaunchMintedInfo(item.FairLaunchMintedInfoID)
+		err = UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(fairLaunchMintedInfo)
+		if err != nil {
+			return nil, utils.AppendErrorInfo(err, "UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo")
+		}
+	}
+	var mintedAndAvailableInfos []models.FairLaunchMintedAndAvailableInfo
+	for id := range fairLaunchInfoIdMapExists {
+		var mintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo
+		mintedAndAvailableInfo, err = GetFairLaunchMintedAndAvailableInfoByFairLaunchInfoId(id)
+		if err != nil {
+			return nil, utils.AppendErrorInfo(err, "GetFairLaunchMintedAndAvailableInfoByFairLaunchInfoId")
+		}
+		mintedAndAvailableInfos = append(mintedAndAvailableInfos, *mintedAndAvailableInfo)
+	}
+	return &mintedAndAvailableInfos, nil
 }

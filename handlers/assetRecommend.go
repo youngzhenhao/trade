@@ -57,7 +57,7 @@ func GetAssetRecommendByAssetId(c *gin.Context) {
 	})
 }
 
-func GetAssetRecommendByUserIdAndAssetId(c *gin.Context) {
+func GetUserAssetRecommendByAssetId(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	userId, err := services.NameToId(username)
 	if err != nil {
@@ -146,5 +146,39 @@ func GetAllAssetRecommendSimplified(c *gin.Context) {
 		Error:   models.SuccessErr,
 		Code:    models.SUCCESS,
 		Data:    assetRecommendSimplified,
+	})
+}
+
+func GetAssetRecommendByUserIdAndAssetId(c *gin.Context) {
+	type UserIdAndAssetId struct {
+		UserId  int    `json:"user_id"`
+		AssetId string `json:"asset_id"`
+	}
+	var userIdAndAssetId UserIdAndAssetId
+	err := c.ShouldBind(&userIdAndAssetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	assetRecommend, err := services.GetAssetRecommendByUserIdAndAssetId(userIdAndAssetId.UserId, userIdAndAssetId.AssetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetRecommendByUserIdAndAssetIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    assetRecommend,
 	})
 }
