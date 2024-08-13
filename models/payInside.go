@@ -11,6 +11,7 @@ type PayInside struct {
 	PayType       PayInsideType   `gorm:"column:pay_type;type:smallint" json:"pay_type"`
 	AssetType     string          `gorm:"column:asset_type;type:varchar(128);default:'00'" json:"asset_type"`
 	PayReq        *string         `gorm:"column:pay_req;type:varchar(512)" json:"pay_req"`
+	BalanceId     uint            `gorm:"column:balance_id;type:bigint;default:0" json:"balance_id"`
 	Status        PayInsideStatus `gorm:"column:status;type:smallint" json:"status"`
 }
 

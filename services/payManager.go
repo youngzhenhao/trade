@@ -22,6 +22,16 @@ func PayAmountToAdmin(payUserId uint, gasFee uint64) (uint, error) {
 	}
 	return id, nil
 }
+func BackAmount(payUserId uint) (uint, error) {
+	missionId, err := CreateBackFeeMission(payUserId)
+	if err != nil {
+		return 0, err
+	}
+	return missionId, nil
+}
+func CheckBackFeeMission(missionId uint) bool {
+	return checkBackFeeMissionById(missionId)
+}
 
 func CheckAdminAccount() bool {
 	adminUser, err := btldb.ReadUserByUsername("admin")

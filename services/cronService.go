@@ -214,6 +214,11 @@ func CreateCustodyAccountProcessions() (err error) {
 			CronExpression: "*/25 * * * * *",
 			FunctionName:   "PollPayInsideMission",
 			Package:        "services",
+		}, {
+			Name:           "PollBackFeeMission",
+			CronExpression: "*/25 * * * * *",
+			FunctionName:   "PollBackFeeMission",
+			Package:        "services",
 		},
 	})
 }
@@ -228,6 +233,9 @@ func (cs *CronService) PollInvoiceCron() {
 
 func (cs *CronService) PollPayInsideMission() {
 	pollPayInsideMission()
+}
+func (cs *CronService) PollBackFeeMission() {
+	pollBackFeeMission()
 }
 
 func CreateSnapshotProcessions() (err error) {
