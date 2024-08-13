@@ -351,22 +351,35 @@ func IsIssuanceFeePaid(paidId int) bool {
 	return state
 }
 
-func PayMintFee(userId int, feeRateSatPerKw int) (mintFeePaidId int, err error) {
+type PayIssuanceAndMintedFeeResult struct {
+	PaidId int `json:"paid_id"`
+	Fee    int `json:"fee"`
+}
+
+func PayIssuanceFee(userId int, feeRateSatPerKw int) (payIssuanceAndMintedFeeResult *PayIssuanceAndMintedFeeResult, err error) {
 	if feeRateSatPerKw < FeeRateSatPerBToSatPerKw(1) {
-		return 0, errors.New("fee rate too small for mint")
+		return nil, errors.New("fee rate too small for issuance")
+	}
+	fee := GetIssuanceTransactionGasFee(feeRateSatPerKw)
+	paidId, err := PayGasFee(userId, fee)
+	if err != nil {
+		return nil, err
+	}
+	return &PayIssuanceAndMintedFeeResult{paidId, fee}, nil
+}
+
+func PayMintFee(userId int, feeRateSatPerKw int) (payIssuanceAndMintedFeeResult *PayIssuanceAndMintedFeeResult, err error) {
+	if feeRateSatPerKw < FeeRateSatPerBToSatPerKw(1) {
+		return nil, errors.New("fee rate too small for mint")
 	}
 	// @dev: Do not add fee rate when pay
 	// feeRateSatPerKw = feeRateSatPerKw + FeeRateSatPerBToSatPerKw(2)
 	fee := GetMintedTransactionGasFee(feeRateSatPerKw)
-	return PayGasFee(userId, fee)
-}
-
-func PayIssuanceFee(userId int, feeRateSatPerKw int) (IssuanceFeePaidId int, err error) {
-	if feeRateSatPerKw < FeeRateSatPerBToSatPerKw(1) {
-		return 0, errors.New("fee rate too small for issuance")
+	paidId, err := PayGasFee(userId, fee)
+	if err != nil {
+		return nil, err
 	}
-	fee := GetIssuanceTransactionGasFee(feeRateSatPerKw)
-	return PayGasFee(userId, fee)
+	return &PayIssuanceAndMintedFeeResult{paidId, fee}, nil
 }
 
 func PayGasFee(payUserId int, gasFee int) (int, error) {

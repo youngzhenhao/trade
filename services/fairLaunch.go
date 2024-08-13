@@ -1152,6 +1152,11 @@ func FairLaunchTapdMintFinalize(fairLaunchInfo *models.FairLaunchInfo) (err erro
 	if err != nil {
 		return utils.AppendErrorInfo(err, "BatchTxidAnchorToAssetId")
 	}
+	// @dev: Record paid fee
+	err = CreateFairLaunchIncomeOfServerPayIssuanceFinalizeFee(int(fairLaunchInfo.ID), batchTxidAnchor)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfServerPayIssuanceFinalizeFee")
+	}
 	err = UpdateFairLaunchInfoBatchTxidAndAssetId(fairLaunchInfo, batchTxidAnchor, batchState, assetId)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoBatchTxidAndAssetId")
@@ -1285,12 +1290,17 @@ func ProcessIssuedFairLaunchInfos(fairLaunchInfos *[]models.FairLaunchInfo) *[]m
 
 func ProcessFairLaunchStateNoPayInfoService(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	// @dev: 1.pay fee
-	paidId, err := PayIssuanceFee(fairLaunchInfo.UserID, fairLaunchInfo.FeeRate)
+	payIssuanceFeeResult, err := PayIssuanceFee(fairLaunchInfo.UserID, fairLaunchInfo.FeeRate)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "PayIssuanceFee")
 	}
+	// @dev: Record paid fee
+	err = CreateFairLaunchIncomeOfUserPayIssuanceFee(int(fairLaunchInfo.ID), payIssuanceFeeResult.PaidId, payIssuanceFeeResult.Fee, fairLaunchInfo.UserID, fairLaunchInfo.Username)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfUserPayIssuanceFee")
+	}
 	// @dev: 2.Store paidId
-	err = UpdateFairLaunchInfoPaidId(fairLaunchInfo, paidId)
+	err = UpdateFairLaunchInfoPaidId(fairLaunchInfo, payIssuanceFeeResult.PaidId)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoPaidId")
 	}
@@ -1700,6 +1710,7 @@ func SendFairLaunchMintedAssetLocked() error {
 	if err != nil {
 		return utils.AppendErrorInfo(err, "GetAllUnsentFairLaunchMintedInfos")
 	}
+	assetIdToFairLaunchInfoId := make(map[string]int)
 	assetIdToAddrs := make(map[string][]string)
 	assetIdToAmount := make(map[string]int)
 	assetIdToGasFeeTotal := make(map[string]int)
@@ -1714,6 +1725,7 @@ func SendFairLaunchMintedAssetLocked() error {
 		assetIdToAmount[assetId] += fairLaunchMintedInfo.AddrAmount
 		assetIdToGasFeeTotal[assetId] += fairLaunchMintedInfo.MintedGasFee
 		assetIdToGasFeeRateTotal[assetId] += fairLaunchMintedInfo.MintedFeeRateSatPerKw
+		assetIdToFairLaunchInfoId[assetId] = fairLaunchMintedInfo.FairLaunchInfoID
 	}
 	assetIdToGasFeeRateAverage := make(map[string]int)
 	for assetId, feeRateTotal := range assetIdToGasFeeTotal {
@@ -1758,6 +1770,14 @@ func SendFairLaunchMintedAssetLocked() error {
 		if err != nil {
 			return utils.AppendErrorInfo(err, "SendAssetAddrSliceAndGetResponse")
 		}
+		// @dev: Record paid fee
+		outpoint := response.Transfer.Outputs[0].Anchor.Outpoint
+		txid, _ := utils.OutpointToTransactionAndIndex(outpoint)
+		addrsStr := AddrsToString(addrs)
+		err = CreateFairLaunchIncomeOfServerPaySendAssetFee(assetId, assetIdToFairLaunchInfoId[assetId], txid, addrsStr)
+		if err != nil {
+			return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfServerPaySendAssetFee")
+		}
 		// @dev: Update minted info
 		err = UpdateFairLaunchMintedInfosBySendAssetResponse(unsentFairLaunchMintedInfos, response)
 		if err != nil {
@@ -1765,6 +1785,18 @@ func SendFairLaunchMintedAssetLocked() error {
 		}
 	}
 	return nil
+}
+
+func AddrsToString(addrs []string) string {
+	var addrsStr string
+	for i, addr := range addrs {
+		if i == 0 {
+			addrsStr = addr
+		} else {
+			addrsStr += ", " + addr
+		}
+	}
+	return addrsStr
 }
 
 func GetAllLockedInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (*[]models.FairLaunchInventoryInfo, error) {
@@ -1855,12 +1887,17 @@ func ProcessSentButNotUpdatedMintedInfo(fairLaunchMintedInfo *models.FairLaunchM
 
 func ProcessFairLaunchMintedStateNoPayInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	// @dev: 1.pay fee
-	paidId, err := PayMintFee(fairLaunchMintedInfo.UserID, fairLaunchMintedInfo.MintedFeeRateSatPerKw)
+	payMintedFeeResult, err := PayMintFee(fairLaunchMintedInfo.UserID, fairLaunchMintedInfo.MintedFeeRateSatPerKw)
 	if err != nil {
 		return nil
 	}
+	// @dev: Record paid fee
+	err = CreateFairLaunchIncomeOfUserPayMintedFee(fairLaunchMintedInfo.AssetID, fairLaunchMintedInfo.FairLaunchInfoID, int(fairLaunchMintedInfo.ID), payMintedFeeResult.PaidId, payMintedFeeResult.Fee, fairLaunchMintedInfo.UserID, fairLaunchMintedInfo.Username)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfUserPayMintedFee")
+	}
 	// @dev: 2.Store paidId
-	err = UpdateFairLaunchMintedInfoPaidId(fairLaunchMintedInfo, paidId)
+	err = UpdateFairLaunchMintedInfoPaidId(fairLaunchMintedInfo, payMintedFeeResult.PaidId)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchMintedInfoPaidId")
 	}

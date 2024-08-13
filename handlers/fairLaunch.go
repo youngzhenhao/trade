@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"trade/models"
 	"trade/services"
+	"trade/utils"
 )
 
 func GetAllFairLaunchInfo(c *gin.Context) {
@@ -417,6 +418,18 @@ func MintFairLaunchReserved(c *gin.Context) {
 			Success: false,
 			Error:   "Update FairLaunchInfo IsReservedSent. " + err.Error(),
 			Code:    models.UpdateFairLaunchInfoIsReservedSentErr,
+			Data:    nil,
+		})
+		return
+	}
+	// @dev: Record paid fee
+	txid, _ := utils.OutpointToTransactionAndIndex(outpoint)
+	err = services.CreateFairLaunchIncomeOfServerPaySendReservedFee(fairLaunchInfo.AssetID, int(fairLaunchInfo.ID), txid)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   "Create FairLaunch Income Of Server Pay Send Reserved Fee. " + err.Error(),
+			Code:    models.CreateFairLaunchIncomeOfServerPaySendReservedFeeErr,
 			Data:    nil,
 		})
 		return
