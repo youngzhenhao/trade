@@ -29,6 +29,7 @@ const (
 	BILL_TYPE_PAYMENT           BalanceType = 1
 	BILL_TYPE_ASSET_TRANSFER    BalanceType = 2
 	BILL_TYPE_ASSET_MINTED_SEND             = 3
+	BILL_TYPE_BACK_FEE                      = 4
 )
 
 type BalanceAway int16
