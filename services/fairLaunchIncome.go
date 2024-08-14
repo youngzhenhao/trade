@@ -1,8 +1,10 @@
 package services
 
 import (
+	"trade/api"
 	"trade/models"
 	"trade/services/btldb"
+	"trade/utils"
 )
 
 func CreateFairLaunchIncome(fairLaunchIncome *models.FairLaunchIncome) error {
@@ -91,10 +93,66 @@ func CreateFairLaunchIncomeOfServerPaySendAssetFee(assetId string, fairLaunchInf
 	})
 }
 
-// TODO: Update SatAmount
-func UpdateFairLaunchIncomesSatAmountByTxids() error {
-	// TODO: Need to complete
-	return nil
+func GetFairLaunchIncomesWhoseTxidIsNotNullAndSatAmountIsZero() (*[]models.FairLaunchIncome, error) {
+	return btldb.ReadFairLaunchIncomesWhoseTxidIsNotNullAndSatAmountIsZero()
+}
+
+func UpdateFairLaunchIncomes(fairLaunchIncomes *[]models.FairLaunchIncome) error {
+	if fairLaunchIncomes == nil {
+		return nil
+	}
+	return btldb.UpdateFairLaunchIncomes(fairLaunchIncomes)
+}
+
+// @dev: Scheduled task
+func UpdateFairLaunchIncomesSatAmountByTxids(network models.Network) error {
+	// @dev: Get fair launch incomes whose txid is not null
+	fairLaunchIncomes, err := GetFairLaunchIncomesWhoseTxidIsNotNullAndSatAmountIsZero()
+	if err != nil {
+		return err
+	}
+	if fairLaunchIncomes == nil || len(*fairLaunchIncomes) == 0 {
+		return nil
+	}
+	var txids []string
+	txidMapId := make(map[string]int)
+	txidMapFee := make(map[string]int)
+	// @dev: Get txid slice and txid map income id
+	for _, fairLaunchIncome := range *fairLaunchIncomes {
+		txids = append(txids, fairLaunchIncome.Txid)
+		txidMapId[fairLaunchIncome.Txid] = int(fairLaunchIncome.ID)
+	}
+	// @dev: Get transactions by txids
+	rawTransactionResponse, err := api.GetRawTransactionsByTxids(network, txids)
+	if err != nil {
+		return err
+	}
+	// @dev: Get txid map fee
+	for _, rawTransaction := range *rawTransactionResponse {
+		if rawTransaction.Error != nil {
+			continue
+		}
+		fee := rawTransaction.Result.Fee
+		txidMapFee[rawTransaction.Result.Txid] = utils.ToSat(fee)
+	}
+	var fairLaunchIncomesUpdated []models.FairLaunchIncome
+	// @dev: Set fee by txid
+	for _, fairLaunchIncome := range *fairLaunchIncomes {
+		fee, ok := txidMapFee[fairLaunchIncome.Txid]
+		if ok {
+			fairLaunchIncome.SatAmount = fee
+			fairLaunchIncomesUpdated = append(fairLaunchIncomesUpdated, fairLaunchIncome)
+		}
+	}
+	if len(fairLaunchIncomesUpdated) == 0 {
+		return nil
+	}
+	// @dev: Update fair launch incomes
+	return UpdateFairLaunchIncomes(&fairLaunchIncomesUpdated)
+}
+
+func GetFairLaunchIncomesByAssetId(assetId string) (*[]models.FairLaunchIncome, error) {
+	return btldb.ReadFairLaunchIncomesByAssetId(assetId)
 }
 
 // TODO: Query total incomes and spent by fair launch id

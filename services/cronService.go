@@ -83,6 +83,12 @@ func CreateFairLaunchProcessions() (err error) {
 			FunctionName:   "SnapshotToZipLast",
 			Package:        "services",
 		},
+		{
+			Name:           "UpdateFairLaunchIncomesSatAmountByTxids",
+			CronExpression: "*/20 * * * * *",
+			FunctionName:   "UpdateFairLaunchIncomesSatAmountByTxids",
+			Package:        "services",
+		},
 	})
 }
 
@@ -280,4 +286,15 @@ func CreateSetTransfersAndReceives() (err error) {
 			Package:        "services",
 		},
 	})
+}
+
+func (cs *CronService) UpdateFairLaunchIncomesSatAmountByTxids() {
+	network, err := api.NetworkStringToNetwork(config.GetLoadConfig().NetWork)
+	if err != nil {
+		return
+	}
+	err = UpdateFairLaunchIncomesSatAmountByTxids(network)
+	if err != nil {
+		return
+	}
 }

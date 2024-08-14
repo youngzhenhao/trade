@@ -12,8 +12,8 @@ type FairLaunchIncome struct {
 	FeePaidId              int                  `json:"fee_paid_id"`
 	IncomeType             FairLaunchIncomeType `json:"income_type" gorm:"index"`
 	IsIncome               bool                 `json:"is_income" gorm:"index"`
-	SatAmount              int                  `json:"sat_amount"`
-	Txid                   string               `json:"txid"`
+	SatAmount              int                  `json:"sat_amount" gorm:"index"`
+	Txid                   string               `json:"txid" gorm:"index"`
 	Addrs                  string               `json:"addrs"`
 	UserId                 int                  `json:"user_id" gorm:"index"`
 	Username               string               `json:"username" gorm:"type:varchar(255)"`

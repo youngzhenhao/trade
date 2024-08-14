@@ -25,6 +25,12 @@ func ReadAllFairLaunchIncomesUpdatedAtDesc() (*[]models.FairLaunchIncome, error)
 	return &fairLaunchIncomes, err
 }
 
+func ReadFairLaunchIncomesWhoseTxidIsNotNullAndSatAmountIsZero() (*[]models.FairLaunchIncome, error) {
+	var fairLaunchIncomes []models.FairLaunchIncome
+	err := middleware.DB.Where("txid <> ? AND sat_amount = ?", "", 0).Find(&fairLaunchIncomes).Error
+	return &fairLaunchIncomes, err
+}
+
 func ReadFairLaunchIncome(id uint) (*models.FairLaunchIncome, error) {
 	var fairLaunchIncome models.FairLaunchIncome
 	err := middleware.DB.First(&fairLaunchIncome, id).Error
@@ -62,6 +68,9 @@ func UpdateFairLaunchIncome(fairLaunchIncome *models.FairLaunchIncome) error {
 }
 
 func UpdateFairLaunchIncomes(fairLaunchIncomes *[]models.FairLaunchIncome) error {
+	if fairLaunchIncomes == nil {
+		return nil
+	}
 	return middleware.DB.Save(fairLaunchIncomes).Error
 }
 
