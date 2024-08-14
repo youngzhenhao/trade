@@ -293,11 +293,11 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 	if err != nil {
 		return nil, err
 	}
-	calculatedFeeRateSatPerKw := feeRateResponse.SatPerKw.FastestFee + FeeRateSatPerBToSatPerKw(2)
+	//calculatedFeeRateSatPerKw := feeRateResponse.SatPerKw.FastestFee + FeeRateSatPerBToSatPerKw(2)
 	// @dev: The allowable fee rate error is minus one sat per b
-	if mintedFeeRateSatPerKw+FeeRateSatPerBToSatPerKw(1) < calculatedFeeRateSatPerKw {
-		return nil, errors.New("mint fee rate not enough, it has changed")
-	}
+	//if mintedFeeRateSatPerKw+FeeRateSatPerBToSatPerKw(1) < calculatedFeeRateSatPerKw {
+	//	return nil, errors.New("mint fee rate not enough, it has changed")
+	//}
 	lowest := feeRateResponse.SatPerKw.MinimumFee
 	if mintedFeeRateSatPerKw < lowest {
 		return nil, errors.New("set fee rate is less than lowest, it may not be confirmed forever")
