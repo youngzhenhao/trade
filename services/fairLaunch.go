@@ -293,11 +293,20 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 	if err != nil {
 		return nil, err
 	}
-	//calculatedFeeRateSatPerKw := feeRateResponse.SatPerKw.FastestFee + FeeRateSatPerBToSatPerKw(2)
-	// @dev: The allowable fee rate error is minus one sat per b
-	//if mintedFeeRateSatPerKw+FeeRateSatPerBToSatPerKw(1) < calculatedFeeRateSatPerKw {
-	//	return nil, errors.New("mint fee rate not enough, it has changed")
-	//}
+	calculatedFeeRateSatPerKw := feeRateResponse.SatPerKw.FastestFee + FeeRateSatPerBToSatPerKw(2)
+	// @dev: The allowable fee rate error is minus 100 sat/b
+	// @notice: 2024-8-14 16:37:34 This check should be removed
+	// @note: Use greater restrictions instead of removing check
+	if mintedFeeRateSatPerKw+FeeRateSatPerBToSatPerKw(100) < calculatedFeeRateSatPerKw {
+		return nil, errors.New("mint fee rate not enough, it has changed")
+	}
+	if mintedFeeRateSatPerKw < FeeRateSatPerBToSatPerKw(1) {
+		return nil, errors.New("mint fee rate not enough, it less than 1 sat/b")
+	}
+	numberToGasFeeRate, _ := NumberToGasFeeRate(mintedNumber)
+	if mintedFeeRateSatPerKw < int(math.Ceil(float64(FeeRateSatPerBToSatPerKw(1))*numberToGasFeeRate)) {
+		return nil, errors.New("mint fee rate not enough, it less than 1 multiple fee rate of minted number")
+	}
 	lowest := feeRateResponse.SatPerKw.MinimumFee
 	if mintedFeeRateSatPerKw < lowest {
 		return nil, errors.New("set fee rate is less than lowest, it may not be confirmed forever")
@@ -1756,8 +1765,10 @@ func SendFairLaunchMintedAssetLocked() error {
 		// @dev: Append fee of 2 sat per b
 		feeRateSatPerKw := feeRate.SatPerKw.FastestFee + FeeRateSatPerBToSatPerKw(2)
 		// TODO;
-		// @dev: Make sure fee rate is less than average
-		if assetIdToGasFeeRateAverage[assetId]+FeeRateSatPerBToSatPerKw(1) < feeRateSatPerKw {
+		// @dev: Make sure fee rate is less than average plus 100 sat/b
+		// @notice: 2024-8-14 16:37:34 This check should be removed
+		// @note: Use greater restrictions instead of removing check
+		if assetIdToGasFeeRateAverage[assetId]+FeeRateSatPerBToSatPerKw(100) < feeRateSatPerKw {
 			return errors.New("too high fee rate to send minted asset now")
 		}
 		if len(addrs) == 0 {
