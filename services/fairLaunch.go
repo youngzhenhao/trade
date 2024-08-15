@@ -286,7 +286,7 @@ func ValidateStartAndEndTime(startTime int, endTime int) error {
 // @Description: Process fairLaunchMintedInfo
 func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedFeeRateSatPerKw int, addr string, userId int, username string) (*models.FairLaunchMintedInfo, error) {
 	if FeeRateSatPerKwToSatPerB(mintedFeeRateSatPerKw) > 500 {
-		return nil, errors.New("fee rate exceeds max(500)")
+		return nil, errors.New("fee rate exceeds max(500)" + "; " + strconv.Itoa(mintedFeeRateSatPerKw))
 	}
 	// @dev: Validate fee rate
 	feeRateResponse, err := UpdateAndCalculateGasFeeRateByMempool(mintedNumber)
@@ -298,18 +298,18 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 	// @notice: 2024-8-14 16:37:34 This check should be removed
 	// @note: Use greater restrictions instead of removing check
 	if mintedFeeRateSatPerKw+FeeRateSatPerBToSatPerKw(100) < calculatedFeeRateSatPerKw {
-		return nil, errors.New("mint fee rate not enough, it has changed")
+		return nil, errors.New("mint fee rate not enough, it has changed" + "; " + strconv.Itoa(mintedFeeRateSatPerKw))
 	}
-	if mintedFeeRateSatPerKw < FeeRateSatPerBToSatPerKw(1) {
-		return nil, errors.New("mint fee rate not enough, it less than 1 sat/b")
+	if mintedFeeRateSatPerKw < FeeRateSatPerBToSatPerKw(3) {
+		return nil, errors.New("mint fee rate not enough, it less than minimum value (3 sat/b)" + "; " + strconv.Itoa(mintedFeeRateSatPerKw))
 	}
 	numberToGasFeeRate, _ := NumberToGasFeeRate(mintedNumber)
 	if mintedFeeRateSatPerKw < int(math.Ceil(float64(FeeRateSatPerBToSatPerKw(1))*numberToGasFeeRate)) {
-		return nil, errors.New("mint fee rate not enough, it less than 1 multiple fee rate of minted number")
+		return nil, errors.New("mint fee rate not enough, it less than 1 multiple fee rate of minted number" + "; " + strconv.Itoa(mintedFeeRateSatPerKw))
 	}
 	lowest := feeRateResponse.SatPerKw.MinimumFee
 	if mintedFeeRateSatPerKw < lowest {
-		return nil, errors.New("set fee rate is less than lowest, it may not be confirmed forever")
+		return nil, errors.New("set fee rate is less than lowest, it may not be confirmed forever" + "; " + strconv.Itoa(mintedFeeRateSatPerKw))
 	}
 	var fairLaunchMintedInfo models.FairLaunchMintedInfo
 	isFairLaunchMintTimeRight, err := IsFairLaunchMintTimeRight(fairLaunchInfoID)
