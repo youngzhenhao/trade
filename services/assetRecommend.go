@@ -5,6 +5,7 @@ import (
 	"time"
 	"trade/models"
 	"trade/services/btldb"
+	"trade/utils"
 )
 
 func GetAssetRecommendsByUserId(userId int) (*[]models.AssetRecommend, error) {
@@ -20,6 +21,15 @@ func GetAssetRecommendByUserIdAndAssetId(userId int, assetId string) (*models.As
 }
 
 func ProcessAssetRecommendSetRequest(userId int, username string, assetRecommendSetRequest models.AssetRecommendSetRequest) models.AssetRecommend {
+	if assetRecommendSetRequest.RecommendUserId == 0 {
+		assetRecommendSetRequest.RecommendUserId = userId
+	}
+	if assetRecommendSetRequest.RecommendUsername == "" {
+		assetRecommendSetRequest.RecommendUsername = username
+	}
+	if assetRecommendSetRequest.RecommendTime == 0 {
+		assetRecommendSetRequest.RecommendTime = utils.GetTimestamp()
+	}
 	return models.AssetRecommend{
 		AssetId:           assetRecommendSetRequest.AssetId,
 		AssetFromAddr:     assetRecommendSetRequest.AssetFromAddr,
