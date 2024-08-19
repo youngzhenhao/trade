@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"time"
 	"trade/models"
 	"trade/services/btldb"
@@ -78,4 +79,62 @@ func GetAllAssetRecommendSimplified() (*[]AssetRecommendSimplified, error) {
 		return nil, err
 	}
 	return AssetRecommendSliceToAssetRecommendSimplifiedSlice(assetRecommends), nil
+}
+
+func IsAssetRecommendChanged(assetRecommendByInvoice *models.AssetRecommend, old *models.AssetRecommend) bool {
+	if assetRecommendByInvoice == nil || old == nil {
+		return true
+	}
+	if assetRecommendByInvoice.AssetId != old.AssetId {
+		return true
+	}
+	if assetRecommendByInvoice.AssetFromAddr != old.AssetFromAddr {
+		return true
+	}
+	if assetRecommendByInvoice.RecommendUserId != old.RecommendUserId {
+		return true
+	}
+	if assetRecommendByInvoice.RecommendUsername != old.RecommendUsername {
+		return true
+	}
+	if assetRecommendByInvoice.RecommendTime != old.RecommendTime {
+		return true
+	}
+	if assetRecommendByInvoice.DeviceId != old.DeviceId {
+		return true
+	}
+	if assetRecommendByInvoice.UserId != old.UserId {
+		return true
+	}
+	if assetRecommendByInvoice.Username != old.Username {
+		return true
+	}
+	return false
+}
+
+func CheckAssetRecommendIfUpdate(assetRecommend *models.AssetRecommend) (*models.AssetRecommend, error) {
+	if assetRecommend == nil {
+		return nil, errors.New("nil asset recommend")
+	}
+	assetRecommendByUserIdAndAssetId, err := GetAssetRecommendByUserIdAndAssetId(assetRecommend.UserId, assetRecommend.AssetId)
+	if err != nil {
+		return assetRecommend, nil
+	}
+	if !IsAssetRecommendChanged(assetRecommendByUserIdAndAssetId, assetRecommend) {
+		return assetRecommendByUserIdAndAssetId, nil
+	}
+	assetRecommendByUserIdAndAssetId.AssetId = assetRecommend.AssetId
+	assetRecommendByUserIdAndAssetId.AssetFromAddr = assetRecommend.AssetFromAddr
+	assetRecommendByUserIdAndAssetId.RecommendUserId = assetRecommend.RecommendUserId
+	assetRecommendByUserIdAndAssetId.RecommendUsername = assetRecommend.RecommendUsername
+	assetRecommendByUserIdAndAssetId.RecommendTime = assetRecommend.RecommendTime
+	assetRecommendByUserIdAndAssetId.DeviceId = assetRecommend.DeviceId
+	assetRecommendByUserIdAndAssetId.UserId = assetRecommend.UserId
+	return assetRecommendByUserIdAndAssetId, nil
+}
+
+func CreateOrUpdateAssetRecommend(assetRecommend *models.AssetRecommend) (err error) {
+	var assetRecommendUpdate *models.AssetRecommend
+	assetRecommendUpdate, err = CheckAssetRecommendIfUpdate(assetRecommend)
+	return btldb.UpdateAssetRecommend(assetRecommendUpdate)
 }

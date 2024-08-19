@@ -180,6 +180,7 @@ func (e ErrCode) Error() string {
 		return ""
 	}
 }
+
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
 	jsonResult := JsonResult{
 		Error: errorString,

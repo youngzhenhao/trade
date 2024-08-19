@@ -112,7 +112,7 @@ func SetAssetRecommend(c *gin.Context) {
 		return
 	}
 	assetRecommend := services.ProcessAssetRecommendSetRequest(userId, username, assetRecommendSetRequest)
-	err = services.SetAssetRecommend(&assetRecommend)
+	err = services.CreateOrUpdateAssetRecommend(&assetRecommend)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
