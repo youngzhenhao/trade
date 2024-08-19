@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"github.com/robfig/cron/v3"
 	"log"
 	"os"
@@ -22,9 +24,9 @@ import (
 func main() {
 	loadConfig, err := config.LoadConfig("config.yaml")
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		log.Printf("Failed to load config: %v", err)
+		return
 	}
-
 	mode := loadConfig.GinConfig.Mode
 	if !(mode == gin.DebugMode || mode == gin.ReleaseMode || mode == gin.TestMode) {
 		mode = gin.DebugMode
@@ -35,18 +37,19 @@ func main() {
 		utils.PrintTitle(false, "Initialize")
 	}
 	// Initialize the database connection
-	if err := middleware.InitMysql(); err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+	if err = middleware.InitMysql(); err != nil {
+		log.Printf("Failed to initialize database: %v", err)
+		return
 	}
-	if err := middleware.RedisConnect(); err != nil {
-		log.Fatalf("Failed to initialize redis: %v", err)
+	if err = middleware.RedisConnect(); err != nil {
+		log.Printf("Failed to initialize redis: %v", err)
+		return
 	}
 	if config.GetLoadConfig().IsAutoMigrate {
-		err = dao.Migrate()
-	}
-	if err != nil {
-		utils.LogError("AutoMigrate error", err)
-		return
+		if err = dao.Migrate(); err != nil {
+			utils.LogError("AutoMigrate error", err)
+			return
+		}
 	}
 	utils.PrintTitle(true, "Check Start")
 	if !checkStart() {
@@ -54,18 +57,20 @@ func main() {
 	}
 	// Setup cron jobs
 	services.CheckIfAutoUpdateScheduledTask()
-	jobs, err := task.LoadJobs()
-	if err != nil {
-		log.Fatal(err)
+	var jobs []task.Job
+	if jobs, err = task.LoadJobs(); err != nil {
+		log.Println(err)
+		return
 	}
 	c := cron.New(cron.WithSeconds())
 	for _, job := range jobs {
 		// Schedule each job using cron
-		_, err := c.AddFunc(job.CronExpression, func() {
+		_, err = c.AddFunc(job.CronExpression, func() {
 			task.ExecuteWithLock(job.Name)
 		})
 		if err != nil {
 			log.Printf("Error scheduling job %s: %v\n", job.Name, err)
+			continue
 		}
 	}
 	c.Start()
@@ -86,8 +91,8 @@ func main() {
 		port = "8080"
 	}
 	utils.PrintTitle(true, "Run Router")
-	err = r.Run(fmt.Sprintf("%s:%s", bind, port))
-	if err != nil {
+	if err = r.Run(fmt.Sprintf("%s:%s", bind, port)); err != nil {
+		log.Println(err)
 		return
 	}
 	// Create a channel to listen to interrupt signals
@@ -95,8 +100,9 @@ func main() {
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 	// Start HTTP server in a goroutine
 	go func() {
-		if err := r.Run(fmt.Sprintf(":%s", port)); err != nil {
-			log.Fatalf("Failed to start server: %v", err)
+		if err = r.Run(fmt.Sprintf(":%s", port)); err != nil {
+			log.Printf("Failed to start server: %v", err)
+			return
 		}
 	}()
 	// Block until a signal is received
@@ -106,25 +112,34 @@ func main() {
 	_, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	// Close Redis connection
-	if err := middleware.Client.Close(); err != nil {
-		log.Printf("Failed to close Redis connection: %v", err)
-	} else {
-		log.Println("Redis connection closed successfully.")
-	}
+	defer func(client *redis.Client) {
+		if err = client.Close(); err != nil {
+			log.Printf("Failed to close Redis connection: %v", err)
+			return
+		} else {
+			log.Println("Redis connection closed successfully.")
+		}
+	}(middleware.Client)
 	// Close database connection
-	if db, err := middleware.DB.DB(); err == nil {
-		if err := db.Close(); err != nil {
+	var db *sql.DB
+	if db, err = middleware.DB.DB(); err != nil {
+		log.Println(err)
+		return
+	}
+	defer func(db *sql.DB) {
+		if err = db.Close(); err != nil {
 			log.Printf("Error closing database: %v", err)
+			return
 		} else {
 			log.Println("Database connection closed successfully.")
 		}
-	}
+	}(db)
 	// Perform any other shutdown tasks here
 	log.Println("Shutting down the server...")
 	os.Exit(0)
 }
 
-// check config
+// Check config
 func checkStart() bool {
 	cfg := config.GetConfig()
 	if cfg.ApiConfig.CustodyAccount.MacaroonDir == "" {
@@ -142,9 +157,8 @@ func checkStart() bool {
 		log.Println("NetWork need set testnet, mainnet or regtest")
 		return false
 	}
-
 	fmt.Println("Custody account MacaroonDir is set:", cfg.ApiConfig.CustodyAccount.MacaroonDir)
-	// 检测admin账户
+	// Check the admin account
 	if !services.CheckAdminAccount() {
 		log.Println("Admin account is not set")
 		return false
