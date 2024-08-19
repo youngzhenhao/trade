@@ -127,7 +127,8 @@ func CheckAssetRecommendIfUpdate(assetRecommend *models.AssetRecommend) (*models
 	assetRecommendByUserIdAndAssetId.AssetFromAddr = assetRecommend.AssetFromAddr
 	assetRecommendByUserIdAndAssetId.RecommendUserId = assetRecommend.RecommendUserId
 	assetRecommendByUserIdAndAssetId.RecommendUsername = assetRecommend.RecommendUsername
-	assetRecommendByUserIdAndAssetId.RecommendTime = assetRecommend.RecommendTime
+	// @dev: Do not update Recommend Time
+	//assetRecommendByUserIdAndAssetId.RecommendTime = assetRecommend.RecommendTime
 	assetRecommendByUserIdAndAssetId.DeviceId = assetRecommend.DeviceId
 	assetRecommendByUserIdAndAssetId.UserId = assetRecommend.UserId
 	return assetRecommendByUserIdAndAssetId, nil
