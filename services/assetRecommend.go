@@ -97,9 +97,9 @@ func IsAssetRecommendChanged(assetRecommendByInvoice *models.AssetRecommend, old
 	if assetRecommendByInvoice.RecommendUsername != old.RecommendUsername {
 		return true
 	}
-	if assetRecommendByInvoice.RecommendTime != old.RecommendTime {
-		return true
-	}
+	//if assetRecommendByInvoice.RecommendTime != old.RecommendTime {
+	//	return true
+	//}
 	if assetRecommendByInvoice.DeviceId != old.DeviceId {
 		return true
 	}
