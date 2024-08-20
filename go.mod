@@ -16,8 +16,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lightninglabs/lightning-terminal v0.12.2-alpha
-	github.com/lightninglabs/taproot-assets v0.3.3-0.20240605143843-7dd2bee0dad9
-	github.com/lightningnetwork/lnd v0.18.0-beta.rc4.0.20240709210732-0cd11ad84792
+	github.com/lightninglabs/taproot-assets v0.4.1
+	github.com/lightningnetwork/lnd v0.18.0-beta.rc4.0.20240723043204-f09d4042aee4
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.9.0

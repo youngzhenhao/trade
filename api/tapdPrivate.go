@@ -265,9 +265,10 @@ func listAssets(withWitness, includeSpent, includeLeased bool) (*taprpc.ListAsse
 	defer connClose()
 	client := taprpc.NewTaprootAssetsClient(conn)
 	request := &taprpc.ListAssetRequest{
-		WithWitness:   withWitness,
-		IncludeSpent:  includeSpent,
-		IncludeLeased: includeLeased,
+		WithWitness:             withWitness,
+		IncludeSpent:            includeSpent,
+		IncludeLeased:           includeLeased,
+		IncludeUnconfirmedMints: true,
 	}
 	response, err := client.ListAssets(context.Background(), request)
 	if err != nil {

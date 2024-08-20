@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/lightninglabs/taproot-assets/fn"
 	"github.com/lightninglabs/taproot-assets/proof"
 	"github.com/lightninglabs/taproot-assets/taprpc"
 	"github.com/lightninglabs/taproot-assets/taprpc/universerpc"
@@ -121,7 +122,7 @@ func InsertProof(annotatedProof *proof.AnnotatedProof) error {
 
 		// Construct asset leaf.
 		rpcAsset, err := taprpc.MarshalAsset(
-			context.Background(), &proofAsset, true, true, nil,
+			context.Background(), &proofAsset, true, true, nil, fn.None[uint32](),
 		)
 		if err != nil {
 			return err
