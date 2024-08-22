@@ -31,6 +31,10 @@ const (
 )
 
 const (
+	FairLaunchMintedStateFail FairLaunchMintedState = -1
+)
+
+const (
 	FairLaunchInventoryStateOpen FairLaunchInventoryState = iota
 	FairLaunchInventoryStateLocked
 	FairLaunchInventoryStateMinted

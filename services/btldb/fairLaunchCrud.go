@@ -99,6 +99,10 @@ func (f *FairLaunchStore) UpdateFairLaunchMintedInfo(fairLaunchMintedInfo *model
 	return f.DB.Save(fairLaunchMintedInfo).Error
 }
 
+func UpdateFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
+	return middleware.DB.Save(fairLaunchMintedInfo).Error
+}
+
 func (f *FairLaunchStore) DeleteFairLaunchMintedInfo(id uint) error {
 	var fairLaunchMintedInfo models.FairLaunchMintedInfo
 	return f.DB.Delete(&fairLaunchMintedInfo, id).Error
@@ -111,7 +115,7 @@ func DeleteFairLaunchMintedInfo(id uint) error {
 
 func ReadNotSentFairLaunchMintedInfos() (*[]models.FairLaunchMintedInfo, error) {
 	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
-	err := middleware.DB.Where("status = ? AND state < ?", models.StatusNormal, models.FairLaunchMintedStateSent).Order("minted_set_time").Find(&fairLaunchMintedInfos).Error
+	err := middleware.DB.Where("status = ? AND state BETWEEN ? AND ?", models.StatusNormal, models.FairLaunchMintedStateNoPay, models.FairLaunchMintedStateSentPending).Order("minted_set_time").Find(&fairLaunchMintedInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find Not Issued fairLaunchMintedInfos")
 	}

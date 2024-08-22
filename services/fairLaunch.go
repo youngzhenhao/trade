@@ -1946,9 +1946,11 @@ func ProcessFairLaunchMintedStatePaidPendingInfo(fairLaunchMintedInfo *models.Fa
 	isMintFeePaid, err = IsMintFeePaid(fairLaunchMintedInfo.MintFeePaidID)
 	if err != nil {
 		if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
-			err = RemoveFairLaunchMintedInfo(fairLaunchMintedInfo)
+			// test
+			fmt.Println("err is CustodyAccountPayInsideMissionFaild")
+			err = SetFairLaunchMintedInfoFail(fairLaunchMintedInfo)
 			if err != nil {
-				return utils.AppendErrorInfo(err, "RemoveFairLaunchMintedInfo")
+				return utils.AppendErrorInfo(err, "SetFairLaunchMintedInfoFail")
 			}
 		}
 	}
@@ -2665,4 +2667,13 @@ func DeleteFairLaunchMintedInfo(fairLaunchMintedInfoId uint) error {
 
 func RemoveFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
 	return DeleteFairLaunchMintedInfo(fairLaunchMintedInfo.ID)
+}
+
+func UpdateFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
+	return btldb.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
+}
+
+func SetFairLaunchMintedInfoFail(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
+	fairLaunchMintedInfo.State = models.FairLaunchMintedStateFail
+	return UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
 }
