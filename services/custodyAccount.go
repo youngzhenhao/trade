@@ -727,10 +727,11 @@ func pollPayInsideMission() {
 			balanceId, err := PayInvoice(payAccount, &payReq, HasServerFee)
 			if err != nil {
 				CUST.Error("pollPayInsideMission:%v", err)
-				continue
+				v.Status = models.PayInsideStatusFailed
+			} else {
+				v.Status = models.PayInsideStatusSuccess
 			}
 			//更新数据库状态
-			v.Status = models.PayInsideStatusSuccess
 			v.BalanceId = balanceId
 			err = btldb.UpdatePayInside(v)
 			if err != nil {
@@ -747,10 +748,14 @@ func CheckPayInsideStatus(id uint) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if p.Status == models.PayInsideStatusSuccess {
+	switch p.Status {
+	case models.PayInsideStatusSuccess:
 		return true, nil
+	case models.PayInsideStatusFailed:
+		return false, models.CustodyAccountPayInsideMissionFaild
+	default:
+		return false, models.CustodyAccountPayInsideMissionPending
 	}
-	return false, nil
 }
 
 func SetMemoSign() string {

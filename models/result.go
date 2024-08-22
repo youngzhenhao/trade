@@ -24,6 +24,10 @@ const (
 	CustodyAccountUpdateErr
 	CustodyAccountGetErr
 	CustodyAccountDeleteErr
+
+	//CcustodyAccountPayInsideMissionSuccess
+	CustodyAccountPayInsideMissionFaild
+	CustodyAccountPayInsideMissionPending
 )
 
 // Err type:Normal
@@ -176,6 +180,11 @@ func (e ErrCode) Error() string {
 		return ""
 	case errors.Is(e, DefaultErr):
 		return "error"
+	case errors.Is(e, CustodyAccountPayInsideMissionFaild):
+		return "custody account pay inside mission faild"
+	case errors.Is(e, CustodyAccountPayInsideMissionPending):
+		return "custody account pay inside mission pending"
+
 	default:
 		return ""
 	}

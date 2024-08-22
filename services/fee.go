@@ -338,7 +338,10 @@ func GetIdoParticipateTransactionByteSize() ByteSize {
 func IsMintFeePaid(paidId int) bool {
 	state, err := CheckPayInsideStatus(uint(paidId))
 	if err != nil {
-		return false
+		if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
+			//订单支付失败
+		}
+		//订单待确认
 	}
 	return state
 }
