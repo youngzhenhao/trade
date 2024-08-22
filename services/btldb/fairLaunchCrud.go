@@ -78,6 +78,11 @@ func (f *FairLaunchStore) DeleteFairLaunchInfo(id uint) error {
 	return f.DB.Delete(&fairLaunchInfo, id).Error
 }
 
+func DeleteFairLaunchInfo(id uint) error {
+	var fairLaunchInfo models.FairLaunchInfo
+	return middleware.DB.Delete(&fairLaunchInfo, id).Error
+}
+
 // FairLaunchMintedInfo
 
 func (f *FairLaunchStore) CreateFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
@@ -97,6 +102,11 @@ func (f *FairLaunchStore) UpdateFairLaunchMintedInfo(fairLaunchMintedInfo *model
 func (f *FairLaunchStore) DeleteFairLaunchMintedInfo(id uint) error {
 	var fairLaunchMintedInfo models.FairLaunchMintedInfo
 	return f.DB.Delete(&fairLaunchMintedInfo, id).Error
+}
+
+func DeleteFairLaunchMintedInfo(id uint) error {
+	var fairLaunchMintedInfo models.FairLaunchMintedInfo
+	return middleware.DB.Delete(&fairLaunchMintedInfo, id).Error
 }
 
 func ReadNotSentFairLaunchMintedInfos() (*[]models.FairLaunchMintedInfo, error) {

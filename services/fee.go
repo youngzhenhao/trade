@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"strconv"
 	"trade/api"
@@ -337,23 +338,26 @@ func GetIdoParticipateTransactionByteSize() ByteSize {
 	return ByteSize(byteSize)
 }
 
-func IsMintFeePaid(paidId int) bool {
+func IsMintFeePaid(paidId int) (bool, error) {
 	state, err := custodyAccount.CheckPayInsideStatus(uint(paidId))
 	if err != nil {
 		if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
-			//订单支付失败
+			return false, fmt.Errorf("pay to mint fail: %w", err)
 		}
-		//订单待确认
+		return false, err
 	}
-	return state
+	return state, nil
 }
 
-func IsIssuanceFeePaid(paidId int) bool {
+func IsIssuanceFeePaid(paidId int) (bool, error) {
 	state, err := custodyAccount.CheckPayInsideStatus(uint(paidId))
 	if err != nil {
-		return false
+		if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
+			return false, fmt.Errorf("pay to issuance fail: %w", err)
+		}
+		return false, err
 	}
-	return state
+	return state, nil
 }
 
 type PayIssuanceAndMintedFeeResult struct {

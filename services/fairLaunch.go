@@ -1332,7 +1332,18 @@ func ProcessFairLaunchStateNoPayInfoService(fairLaunchInfo *models.FairLaunchInf
 
 func ProcessFairLaunchStatePaidPendingInfoService(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	// @dev: 1.fee paid
-	if IsIssuanceFeePaid(fairLaunchInfo.IssuanceFeePaidID) {
+	var issuanceFeePaid bool
+	issuanceFeePaid, err = IsIssuanceFeePaid(fairLaunchInfo.IssuanceFeePaidID)
+	if err != nil {
+		// TODO: Consider if remove FairLaunchInfo which paid fail
+		//if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
+		//	err = RemoveFairLaunchInfo(fairLaunchInfo)
+		//	if err != nil {
+		//		return utils.AppendErrorInfo(err, "RemoveFairLaunchInfo")
+		//	}
+		//}
+	}
+	if issuanceFeePaid {
 		// @dev: Change state
 		err = ChangeFairLaunchInfoStateAndUpdatePaidSuccessTime(fairLaunchInfo)
 		if err != nil {
@@ -1931,7 +1942,17 @@ func ProcessFairLaunchMintedStateNoPayInfo(fairLaunchMintedInfo *models.FairLaun
 
 func ProcessFairLaunchMintedStatePaidPendingInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	// @dev: 1.fee paid
-	if IsMintFeePaid(fairLaunchMintedInfo.MintFeePaidID) {
+	var isMintFeePaid bool
+	isMintFeePaid, err = IsMintFeePaid(fairLaunchMintedInfo.MintFeePaidID)
+	if err != nil {
+		if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
+			err = RemoveFairLaunchMintedInfo(fairLaunchMintedInfo)
+			if err != nil {
+				return utils.AppendErrorInfo(err, "RemoveFairLaunchMintedInfo")
+			}
+		}
+	}
+	if isMintFeePaid {
 		// @dev: Change state
 		err = ChangeFairLaunchMintedInfoStateAndUpdatePaidSuccessTime(fairLaunchMintedInfo)
 		if err != nil {
@@ -2628,4 +2649,20 @@ func FairLaunchInventoryToMintedAndAvailableInfo() (*[]models.FairLaunchMintedAn
 		mintedAndAvailableInfos = append(mintedAndAvailableInfos, *mintedAndAvailableInfo)
 	}
 	return &mintedAndAvailableInfos, nil
+}
+
+func DeleteFairLaunchInfo(fairLaunchInfoId uint) error {
+	return btldb.DeleteFairLaunchInfo(fairLaunchInfoId)
+}
+
+func RemoveFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
+	return DeleteFairLaunchInfo(fairLaunchInfo.ID)
+}
+
+func DeleteFairLaunchMintedInfo(fairLaunchMintedInfoId uint) error {
+	return btldb.DeleteFairLaunchMintedInfo(fairLaunchMintedInfoId)
+}
+
+func RemoveFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
+	return DeleteFairLaunchMintedInfo(fairLaunchMintedInfo.ID)
 }
