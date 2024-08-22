@@ -108,9 +108,6 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 	}
 	// Change the escrow account balance
 	_, err = servicesrpc.AccountUpdate(account.UserAccountCode, amount, -1)
-	if err != nil {
-		return 0, err
-	}
 
 	// Build a database storage object
 	ba := models.Balance{}
@@ -119,7 +116,11 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 	ba.Unit = models.UNIT_SATOSHIS
 	ba.BillType = models.BILL_TYPE_PAYMENT
 	ba.Away = away
-	ba.State = models.STATE_SUCCESS
+	if err != nil {
+		ba.State = models.STATE_FAILED
+	} else {
+		ba.State = models.STATE_SUCCESS
+	}
 	ba.Invoice = nil
 	ba.PaymentHash = nil
 	if HasServerFee {
@@ -426,6 +427,9 @@ func QueryPaymentByUserId(userId uint, assetId string) ([]PaymentResponse, error
 	var results []PaymentResponse
 	if len(a) > 0 {
 		for i := len(a) - 1; i >= 0; i-- {
+			if a[i].State == models.STATE_FAILED {
+				continue
+			}
 			v := a[i]
 			r := PaymentResponse{}
 			r.Timestamp = v.CreatedAt.Unix()
