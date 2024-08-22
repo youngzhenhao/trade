@@ -50,7 +50,7 @@ func ReadIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 
 func ReadNotIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
-	err := middleware.DB.Where("status = ? AND state < ?", models.StatusNormal, models.FairLaunchStateIssued).Order("set_time").Find(&fairLaunchInfos).Error
+	err := middleware.DB.Where("status = ? AND state BETWEEN ? AND ?", models.StatusNormal, models.FairLaunchStateNoPay, models.FairLaunchStateIssuedPending).Order("set_time").Find(&fairLaunchInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find Not Issued fairLaunchInfos")
 	}
@@ -71,6 +71,10 @@ func ReadIssuedAndTimeValidFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 
 func (f *FairLaunchStore) UpdateFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
 	return f.DB.Save(fairLaunchInfo).Error
+}
+
+func UpdateFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
+	return middleware.DB.Save(fairLaunchInfo).Error
 }
 
 func (f *FairLaunchStore) DeleteFairLaunchInfo(id uint) error {

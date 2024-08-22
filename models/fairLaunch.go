@@ -31,6 +31,7 @@ const (
 )
 
 const (
+	FairLaunchStateFail       FairLaunchState       = -1
 	FairLaunchMintedStateFail FairLaunchMintedState = -1
 )
 

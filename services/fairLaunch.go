@@ -1335,13 +1335,12 @@ func ProcessFairLaunchStatePaidPendingInfoService(fairLaunchInfo *models.FairLau
 	var issuanceFeePaid bool
 	issuanceFeePaid, err = IsIssuanceFeePaid(fairLaunchInfo.IssuanceFeePaidID)
 	if err != nil {
-		// TODO: Consider if remove FairLaunchInfo which paid fail
-		//if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
-		//	err = RemoveFairLaunchInfo(fairLaunchInfo)
-		//	if err != nil {
-		//		return utils.AppendErrorInfo(err, "RemoveFairLaunchInfo")
-		//	}
-		//}
+		if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
+			err = SetFairLaunchInfoFail(fairLaunchInfo)
+			if err != nil {
+				return utils.AppendErrorInfo(err, "SetFairLaunchInfoFail")
+			}
+		}
 	}
 	if issuanceFeePaid {
 		// @dev: Change state
@@ -1947,7 +1946,6 @@ func ProcessFairLaunchMintedStatePaidPendingInfo(fairLaunchMintedInfo *models.Fa
 	if err != nil {
 		if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
 			// test
-			fmt.Println("err is CustodyAccountPayInsideMissionFaild")
 			err = SetFairLaunchMintedInfoFail(fairLaunchMintedInfo)
 			if err != nil {
 				return utils.AppendErrorInfo(err, "SetFairLaunchMintedInfoFail")
@@ -2655,6 +2653,15 @@ func FairLaunchInventoryToMintedAndAvailableInfo() (*[]models.FairLaunchMintedAn
 
 func DeleteFairLaunchInfo(fairLaunchInfoId uint) error {
 	return btldb.DeleteFairLaunchInfo(fairLaunchInfoId)
+}
+
+func UpdateFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
+	return btldb.UpdateFairLaunchInfo(fairLaunchInfo)
+}
+
+func SetFairLaunchInfoFail(fairLaunchInfo *models.FairLaunchInfo) error {
+	fairLaunchInfo.State = models.FairLaunchStateFail
+	return UpdateFairLaunchInfo(fairLaunchInfo)
 }
 
 func RemoveFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
