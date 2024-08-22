@@ -7,9 +7,11 @@ import (
 	"strings"
 	"time"
 	"trade/api"
+	"trade/btlLog"
 	"trade/config"
 	"trade/middleware"
 	"trade/models"
+	"trade/services/custodyAccount"
 	"trade/utils"
 )
 
@@ -20,19 +22,19 @@ func CheckIfAutoUpdateScheduledTask() {
 	if config.GetLoadConfig().IsAutoUpdateScheduledTask {
 		err := CreateFairLaunchProcessions()
 		if err != nil {
-			ScheduledTask.Info("%v", err)
+			btlLog.ScheduledTask.Info("%v", err)
 		}
 		err = CreateCustodyAccountProcessions()
 		if err != nil {
-			ScheduledTask.Info("%v", err)
+			btlLog.ScheduledTask.Info("%v", err)
 		}
 		err = CreateSnapshotProcessions()
 		if err != nil {
-			ScheduledTask.Info("%v", err)
+			btlLog.ScheduledTask.Info("%v", err)
 		}
 		err = CreateSetTransfersAndReceives()
 		if err != nil {
-			ScheduledTask.Info("%v", err)
+			btlLog.ScheduledTask.Info("%v", err)
 		}
 	}
 }
@@ -224,18 +226,18 @@ func CreateCustodyAccountProcessions() (err error) {
 }
 
 func (cs *CronService) PollPaymentCron() {
-	pollPayment()
+	custodyAccount.PollPayment()
 }
 
 func (cs *CronService) PollInvoiceCron() {
-	pollInvoice()
+	custodyAccount.PollInvoice()
 }
 
 func (cs *CronService) PollPayInsideMission() {
-	pollPayInsideMission()
+	custodyAccount.PollPayInsideMission()
 }
 func (cs *CronService) PollBackFeeMission() {
-	pollBackFeeMission()
+	custodyAccount.PollBackFeeMission()
 }
 
 func CreateSnapshotProcessions() (err error) {

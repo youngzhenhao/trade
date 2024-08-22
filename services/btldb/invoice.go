@@ -1,4 +1,4 @@
-package services
+package btldb
 
 import (
 	"gorm.io/gorm"

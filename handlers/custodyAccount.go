@@ -6,8 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
-	"trade/services"
+	"trade/btlLog"
 	"trade/services/btldb"
+	"trade/services/custodyAccount"
 )
 
 // CreateCustodyAccount 创建托管账户
@@ -28,7 +29,7 @@ func CreateCustodyAccount(c *gin.Context) {
 		return
 	}
 	//创建账户
-	cstAccount, err := services.CreateCustodyAccount(user)
+	cstAccount, err := custodyAccount.CreateCustodyAccount(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -52,7 +53,7 @@ func ApplyInvoice(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "service is default"})
 			return
 		}
-		account, err = services.CreateCustodyAccount(user)
+		account, err = custodyAccount.CreateCustodyAccount(user)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "创建托管账户失败"})
 			return
@@ -60,7 +61,7 @@ func ApplyInvoice(c *gin.Context) {
 	}
 
 	//TODO 判断申请金额是否超过通道余额,检查申请内容是否合法
-	apply := services.ApplyRequest{}
+	apply := custodyAccount.ApplyRequest{}
 	if err = c.ShouldBindJSON(&apply); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -70,7 +71,7 @@ func ApplyInvoice(c *gin.Context) {
 		return
 	}
 	//生成一张发票
-	invoiceRequest, err := services.ApplyInvoice(user.ID, account, &apply)
+	invoiceRequest, err := custodyAccount.ApplyInvoice(user.ID, account, &apply)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -96,7 +97,7 @@ func QueryInvoice(c *gin.Context) {
 	}
 
 	// 查询账户发票
-	invoices, err := services.QueryInvoiceByUserId(user.ID, invoiceRequest.AssetId)
+	invoices, err := custodyAccount.QueryInvoiceByUserId(user.ID, invoiceRequest.AssetId)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "service error"})
@@ -117,7 +118,7 @@ func PayInvoice(c *gin.Context) {
 	// 选择托管账户
 	account, err := btldb.ReadAccountByUserId(user.ID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		services.CUST.Error(err.Error())
+		btlLog.CUST.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询账户信息失败"})
 		return
 	}
@@ -127,14 +128,14 @@ func PayInvoice(c *gin.Context) {
 	}
 
 	//获取支付发票请求
-	pay := services.PayInvoiceRequest{}
+	pay := custodyAccount.PayInvoiceRequest{}
 	if err := c.ShouldBindJSON(&pay); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
 	// 支付发票
-	_, err = services.PayInvoice(account, &pay, true)
+	_, err = custodyAccount.PayInvoice(account, &pay, true)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -153,7 +154,7 @@ func QueryBalance(c *gin.Context) {
 	}
 
 	// 查询账户余额
-	balance, err := services.QueryAccountBalanceByUserId(user.ID)
+	balance, err := custodyAccount.QueryAccountBalanceByUserId(user.ID)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -172,14 +173,14 @@ func QueryPayment(c *gin.Context) {
 	}
 
 	//获取交易查询请求
-	query := services.PaymentRequest{}
+	query := custodyAccount.PaymentRequest{}
 	if err := c.ShouldBindJSON(&query); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
 	// 查询交易记录
-	payments, err := services.QueryPaymentByUserId(user.ID, query.AssetId)
+	payments, err := custodyAccount.QueryPaymentByUserId(user.ID, query.AssetId)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -209,13 +210,13 @@ func LookupInvoice(c *gin.Context) {
 	}
 
 	//获取发票查询请求
-	lookup := services.LookupInvoiceRequest{}
+	lookup := custodyAccount.LookupInvoiceRequest{}
 	if err := c.ShouldBindJSON(&lookup); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 	// 查询发票状态
-	invoice, err := services.LookupInvoice(&lookup)
+	invoice, err := custodyAccount.LookupInvoice(&lookup)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return

@@ -8,6 +8,7 @@ import (
 	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
+	"trade/services/custodyAccount"
 	"trade/utils"
 )
 
@@ -73,7 +74,7 @@ func ProcessIdoPublishInfo(userId int, assetID string, totalAmount int, minimumQ
 	var idoPublishInfo models.IdoPublishInfo
 	// TODO: need to calculate fee
 	setGasFee := GetIdoPublishTransactionGasFee(feeRate)
-	if !IsAccountBalanceEnoughByUserId(uint(userId), uint64(setGasFee)) {
+	if !custodyAccount.IsAccountBalanceEnoughByUserId(uint(userId), uint64(setGasFee)) {
 		return nil, errorAppendInfo("account balance not enough to pay publish gas fee")
 	}
 	assetInfo, err := api.GetAssetInfo(assetID)
@@ -166,7 +167,7 @@ func ProcessIdoParticipateInfo(userId int, idoPublishInfoID int, boughtAmount in
 	}
 	// TODO: need to calculate fee
 	participateGasFee := GetIdoParticipateTransactionGasFee(feeRate)
-	if !IsAccountBalanceEnoughByUserId(uint(userId), uint64(participateGasFee)) {
+	if !custodyAccount.IsAccountBalanceEnoughByUserId(uint(userId), uint64(participateGasFee)) {
 		return nil, errorAppendInfo("account balance not enough to pay minted gas fee")
 	}
 	idoParticipateInfo = models.IdoParticipateInfo{

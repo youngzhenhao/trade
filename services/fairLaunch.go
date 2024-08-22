@@ -11,16 +11,18 @@ import (
 	"strconv"
 	"time"
 	"trade/api"
+	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
+	"trade/services/custodyAccount"
 	"trade/utils"
 )
 
 func PrintProcessionResult(processionResult *[]ProcessionResult) {
 	for _, result := range *processionResult {
 		if !result.Success {
-			FairLaunchDebugLogger.Info("%d:%v", result.id, utils.ValueJsonString(result.Error))
+			btlLog.FairLaunchDebugLogger.Info("%d:%v", result.id, utils.ValueJsonString(result.Error))
 		}
 	}
 }
@@ -123,7 +125,7 @@ func FairLaunchMint() {
 func SendFairLaunchAsset() {
 	err := SendFairLaunchMintedAssetLocked()
 	if err != nil {
-		FairLaunchDebugLogger.Info("%v", err)
+		btlLog.FairLaunchDebugLogger.Info("%v", err)
 		return
 	}
 }
@@ -133,7 +135,7 @@ func SendFairLaunchAsset() {
 func RemoveMintedInventories() {
 	err := RemoveFairLaunchInventoryStateMintedInfos()
 	if err != nil {
-		FairLaunchDebugLogger.Info("%v", err)
+		btlLog.FairLaunchDebugLogger.Info("%v", err)
 		return
 	}
 }
@@ -209,7 +211,7 @@ func ProcessFairLaunchInfo(imageData string, name string, assetType int, amount 
 	//	return nil, utils.AppendErrorInfo(err, "ValidateFeeRate")
 	//}
 	setGasFee := GetIssuanceTransactionGasFee(feeRate)
-	if !IsAccountBalanceEnoughByUserId(uint(userId), uint64(setGasFee)) {
+	if !custodyAccount.IsAccountBalanceEnoughByUserId(uint(userId), uint64(setGasFee)) {
 		return nil, errors.New("account balance not enough to pay issuance gas fee")
 	}
 	fairLaunchInfo = models.FairLaunchInfo{
@@ -348,7 +350,7 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 		return nil, utils.AppendErrorInfo(err, "Is Minted Number Valid")
 	}
 	mintedGasFee := GetMintedTransactionGasFee(mintedFeeRateSatPerKw)
-	if !IsAccountBalanceEnoughByUserId(uint(userId), uint64(mintedGasFee)) {
+	if !custodyAccount.IsAccountBalanceEnoughByUserId(uint(userId), uint64(mintedGasFee)) {
 		return nil, errors.New("account balance not enough to pay minted gas fee")
 	}
 	fairLaunchMintedInfo = models.FairLaunchMintedInfo{
@@ -1998,7 +2000,7 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 			return utils.AppendErrorInfo(err, "CreateFairLaunchMintedUserInfo")
 		}
 		err = btldb.CreateBalance(&models.Balance{
-			AccountId:   AdminAccountId,
+			AccountId:   custodyAccount.AdminAccountId,
 			BillType:    models.BILL_TYPE_ASSET_MINTED_SEND,
 			Away:        models.AWAY_OUT,
 			Amount:      float64(fairLaunchMintedInfo.AddrAmount),

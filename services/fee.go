@@ -5,10 +5,12 @@ import (
 	"math"
 	"strconv"
 	"trade/api"
+	"trade/btlLog"
 	"trade/config"
 	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
+	"trade/services/custodyAccount"
 	"trade/utils"
 )
 
@@ -336,7 +338,7 @@ func GetIdoParticipateTransactionByteSize() ByteSize {
 }
 
 func IsMintFeePaid(paidId int) bool {
-	state, err := CheckPayInsideStatus(uint(paidId))
+	state, err := custodyAccount.CheckPayInsideStatus(uint(paidId))
 	if err != nil {
 		if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
 			//订单支付失败
@@ -347,7 +349,7 @@ func IsMintFeePaid(paidId int) bool {
 }
 
 func IsIssuanceFeePaid(paidId int) bool {
-	state, err := CheckPayInsideStatus(uint(paidId))
+	state, err := custodyAccount.CheckPayInsideStatus(uint(paidId))
 	if err != nil {
 		return false
 	}
@@ -389,7 +391,7 @@ func PayGasFee(payUserId int, gasFee int) (int, error) {
 	if gasFee < 0 {
 		return 0, errors.New("gas fee is negative")
 	}
-	id, err := PayAmountToAdmin(uint(payUserId), uint64(gasFee))
+	id, err := custodyAccount.PayAmountToAdmin(uint(payUserId), uint64(gasFee))
 	if err != nil {
 		return 0, utils.AppendErrorInfo(err, "PayAmountToAdmin")
 	}
@@ -427,7 +429,7 @@ func UpdateFeeRateInfoByBitcoind(network models.Network) (err error) {
 			return utils.AppendErrorInfo(err, "CreateFeeRateInfo")
 		}
 		// @dev: Create new record
-		FEE.Info("Bitcoind FeeRateInfo record created. %v", err)
+		btlLog.FEE.Info("Bitcoind FeeRateInfo record created. %v", err)
 	}
 	feeRateInfo.FeeRate, err = EstimateSmartFeeRate(network, config.GetLoadConfig().FairLaunchConfig.EstimateSmartFeeRateBlocks)
 	if err != nil {
@@ -454,7 +456,7 @@ func UpdateFeeRateInfoByBlock(network models.Network, block int) (err error) {
 		if err != nil {
 			return utils.AppendErrorInfo(err, "CreateFeeRateInfo")
 		}
-		FEE.Info("%s %v", name, "FeeRateInfo record created.")
+		btlLog.FEE.Info("%s %v", name, "FeeRateInfo record created.")
 	}
 	feeRateInfo.FeeRate, err = EstimateSmartFeeRate(network, block)
 	if err != nil {
@@ -694,7 +696,7 @@ func UpdateFeeRateInfoByNameAndUnitIfNotExistThenCreate(name string, unit models
 		if err != nil {
 			return utils.AppendErrorInfo(err, "CreateFeeRateInfo")
 		}
-		FEE.Info("%v %v %v", name, unit, "FeeRateInfo record created.")
+		btlLog.FEE.Info("%v %v %v", name, unit, "FeeRateInfo record created.")
 	} else {
 		feeRateInfo.FeeRate = float64(feeRate)
 		err = f.UpdateFeeRateInfo(feeRateInfo)

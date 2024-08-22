@@ -1,8 +1,9 @@
-package services
+package custodyAccount
 
 import (
 	"errors"
 	"gorm.io/gorm"
+	"trade/btlLog"
 	"trade/models"
 	"trade/services/btldb"
 )
@@ -17,7 +18,7 @@ var (
 func PayAmountToAdmin(payUserId uint, gasFee uint64) (uint, error) {
 	id, err := CreatePayInsideMission(payUserId, AdminUserId, gasFee, 0, "00")
 	if err != nil {
-		CUST.Error("PayAmountToAdmin failed:%s", err)
+		btlLog.CUST.Error("PayAmountToAdmin failed:%s", err)
 		return 0, err
 	}
 	return id, nil
@@ -37,7 +38,7 @@ func CheckAdminAccount() bool {
 	adminUser, err := btldb.ReadUserByUsername("admin")
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			CUST.Error("CheckAdminAccount failed:%s", err)
+			btlLog.CUST.Error("CheckAdminAccount failed:%s", err)
 			return false
 		}
 		// 创建管理员USER
@@ -46,7 +47,7 @@ func CheckAdminAccount() bool {
 		adminUser.Status = 1
 		err = btldb.CreateUser(adminUser)
 		if err != nil {
-			CUST.Error("create AdminUser failed:%s", err)
+			btlLog.CUST.Error("create AdminUser failed:%s", err)
 			return false
 		}
 	}
@@ -55,7 +56,7 @@ func CheckAdminAccount() bool {
 
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			CUST.Error("CheckAdminAccount failed:%s", err)
+			btlLog.CUST.Error("CheckAdminAccount failed:%s", err)
 			return false
 		}
 		// 创建管理员ACCOUNT
@@ -65,13 +66,13 @@ func CheckAdminAccount() bool {
 		adminAccount.Status = 1
 		err = btldb.CreateAccount(adminAccount)
 		if err != nil {
-			CUST.Error("create AdminAccount failed:%s", err)
+			btlLog.CUST.Error("create AdminAccount failed:%s", err)
 			return false
 		}
 	}
 	AdminUserId = adminUser.ID
 	AdminAccountId = adminAccount.ID
 	AdminAccount = adminAccount
-	CUST.Info("admin user id:%d", AdminUserId)
+	btlLog.CUST.Info("admin user id:%d", AdminUserId)
 	return true
 }

@@ -17,6 +17,7 @@ import (
 	"trade/middleware"
 	"trade/routers"
 	"trade/services"
+	"trade/services/custodyAccount"
 	"trade/task"
 	"trade/utils"
 )
@@ -159,7 +160,7 @@ func checkStart() bool {
 	}
 	fmt.Println("Custody account MacaroonDir is set:", cfg.ApiConfig.CustodyAccount.MacaroonDir)
 	// Check the admin account
-	if !services.CheckAdminAccount() {
+	if !custodyAccount.CheckAdminAccount() {
 		log.Println("Admin account is not set")
 		return false
 	}
