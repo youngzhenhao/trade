@@ -1,6 +1,6 @@
 module trade
 
-go 1.22.5
+go 1.23.0
 
 replace google.golang.org/protobuf => github.com/lightninglabs/protobuf-go-hex-display v1.33.0-hex-display
 

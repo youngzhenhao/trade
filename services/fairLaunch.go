@@ -340,7 +340,10 @@ func ProcessFairLaunchMintedInfo(fairLaunchInfoID int, mintedNumber int, mintedF
 	//if err != nil {
 	//	return nil, utils.AppendErrorInfo(err, "ValidateMintedFeeRate")
 	//}
-	isValid, err := IsMintedNumberValid(userId, fairLaunchInfoID, mintedNumber)
+	// @dev: Update: 2024-8-22 10:27:40
+	// @dev: Do not limit total minted
+	//isValid, err := IsMintedNumberValid(userId, fairLaunchInfoID, mintedNumber)
+	isValid, err := IsEachMintedNumberValid(mintedNumber)
 	if err != nil || !isValid {
 		return nil, utils.AppendErrorInfo(err, "Is Minted Number Valid")
 	}
@@ -2137,6 +2140,14 @@ func IsMintedNumberValid(userId int, fairLaunchInfoId int, mintedNumber int) (bo
 	}
 	if recordNumber+mintedNumber > models.MintMaxNumber {
 		err = errors.New("Reach max mint number, available: " + strconv.Itoa(models.MintMaxNumber-recordNumber))
+		return false, err
+	}
+	return true, nil
+}
+
+func IsEachMintedNumberValid(mintedNumber int) (bool, error) {
+	if mintedNumber > models.MintMaxNumber {
+		err := errors.New("Reach max mint number, available: " + strconv.Itoa(models.MintMaxNumber))
 		return false, err
 	}
 	return true, nil
