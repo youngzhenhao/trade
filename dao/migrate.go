@@ -34,9 +34,6 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.FairLaunchMintedUserInfo{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&models.FairLaunchInventoryInfo{}); err != nil {
-		return err
-	}
 	if err = middleware.DB.AutoMigrate(&models.FeeRateInfo{}); err != nil {
 		return err
 	}
