@@ -125,7 +125,7 @@ func FairLaunchMint() {
 func SendFairLaunchAsset() {
 	err := SendFairLaunchMintedAssetLocked()
 	if err != nil {
-		btlLog.FairLaunchDebugLogger.Info("%v", err)
+		btlLog.FairLaunchDebugLogger.Info("SendFairLaunchAsset: %v", err)
 		return
 	}
 }
