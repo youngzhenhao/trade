@@ -82,5 +82,7 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AssetManagedUtxo {
 		SetupAssetManagedUtxoRouter(r)
 	}
+	SetupWsRouter(r)
 	return r
+
 }
