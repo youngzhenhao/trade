@@ -52,7 +52,7 @@ func CheckAdminAccount() bool {
 		}
 	}
 
-	adminAccount, err := btldb.ReadAccountByUserId(adminUser.ID)
+	adminAccount, err := btldb.ReadAccount(adminUser.ID)
 
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -63,7 +63,7 @@ func CheckAdminAccount() bool {
 		adminAccount.UserId = adminUser.ID
 		adminAccount.UserName = adminUser.Username
 		adminAccount.UserAccountCode = "admin"
-		adminAccount.Status = 1
+		adminAccount.Status = models.AccountStatusEnable
 		err = btldb.CreateAccount(adminAccount)
 		if err != nil {
 			btlLog.CUST.Error("create AdminAccount failed:%s", err)

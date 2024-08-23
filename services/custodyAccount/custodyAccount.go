@@ -15,7 +15,7 @@ import (
 	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
-	"trade/services/servicesrpc"
+	rpc "trade/services/servicesrpc"
 )
 
 var ServerFee uint64 = 100
@@ -25,12 +25,12 @@ func GetServerFee() uint64 {
 }
 
 func PayServerFee(account *models.Account) error {
-	acc, err := servicesrpc.AccountInfo(account.UserAccountCode)
+	acc, err := rpc.AccountInfo(account.UserAccountCode)
 	if err != nil {
 		return err
 	}
 	// Change the escrow account balance
-	_, err = servicesrpc.AccountUpdate(account.UserAccountCode, acc.CurrentBalance-int64(ServerFee), -1)
+	_, err = rpc.AccountUpdate(account.UserAccountCode, acc.CurrentBalance-int64(ServerFee), -1)
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ var CMutex sync.Mutex
 // CreateCustodyAccount 创建托管账户并保持马卡龙文件
 func CreateCustodyAccount(user *models.User) (*models.Account, error) {
 	// Create a custody account based on user information
-	account, macaroon, err := servicesrpc.AccountCreate(0, 0)
+	account, macaroon, err := rpc.AccountCreate(0, 0)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return nil, err
@@ -69,7 +69,7 @@ func CreateCustodyAccount(user *models.User) (*models.Account, error) {
 	accountModel.UserId = user.ID
 	accountModel.UserAccountCode = account.Id
 	accountModel.Label = &account.Label
-	accountModel.Status = 1
+	accountModel.Status = models.AccountStatusEnable
 	// Write to the database
 	CMutex.Lock()
 	defer CMutex.Unlock()
@@ -90,7 +90,7 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 		return 0, nil
 	}
 
-	acc, err := servicesrpc.AccountInfo(account.UserAccountCode)
+	acc, err := rpc.AccountInfo(account.UserAccountCode)
 	if err != nil {
 		return 0, err
 	}
@@ -108,7 +108,7 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 		return 0, errors.New("balance not enough")
 	}
 	// Change the escrow account balance
-	_, err = servicesrpc.AccountUpdate(account.UserAccountCode, amount, -1)
+	_, err = rpc.AccountUpdate(account.UserAccountCode, amount, -1)
 
 	// Build a database storage object
 	ba := models.Balance{}
@@ -129,7 +129,7 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 		ba.ServerFee = GetServerFee()
 	}
 	if invoice != "" && invoice != "backFee" {
-		i, _ := servicesrpc.InvoiceDecode(invoice)
+		i, _ := rpc.InvoiceDecode(invoice)
 		if i.PaymentHash != "" {
 			ba.PaymentHash = &i.PaymentHash
 		}
@@ -168,13 +168,13 @@ func ApplyInvoice(userId uint, account *models.Account, applyRequest *ApplyReque
 		return nil, fmt.Errorf("macaroon file not found")
 	}
 	//调用Lit节点发票申请接口
-	invoice, err := servicesrpc.InvoiceCreate(applyRequest.Amount, applyRequest.Memo, macaroonFile)
+	invoice, err := rpc.InvoiceCreate(applyRequest.Amount, applyRequest.Memo, macaroonFile)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return nil, err
 	}
 	//获取发票信息
-	info, _ := servicesrpc.InvoiceFind(invoice.RHash)
+	info, _ := rpc.InvoiceFind(invoice.RHash)
 
 	//构建invoice对象
 	var invoiceModel models.Invoice
@@ -229,12 +229,12 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest, H
 		}
 	}
 	// 判断账户余额是否足够
-	info, err := servicesrpc.InvoiceDecode(PayInvoiceRequest.Invoice)
+	info, err := rpc.InvoiceDecode(PayInvoiceRequest.Invoice)
 	if err != nil {
 		//CUST.Error("发票解析失败")
 		return 0, fmt.Errorf("发票解析失败(pay_request=%s)", PayInvoiceRequest.Invoice)
 	}
-	userBalance, err := servicesrpc.AccountInfo(account.UserAccountCode)
+	userBalance, err := rpc.AccountInfo(account.UserAccountCode)
 	if err != nil {
 		btlLog.CUST.Error("查询账户余额失败")
 		return 0, fmt.Errorf("查询账户余额失败（UserId=%d）", account.UserId)
@@ -270,7 +270,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest, H
 		}
 		//更改发票状态
 		h, _ := hex.DecodeString(info.PaymentHash)
-		err = servicesrpc.InvoiceCancel(h)
+		err = rpc.InvoiceCancel(h)
 		if err != nil {
 			btlLog.CUST.Error("取消发票失败")
 		}
@@ -291,7 +291,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest, H
 		return 0, fmt.Errorf("macaroon file not found")
 	}
 
-	payment, err := servicesrpc.InvoicePay(macaroonFile, PayInvoiceRequest.Invoice, info.NumSatoshis, PayInvoiceRequest.FeeLimit)
+	payment, err := rpc.InvoicePay(macaroonFile, PayInvoiceRequest.Invoice, info.NumSatoshis, PayInvoiceRequest.FeeLimit)
 	if err != nil {
 		btlLog.CUST.Error("pay invoice fail")
 		return 0, fmt.Errorf("pay invoice fail")
@@ -330,13 +330,13 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest, H
 // QueryAccountBalanceByUserId 通过用户ID查询账户余额
 func QueryAccountBalanceByUserId(userId uint) (uint64, error) {
 	// 查询账户
-	account, err := btldb.ReadAccountByUserId(userId)
+	account, err := btldb.ReadAccount(userId)
 	if err != nil {
 		fmt.Println(err.Error())
 		return 0, err
 	}
 	// 查询账户余额
-	userBalance, err := servicesrpc.AccountInfo(account.UserAccountCode)
+	userBalance, err := rpc.AccountInfo(account.UserAccountCode)
 	if err != nil {
 		btlLog.CUST.Error("Query failed: %s", err)
 		return 0, err
@@ -412,7 +412,7 @@ type PaymentResponse struct {
 
 // QueryPaymentByUserId 查询用户支付记录
 func QueryPaymentByUserId(userId uint, assetId string) ([]PaymentResponse, error) {
-	accountId, err := btldb.ReadAccountByUserId(userId)
+	accountId, err := btldb.ReadAccount(userId)
 	if err != nil {
 		return nil, fmt.Errorf("not find account info")
 	}
@@ -491,7 +491,7 @@ func PollPayment() {
 			if v.Invoice == nil {
 				continue
 			}
-			temp, err := servicesrpc.PaymentTrack(*v.PaymentHash)
+			temp, err := rpc.PaymentTrack(*v.PaymentHash)
 			if err != nil {
 				btlLog.CUST.Warning(err.Error())
 				continue
@@ -531,7 +531,7 @@ func PollInvoice() {
 	}
 	if len(a) > 0 {
 		for _, v := range a {
-			invoice, err := servicesrpc.InvoiceDecode(v.Invoice)
+			invoice, err := rpc.InvoiceDecode(v.Invoice)
 			if err != nil {
 				btlLog.CUST.Warning(err.Error())
 				continue
@@ -541,7 +541,7 @@ func PollInvoice() {
 				btlLog.CUST.Warning(err.Error())
 				continue
 			}
-			temp, err := servicesrpc.InvoiceFind(rHash)
+			temp, err := rpc.InvoiceFind(rHash)
 			if err != nil {
 				btlLog.CUST.Warning(err.Error())
 				continue
@@ -576,9 +576,9 @@ func PollInvoice() {
 // PayAmountInside 内部转账比特币
 func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, invoice string, HasServerFee bool) (uint, error) {
 	amount := gasFee + serveFee
-	payAccount, err := btldb.ReadAccountByUserId(payUserId)
+	payAccount, err := btldb.ReadAccount(payUserId)
 	if err != nil {
-		btlLog.CUST.Error("ReadAccountByUserId error:%v", err)
+		btlLog.CUST.Error("ReadAccount error:%v", err)
 		return 0, err
 	}
 	outId, err := UpdateCustodyAccount(payAccount, models.AWAY_OUT, amount, invoice, HasServerFee)
@@ -604,9 +604,9 @@ func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, inv
 	}
 	mark(outId, gasFee, HasServerFee)
 
-	receiveAccount, err := btldb.ReadAccountByUserId(receiveUserId)
+	receiveAccount, err := btldb.ReadAccount(receiveUserId)
 	if err != nil {
-		btlLog.CUST.Error("ReadAccountByUserId error:%v", err)
+		btlLog.CUST.Error("ReadAccount error:%v", err)
 		return 0, err
 	}
 	_, err = UpdateCustodyAccount(receiveAccount, models.AWAY_IN, amount, invoice, false)
@@ -620,13 +620,13 @@ func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, inv
 // CreatePayInsideMission 创建内部转账任务
 func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint64, assetType string) (uint, error) {
 	//获取支付账户信息
-	payAccount, err := btldb.ReadAccountByUserId(payUserId)
+	payAccount, err := btldb.ReadAccount(payUserId)
 	if err != nil {
 		btlLog.CUST.Error("Not find pay account info(UserId=%v):%v", payUserId, err)
 		return 0, fmt.Errorf("not find pay account info")
 	}
 	//获取账户信息
-	acc, err := servicesrpc.AccountInfo(payAccount.UserAccountCode)
+	acc, err := rpc.AccountInfo(payAccount.UserAccountCode)
 	if err != nil {
 		btlLog.CUST.Error("AccountInfo error(UserId=%v):%v", payUserId, err)
 		return 0, fmt.Errorf("AccountInfo error")
@@ -661,7 +661,7 @@ func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint
 		payType = models.PayInsideToAdmin
 	default:
 		//获取非管理员账户信息
-		receiveAccount, err = btldb.ReadAccountByUserId(receiveUserId)
+		receiveAccount, err = btldb.ReadAccount(receiveUserId)
 		if err != nil {
 			btlLog.CUST.Error("Not find receive account info(UserId=%v):%v", receiveUserId, err)
 			return 0, fmt.Errorf("not find receive account info")
@@ -713,7 +713,7 @@ func PollPayInsideMission() {
 	for _, v := range a {
 		if v.AssetType == "00" {
 			//获取支付账户信息
-			payAccount, err := btldb.ReadAccountByUserId(v.PayUserId)
+			payAccount, err := btldb.ReadAccount(v.PayUserId)
 			if err != nil {
 				btlLog.CUST.Error("pollPayInsideMission find pay account error:%v", err)
 				continue
@@ -795,7 +795,7 @@ func LookupInvoice(req *LookupInvoiceRequest) (*LookupInvoiceResponse, error) {
 		btlLog.CUST.Error("Decode invoice hash error:%v", err.Error())
 		return nil, err
 	}
-	invoice, err := servicesrpc.InvoiceFind(invoiceHash)
+	invoice, err := rpc.InvoiceFind(invoiceHash)
 	if err != nil {
 		btlLog.CUST.Error("FindInvoice error:%v", err.Error())
 		return nil, err
@@ -836,7 +836,7 @@ func PollBackFeeMission() {
 	var results []BackFeeSqlResult
 	middleware.DB.Raw(getBackFeeSql, 0).Scan(&results)
 	for _, r := range results {
-		account, err := btldb.ReadAccountByUserId(r.PayUserId)
+		account, err := btldb.ReadAccount(r.PayUserId)
 		if err != nil {
 			btlLog.CUST.Error("PollBackFeeMission find pay account error:%v", err.Error())
 			continue

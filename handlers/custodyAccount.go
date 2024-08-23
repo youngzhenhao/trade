@@ -23,18 +23,23 @@ func CreateCustodyAccount(c *gin.Context) {
 		return
 	}
 	// 判断用户是否已经创建账户
-	accounts, _ := btldb.ReadAccountByUserIds(user.ID)
-	if len(accounts) > 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "托管账户已存在"})
+	_, err = btldb.ReadAccount(user.ID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		//创建账户
+		cstAccount, err := custodyAccount.CreateCustodyAccount(user)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"accountModel": cstAccount})
 		return
 	}
-	//创建账户
-	cstAccount, err := custodyAccount.CreateCustodyAccount(user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		btlLog.CUST.Error(err.Error())
+		c.JSON(http.StatusOK, gin.H{"error": "get account info error"})
 	}
-	c.JSON(http.StatusOK, gin.H{"accountModel": cstAccount})
+	c.JSON(http.StatusOK, gin.H{"error": "用户已存在"})
+
 }
 
 // ApplyInvoice CustodyAccount开具发票
@@ -47,7 +52,7 @@ func ApplyInvoice(c *gin.Context) {
 		return
 	}
 
-	account, err := btldb.ReadAccountByUserId(user.ID)
+	account, err := btldb.ReadAccount(user.ID)
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "service is default"})
@@ -116,7 +121,7 @@ func PayInvoice(c *gin.Context) {
 		return
 	}
 	// 选择托管账户
-	account, err := btldb.ReadAccountByUserId(user.ID)
+	account, err := btldb.ReadAccount(user.ID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		btlLog.CUST.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询账户信息失败"})
@@ -199,7 +204,7 @@ func LookupInvoice(c *gin.Context) {
 		return
 	}
 	// 选择托管账户
-	account, err := btldb.ReadAccountByUserId(user.ID)
+	account, err := btldb.ReadAccount(user.ID)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
