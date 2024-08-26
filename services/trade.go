@@ -3,7 +3,6 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"log"
 	"math/rand"
 	"strconv"
@@ -12,13 +11,15 @@ import (
 	"time"
 	"trade/middleware"
 	"trade/models"
+
+	"github.com/google/uuid"
 )
 
 type TransactionService struct {
 	Orders              map[string]*models.TradeOrder
 	OrderStatus         map[string]bool
 	Mutex               *sync.RWMutex
-	Clients             map[*models.Client]*models.Client
+	Clients             map[string]*models.Client
 	subscriptionManager *SubscriptionManager
 	messageQueue        chan messageTask
 }
@@ -33,7 +34,7 @@ func NewTransactionService() *TransactionService {
 		Orders:              make(map[string]*models.TradeOrder),
 		OrderStatus:         make(map[string]bool),
 		Mutex:               &sync.RWMutex{},
-		Clients:             make(map[*models.Client]*models.Client),
+		Clients:             make(map[string]*models.Client),
 		subscriptionManager: NewSubscriptionManager(),
 		messageQueue:        make(chan messageTask, 1000),
 	}
@@ -54,6 +55,83 @@ func (ts *TransactionService) ProcessMessage(client *models.Client, msg []byte) 
 	default:
 		log.Println("Message queue is full, dropping message")
 	}
+}
+
+func (ts *TransactionService) SendDirectMessage(username string, message interface{}) error {
+	ts.Mutex.RLock()
+	client, exists := ts.Clients[username]
+	ts.Mutex.RUnlock()
+
+	if !exists {
+		return fmt.Errorf("client not found: %s", username)
+	}
+
+	jsonMessage, err := json.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("failed to marshal message: %v", err)
+	}
+
+	select {
+	case client.Send <- jsonMessage:
+		log.Printf("Sent direct message to %s: %s", username, string(jsonMessage))
+	default:
+		return fmt.Errorf("failed to send message to %s, channel might be full", username)
+	}
+
+	return nil
+}
+
+func (ts *TransactionService) AddClient(client *models.Client) {
+	ts.Mutex.Lock()
+	defer ts.Mutex.Unlock()
+	ts.Clients[client.Username] = client
+}
+
+func (ts *TransactionService) RemoveClient(client *models.Client) {
+	ts.Mutex.Lock()
+	defer ts.Mutex.Unlock()
+	delete(ts.Clients, client.Username)
+}
+
+func (ts *TransactionService) UpdateClientOrders(username string, online bool) {
+	ts.Mutex.Lock()
+	defer ts.Mutex.Unlock()
+	for _, order := range ts.Orders {
+		if order.Seller == username || order.Buyer == username {
+			if online {
+				order.Status = -1
+			}
+			ts.OrderStatus[order.OrderID] = online
+		}
+	}
+}
+
+func (ts *TransactionService) BroadcastMessage(message interface{}) error {
+	jsonMessage, err := json.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("failed to marshal broadcast message: %v", err)
+	}
+
+	ts.Mutex.RLock()
+	defer ts.Mutex.RUnlock()
+	for _, client := range ts.Clients {
+		select {
+		case client.Send <- jsonMessage:
+			// Message sent successfully
+		default:
+			go ts.RemoveClient(client)
+			close(client.Send)
+			log.Printf("Failed to send message to client: %s. Closing connection.", client.Username)
+		}
+	}
+	return nil
+}
+
+func (ts *TransactionService) GetClient(username string) (*models.Client, bool) {
+	ts.Mutex.RLock()
+	defer ts.Mutex.RUnlock()
+	client, exists := ts.Clients[username]
+	return client, exists
 }
 
 func (ts *TransactionService) processMessage(client *models.Client, msg []byte) {
@@ -94,6 +172,8 @@ func (ts *TransactionService) processMessage(client *models.Client, msg []byte) 
 		ts.handleSubscribe(client, content)
 	case "unsubscribe":
 		ts.handleUnsubscribe(client, content)
+	case "send_direct_message":
+		ts.handleSendDirectMessage(client, content, requestID)
 	default:
 		ts.sendErrorResponse(client, requestID, "Unknown action")
 	}
@@ -234,6 +314,41 @@ func (ts *TransactionService) handleUnsubscribe(client *models.Client, content m
 		"status":  200,
 		"message": "Unsubscribed from " + channel,
 		"code":    200,
+	})
+}
+
+func (ts *TransactionService) handleSendDirectMessage(client *models.Client, content map[string]interface{}, requestID string) {
+	recipient, ok := content["recipient"].(string)
+	if !ok {
+		ts.sendErrorResponse(client, requestID, "Invalid recipient")
+		return
+	}
+
+	message, ok := content["message"]
+	if !ok {
+		ts.sendErrorResponse(client, requestID, "Invalid message")
+		return
+	}
+
+	directMessage := map[string]interface{}{
+		"action":     "direct_message",
+		"from":       client.Username,
+		"message":    message,
+		"request_id": requestID,
+	}
+
+	err := ts.SendDirectMessage(recipient, directMessage)
+
+	if err != nil {
+		ts.sendErrorResponse(client, requestID, fmt.Sprintf("Failed to send direct message: %v", err))
+		return
+	}
+
+	ts.sendResponse(client, map[string]interface{}{
+		"request_id": requestID,
+		"status":     200,
+		"message":    "Direct message sent successfully",
+		"code":       200,
 	})
 }
 
@@ -441,14 +556,14 @@ func (ts *TransactionService) sendErrorResponse(client *models.Client, requestID
 }
 
 func (ts *TransactionService) sendResponse(client *models.Client, response map[string]interface{}) {
-	resMessage, err := json.Marshal(response)
+	jsonResponse, err := json.Marshal(response)
 	if err != nil {
 		log.Println("Error marshaling response:", err)
 		return
 	}
 	select {
-	case client.Send <- resMessage:
-		log.Println("Sent message to client:", string(resMessage))
+	case client.Send <- jsonResponse:
+		log.Println("Sent message to client:", string(jsonResponse))
 	default:
 		log.Println("Client send channel is blocked, discarding message")
 	}
@@ -466,54 +581,12 @@ func mapToStruct(input map[string]interface{}, output interface{}) error {
 	return json.Unmarshal(data, output)
 }
 
-// New methods for client management
-
-func (ts *TransactionService) AddClient(client *models.Client) {
-	ts.Mutex.Lock()
-	defer ts.Mutex.Unlock()
-	ts.Clients[client] = client
-}
-
-func (ts *TransactionService) RemoveClient(client *models.Client) {
-	ts.Mutex.Lock()
-	defer ts.Mutex.Unlock()
-	delete(ts.Clients, client)
-}
-
-func (ts *TransactionService) UpdateClientOrders(username string, online bool) {
-	ts.Mutex.Lock()
-	defer ts.Mutex.Unlock()
-	for _, order := range ts.Orders {
-		if order.Seller == username || order.Buyer == username {
-			if online {
-				order.Status = -1
-			}
-			ts.OrderStatus[order.OrderID] = online
-		}
-	}
-}
-
-func (ts *TransactionService) BroadcastMessage(msg []byte) {
-	ts.Mutex.RLock()
-	defer ts.Mutex.RUnlock()
-	for client := range ts.Clients {
-		select {
-		case client.Send <- msg:
-			// Message sent successfully
-		default:
-			go ts.RemoveClient(client)
-			close(client.Send)
-			log.Printf("Failed to send message to client: %s. Closing connection.", client.Username)
-		}
-	}
-}
-
 func (ts *TransactionService) CloseAllConnections() {
 	ts.Mutex.Lock()
 	defer ts.Mutex.Unlock()
-	for client := range ts.Clients {
+	for _, client := range ts.Clients {
 		client.Conn.Close()
 		close(client.Send)
-		delete(ts.Clients, client)
 	}
+	ts.Clients = make(map[string]*models.Client)
 }

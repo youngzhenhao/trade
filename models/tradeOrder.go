@@ -6,6 +6,7 @@ type TradeOrder struct {
 	gorm.Model
 	OrderID       string  `gorm:"column:order_id" json:"order_id"`
 	TradingPair   string  `gorm:"column:trading_pair" json:"trading_pair"`
+	AssetID       string  `gorm:"column:asset_id" json:"asset_id"`
 	BitcoinAmount float64 `gorm:"column:bitcoin_amount;type:decimal(15,2)" json:"bitcoin_amount"`
 	TapRootAsset  string  `gorm:"column:taproot_asset" json:"taproot_asset"`
 	TapRootAmount float64 `gorm:"column:taproot_amount;type:decimal(15,2)" json:"taproot_amount"`
