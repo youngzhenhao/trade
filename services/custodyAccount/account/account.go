@@ -1,7 +1,9 @@
 package account
 
 import (
+	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"os"
 	"path/filepath"
 	"sync"
@@ -82,4 +84,25 @@ func saveMacaroon(macaroon []byte, macaroonFile string) error {
 // GetAccountByUserName 获取托管账户信息
 func GetAccountByUserName(username string) (*models.Account, error) {
 	return btldb.ReadAccountByName(username)
+}
+
+type UserInfo struct {
+	Username *string
+	Account  *models.Account
+}
+
+// GetUserInfo 获取用户信息
+func GetUserInfo(username string) (*UserInfo, error) {
+	account, err := GetAccountByUserName(username)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		btlLog.CUST.Error(err.Error())
+		return nil, err
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		//TODO create new account
+		return nil, errors.New("create new account")
+	}
+	return &UserInfo{
+		Username: &username,
+		Account:  account,
+	}, nil
 }
