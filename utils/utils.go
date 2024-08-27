@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"log"
 	"math"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path"
@@ -517,4 +518,46 @@ func RemoveStringInNameForFileSlice(fileSlice []string, s string) ([]string, err
 		newSlice = append(newSlice, name)
 	}
 	return newSlice, nil
+}
+
+// GetRandomNumber
+// @Description: Return a random number whose range is (0,maxValue).
+func GetRandomNumber(maxValue int) int {
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+	var randNumber int
+	for randNumber == 0 {
+		randNumber = rand.Intn(maxValue)
+	}
+	return randNumber
+}
+
+// GetRandomNumberSlice
+// @Description: Use this to generate a slice of random number
+func GetRandomNumberSlice(maxValue int, n int) ([]int, error) {
+	// @dev: If the number of times the same random number is obtained exceeds this value,
+	// add this random number to the slice of random number results,
+	// so that duplicates can be obtained relatively randomly
+	// when the range of random numbers is small
+	// (the number of random numbers that can be obtained is less than
+	// the number of random numbers that need to be generated).
+	// The third time when a random number duplicates, it will be accepted.
+	const retryTimes = 2
+	if maxValue < 1 || n < 0 {
+		return nil, errors.New("max value or slice length is negative")
+	}
+	var slice []int
+	randNumberMapGeneratedTimes := make(map[int]int)
+	for len(slice) < n {
+		// @dev: Return a random number whose range is (0,maxValue].
+		randNumber := GetRandomNumber(maxValue + 1)
+		randNumberMapGeneratedTimes[randNumber]++
+		if randNumberMapGeneratedTimes[randNumber] == 1 || randNumberMapGeneratedTimes[randNumber] > 1+retryTimes {
+			slice = append(slice, randNumber)
+			randNumberMapGeneratedTimes[randNumber] = 1
+		} else {
+			// @dev: length of slice will not add
+			continue
+		}
+	}
+	return slice, nil
 }

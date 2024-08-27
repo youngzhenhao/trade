@@ -69,7 +69,7 @@ func ReadAssetBalanceByAssetId(assetId string) (*[]models.AssetBalance, error) {
 
 func ReadAssetBalanceByAssetIdNonZero(assetId string) (*[]models.AssetBalance, error) {
 	var assetBalances []models.AssetBalance
-	err := middleware.DB.Where("asset_id = ? AND status = ? AND balance <> ?", assetId, 1, 0).Order("updated_at desc").Find(&assetBalances).Error
+	err := middleware.DB.Where("asset_id = ? AND balance <> ?", assetId, 0).Order("updated_at desc").Find(&assetBalances).Error
 	return &assetBalances, err
 }
 
