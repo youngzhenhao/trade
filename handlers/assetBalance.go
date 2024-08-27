@@ -144,7 +144,7 @@ func GetAssetHolderNumber(c *gin.Context) {
 
 func GetAssetHolderBalance(c *gin.Context) {
 	assetId := c.Param("asset_id")
-	holderBalances, err := services.GetAssetIdAndBalancesByAssetId(assetId)
+	holderBalances, err := services.GetAssetIdAndAssetBalancesByAssetId(assetId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
