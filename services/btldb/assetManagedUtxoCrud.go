@@ -39,19 +39,19 @@ func ReadAssetManagedUtxosByIds(assetManagedUtxoIds *[]int) (*[]models.AssetMana
 
 func ReadAssetManagedUtxosByUserId(userId int) (*[]models.AssetManagedUtxo, error) {
 	var assetManagedUtxos []models.AssetManagedUtxo
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&assetManagedUtxos).Error
+	err := middleware.DB.Where("user_id = ?", userId).Find(&assetManagedUtxos).Error
 	return &assetManagedUtxos, err
 }
 
 func ReadAssetManagedUtxosByAssetId(assetId string) (*[]models.AssetManagedUtxo, error) {
 	var assetManagedUtxos []models.AssetManagedUtxo
-	err := middleware.DB.Where("asset_genesis_asset_id = ? AND status = ?", assetId, 1).Find(&assetManagedUtxos).Error
+	err := middleware.DB.Where("asset_genesis_asset_id = ?", assetId).Find(&assetManagedUtxos).Error
 	return &assetManagedUtxos, err
 }
 
 func ReadAssetManagedUtxoByUserIdAndAssetId(userId int, assetId string) (*models.AssetManagedUtxo, error) {
 	var assetManagedUtxo models.AssetManagedUtxo
-	err := middleware.DB.Where("user_id = ? AND asset_genesis_asset_id = ? AND status = ?", userId, assetId, 1).First(&assetManagedUtxo).Error
+	err := middleware.DB.Where("user_id = ? AND asset_genesis_asset_id = ?", userId, assetId).First(&assetManagedUtxo).Error
 	return &assetManagedUtxo, err
 }
 

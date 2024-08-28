@@ -33,19 +33,19 @@ func ReadAssetLocalMintHistory(id uint) (*models.AssetLocalMintHistory, error) {
 
 func ReadAssetLocalMintHistoriesByUserId(userId int) (*[]models.AssetLocalMintHistory, error) {
 	var assetLocalMintHistories []models.AssetLocalMintHistory
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&assetLocalMintHistories).Error
+	err := middleware.DB.Where("user_id = ?", userId).Find(&assetLocalMintHistories).Error
 	return &assetLocalMintHistories, err
 }
 
 func ReadAssetLocalMintHistoryByAssetId(assetId string) (*models.AssetLocalMintHistory, error) {
 	var assetLocalMintHistory models.AssetLocalMintHistory
-	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).First(&assetLocalMintHistory).Error
+	err := middleware.DB.Where("asset_id = ?", assetId).First(&assetLocalMintHistory).Error
 	return &assetLocalMintHistory, err
 }
 
 func ReadAssetLocalMintHistoryByUserIdAndAssetId(userId int, assetId string) (*models.AssetLocalMintHistory, error) {
 	var assetLocalMintHistory models.AssetLocalMintHistory
-	err := middleware.DB.Where("user_id = ? AND asset_id = ? AND status = ?", userId, assetId, 1).First(&assetLocalMintHistory).Error
+	err := middleware.DB.Where("user_id = ? AND asset_id = ?", userId, assetId).First(&assetLocalMintHistory).Error
 	return &assetLocalMintHistory, err
 }
 
