@@ -27,19 +27,19 @@ func ReadAddrReceiveEvent(id uint) (*models.AddrReceiveEvent, error) {
 
 func ReadAddrReceiveEventsByUserId(userId int) (*[]models.AddrReceiveEvent, error) {
 	var addrReceiveEvents []models.AddrReceiveEvent
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Order("creation_time_unix_seconds desc").Find(&addrReceiveEvents).Error
+	err := middleware.DB.Where("user_id = ?", userId).Order("creation_time_unix_seconds desc").Find(&addrReceiveEvents).Error
 	return &addrReceiveEvents, err
 }
 
 func ReadAddrReceiveEventByAddrEncoded(addrEncoded string) (*models.AddrReceiveEvent, error) {
 	var addrReceiveEvent models.AddrReceiveEvent
-	err := middleware.DB.Where("addr_encoded = ? AND status = ?", addrEncoded, 1).First(&addrReceiveEvent).Error
+	err := middleware.DB.Where("addr_encoded = ?", addrEncoded).First(&addrReceiveEvent).Error
 	return &addrReceiveEvent, err
 }
 
 func ReadAddrReceiveEventsByAssetId(assetId string) (*[]models.AddrReceiveEvent, error) {
 	var addrReceiveEvents []models.AddrReceiveEvent
-	err := middleware.DB.Where("addr_asset_id = ? AND status = ?", assetId, 1).Order("creation_time_unix_seconds desc").Find(&addrReceiveEvents).Error
+	err := middleware.DB.Where("addr_asset_id = ?", assetId).Order("creation_time_unix_seconds desc").Find(&addrReceiveEvents).Error
 	return &addrReceiveEvents, err
 }
 

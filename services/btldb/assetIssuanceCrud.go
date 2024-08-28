@@ -23,7 +23,7 @@ func (a *AssetIssuanceStore) ReadAssetIssuance(id uint) (*models.AssetIssuance, 
 
 func (a *AssetIssuanceStore) ReadAssetIssuanceByFairLaunchId(fairLaunchId uint) (*models.AssetIssuance, error) {
 	var assetIssuance models.AssetIssuance
-	err := a.DB.Where("status = ? AND is_fair_launch = ? AND fair_launch_id = ?", models.StatusNormal, true, fairLaunchId).First(&assetIssuance).Error
+	err := a.DB.Where("is_fair_launch = ? AND fair_launch_id = ?", true, fairLaunchId).First(&assetIssuance).Error
 	return &assetIssuance, err
 }
 

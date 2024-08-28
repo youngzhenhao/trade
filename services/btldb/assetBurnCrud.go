@@ -33,13 +33,13 @@ func ReadAssetBurn(id uint) (*models.AssetBurn, error) {
 
 func ReadAssetBurnsByUserId(userId int) (*[]models.AssetBurn, error) {
 	var assetBurns []models.AssetBurn
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&assetBurns).Error
+	err := middleware.DB.Where("user_id = ?", userId).Find(&assetBurns).Error
 	return &assetBurns, err
 }
 
 func ReadAssetBurnsByAssetId(assetId string) (*[]models.AssetBurn, error) {
 	var assetBurns []models.AssetBurn
-	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).Find(&assetBurns).Error
+	err := middleware.DB.Where("asset_id = ?", assetId).Find(&assetBurns).Error
 	return &assetBurns, err
 }
 
