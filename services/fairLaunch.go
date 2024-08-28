@@ -157,6 +157,10 @@ func GetFairLaunchMintedInfo(id int) (*models.FairLaunchMintedInfo, error) {
 	return f.ReadFairLaunchMintedInfo(uint(id))
 }
 
+func GetFairLaunchMintedInfoWhoseProcessNumberIsMoreThanTenThousand() (*[]models.FairLaunchMintedInfo, error) {
+	return btldb.ReadFairLaunchMintedInfoWhoseProcessNumberIsMoreThanTenThousand()
+}
+
 func GetFairLaunchMintedInfosByFairLaunchId(fairLaunchId int) (*[]models.FairLaunchMintedInfo, error) {
 	f := btldb.FairLaunchStore{DB: middleware.DB}
 	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
@@ -2683,4 +2687,22 @@ func UpdateFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInf
 func SetFairLaunchMintedInfoFail(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
 	fairLaunchMintedInfo.State = models.FairLaunchMintedStateFail
 	return UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
+}
+
+func CancelAndRefundFairLaunchMintedInfo(fairLaunchMintedInfoId int) (BackAmountMissionId int, err error) {
+	var fairLaunchMintedInfo *models.FairLaunchMintedInfo
+	fairLaunchMintedInfo, err = GetFairLaunchMintedInfo(fairLaunchMintedInfoId)
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "GetFairLaunchMintedInfo")
+	}
+	err = SetFairLaunchMintedInfoFail(fairLaunchMintedInfo)
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "SetFairLaunchMintedInfoFail")
+	}
+	mintFeePaidId := fairLaunchMintedInfo.MintFeePaidID
+	missionId, err := custodyAccount.BackAmount(uint(mintFeePaidId))
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "BackAmount")
+	}
+	return int(missionId), nil
 }

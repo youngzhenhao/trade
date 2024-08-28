@@ -126,6 +126,15 @@ func ReadNotSentFairLaunchMintedInfos() (*[]models.FairLaunchMintedInfo, error) 
 	return &fairLaunchMintedInfos, nil
 }
 
+func ReadFairLaunchMintedInfoWhoseProcessNumberIsMoreThanTenThousand() (*[]models.FairLaunchMintedInfo, error) {
+	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
+	err := middleware.DB.Where("state BETWEEN ? AND ? AND process_number > ?", models.FairLaunchMintedStateNoPay, models.FairLaunchMintedStateSentPending, 10000).Find(&fairLaunchMintedInfos).Error
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "Read fairLaunchMintedInfos")
+	}
+	return &fairLaunchMintedInfos, nil
+}
+
 // FairLaunchInventoryInfo
 
 func (f *FairLaunchStore) CreateFairLaunchInventoryInfo(fairLaunchInventoryInfo *models.FairLaunchInventoryInfo) error {
