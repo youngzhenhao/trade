@@ -2706,3 +2706,25 @@ func CancelAndRefundFairLaunchMintedInfo(fairLaunchMintedInfoId int) (BackAmount
 	}
 	return int(missionId), nil
 }
+
+// TODO: This function maybe need to update.
+//
+//	Consider if use scheduled task
+func RefundBlockFairLaunchMintedInfos() (missionIds []int, err error) {
+	fairLaunchMintedInfos, err := GetFairLaunchMintedInfoWhoseProcessNumberIsMoreThanTenThousand()
+	if err != nil {
+		return
+	}
+	if fairLaunchMintedInfos == nil || len(*fairLaunchMintedInfos) == 0 {
+		return
+	}
+	var missionId int
+	for _, fairLaunchMintedInfo := range *fairLaunchMintedInfos {
+		missionId, err = CancelAndRefundFairLaunchMintedInfo(int(fairLaunchMintedInfo.ID))
+		if err != nil {
+			return
+		}
+		missionIds = append(missionIds, missionId)
+	}
+	return
+}
