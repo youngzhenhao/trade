@@ -18,22 +18,11 @@ var (
 	SuccessErr = SUCCESS.Error()
 )
 
-// Err type:CustodyAccount
-const (
-	CustodyAccountCreateErr ErrCode = iota + 1000
-	CustodyAccountUpdateErr
-	CustodyAccountGetErr
-	CustodyAccountDeleteErr
-
-	//CcustodyAccountPayInsideMissionSuccess
-	CustodyAccountPayInsideMissionFaild
-	CustodyAccountPayInsideMissionPending
-)
-
 // Err type:Normal
 const (
 	SUCCESS    ErrCode = 200
 	DefaultErr ErrCode = -1
+	ReadDbErr  ErrCode = 4001
 )
 
 // Err type:Unknown
@@ -174,6 +163,18 @@ const (
 	CreateFairLaunchIncomeOfServerPaySendReservedFeeErr
 )
 
+// Err type:CustodyAccount
+const (
+	_ ErrCode = iota + 1000
+	_
+	_
+	_
+
+	//CcustodyAccountPayInsideMissionSuccess
+	CustodyAccountPayInsideMissionFaild
+	CustodyAccountPayInsideMissionPending
+)
+
 func (e ErrCode) Error() string {
 	switch {
 	case errors.Is(e, SUCCESS):
@@ -184,6 +185,8 @@ func (e ErrCode) Error() string {
 		return "custody account pay inside mission faild"
 	case errors.Is(e, CustodyAccountPayInsideMissionPending):
 		return "custody account pay inside mission pending"
+	case errors.Is(e, ReadDbErr):
+		return "get server data error"
 
 	default:
 		return ""

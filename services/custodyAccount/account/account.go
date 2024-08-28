@@ -14,6 +14,17 @@ import (
 	rpc "trade/services/servicesrpc"
 )
 
+type AccError error
+
+var (
+	CustodyAccountCreateErr AccError = errors.New("创建托管账户失败")
+	CustodyAccountUpdateErr AccError = errors.New("更新托管账户失败")
+	CustodyAccountGetErr    AccError = errors.New("获取托管账户失败")
+	CustodyAccountDeleteErr AccError = errors.New("删除托管账户失败")
+	MacaroonSaveErr         AccError = errors.New("保存macaroon文件失败")
+	MacaroonFindErr         AccError = errors.New("找不到macaroon文件")
+)
+
 var CMutex sync.Mutex
 
 // CreateAccount 创建托管账户并存储马卡龙文件
@@ -87,22 +98,58 @@ func GetAccountByUserName(username string) (*models.Account, error) {
 }
 
 type UserInfo struct {
-	Username *string
-	Account  *models.Account
+	User    *models.User
+	Account *models.Account
 }
 
 // GetUserInfo 获取用户信息
 func GetUserInfo(username string) (*UserInfo, error) {
+	user, err := btldb.ReadUserByUsername(username)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
+	}
 	account, err := GetAccountByUserName(username)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		btlLog.CUST.Error(err.Error())
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		//TODO create new account
-		return nil, errors.New("create new account")
+		// 如果账户不存在，则创建账户
+		newAccount, err := CreateAccount(user)
+		if err != nil {
+			return nil, CustodyAccountCreateErr
+		}
+		return &UserInfo{
+			User:    user,
+			Account: newAccount,
+		}, nil
 	}
 	return &UserInfo{
-		Username: &username,
-		Account:  account,
+		User:    user,
+		Account: account,
+	}, nil
+}
+
+// GetUserInfoById 获取用户信息
+func GetUserInfoById(userId uint) (*UserInfo, error) {
+	user, err := btldb.ReadUser(userId)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
+	}
+	account, err := GetAccountByUserName(user.Username)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		// 如果账户不存在，则创建账户
+		newAccount, err := CreateAccount(user)
+		if err != nil {
+			return nil, CustodyAccountCreateErr
+		}
+		return &UserInfo{
+			User:    user,
+			Account: newAccount,
+		}, nil
+	}
+	return &UserInfo{
+		User:    user,
+		Account: account,
 	}, nil
 }

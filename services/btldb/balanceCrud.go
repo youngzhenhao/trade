@@ -1,12 +1,17 @@
 package btldb
 
 import (
+	"sync"
 	"trade/middleware"
 	"trade/models"
 )
 
+var balanceMutex sync.Mutex
+
 // CreateBalance creates a new balance record
 func CreateBalance(balance *models.Balance) error {
+	balanceMutex.Lock()
+	defer balanceMutex.Unlock()
 	return middleware.DB.Create(balance).Error
 }
 
@@ -19,6 +24,8 @@ func ReadBalance(id uint) (*models.Balance, error) {
 
 // UpdateBalance updates an existing balance
 func UpdateBalance(balance *models.Balance) error {
+	balanceMutex.Lock()
+	defer balanceMutex.Unlock()
 	return middleware.DB.Save(balance).Error
 }
 
