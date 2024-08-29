@@ -728,3 +728,7 @@ func GetAllAddressAmountMapByRatPositiveAmount(network models.Network) (*map[str
 	}
 	return &addressAmountMap, nil
 }
+
+func GetAssetBalanceByAssetIdAndUserId(assetId string, userId int) (*models.AssetBalance, error) {
+	return btldb.ReadAssetBalanceByAssetIdAndUserId(assetId, userId)
+}

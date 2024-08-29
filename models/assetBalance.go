@@ -35,3 +35,8 @@ type AssetHolderBalanceLimitAndOffsetRequest struct {
 	Limit   int    `json:"limit"`
 	Offset  int    `json:"offset"`
 }
+
+type GetAssetBalanceByUserIdAndAssetIdRequest struct {
+	UserId  int    `json:"user_id"`
+	AssetId string `json:"asset_id"`
+}
