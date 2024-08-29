@@ -12,7 +12,7 @@ type PayReqApplyRequest interface {
 
 type PayReqApplyResponse interface {
 	GetAmount() int64
-	GetInvoiceToString() string
+	GetPayReq() string
 }
 
 type PayPacket interface {

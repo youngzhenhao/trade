@@ -20,7 +20,7 @@ type BtcApplyInvoice struct {
 func (in *BtcApplyInvoice) GetAmount() int64 {
 	return in.Amount
 }
-func (in *BtcApplyInvoice) GetInvoiceToString() string {
+func (in *BtcApplyInvoice) GetPayReq() string {
 	return in.LnInvoice.String()
 }
 

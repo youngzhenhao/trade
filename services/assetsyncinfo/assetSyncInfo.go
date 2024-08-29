@@ -22,6 +22,7 @@ import (
 	"trade/api"
 	"trade/config"
 	"trade/models"
+	"trade/services/btldb"
 	"trade/services/servicesrpc"
 )
 
@@ -44,7 +45,7 @@ var (
 func GetAssetSyncInfo(req *SyncInfoRequest) (*models.AssetSyncInfo, error) {
 	//  根据资产id查询数据库
 	id := req.Id
-	AssetSyncInfo, err := ReadAssetSyncInfoByAssetID(id)
+	AssetSyncInfo, err := btldb.ReadAssetSyncInfoByAssetID(id)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
@@ -61,7 +62,7 @@ func GetAssetSyncInfo(req *SyncInfoRequest) (*models.AssetSyncInfo, error) {
 	// 更新数据库
 	if assetSyncInfo != nil {
 		assetSyncInfo.Universe = config.GetConfig().ApiConfig.Tapd.UniverseHost
-		err = CreateAssetSyncInfo(assetSyncInfo)
+		err = btldb.CreateAssetSyncInfo(assetSyncInfo)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -89,7 +90,7 @@ func GetAssetSyncInfo(req *SyncInfoRequest) (*models.AssetSyncInfo, error) {
 			assetSyncInfo, err = getAssetInfoFromLeaves(req.Id)
 			if assetSyncInfo != nil {
 				assetSyncInfo.Universe = config.GetConfig().ApiConfig.Tapd.UniverseHost
-				err = CreateAssetSyncInfo(assetSyncInfo)
+				err = btldb.CreateAssetSyncInfo(assetSyncInfo)
 				if err != nil {
 					fmt.Println(err)
 				}

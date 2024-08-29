@@ -3,6 +3,7 @@ package servicesrpc
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/lightninglabs/taproot-assets/fn"
@@ -10,6 +11,7 @@ import (
 	"github.com/lightninglabs/taproot-assets/taprpc"
 	"github.com/lightninglabs/taproot-assets/taprpc/universerpc"
 	"strconv"
+	"strings"
 	"trade/config"
 	"trade/utils"
 )
@@ -46,6 +48,7 @@ func GetAssetLeaves(ID string, isGroup bool, proofType string) (*universerpc.Ass
 	return leaves, nil
 
 }
+
 func GetAssetMeta(ID string, isHash bool) (*taprpc.AssetMeta, error) {
 	var request taprpc.FetchAssetMetaRequest
 	if isHash {
@@ -175,11 +178,9 @@ func InsertProof(annotatedProof *proof.AnnotatedProof) error {
 
 func getAssetLeaves(request *universerpc.ID) (*universerpc.AssetLeafResponse, error) {
 	tapdconf := config.GetConfig().ApiConfig.Tapd
-
 	grpcHost := tapdconf.Host + ":" + strconv.Itoa(tapdconf.Port)
 	tlsCertPath := tapdconf.TlsCertPath
 	macaroonPath := tapdconf.MacaroonPath
-
 	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
 	defer connClose()
 
@@ -234,4 +235,29 @@ func insertProof(request *universerpc.AssetProof) error {
 		return err
 	}
 	return nil
+}
+
+func NewAddr(assetId string, amt int, proofCourierAddr string) (*taprpc.Addr, error) {
+	tapdconf := config.GetConfig().ApiConfig.Tapd
+	grpcHost := tapdconf.Host + ":" + strconv.Itoa(tapdconf.Port)
+	tlsCertPath := tapdconf.TlsCertPath
+	macaroonPath := tapdconf.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+
+	client := taprpc.NewTaprootAssetsClient(conn)
+	_assetIdByteSlice, _ := hex.DecodeString(assetId)
+	if !strings.HasPrefix(proofCourierAddr, "universerpc://") {
+		proofCourierAddr = "universerpc://" + proofCourierAddr
+	}
+	request := &taprpc.NewAddrRequest{
+		AssetId:          _assetIdByteSlice,
+		Amt:              uint64(amt),
+		ProofCourierAddr: proofCourierAddr,
+	}
+	response, err := client.NewAddr(context.Background(), request)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
 }

@@ -24,8 +24,9 @@ func (Invoice) TableName() string {
 type InvoiceStatus int16
 
 const (
-	InvoiceStatusPending InvoiceStatus = 0
-	InvoiceStatusSuccess InvoiceStatus = 1
-	InvoiceStatusFailed  InvoiceStatus = 2
-	InvoiceStatusLocal   InvoiceStatus = 3
+	InvoiceStatusPending   InvoiceStatus = 0
+	InvoiceStatusSuccess   InvoiceStatus = 1
+	InvoiceStatusFailed    InvoiceStatus = 2
+	InvoiceStatusLocal     InvoiceStatus = 3
+	InvoiceStatusIsTaproot InvoiceStatus = 10
 )

@@ -1,4 +1,4 @@
-package assetsyncinfo
+package btldb
 
 import (
 	"trade/middleware"
