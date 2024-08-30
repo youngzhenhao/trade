@@ -17,18 +17,6 @@ import (
 	rpc "trade/services/servicesrpc"
 )
 
-const (
-	timeout   = 20 * time.Second
-	serverFee = 0
-)
-
-type BtcChannel error
-
-var (
-	GetbalanceErr = errors.New("GetbalanceErr")
-	TimeoutErr    = errors.New("TimeoutErr")
-)
-
 //构建用户的BTC通道事件
 
 type BtcChannelEvent struct {
@@ -129,12 +117,8 @@ func (e *BtcChannelEvent) SendPayment(payRequest cBase.PayPacket) error {
 	}
 	bt.err = make(chan error, 1)
 	defer close(bt.err)
-	useableBalance, err := e.GetBalance()
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
-		return GetbalanceErr
-	}
-	err = bt.VerifyPayReq(useableBalance[0].Amount)
+
+	err := bt.VerifyPayReq(e.UserInfo)
 	if err != nil {
 		return err
 	}
@@ -146,12 +130,12 @@ func (e *BtcChannelEvent) SendPayment(payRequest cBase.PayPacket) error {
 		//发起外部转账
 		go e.payToOutside(bt)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), cBase.Timeout)
 	defer cancel()
 	select {
 	case <-ctx.Done():
 		//超时处理
-		return TimeoutErr
+		return cBase.TimeoutErr
 	case err = <-bt.err:
 		//错误处理
 		return err
@@ -163,9 +147,9 @@ func (e *BtcChannelEvent) payToInside(bt *BtcPacket) {
 	payInside := models.PayInside{
 		PayUserId:     e.UserInfo.User.ID,
 		GasFee:        uint64(bt.DecodePayReq.NumSatoshis),
-		ServeFee:      serverFee,
+		ServeFee:      uint64(cBase.ServerFee),
 		ReceiveUserId: bt.isInsideMission.insideInvoice.UserID,
-		PayType:       models.PayInsideByInvioce,
+		PayType:       models.PayInsideByInvoice,
 		AssetType:     "00",
 		PayReq:        &bt.PayReq,
 		Status:        models.PayInsideStatusPending,

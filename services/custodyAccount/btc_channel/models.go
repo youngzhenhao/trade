@@ -8,6 +8,8 @@ import (
 	"trade/btlLog"
 	"trade/models"
 	"trade/services/btldb"
+	caccount "trade/services/custodyAccount/account"
+	cBase "trade/services/custodyAccount/custodyBase"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -54,7 +56,7 @@ type BtcPacket struct {
 	err             chan error
 }
 
-func (p *BtcPacket) VerifyPayReq(usableBalance int64) error {
+func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 	//验证是否为本地发票
 	i, err := btldb.GetInvoiceByReq(p.PayReq)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -76,7 +78,12 @@ func (p *BtcPacket) VerifyPayReq(usableBalance int64) error {
 		return fmt.Errorf("%w(pay_request=%s)", DecodeInvoiceFail, p.PayReq)
 	}
 	//验证金额
-	if usableBalance < (p.DecodePayReq.NumSatoshis + p.FeeLimit + defaultServerFee) {
+	useableBalance, err := rpc.AccountInfo(userinfo.Account.UserAccountCode)
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+		return cBase.GetbalanceErr
+	}
+	if useableBalance.CurrentBalance < (p.DecodePayReq.NumSatoshis + p.FeeLimit + defaultServerFee) {
 		return NotSufficientFunds
 	}
 	return nil

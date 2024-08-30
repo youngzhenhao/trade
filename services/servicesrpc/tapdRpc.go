@@ -261,3 +261,58 @@ func NewAddr(assetId string, amt int, proofCourierAddr string) (*taprpc.Addr, er
 	}
 	return response, nil
 }
+
+func DecodeAddr(addr string) (*taprpc.Addr, error) {
+	tapdconf := config.GetConfig().ApiConfig.Tapd
+	grpcHost := tapdconf.Host + ":" + strconv.Itoa(tapdconf.Port)
+	tlsCertPath := tapdconf.TlsCertPath
+	macaroonPath := tapdconf.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+
+	client := taprpc.NewTaprootAssetsClient(conn)
+	request := &taprpc.DecodeAddrRequest{
+		Addr: addr,
+	}
+	response, err := client.DecodeAddr(context.Background(), request)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func ListAssets() (*taprpc.ListAssetResponse, error) {
+	tapdconf := config.GetConfig().ApiConfig.Tapd
+	grpcHost := tapdconf.Host + ":" + strconv.Itoa(tapdconf.Port)
+	tlsCertPath := tapdconf.TlsCertPath
+	macaroonPath := tapdconf.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+
+	client := taprpc.NewTaprootAssetsClient(conn)
+	request := &taprpc.ListAssetRequest{}
+	response, err := client.ListAssets(context.Background(), request)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func SendAssets(addr []string) (*taprpc.SendAssetResponse, error) {
+	tapdconf := config.GetConfig().ApiConfig.Tapd
+	grpcHost := tapdconf.Host + ":" + strconv.Itoa(tapdconf.Port)
+	tlsCertPath := tapdconf.TlsCertPath
+	macaroonPath := tapdconf.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+
+	client := taprpc.NewTaprootAssetsClient(conn)
+	request := &taprpc.SendAssetRequest{
+		TapAddrs: addr,
+	}
+	response, err := client.SendAsset(context.Background(), request)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}

@@ -666,7 +666,7 @@ func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint
 			btlLog.CUST.Error("Not find receive account info(UserId=%v):%v", receiveUserId, err)
 			return 0, fmt.Errorf("not find receive account info")
 		}
-		payType = models.PayInsideByInvioce
+		payType = models.PayInsideByInvoice
 	}
 	//创建发票
 	invoice, err := ApplyInvoice(receiveUserId, receiveAccount, &apply)

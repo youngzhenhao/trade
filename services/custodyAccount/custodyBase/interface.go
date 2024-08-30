@@ -1,5 +1,9 @@
 package custodyBase
 
+import (
+	caccount "trade/services/custodyAccount/account"
+)
+
 type CustodyEvent interface {
 	GetBalance() ([]Balance, error)
 	ApplyPayReq(PayReqApplyRequest) (PayReqApplyResponse, error)
@@ -16,5 +20,5 @@ type PayReqApplyResponse interface {
 }
 
 type PayPacket interface {
-	VerifyPayReq(int64) error
+	VerifyPayReq(*caccount.UserInfo) error
 }

@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -118,7 +119,54 @@ func (e *AssetEvent) ApplyPayReq(Request cBase.PayReqApplyRequest) (cBase.PayReq
 }
 
 func (e *AssetEvent) SendPayment(payRequest cBase.PayPacket) error {
-	return nil
+	var bt *AssetPacket
+	var ok bool
+	if bt, ok = payRequest.(*AssetPacket); !ok {
+		return errors.New("invalid pay request")
+	}
+	bt.err = make(chan error, 1)
+	defer close(bt.err)
+
+	err := bt.VerifyPayReq(e.UserInfo)
+	if err != nil {
+		return err
+	}
+	if bt.isInsideMission != nil {
+		//发起本地转账
+		bt.isInsideMission.err = bt.err
+		go e.payToInside(bt)
+	} else {
+		//发起外部转账
+		go e.payToOutside(bt)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), cBase.Timeout)
+	defer cancel()
+	select {
+	case <-ctx.Done():
+		//超时处理
+		return cBase.TimeoutErr
+	case err = <-bt.err:
+		//错误处理
+		return err
+	}
+
+}
+
+func (e *AssetEvent) payToInside(bt *AssetPacket) {
+
+}
+func (e *AssetEvent) payToOutside(bt *AssetPacket) {
+	m := OutsideMission{
+		AddrTarget: []*target{
+			{
+				Addr: bt.DecodePayReq.Encoded,
+			},
+		},
+		AssetID:     string(bt.DecodePayReq.AssetId),
+		TotalAmount: int64(bt.DecodePayReq.Amount),
+		err:         []chan error{bt.err},
+	}
+	BtcSever.Queue.addNewPkg(&m)
 }
 func (e *AssetEvent) GetTransactionHistory() {
 
