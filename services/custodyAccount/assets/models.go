@@ -108,5 +108,6 @@ type OutsideMission struct {
 }
 
 type target struct {
-	Addr string
+	AccountId uint
+	Addr      string
 }

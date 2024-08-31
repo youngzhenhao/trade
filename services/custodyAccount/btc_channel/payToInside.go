@@ -200,7 +200,6 @@ type BTCPayInsideUniqueQueue struct {
 	itemSet map[uint]bool
 }
 
-// NewUniqueQueue 初始化队列
 func NewUniqueQueue() *BTCPayInsideUniqueQueue {
 	return &BTCPayInsideUniqueQueue{
 		items:   []*isInsideMission{},
