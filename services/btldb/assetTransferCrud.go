@@ -92,6 +92,12 @@ func ReadAssetTransferProcessedByTxid(txid string) (*models.AssetTransferProcess
 	return &assetTransferProcessed, err
 }
 
+func ReadAssetTransferProcessedSliceByTxid(txid string) (*[]models.AssetTransferProcessedDb, error) {
+	var assetTransferProcessedSlice []models.AssetTransferProcessedDb
+	err := middleware.DB.Where("txid = ?", txid).First(&assetTransferProcessedSlice).Error
+	return &assetTransferProcessedSlice, err
+}
+
 func ReadAssetTransferProcessedByAnchorTxHash(anchorTxHash string) (*models.AssetTransferProcessedDb, error) {
 	var assetTransferProcessed models.AssetTransferProcessedDb
 	err := middleware.DB.Where("anchor_tx_hash = ?", anchorTxHash).First(&assetTransferProcessed).Error
@@ -142,6 +148,12 @@ func ReadAssetTransferProcessedInputSliceByUserId(userId int) (*[]models.AssetTr
 func ReadAssetTransferProcessedInputSliceByAssetId(assetId string) (*[]models.AssetTransferProcessedInputDb, error) {
 	var assetTransferProcessedInputSlice []models.AssetTransferProcessedInputDb
 	err := middleware.DB.Where("asset_id = ?", assetId).Find(&assetTransferProcessedInputSlice).Error
+	return &assetTransferProcessedInputSlice, err
+}
+
+func ReadAssetTransferProcessedInputSliceByTxid(txid string) (*[]models.AssetTransferProcessedInputDb, error) {
+	var assetTransferProcessedInputSlice []models.AssetTransferProcessedInputDb
+	err := middleware.DB.Where("txid = ?", txid).Find(&assetTransferProcessedInputSlice).Error
 	return &assetTransferProcessedInputSlice, err
 }
 
@@ -224,6 +236,12 @@ func ReadAssetTransferProcessedOutputByTxid(txid string) (*models.AssetTransferP
 	var assetTransferProcessedOutput models.AssetTransferProcessedOutputDb
 	err := middleware.DB.Where("txid = ?", txid).First(&assetTransferProcessedOutput).Error
 	return &assetTransferProcessedOutput, err
+}
+
+func ReadAssetTransferProcessedOutputSliceByTxid(txid string) (*[]models.AssetTransferProcessedOutputDb, error) {
+	var assetTransferProcessedOutputSlice []models.AssetTransferProcessedOutputDb
+	err := middleware.DB.Where("txid = ?", txid).Find(&assetTransferProcessedOutputSlice).Error
+	return &assetTransferProcessedOutputSlice, err
 }
 
 // ReadAssetTransferProcessedOutputByTxidAndIndex

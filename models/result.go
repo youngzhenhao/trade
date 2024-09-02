@@ -173,6 +173,7 @@ const (
 	GetAmountCouldBeMintByMintedNumberErr
 	CreateFairLaunchIncomeOfServerPaySendReservedFeeErr
 	GetAssetBalanceByUserIdAndAssetIdErr
+	GetAssetTransferByTxidErr
 )
 
 func (e ErrCode) Error() string {

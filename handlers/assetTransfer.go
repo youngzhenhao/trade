@@ -218,3 +218,23 @@ func GetAllAssetIdAndAssetTransferSimplified(c *gin.Context) {
 		Data:    assetTransferCombinedSlice,
 	})
 }
+
+func GetAssetTransferByTxid(c *gin.Context) {
+	txid := c.Param("txid")
+	assetTransfer, err := services.GetAssetTransferByTxid(txid)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetTransferByTxidErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    assetTransfer,
+	})
+}
