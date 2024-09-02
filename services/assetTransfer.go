@@ -1061,3 +1061,15 @@ func UpdateAssetTransferProcessedOutputSliceWhoseAddressIsNull(network models.Ne
 	}
 	return btldb.UpdateAssetTransferProcessedOutputSlice(assetTransfers)
 }
+
+func ExcludeAssetTransferProcessedSetRequestWhoseOutpointAddressIsNull(assetTransferProcessedSetRequests []models.AssetTransferProcessedSetRequest) []models.AssetTransferProcessedSetRequest {
+	var assetTransferProcessedSetRequestsProcessed []models.AssetTransferProcessedSetRequest
+	for _, assetTransferProcessedSetRequest := range assetTransferProcessedSetRequests {
+		if assetTransferProcessedSetRequest.Outputs[0].Address == "" {
+			continue
+		} else {
+			assetTransferProcessedSetRequestsProcessed = append(assetTransferProcessedSetRequestsProcessed, assetTransferProcessedSetRequest)
+		}
+	}
+	return assetTransferProcessedSetRequestsProcessed
+}
