@@ -117,6 +117,10 @@ func DeleteAssetTransferProcessed(id uint) error {
 	return middleware.DB.Delete(&assetTransferProcessed, id).Error
 }
 
+func DeleteAssetTransferProcessedSlice(assetTransferProcessedSlice *[]models.AssetTransferProcessedDb) error {
+	return middleware.DB.Delete(&assetTransferProcessedSlice).Error
+}
+
 // AssetTransferProcessedInputDb
 
 func CreateAssetTransferProcessedInput(assetTransferProcessedInput *models.AssetTransferProcessedInputDb) error {
@@ -189,6 +193,10 @@ func UpdateAssetTransferProcessedInputSlice(assetTransferProcessedInputSlice *[]
 func DeleteAssetTransferProcessedInput(id uint) error {
 	var assetTransferProcessedInput models.AssetTransferProcessedInputDb
 	return middleware.DB.Delete(&assetTransferProcessedInput, id).Error
+}
+
+func DeleteAssetTransferProcessedInputSlice(assetTransferProcessedInputSlice *[]models.AssetTransferProcessedInputDb) error {
+	return middleware.DB.Delete(assetTransferProcessedInputSlice).Error
 }
 
 // AssetTransferProcessedOutputDb
@@ -269,4 +277,8 @@ func UpdateAssetTransferProcessedOutputSlice(assetTransferProcessedOutputSlice *
 func DeleteAssetTransferProcessedOutput(id uint) error {
 	var assetTransferProcessedOutput models.AssetTransferProcessedOutputDb
 	return middleware.DB.Delete(&assetTransferProcessedOutput, id).Error
+}
+
+func DeleteAssetTransferProcessedOutputSlice(assetTransferProcessedOutputSlice *[]models.AssetTransferProcessedOutputDb) error {
+	return middleware.DB.Delete(&assetTransferProcessedOutputSlice).Error
 }
