@@ -164,7 +164,6 @@ func (e *BtcChannelEvent) payToInside(bt *BtcPacket) {
 	//递交给内部转账服务
 	bt.isInsideMission.insideMission = &payInside
 	BtcSever.NewMission(bt.isInsideMission)
-
 }
 
 func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
@@ -190,11 +189,12 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 
 	bt.err <- nil
 	var balanceModel models.Balance
-	//TODO：扣除服务费
-	//if HasServerFee {
-	//err = PayServerFee(bt.account)
-	//balanceModel.ServerFee = GetServerFee() + uint64(payment.FeeSat)
-	//}
+	//扣除服务费
+	err = PayServerFee(e.UserInfo.Account, ChannelBtcServiceFee)
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+	}
+	balanceModel.ServerFee = ChannelBtcServiceFee + uint64(payment.FeeSat)
 	switch payment.Status {
 	case lnrpc.Payment_SUCCEEDED:
 		balanceModel.State = models.STATE_SUCCESS
@@ -218,6 +218,35 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	btlLog.CUST.Info("payment outside success balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
 }
 
-func (e *BtcChannelEvent) GetTransactionHistory() {
-
+func (e *BtcChannelEvent) GetTransactionHistory() (cBase.TxHistory, error) {
+	params := btldb.QueryParams{
+		"AccountId": e.UserInfo.Account.UserId,
+		"AssetId":   "00",
+	}
+	a, err := btldb.GenericQuery(&models.Balance{}, params)
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+		return nil, fmt.Errorf("query payment error")
+	}
+	var results BtcPaymentList
+	if len(a) > 0 {
+		for i := len(a) - 1; i >= 0; i-- {
+			if a[i].State == models.STATE_FAILED {
+				continue
+			}
+			v := a[i]
+			r := PaymentResponse{}
+			r.Timestamp = v.CreatedAt.Unix()
+			r.BillType = v.BillType
+			r.Away = v.Away
+			r.Invoice = v.Invoice
+			r.Amount = v.Amount
+			btcAssetId := "00"
+			r.AssetId = &btcAssetId
+			r.State = v.State
+			r.Fee = v.ServerFee
+			results.PaymentList = append(results.PaymentList, r)
+		}
+	}
+	return &results, nil
 }

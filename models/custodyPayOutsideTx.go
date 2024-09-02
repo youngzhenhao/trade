@@ -4,7 +4,6 @@ import "gorm.io/gorm"
 
 type PayOutsideTx struct {
 	gorm.Model
-
 	TxHash     string             `gorm:"column:tx_hash;index:idx_tx_hash;unique" json:"txHash"`
 	Timestamp  int64              `gorm:"column:timestamp;" json:"timestamp"`
 	HeightHint uint32             `gorm:"column:height_hint;" json:"heightHint"`

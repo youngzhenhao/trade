@@ -8,7 +8,7 @@ type CustodyEvent interface {
 	GetBalance() ([]Balance, error)
 	ApplyPayReq(PayReqApplyRequest) (PayReqApplyResponse, error)
 	SendPayment(PayPacket) error
-	GetTransactionHistory()
+	GetTransactionHistory() (TxHistory, error)
 }
 type PayReqApplyRequest interface {
 	GetPayReqAmount() int64
@@ -21,4 +21,8 @@ type PayReqApplyResponse interface {
 
 type PayPacket interface {
 	VerifyPayReq(*caccount.UserInfo) error
+}
+
+type TxHistory interface {
+	GetTxString() string
 }
