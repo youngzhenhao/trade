@@ -24,6 +24,7 @@ type PayInsideType uint16
 const (
 	PayInsideToAdmin   PayInsideType = 1
 	PayInsideByInvoice PayInsideType = 2
+	PayInsideByAddress PayInsideType = 3
 )
 
 type PayInsideStatus uint16

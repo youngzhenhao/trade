@@ -316,3 +316,26 @@ func SendAssets(addr []string) (*taprpc.SendAssetResponse, error) {
 	}
 	return response, nil
 }
+
+func SubscribeReceiveEvents() (*taprpc.ReceiveEvent, error) {
+	tapdconf := config.GetConfig().ApiConfig.Tapd
+	grpcHost := tapdconf.Host + ":" + strconv.Itoa(tapdconf.Port)
+	tlsCertPath := tapdconf.TlsCertPath
+	macaroonPath := tapdconf.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+
+	client := taprpc.NewTaprootAssetsClient(conn)
+	request := &taprpc.SubscribeReceiveEventsRequest{}
+	stream, err := client.SubscribeReceiveEvents(context.Background(), request)
+	if err != nil {
+		return nil, err
+	}
+	for {
+		event, err := stream.Recv()
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(event)
+	}
+}

@@ -1,9 +1,11 @@
 package assets
 
 import (
-	"fmt"
+	"encoding/hex"
 	"time"
 	"trade/btlLog"
+	"trade/models"
+	"trade/services/btldb"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -58,7 +60,6 @@ func (s *AssetOutsideSever) runServer() {
 			if balance.AccountBalance["default"].ConfirmedBalance < int64(len(mission.AddrTarget)*1000) {
 				continue
 			}
-			//TODO：创建交易：CREATE TX
 			err = s.payToOutside(mission)
 			//返回错误信息
 			for index, _ := range mission.err {
@@ -73,15 +74,37 @@ func (s *AssetOutsideSever) runServer() {
 func (s *AssetOutsideSever) payToOutside(mission *OutsideMission) error {
 	var addr []string
 	for _, a := range mission.AddrTarget {
-		addr = append(addr, a.Addr)
+		addr = append(addr, a.Mission.Address)
 	}
-	assets, err := rpc.SendAssets(addr)
+	response, err := rpc.SendAssets(addr)
 	if err != nil {
 		btlLog.CUST.Error("rpc.SendAssets error:%w", err)
 		return err
 	}
-	//TODO：处理交易结果
-	fmt.Println(assets)
+	txId := hex.EncodeToString(response.Transfer.AnchorTxHash)
+	tx := models.PayOutsideTx{
+		TxHash:     txId,
+		Timestamp:  response.Transfer.TransferTimestamp,
+		HeightHint: response.Transfer.AnchorTxHeightHint,
+		ChainFees:  response.Transfer.AnchorTxChainFees,
+		InputsNum:  uint(len(response.Transfer.Inputs)),
+		OutputsNum: uint(len(response.Transfer.Outputs)),
+		Status:     models.PayOutsideStatusTXPending,
+	}
+	err = btldb.CreatePayOutsideTx(&tx)
+	if err != nil {
+		btlLog.CUST.Error("btldb.CreatePayOutsideTx error:%w", err)
+	}
+	for _, a := range mission.AddrTarget {
+		a.Mission.TxHash = txId
+		a.Mission.Status = models.PayOutsideStatusPaid
+		err = btldb.UpdatePayOutside(a.Mission)
+		if err != nil {
+			btlLog.CUST.Error("btldb.UpdatePayOutside error:%w", err)
+		}
+		//todo：扣除手续费
+		//todo:更新Balance表
+	}
 	return nil
 }
 func (s *AssetOutsideSever) LoadMission() {
@@ -128,26 +151,51 @@ func (q *AssetOutsideUniqueQueue) size() int {
 	return len(q.items)
 }
 
-// AssetInSideSever 资产内部支付转账服务
+// TODO: AssetInSideSever 资产内部支付转账服务
 type AssetInSideSever struct {
-	Queue *AssetOutsideUniqueQueue
+	Queue *AssetInsideUniqueQueue
 }
 
 var InSideSever AssetInSideSever
 
 func (s *AssetInSideSever) Start() {
 	// Start 启动服务
-	s.Queue = NewOutsideUniqueQueue()
+	s.Queue = NewInsideUniqueQueue()
 	s.LoadMission()
 	go s.runServer()
 }
 func (s *AssetInSideSever) runServer() {
 	for {
-		time.Sleep(60 * time.Second)
+		if len(s.Queue.items) == 0 {
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		//取出队首元素
+		mission := s.Queue.getNextPkg()
+		if mission == nil {
+			continue
+		}
+		//处理
+		var err error
+		err = s.payToInside(mission)
+		if err != nil {
+			mission.insideMission.Status = models.PayInsideStatusFailed
+		} else {
+			mission.insideMission.Status = models.PayInsideStatusSuccess
+			btlLog.CUST.Info("inside transfer success: id=%v,amount=%v", mission.insideMission.ID, mission.insideMission.GasFee)
+		}
+		select {
+		case mission.err <- err:
+		default:
+		}
+		err = btldb.UpdatePayInside(mission.insideMission)
+		if err != nil {
+			btlLog.CUST.Error("更新内部转账记录失败, mission_id:%v，error:%v", mission.insideMission.ID, err)
+		}
 
 	}
 }
-func (s *AssetInSideSever) payToOutside(mission *OutsideMission) error {
+func (s *AssetInSideSever) payToInside(mission *isInsideMission) error {
 
 	return nil
 }
@@ -157,33 +205,33 @@ func (s *AssetInSideSever) LoadMission() {
 
 // AssetInsideUniqueQueue 构建一个内部支付任务队列
 type AssetInsideUniqueQueue struct {
-	items   []*OutsideMission
-	itemSet map[string]*OutsideMission
+	items   []*isInsideMission
+	itemSet map[uint]bool
 }
 
 func NewInsideUniqueQueue() *AssetInsideUniqueQueue {
-	return &AssetInsideUniqueQueue{}
+	return &AssetInsideUniqueQueue{
+		items:   []*isInsideMission{},
+		itemSet: make(map[uint]bool),
+	}
 }
-func (q *AssetInsideUniqueQueue) addNewPkg(item *OutsideMission) bool {
+func (q *AssetInsideUniqueQueue) addNewPkg(item *isInsideMission) bool {
 	// addNewPkg 入队操作
-	if i, exists := q.itemSet[item.AssetID]; exists {
-		i.AddrTarget = append(i.AddrTarget, item.AddrTarget...)
-		i.TotalAmount = i.TotalAmount + item.TotalAmount
-		i.err = append(i.err, item.err...)
-		return true // 元素已存在，入队失败
+	if _, exists := q.itemSet[item.insideMission.ID]; exists {
+		return false // 元素已存在，入队失败
 	}
 	q.items = append(q.items, item)
-	q.itemSet[item.AssetID] = item
+	q.itemSet[item.insideMission.ID] = true
 	return true
 }
-func (q *AssetInsideUniqueQueue) getNextPkg() *OutsideMission {
+func (q *AssetInsideUniqueQueue) getNextPkg() *isInsideMission {
 	// 出队操作
 	if len(q.items) == 0 {
 		return nil
 	}
 	item := q.items[0]
 	q.items = q.items[1:]
-	delete(q.itemSet, item.AssetID)
+	delete(q.itemSet, item.insideMission.ID)
 	return item
 }
 func (q *AssetInsideUniqueQueue) isEmpty() bool {

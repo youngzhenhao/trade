@@ -108,6 +108,5 @@ type OutsideMission struct {
 }
 
 type target struct {
-	AccountId uint
-	Addr      string
+	Mission *models.PayOutside
 }

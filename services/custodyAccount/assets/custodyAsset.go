@@ -149,24 +149,54 @@ func (e *AssetEvent) SendPayment(payRequest cBase.PayPacket) error {
 		//错误处理
 		return err
 	}
-
 }
 
 func (e *AssetEvent) payToInside(bt *AssetPacket) {
-
+	//创建内部转账任务
+	payInside := models.PayInside{
+		PayUserId:     e.UserInfo.User.ID,
+		GasFee:        1000,
+		ServeFee:      uint64(cBase.ServerFee),
+		ReceiveUserId: bt.isInsideMission.insideInvoice.UserID,
+		PayType:       models.PayInsideByAddress,
+		AssetType:     string(bt.DecodePayReq.AssetId),
+		PayReq:        &bt.PayReq,
+		Status:        models.PayInsideStatusPending,
+	}
+	//写入数据库
+	err := btldb.CreatePayInside(&payInside)
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+		bt.err <- err
+		return
+	}
+	//递交给内部转账服务
+	bt.isInsideMission.insideMission = &payInside
+	InSideSever.Queue.addNewPkg(bt.isInsideMission)
 }
 func (e *AssetEvent) payToOutside(bt *AssetPacket) {
+	outside := models.PayOutside{
+		AccountID: e.UserInfo.Account.ID,
+		AssetId:   string(bt.DecodePayReq.AssetId),
+		Address:   bt.DecodePayReq.Encoded,
+		Amount:    float64(bt.DecodePayReq.Amount),
+		Status:    models.PayOutsideStatusPending,
+	}
+	err := btldb.CreatePayOutside(&outside)
+	if err != nil {
+		btlLog.CUST.Error("payToOutside db error")
+	}
 	m := OutsideMission{
 		AddrTarget: []*target{
 			{
-				Addr: bt.DecodePayReq.Encoded,
+				Mission: &outside,
 			},
 		},
 		AssetID:     string(bt.DecodePayReq.AssetId),
 		TotalAmount: int64(bt.DecodePayReq.Amount),
 		err:         []chan error{bt.err},
 	}
-	BtcSever.Queue.addNewPkg(&m)
+	OutsideSever.Queue.addNewPkg(&m)
 }
 func (e *AssetEvent) GetTransactionHistory() {
 
