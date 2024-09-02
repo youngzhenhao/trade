@@ -68,6 +68,12 @@ func (m *BTCPayInsideSever) payToInside(mission *isInsideMission) error {
 	if mission.insideInvoice.Status != models.InvoiceStatusPending {
 		return nil
 	}
+	var payToAdmin bool
+	fee := ChannelBtcServiceFee
+	if mission.insideMission.PayType == models.PayInsideToAdmin {
+		payToAdmin = true
+		fee = 0
+	}
 	amount := mission.insideMission.GasFee + mission.insideMission.ServeFee
 	//变更付款方账户
 	payAcc, err := caccount.GetUserInfoById(mission.insideMission.PayUserId)
@@ -75,14 +81,15 @@ func (m *BTCPayInsideSever) payToInside(mission *isInsideMission) error {
 		btlLog.CUST.Error("获取账户信息失败, mission_id:%v，error:%v", mission.insideMission.ID, err)
 		return fmt.Errorf("获取账户信息失败")
 	}
-	balanceId, err := UpdateCustodyAccount(payAcc.Account, models.AWAY_OUT, amount, mission.insideInvoice.Invoice, ChannelBtcServiceFee)
+	balanceId, err := UpdateCustodyAccount(payAcc.Account, models.AWAY_OUT, amount, mission.insideInvoice.Invoice, fee)
 	if err != nil {
 		btlLog.CUST.Error("内部付款方账户更新失败, mission_id:%v，error:%v", mission.insideMission.ID, err)
 		return fmt.Errorf("付款失败")
 	}
+
 	mission.insideMission.BalanceId = balanceId
 	//变更收款方账户，如果是内部转账给管理员，则跳过
-	if mission.insideMission.PayType != models.PayInsideToAdmin {
+	if !payToAdmin {
 		recvAcc, err := caccount.GetUserInfoById(mission.insideMission.ReceiveUserId)
 		if err != nil {
 			btlLog.CUST.Error("获取收款账户信息失败, mission_id:%v，error:%v", mission.insideMission.ReceiveUserId, err)
@@ -161,7 +168,7 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 	ba.PaymentHash = nil
 	//	计算服务费
 	err = PayServerFee(account, ServerFee)
-	ba.ServerFee = ChannelBtcServiceFee
+	ba.ServerFee = ServerFee
 	if invoice != "" && invoice != "backFee" {
 		i, _ := rpc.InvoiceDecode(invoice)
 		if i.PaymentHash != "" {

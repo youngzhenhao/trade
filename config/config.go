@@ -9,9 +9,10 @@ import (
 type Config struct {
 	NetWork   string `yaml:"network" json:"network"`
 	GinConfig struct {
-		Bind string `yaml:"bind" json:"bind"`
-		Port string `yaml:"port" json:"port"`
-		Mode string `yaml:"mode" json:"mode"`
+		Bind      string `yaml:"bind" json:"bind"`
+		Port      string `yaml:"port" json:"port"`
+		Mode      string `yaml:"mode" json:"mode"`
+		LocalPort string `yaml:"local_port" json:"local_port"`
 	} `yaml:"gin_config" json:"gin_config"`
 	GormConfig struct {
 		Mysql struct {

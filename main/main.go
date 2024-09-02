@@ -16,6 +16,7 @@ import (
 	"trade/dao"
 	"trade/middleware"
 	"trade/routers"
+	"trade/routers/RouterSecond"
 	"trade/services"
 	"trade/services/custodyAccount"
 	"trade/task"
@@ -81,6 +82,8 @@ func main() {
 		utils.PrintTitle(true, "Setup Router")
 	}
 	r := routers.SetupRouter()
+	r2 := RouterSecond.SetupRouter()
+
 	/**
 	for _, routeInfo := range r.Routes() {
 		fmt.Println(routeInfo.Method, routeInfo.Path)
@@ -91,6 +94,17 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+	localPort := loadConfig.GinConfig.LocalPort
+	if localPort == "" {
+		port = "10080"
+	}
+	utils.PrintTitle(true, "Run local Router")
+	go func() {
+		if err = r2.Run(fmt.Sprintf("%s:%s", "127.0.0.1", localPort)); err != nil {
+			log.Println(err)
+			return
+		}
+	}()
 	utils.PrintTitle(true, "Run Router")
 	if err = r.Run(fmt.Sprintf("%s:%s", bind, port)); err != nil {
 		log.Println(err)
