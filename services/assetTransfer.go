@@ -1030,3 +1030,46 @@ func GetAssetTransferByTxid(txid string) (*models.AssetTransferProcessedCombined
 	transferCombined = (*transferCombinedSlice)[0]
 	return &transferCombined, nil
 }
+
+func GetAssetTransferProcessedOutputSliceWhoseAddressIsNull() (*[]models.AssetTransferProcessedOutputDb, error) {
+	return btldb.ReadAssetTransferProcessedOutputSliceWhoseAddressIsNull()
+}
+
+func UpdateAssetTransferProcessedOutputSliceWhoseAddressIsNull(network models.Network) error {
+	// @dev: Find asset transfers
+	assetTransfers, err := GetAssetTransferProcessedOutputSliceWhoseAddressIsNull()
+	if err != nil {
+		return err
+	}
+	// @dev: Get outpoints
+	var outpoints []string
+	for _, assetTransfer := range *assetTransfers {
+		outpoints = append(outpoints, assetTransfer.AnchorOutpoint)
+	}
+	// @dev: Get addresses by outpoints
+	outpointMapAddress, err := api.GetAddressesByOutpointSlice(network, outpoints)
+	if err != nil {
+		return err
+	}
+	// @dev: Update address
+	for i, assetTransfer := range *assetTransfers {
+		address, ok := outpointMapAddress[assetTransfer.AnchorOutpoint]
+		if !ok {
+			continue
+		}
+		(*assetTransfers)[i].Address = address
+	}
+	return btldb.UpdateAssetTransferProcessedOutputSlice(assetTransfers)
+}
+
+func ExcludeAssetTransferProcessedSetRequestWhoseOutpointAddressIsNull(assetTransferProcessedSetRequests []models.AssetTransferProcessedSetRequest) []models.AssetTransferProcessedSetRequest {
+	var assetTransferProcessedSetRequestsProcessed []models.AssetTransferProcessedSetRequest
+	for _, assetTransferProcessedSetRequest := range assetTransferProcessedSetRequests {
+		if assetTransferProcessedSetRequest.Outputs[0].Address == "" {
+			continue
+		} else {
+			assetTransferProcessedSetRequestsProcessed = append(assetTransferProcessedSetRequestsProcessed, assetTransferProcessedSetRequest)
+		}
+	}
+	return assetTransferProcessedSetRequestsProcessed
+}

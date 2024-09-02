@@ -190,6 +190,7 @@ func ProcessGetRawTransactions(response *[]PostGetRawTransactionResponse) *[]Pos
 	var result []PostGetRawTransactionResponse
 	for _, transaction := range *response {
 		if transaction.Result == nil || transaction.Error != nil {
+			fmt.Println("ID:", transaction.ID, "no result or error", transaction.Error)
 			continue
 		}
 		result = append(result, transaction)

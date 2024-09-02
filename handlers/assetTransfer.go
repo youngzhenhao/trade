@@ -30,6 +30,7 @@ func SetAssetTransfer(c *gin.Context) {
 		})
 		return
 	}
+	assetTransferProcessedSetRequestSlice = services.ExcludeAssetTransferProcessedSetRequestWhoseOutpointAddressIsNull(assetTransferProcessedSetRequestSlice)
 	var assetTransferProcessedSlice *[]models.AssetTransferProcessedDb
 	var assetTransferProcessedInputsSlice *[]models.AssetTransferProcessedInputDb
 	var assetTransferProcessedOutputsSlice *[]models.AssetTransferProcessedOutputDb

@@ -244,6 +244,12 @@ func ReadAssetTransferProcessedOutputSliceByTxid(txid string) (*[]models.AssetTr
 	return &assetTransferProcessedOutputSlice, err
 }
 
+func ReadAssetTransferProcessedOutputSliceWhoseAddressIsNull() (*[]models.AssetTransferProcessedOutputDb, error) {
+	var assetTransferProcessedOutputSlice []models.AssetTransferProcessedOutputDb
+	err := middleware.DB.Where("address = ?", "").Find(&assetTransferProcessedOutputSlice).Error
+	return &assetTransferProcessedOutputSlice, err
+}
+
 // ReadAssetTransferProcessedOutputByTxidAndIndex
 // @dev: `index`
 func ReadAssetTransferProcessedOutputByTxidAndIndex(txid string, index int) (*models.AssetTransferProcessedOutputDb, error) {
