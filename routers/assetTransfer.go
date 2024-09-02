@@ -16,7 +16,7 @@ func SetupAssetTransferRouter(router *gin.Engine) *gin.Engine {
 		assetTransfer.GET("/get/txids", handlers.GetAssetTransferTxids)
 		assetTransfer.POST("/set", handlers.SetAssetTransfer)
 	}
-	query := assetTransfer.Group("/query")
+	query := assetTransfer.Group("/query/:txid")
 	{
 		query.GET("/txid", handlers.GetAssetTransferByTxid)
 	}
