@@ -16,9 +16,9 @@ func SetupAssetTransferRouter(router *gin.Engine) *gin.Engine {
 		assetTransfer.GET("/get/txids", handlers.GetAssetTransferTxids)
 		assetTransfer.POST("/set", handlers.SetAssetTransfer)
 	}
-	query := assetTransfer.Group("/query/:txid")
+	query := assetTransfer.Group("/query")
 	{
-		query.GET("/txid", handlers.GetAssetTransferByTxid)
+		query.GET("/txid/:txid", handlers.GetAssetTransferByTxid)
 	}
 	authorized := router.Group("/asset_transfer", gin.BasicAuth(gin.Accounts{
 		config.GetLoadConfig().AdminUser.Username: config.GetLoadConfig().AdminUser.Password,
