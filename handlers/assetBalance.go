@@ -144,7 +144,7 @@ func GetAssetHolderNumber(c *gin.Context) {
 
 func GetAssetHolderBalance(c *gin.Context) {
 	assetId := c.Param("asset_id")
-	holderBalances, err := services.GetAssetIdAndBalancesByAssetId(assetId)
+	holderBalances, err := services.GetAssetIdAndAssetBalancesByAssetId(assetId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -290,5 +290,35 @@ func GetAllAssetIdAndBalanceSimplified(c *gin.Context) {
 		Error:   models.SuccessErr,
 		Code:    models.SUCCESS,
 		Data:    allAssetIdAndBalanceSimplified,
+	})
+}
+
+func GetAssetBalanceByAssetIdAndUserId(c *gin.Context) {
+	var userIdAndAssetId models.GetAssetBalanceByUserIdAndAssetIdRequest
+	err := c.ShouldBindJSON(&userIdAndAssetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	assetBalance, err := services.GetAssetBalanceByAssetIdAndUserId(userIdAndAssetId.AssetId, userIdAndAssetId.UserId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetBalanceByUserIdAndAssetIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    assetBalance,
 	})
 }

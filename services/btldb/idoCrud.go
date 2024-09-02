@@ -29,13 +29,13 @@ func ReadIdoPublishInfo(id uint) (*models.IdoPublishInfo, error) {
 
 func ReadIdoPublishInfosByAssetId(assetId string) (*[]models.IdoPublishInfo, error) {
 	var idoPublishInfos []models.IdoPublishInfo
-	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, models.IdoStatusNormal).Find(&idoPublishInfos).Error
+	err := middleware.DB.Where("asset_id = ?", assetId).Find(&idoPublishInfos).Error
 	return &idoPublishInfos, err
 }
 
 func ReadIdoPublishInfosByUserId(userId int) (*[]models.IdoPublishInfo, error) {
 	var idoPublishInfos []models.IdoPublishInfo
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, models.IdoStatusNormal).Find(&idoPublishInfos).Error
+	err := middleware.DB.Where("user_id = ?", userId).Find(&idoPublishInfos).Error
 	return &idoPublishInfos, err
 }
 
@@ -70,13 +70,13 @@ func ReadIdoParticipateInfo(id uint) (*models.IdoParticipateInfo, error) {
 
 func ReadIdoParticipateInfosByAssetId(assetId string) (*[]models.IdoParticipateInfo, error) {
 	var idoParticipateInfos []models.IdoParticipateInfo
-	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, models.IdoStatusNormal).Find(&idoParticipateInfos).Error
+	err := middleware.DB.Where("asset_id = ?", assetId).Find(&idoParticipateInfos).Error
 	return &idoParticipateInfos, err
 }
 
 func ReadIdoParticipateInfosByUserId(userId int) (*[]models.IdoParticipateInfo, error) {
 	var idoParticipateInfos []models.IdoParticipateInfo
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, models.IdoStatusNormal).Find(&idoParticipateInfos).Error
+	err := middleware.DB.Where("user_id = ?", userId).Find(&idoParticipateInfos).Error
 	return &idoParticipateInfos, err
 }
 
@@ -111,13 +111,13 @@ func ReadParticipateIdoUserInfo(id uint) (*models.IdoParticipateUserInfo, error)
 
 func ReadParticipateIdoUserInfosByAssetId(assetId string) (*[]models.IdoParticipateUserInfo, error) {
 	var participateIdoUserInfos []models.IdoParticipateUserInfo
-	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, models.IdoStatusNormal).Find(&participateIdoUserInfos).Error
+	err := middleware.DB.Where("asset_id = ?", assetId).Find(&participateIdoUserInfos).Error
 	return &participateIdoUserInfos, err
 }
 
 func ReadParticipateIdoUserInfosByUserId(userId int) (*[]models.IdoParticipateUserInfo, error) {
 	var participateIdoUserInfos []models.IdoParticipateUserInfo
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, models.IdoStatusNormal).Find(&participateIdoUserInfos).Error
+	err := middleware.DB.Where("user_id = ?", userId).Find(&participateIdoUserInfos).Error
 	return &participateIdoUserInfos, err
 }
 

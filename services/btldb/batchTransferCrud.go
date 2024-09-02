@@ -36,19 +36,19 @@ func ReadBatchTransfer(id uint) (*models.BatchTransfer, error) {
 
 func ReadBatchTransfersByUserId(userId int) (*[]models.BatchTransfer, error) {
 	var batchTransfers []models.BatchTransfer
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&batchTransfers).Error
+	err := middleware.DB.Where("user_id = ?", userId).Find(&batchTransfers).Error
 	return &batchTransfers, err
 }
 
 func ReadBatchTransferByAddrEncoded(encoded string) (*models.BatchTransfer, error) {
 	var batchTransfer models.BatchTransfer
-	err := middleware.DB.Where("encoded = ? AND status = ?", encoded, 1).First(&batchTransfer).Error
+	err := middleware.DB.Where("encoded = ?", encoded).First(&batchTransfer).Error
 	return &batchTransfer, err
 }
 
 func ReadBatchTransferByTxid(txid string) (*models.BatchTransfer, error) {
 	var batchTransfer models.BatchTransfer
-	err := middleware.DB.Where("txid = ? AND status = ?", txid, 1).First(&batchTransfer).Error
+	err := middleware.DB.Where("txid = ?", txid).First(&batchTransfer).Error
 	return &batchTransfer, err
 }
 
@@ -56,7 +56,7 @@ func ReadBatchTransferByTxid(txid string) (*models.BatchTransfer, error) {
 // @dev: `index`
 func ReadBatchTransferByAddrEncodedAndIndex(encoded string, index int) (*models.BatchTransfer, error) {
 	var batchTransfer models.BatchTransfer
-	err := middleware.DB.Where("encoded = ? AND `index` = ? AND status = ?", encoded, index, 1).First(&batchTransfer).Error
+	err := middleware.DB.Where("encoded = ? AND `index` = ?", encoded, index).First(&batchTransfer).Error
 	return &batchTransfer, err
 }
 
@@ -64,7 +64,7 @@ func ReadBatchTransferByAddrEncodedAndIndex(encoded string, index int) (*models.
 // @dev: `index`
 func ReadBatchTransferByTxidAndIndex(txid string, index int) (*models.BatchTransfer, error) {
 	var batchTransfer models.BatchTransfer
-	err := middleware.DB.Where("txid = ? AND `index` = ? AND status = ?", txid, index, 1).First(&batchTransfer).Error
+	err := middleware.DB.Where("txid = ? AND `index` = ?", txid, index).First(&batchTransfer).Error
 	return &batchTransfer, err
 }
 

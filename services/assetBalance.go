@@ -160,6 +160,10 @@ func GetAllAssetBalancesNonZero() (*[]models.AssetBalance, error) {
 	return btldb.ReadAllAssetBalancesNonZero()
 }
 
+func GetAllAssetBalancesNonZeroByAssetId(assetId string) (*[]models.AssetBalance, error) {
+	return btldb.ReadAllAssetBalancesNonZeroByAssetId(assetId)
+}
+
 // Deprecated: Use GetAssetIdAndBalancesByAssetIdLimitAndOffset instead
 func GetAllAssetBalancesNonZeroLimit(limit int) (*[]models.AssetBalance, error) {
 	return btldb.ReadAllAssetBalancesNonZeroLimit(limit)
@@ -576,6 +580,23 @@ func GetAssetIdAndBalancesByAssetId(assetId string) (*AssetIdAndBalance, error) 
 	}, nil
 }
 
+func GetAssetIdAndAssetBalancesByAssetId(assetId string) (*AssetIdAndBalance, error) {
+	assetBalances, err := GetAllAssetBalancesNonZeroByAssetId(assetId)
+	if err != nil {
+		return nil, err
+	}
+	if assetBalances == nil || len(*(assetBalances)) == 0 {
+		return &AssetIdAndBalance{
+			AssetId:       assetId,
+			AssetBalances: &[]models.AssetBalance{},
+		}, nil
+	}
+	return &AssetIdAndBalance{
+		AssetId:       assetId,
+		AssetBalances: assetBalances,
+	}, nil
+}
+
 func GetAssetIdAndBalancesByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*AssetIdAndBalance, error) {
 	// @dev: Do not use GetAllAssetBalancesNonZeroLimitAndOffset(limit, offset)
 	// @dev: Do not use AssetBalancesToAssetIdMapAssetBalances(allAssetBalances)
@@ -706,4 +727,8 @@ func GetAllAddressAmountMapByRatPositiveAmount(network models.Network) (*map[str
 		}
 	}
 	return &addressAmountMap, nil
+}
+
+func GetAssetBalanceByAssetIdAndUserId(assetId string, userId int) (*models.AssetBalance, error) {
+	return btldb.ReadAssetBalanceByAssetIdAndUserId(assetId, userId)
 }

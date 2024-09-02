@@ -157,6 +157,10 @@ func GetFairLaunchMintedInfo(id int) (*models.FairLaunchMintedInfo, error) {
 	return f.ReadFairLaunchMintedInfo(uint(id))
 }
 
+func GetFairLaunchMintedInfoWhoseProcessNumberIsMoreThanTenThousand() (*[]models.FairLaunchMintedInfo, error) {
+	return btldb.ReadFairLaunchMintedInfoWhoseProcessNumberIsMoreThanTenThousand()
+}
+
 func GetFairLaunchMintedInfosByFairLaunchId(fairLaunchId int) (*[]models.FairLaunchMintedInfo, error) {
 	f := btldb.FairLaunchStore{DB: middleware.DB}
 	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
@@ -498,7 +502,7 @@ func CreateAssetIssuanceInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchIn
 // @Description: Query all inventory by FairLaunchInfo id
 func GetAllInventoryInfoByFairLaunchInfoId(fairLaunchInfoId int) (*[]models.FairLaunchInventoryInfo, error) {
 	var fairLaunchInventoryInfos []models.FairLaunchInventoryInfo
-	err := middleware.DB.Where("fair_launch_info_id = ? AND status = ?", fairLaunchInfoId, models.StatusNormal).Find(&fairLaunchInventoryInfos).Error
+	err := middleware.DB.Where("fair_launch_info_id = ?", fairLaunchInfoId).Find(&fairLaunchInventoryInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInventoryInfos")
 	}
@@ -684,7 +688,7 @@ func CreateInventoryAndAssetIssuanceInfoByFairLaunchInfo(fairLaunchInfo *models.
 func GetAllFairLaunchInfoByState(state models.FairLaunchState) (fairLaunchInfos *[]models.FairLaunchInfo, err error) {
 	_fairLaunchInfos := make([]models.FairLaunchInfo, 0)
 	fairLaunchInfos = &(_fairLaunchInfos)
-	err = middleware.DB.Where("status = ? AND state = ?", models.StatusNormal, state).Find(fairLaunchInfos).Error
+	err = middleware.DB.Where("state = ?", state).Find(fairLaunchInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
 	}
@@ -722,7 +726,7 @@ func GetAllFairLaunchStateReservedSent() (fairLaunchInfos *[]models.FairLaunchIn
 func GetAllValidFairLaunchInfos() (fairLaunchInfos *[]models.FairLaunchInfo, err error) {
 	_fairLaunchInfos := make([]models.FairLaunchInfo, 0)
 	fairLaunchInfos = &_fairLaunchInfos
-	err = middleware.DB.Where("status = ?", models.StatusNormal).Find(fairLaunchInfos).Error
+	err = middleware.DB.Find(fairLaunchInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
 	}
@@ -1483,7 +1487,7 @@ func ProcessFairLaunchStateReservedSentPending(fairLaunchInfo *models.FairLaunch
 func GetAllFairLaunchMintedInfoByState(state models.FairLaunchMintedState) (fairLaunchMintedInfos *[]models.FairLaunchMintedInfo, err error) {
 	_fairLaunchMintedInfos := make([]models.FairLaunchMintedInfo, 0)
 	fairLaunchMintedInfos = &(_fairLaunchMintedInfos)
-	err = middleware.DB.Where("status = ? AND state = ?", models.StatusNormal, state).Find(fairLaunchMintedInfos).Error
+	err = middleware.DB.Where("state = ?", state).Find(fairLaunchMintedInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchMintedInfos")
 	}
@@ -1513,7 +1517,7 @@ func GetAllFairLaunchMintedStateSentInfo() (fairLaunchMintedInfos *[]models.Fair
 func GetAllValidFairLaunchMintedInfos() (fairLaunchMintedInfos *[]models.FairLaunchMintedInfo, err error) {
 	_fairLaunchMintedInfos := make([]models.FairLaunchMintedInfo, 0)
 	fairLaunchMintedInfos = &(_fairLaunchMintedInfos)
-	err = middleware.DB.Order("minted_set_time").Order("paid_success_time").Where("status = ?", models.StatusNormal).Find(fairLaunchMintedInfos).Error
+	err = middleware.DB.Order("minted_set_time").Order("paid_success_time").Find(fairLaunchMintedInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchMintedInfos")
 	}
@@ -1671,7 +1675,7 @@ func LockInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunch
 func GetAllUnsentFairLaunchMintedInfos() (fairLaunchMintedInfos *[]models.FairLaunchMintedInfo, err error) {
 	_fairLaunchMintedInfos := make([]models.FairLaunchMintedInfo, 0)
 	fairLaunchMintedInfos = &(_fairLaunchMintedInfos)
-	err = middleware.DB.Where("status = ? AND state = ? AND is_addr_sent = ?", models.StatusNormal, models.FairLaunchMintedStateSentPending, false).Find(fairLaunchMintedInfos).Error
+	err = middleware.DB.Where("state = ? AND is_addr_sent = ?", models.FairLaunchMintedStateSentPending, false).Find(fairLaunchMintedInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchMintedInfos")
 	}
@@ -1827,7 +1831,7 @@ func AddrsToString(addrs []string) string {
 
 func GetAllLockedInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (*[]models.FairLaunchInventoryInfo, error) {
 	var fairLaunchInventoryInfos []models.FairLaunchInventoryInfo
-	err := middleware.DB.Where("status = ? AND state = ? AND fair_launch_minted_info_id = ?", models.StatusNormal, models.FairLaunchInventoryStateLocked, fairLaunchMintedInfo.ID).Find(&fairLaunchInventoryInfos).Error
+	err := middleware.DB.Where("state = ? AND fair_launch_minted_info_id = ?", models.FairLaunchInventoryStateLocked, fairLaunchMintedInfo.ID).Find(&fairLaunchInventoryInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInventoryInfos")
 	}
@@ -2079,7 +2083,7 @@ func GetIssuedAndTimeValidFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 
 func GetOwnFairLaunchInfosByUserId(id int) (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
-	err := middleware.DB.Where("status = ? AND user_id = ?", models.StatusNormal, id).Order("set_time").Find(&fairLaunchInfos).Error
+	err := middleware.DB.Where("user_id = ?", id).Order("set_time").Find(&fairLaunchInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
 	}
@@ -2088,7 +2092,7 @@ func GetOwnFairLaunchInfosByUserId(id int) (*[]models.FairLaunchInfo, error) {
 
 func GetOwnFairLaunchInfosByUserIdIssued(id int) (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
-	err := middleware.DB.Where("status = ? AND user_id = ? AND state = ?", models.StatusNormal, id, models.FairLaunchStateIssued).Order("set_time").Find(&fairLaunchInfos).Error
+	err := middleware.DB.Where(" user_id = ? AND state = ?", id, models.FairLaunchStateIssued).Order("set_time").Find(&fairLaunchInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
 	}
@@ -2136,7 +2140,7 @@ func GetFairLaunchInfoSimplifiedByUserIdIssued(id int) (*[]FairLaunchInfoSimplif
 
 func GetOwnFairLaunchMintedInfosByUserId(id int) (*[]models.FairLaunchMintedInfo, error) {
 	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
-	err := middleware.DB.Where("status = ? AND user_id = ?", models.StatusNormal, id).Order("minted_set_time").Find(&fairLaunchMintedInfos).Error
+	err := middleware.DB.Where(" user_id = ?", id).Order("minted_set_time").Find(&fairLaunchMintedInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchMintedInfos")
 	}
@@ -2145,7 +2149,7 @@ func GetOwnFairLaunchMintedInfosByUserId(id int) (*[]models.FairLaunchMintedInfo
 
 func GetOwnFairLaunchMintedNumberByUserIdAndFairLaunchId(userId int, fairLaunchId int) (int, error) {
 	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
-	err := middleware.DB.Where("status = ? AND user_id = ? AND fair_launch_info_id = ?", models.StatusNormal, userId, fairLaunchId).Order("minted_set_time").Find(&fairLaunchMintedInfos).Error
+	err := middleware.DB.Where(" user_id = ? AND fair_launch_info_id = ?", userId, fairLaunchId).Order("minted_set_time").Find(&fairLaunchMintedInfos).Error
 	if err != nil {
 		return 0, utils.AppendErrorInfo(err, "Find fairLaunchMintedInfos")
 	}
@@ -2683,4 +2687,44 @@ func UpdateFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInf
 func SetFairLaunchMintedInfoFail(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
 	fairLaunchMintedInfo.State = models.FairLaunchMintedStateFail
 	return UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
+}
+
+func CancelAndRefundFairLaunchMintedInfo(fairLaunchMintedInfoId int) (BackAmountMissionId int, err error) {
+	var fairLaunchMintedInfo *models.FairLaunchMintedInfo
+	fairLaunchMintedInfo, err = GetFairLaunchMintedInfo(fairLaunchMintedInfoId)
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "GetFairLaunchMintedInfo")
+	}
+	err = SetFairLaunchMintedInfoFail(fairLaunchMintedInfo)
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "SetFairLaunchMintedInfoFail")
+	}
+	mintFeePaidId := fairLaunchMintedInfo.MintFeePaidID
+	missionId, err := custodyAccount.BackAmount(uint(mintFeePaidId))
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "BackAmount")
+	}
+	return int(missionId), nil
+}
+
+// TODO: This function maybe need to update.
+//
+//	Consider if use scheduled task
+func RefundBlockFairLaunchMintedInfos() (missionIds []int, err error) {
+	fairLaunchMintedInfos, err := GetFairLaunchMintedInfoWhoseProcessNumberIsMoreThanTenThousand()
+	if err != nil {
+		return
+	}
+	if fairLaunchMintedInfos == nil || len(*fairLaunchMintedInfos) == 0 {
+		return
+	}
+	var missionId int
+	for _, fairLaunchMintedInfo := range *fairLaunchMintedInfos {
+		missionId, err = CancelAndRefundFairLaunchMintedInfo(int(fairLaunchMintedInfo.ID))
+		if err != nil {
+			return
+		}
+		missionIds = append(missionIds, missionId)
+	}
+	return
 }

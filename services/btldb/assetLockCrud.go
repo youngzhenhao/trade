@@ -27,13 +27,13 @@ func ReadAssetLock(id uint) (*models.AssetLock, error) {
 
 func ReadAssetLocksByUserId(userId int) (*[]models.AssetLock, error) {
 	var assetLocks []models.AssetLock
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&assetLocks).Error
+	err := middleware.DB.Where("user_id = ?", userId).Find(&assetLocks).Error
 	return &assetLocks, err
 }
 
 func ReadAssetLockByInvoice(invoice string) (*models.AssetLock, error) {
 	var assetLock models.AssetLock
-	err := middleware.DB.Where("invoice = ? AND status = ?", invoice, 1).First(&assetLock).Error
+	err := middleware.DB.Where("invoice = ?", invoice).First(&assetLock).Error
 	return &assetLock, err
 }
 

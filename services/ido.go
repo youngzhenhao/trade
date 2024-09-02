@@ -34,7 +34,7 @@ func GetIdoParticipateInfo(id int) (*models.IdoParticipateInfo, error) {
 
 func GetIdoPublishedInfos() (*[]models.IdoPublishInfo, error) {
 	var idoPublishInfos []models.IdoPublishInfo
-	err := middleware.DB.Where("status = ? AND state >= ?", models.StatusNormal, models.IdoParticipateStateSent).Order("set_time").Find(&idoPublishInfos).Error
+	err := middleware.DB.Where("state >= ?", models.IdoParticipateStateSent).Order("set_time").Find(&idoPublishInfos).Error
 	errorAppendInfo := utils.ErrorAppendInfo(err)
 	if err != nil {
 		return nil, errorAppendInfo(utils.ToLowerWords("IdoPublishInfoFind"))

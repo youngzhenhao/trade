@@ -161,6 +161,8 @@ const (
 	ValidateUserIdAndAssetManagedUtxoIdsErr
 	GetAmountCouldBeMintByMintedNumberErr
 	CreateFairLaunchIncomeOfServerPaySendReservedFeeErr
+	GetAssetBalanceByUserIdAndAssetIdErr
+	GetAssetTransferByTxidErr
 )
 
 // Err type:CustodyAccount

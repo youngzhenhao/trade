@@ -23,13 +23,15 @@ func PayAmountToAdmin(payUserId uint, gasFee uint64) (uint, error) {
 	}
 	return id, nil
 }
-func BackAmount(payUserId uint) (uint, error) {
-	missionId, err := CreateBackFeeMission(payUserId)
+
+func BackAmount(payInsideId uint) (uint, error) {
+	missionId, err := CreateBackFeeMission(payInsideId)
 	if err != nil {
 		return 0, err
 	}
 	return missionId, nil
 }
+
 func CheckBackFeeMission(missionId uint) bool {
 	return checkBackFeeMissionById(missionId)
 }

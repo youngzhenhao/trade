@@ -41,7 +41,7 @@ func ReadIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
 	// @dev: Add more condition
 	// @dev: Remove `AND is_mint_all = ?`
-	err := middleware.DB.Where("status = ? AND state >= ?", models.StatusNormal, models.FairLaunchStateIssued).Order("set_time").Find(&fairLaunchInfos).Error
+	err := middleware.DB.Where("state >= ?", models.FairLaunchStateIssued).Order("set_time").Find(&fairLaunchInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
 	}
@@ -50,7 +50,7 @@ func ReadIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 
 func ReadNotIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
-	err := middleware.DB.Where("status = ? AND state BETWEEN ? AND ?", models.StatusNormal, models.FairLaunchStateNoPay, models.FairLaunchStateIssuedPending).Order("set_time").Find(&fairLaunchInfos).Error
+	err := middleware.DB.Where("state BETWEEN ? AND ?", models.FairLaunchStateNoPay, models.FairLaunchStateIssuedPending).Order("set_time").Find(&fairLaunchInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find Not Issued fairLaunchInfos")
 	}
@@ -62,7 +62,7 @@ func ReadNotIssuedFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 func ReadIssuedAndTimeValidFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 	var fairLaunchInfos []models.FairLaunchInfo
 	now := utils.GetTimestamp()
-	err := middleware.DB.Where("state >= ? AND start_time <= ? AND end_time >= ? AND status = ?", models.FairLaunchStateIssued, now, now, models.StatusNormal).Order("minted_number desc, set_time").Find(&fairLaunchInfos).Error
+	err := middleware.DB.Where("state >= ? AND start_time <= ? AND end_time >= ?", models.FairLaunchStateIssued, now, now).Order("minted_number desc, set_time").Find(&fairLaunchInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find fairLaunchInfos")
 	}
@@ -119,9 +119,18 @@ func DeleteFairLaunchMintedInfo(id uint) error {
 
 func ReadNotSentFairLaunchMintedInfos() (*[]models.FairLaunchMintedInfo, error) {
 	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
-	err := middleware.DB.Where("status = ? AND state BETWEEN ? AND ?", models.StatusNormal, models.FairLaunchMintedStateNoPay, models.FairLaunchMintedStateSentPending).Order("minted_set_time").Find(&fairLaunchMintedInfos).Error
+	err := middleware.DB.Where("state BETWEEN ? AND ?", models.FairLaunchMintedStateNoPay, models.FairLaunchMintedStateSentPending).Order("minted_set_time").Find(&fairLaunchMintedInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Find Not Issued fairLaunchMintedInfos")
+	}
+	return &fairLaunchMintedInfos, nil
+}
+
+func ReadFairLaunchMintedInfoWhoseProcessNumberIsMoreThanTenThousand() (*[]models.FairLaunchMintedInfo, error) {
+	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
+	err := middleware.DB.Where("state BETWEEN ? AND ? AND process_number > ?", models.FairLaunchMintedStateNoPay, models.FairLaunchMintedStateSentPending, 10000).Find(&fairLaunchMintedInfos).Error
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "Read fairLaunchMintedInfos")
 	}
 	return &fairLaunchMintedInfos, nil
 }

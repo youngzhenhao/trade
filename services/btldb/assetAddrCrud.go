@@ -27,19 +27,19 @@ func ReadAssetAddr(id uint) (*models.AssetAddr, error) {
 
 func ReadAssetAddrsByUserId(userId int) (*[]models.AssetAddr, error) {
 	var assetAddrs []models.AssetAddr
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&assetAddrs).Error
+	err := middleware.DB.Where("user_id = ?", userId).Find(&assetAddrs).Error
 	return &assetAddrs, err
 }
 
 func ReadAssetAddrsByScriptKey(scriptKey string) (*[]models.AssetAddr, error) {
 	var assetAddrs []models.AssetAddr
-	err := middleware.DB.Where("script_key = ? AND status = ?", scriptKey, 1).Find(&assetAddrs).Error
+	err := middleware.DB.Where("script_key = ?", scriptKey).Find(&assetAddrs).Error
 	return &assetAddrs, err
 }
 
 func ReadAssetAddrByAddrEncoded(addrEncoded string) (*models.AssetAddr, error) {
 	var assetAddr models.AssetAddr
-	err := middleware.DB.Where("encoded = ? AND status = ?", addrEncoded, 1).First(&assetAddr).Error
+	err := middleware.DB.Where("encoded = ?", addrEncoded).First(&assetAddr).Error
 	return &assetAddr, err
 }
 

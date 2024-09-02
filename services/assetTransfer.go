@@ -984,3 +984,49 @@ func GetAllAssetIdAndAssetTransferCombinedSliceSimplified() (*[]AssetIdAndAssetT
 	}
 	return &allAssetIdAndAssetTransferCombinedSliceSimplified, nil
 }
+
+func GetAssetTransferProcessedByTxid(txid string) (*[]models.AssetTransferProcessedDb, error) {
+	return btldb.ReadAssetTransferProcessedSliceByTxid(txid)
+}
+
+func GetAssetTransferProcessedInputSliceByTxid(txid string) (*[]models.AssetTransferProcessedInputDb, error) {
+	return btldb.ReadAssetTransferProcessedInputSliceByTxid(txid)
+}
+
+func GetAssetTransferProcessedOutputSliceByTxid(txid string) (*[]models.AssetTransferProcessedOutputDb, error) {
+	return btldb.ReadAssetTransferProcessedOutputSliceByTxid(txid)
+}
+
+// GetAssetTransferByTxid
+// @Description: Get asset transfer by txid
+func GetAssetTransferByTxid(txid string) (*models.AssetTransferProcessedCombined, error) {
+	assetTransferProcessed, err := GetAssetTransferProcessedByTxid(txid)
+	if err != nil {
+		return nil, err
+	} else if assetTransferProcessed == nil || len(*assetTransferProcessed) == 0 {
+		return nil, errors.New("assetTransferProcessed is nil or empty")
+	}
+
+	assetTransferProcessedInput, err := GetAssetTransferProcessedInputSliceByTxid(txid)
+	if err != nil {
+		return nil, err
+	} else if assetTransferProcessedInput == nil || len(*assetTransferProcessedInput) == 0 {
+		return nil, errors.New("input of assetTransferProcessed is nil or empty")
+	}
+	assetTransferProcessedOutput, err := GetAssetTransferProcessedOutputSliceByTxid(txid)
+	if err != nil {
+		return nil, err
+	} else if assetTransferProcessedOutput == nil || len(*assetTransferProcessedOutput) == 0 {
+		return nil, errors.New("output of assetTransferProcessed is nil or empty")
+	}
+	var transferCombined models.AssetTransferProcessedCombined
+	var transferCombinedSlice *[]models.AssetTransferProcessedCombined
+	transferCombinedSlice, err = CombineAssetTransfers(assetTransferProcessed, assetTransferProcessedInput, assetTransferProcessedOutput)
+	if err != nil {
+		return nil, err
+	} else if transferCombinedSlice == nil || len(*transferCombinedSlice) == 0 {
+		return nil, errors.New("transferCombinedSlice is nil or empty")
+	}
+	transferCombined = (*transferCombinedSlice)[0]
+	return &transferCombined, nil
+}

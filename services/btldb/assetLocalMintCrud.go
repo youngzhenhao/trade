@@ -33,13 +33,13 @@ func ReadAssetLocalMint(id uint) (*models.AssetLocalMint, error) {
 
 func ReadAssetLocalMintsByUserId(userId int) (*[]models.AssetLocalMint, error) {
 	var assetLocalMints []models.AssetLocalMint
-	err := middleware.DB.Where("user_id = ? AND status = ?", userId, 1).Find(&assetLocalMints).Error
+	err := middleware.DB.Where("user_id = ?", userId).Find(&assetLocalMints).Error
 	return &assetLocalMints, err
 }
 
 func ReadAssetLocalMintByAssetId(assetId string) (*models.AssetLocalMint, error) {
 	var assetLocalMint models.AssetLocalMint
-	err := middleware.DB.Where("asset_id = ? AND status = ?", assetId, 1).First(&assetLocalMint).Error
+	err := middleware.DB.Where("asset_id = ?", assetId).First(&assetLocalMint).Error
 	return &assetLocalMint, err
 }
 
