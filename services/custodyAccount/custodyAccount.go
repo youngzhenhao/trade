@@ -115,7 +115,7 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 	ba.AccountId = account.ID
 	ba.Amount = float64(balance)
 	ba.Unit = models.UNIT_SATOSHIS
-	ba.BillType = models.BILL_TYPE_PAYMENT
+	ba.BillType = models.BillTypePayment
 	ba.Away = away
 	if err != nil {
 		ba.State = models.STATE_FAILED
@@ -299,7 +299,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest, H
 
 	var balanceModel models.Balance
 	balanceModel.AccountId = account.ID
-	balanceModel.BillType = models.BILL_TYPE_PAYMENT
+	balanceModel.BillType = models.BillTypePayment
 	balanceModel.Away = models.AWAY_OUT
 	balanceModel.Amount = float64(payment.ValueSat)
 	balanceModel.Unit = models.UNIT_SATOSHIS
@@ -553,7 +553,7 @@ func PollInvoice() {
 					ba.AccountId = *v.AccountID
 					ba.Amount = v.Amount
 					ba.Unit = models.UNIT_SATOSHIS
-					ba.BillType = models.BILL_TYPE_RECHARGE
+					ba.BillType = models.BillTypeRecharge
 					ba.Away = models.AWAY_IN
 					ba.State = models.STATE_SUCCESS
 					ba.Invoice = &v.Invoice

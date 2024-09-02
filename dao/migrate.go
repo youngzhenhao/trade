@@ -115,5 +115,14 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.AccountBalance{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.AccountAward{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&models.PayOutside{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&models.PayOutsideTx{}); err != nil {
+		return err
+	}
 	return err
 }

@@ -24,5 +24,6 @@ func PayServerFee(account *models.Account, fee uint64) error {
 }
 
 func PayFirLunchFee(account *models.Account, fee uint64) error {
+
 	return nil
 }

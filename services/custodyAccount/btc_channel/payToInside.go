@@ -150,7 +150,7 @@ func UpdateCustodyAccount(account *models.Account, away models.BalanceAway, bala
 	ba.AccountId = account.ID
 	ba.Amount = float64(balance)
 	ba.Unit = models.UNIT_SATOSHIS
-	ba.BillType = models.BILL_TYPE_PAYMENT
+	ba.BillType = models.BillTypePayment
 	ba.Away = away
 	if err != nil {
 		ba.State = models.STATE_FAILED

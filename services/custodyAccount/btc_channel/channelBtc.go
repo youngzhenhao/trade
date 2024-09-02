@@ -204,7 +204,7 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 		balanceModel.State = models.STATE_UNKNOW
 	}
 	balanceModel.AccountId = e.UserInfo.Account.ID
-	balanceModel.BillType = models.BILL_TYPE_PAYMENT
+	balanceModel.BillType = models.BillTypePayment
 	balanceModel.Away = models.AWAY_OUT
 	balanceModel.Amount = float64(payment.ValueSat)
 	balanceModel.Unit = models.UNIT_SATOSHIS
@@ -220,7 +220,7 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 
 func (e *BtcChannelEvent) GetTransactionHistory() (cBase.TxHistory, error) {
 	params := btldb.QueryParams{
-		"AccountId": e.UserInfo.Account.UserId,
+		"AccountId": e.UserInfo.Account.ID,
 		"AssetId":   "00",
 	}
 	a, err := btldb.GenericQuery(&models.Balance{}, params)
