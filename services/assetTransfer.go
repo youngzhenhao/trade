@@ -4,8 +4,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"gorm.io/gorm"
 	"time"
 	"trade/api"
+	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
 )
@@ -1006,7 +1008,6 @@ func GetAssetTransferByTxid(txid string) (*models.AssetTransferProcessedCombined
 	} else if assetTransferProcessed == nil || len(*assetTransferProcessed) == 0 {
 		return nil, errors.New("assetTransferProcessed is nil or empty")
 	}
-
 	assetTransferProcessedInput, err := GetAssetTransferProcessedInputSliceByTxid(txid)
 	if err != nil {
 		return nil, err
@@ -1072,4 +1073,42 @@ func ExcludeAssetTransferProcessedSetRequestWhoseOutpointAddressIsNull(assetTran
 		}
 	}
 	return assetTransferProcessedSetRequestsProcessed
+}
+
+// DeleteAssetTransferTransactionByTxid
+// @Description: Delete asset transfer transaction by txid
+func DeleteAssetTransferTransactionByTxid(txid string) error {
+	assetTransferProcessed, err := GetAssetTransferProcessedByTxid(txid)
+	if err != nil {
+		return err
+	} else if assetTransferProcessed == nil || len(*assetTransferProcessed) == 0 {
+		return errors.New("assetTransferProcessed is nil or empty")
+	}
+	assetTransferProcessedInput, err := GetAssetTransferProcessedInputSliceByTxid(txid)
+	if err != nil {
+		return err
+	} else if assetTransferProcessedInput == nil || len(*assetTransferProcessedInput) == 0 {
+		return errors.New("input of assetTransferProcessed is nil or empty")
+	}
+	assetTransferProcessedOutput, err := GetAssetTransferProcessedOutputSliceByTxid(txid)
+	if err != nil {
+		return err
+	} else if assetTransferProcessedOutput == nil || len(*assetTransferProcessedOutput) == 0 {
+		return errors.New("output of assetTransferProcessed is nil or empty")
+	}
+	return middleware.DB.Transaction(func(tx *gorm.DB) error {
+		err := btldb.DeleteAssetTransferProcessedSlice(assetTransferProcessed)
+		if err != nil {
+			return err
+		}
+		err = btldb.DeleteAssetTransferProcessedInputSlice(assetTransferProcessedInput)
+		if err != nil {
+			return err
+		}
+		err = btldb.DeleteAssetTransferProcessedOutputSlice(assetTransferProcessedOutput)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
