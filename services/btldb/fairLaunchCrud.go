@@ -107,6 +107,10 @@ func UpdateFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInf
 	return middleware.DB.Save(fairLaunchMintedInfo).Error
 }
 
+func UpdateFairLaunchMintedInfos(fairLaunchMintedInfos *[]models.FairLaunchMintedInfo) error {
+	return middleware.DB.Save(fairLaunchMintedInfos).Error
+}
+
 func (f *FairLaunchStore) DeleteFairLaunchMintedInfo(id uint) error {
 	var fairLaunchMintedInfo models.FairLaunchMintedInfo
 	return f.DB.Delete(&fairLaunchMintedInfo, id).Error
@@ -133,6 +137,42 @@ func ReadFairLaunchMintedInfoWhoseProcessNumberIsMoreThanTenThousand() (*[]model
 		return nil, utils.AppendErrorInfo(err, "Read fairLaunchMintedInfos")
 	}
 	return &fairLaunchMintedInfos, nil
+}
+
+func ReadFairLaunchMintedInfosWhoseUsernameIsNull() (*[]models.FairLaunchMintedInfo, error) {
+	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
+	err := middleware.DB.Where("username = ?", "").Find(&fairLaunchMintedInfos).Error
+	if err != nil {
+		return nil, err
+	}
+	return &fairLaunchMintedInfos, nil
+}
+
+func ReadUserFirstFairLaunchMintedInfoByUserId(userId int) (*models.FairLaunchMintedInfo, error) {
+	var fairLaunchMintedInfo models.FairLaunchMintedInfo
+	err := middleware.DB.Where("state > ? AND user_id = ?", models.FairLaunchMintedStateFail, userId).Order("minted_set_time").First(&fairLaunchMintedInfo).Error
+	if err != nil {
+		return nil, err
+	}
+	return &fairLaunchMintedInfo, nil
+}
+
+func ReadUserFirstFairLaunchMintedInfoByUserIdAndAssetId(userId int, assetId string) (*models.FairLaunchMintedInfo, error) {
+	var fairLaunchMintedInfo models.FairLaunchMintedInfo
+	err := middleware.DB.Where("state > ? AND user_id = ? AND asset_id = ?", models.FairLaunchMintedStateFail, userId, assetId).Order("minted_set_time").First(&fairLaunchMintedInfo).Error
+	if err != nil {
+		return nil, err
+	}
+	return &fairLaunchMintedInfo, nil
+}
+
+func ReadUserFirstFairLaunchMintedInfoByUsernameAndAssetId(username string, assetId string) (*models.FairLaunchMintedInfo, error) {
+	var fairLaunchMintedInfo models.FairLaunchMintedInfo
+	err := middleware.DB.Where("state > ? AND username = ? AND asset_id = ?", models.FairLaunchMintedStateFail, username, assetId).Order("minted_set_time").First(&fairLaunchMintedInfo).Error
+	if err != nil {
+		return nil, err
+	}
+	return &fairLaunchMintedInfo, nil
 }
 
 // FairLaunchInventoryInfo

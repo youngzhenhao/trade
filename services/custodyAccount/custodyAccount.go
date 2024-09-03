@@ -293,8 +293,8 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest, H
 
 	payment, err := rpc.InvoicePay(macaroonFile, PayInvoiceRequest.Invoice, info.NumSatoshis, PayInvoiceRequest.FeeLimit)
 	if err != nil {
-		btlLog.CUST.Error("pay invoice fail")
-		return 0, fmt.Errorf("pay invoice fail")
+		btlLog.CUST.Error("pay invoice fail %v", err)
+		return 0, fmt.Errorf("pay invoice fail %w", err)
 	}
 
 	var balanceModel models.Balance
