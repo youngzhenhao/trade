@@ -9,11 +9,12 @@ type PayOutside struct {
 	Address   string           `gorm:"column:address;type:varchar(512)" json:"address"`
 	Amount    float64          `gorm:"type:decimal(15,2);column:amount" json:"amount"`
 	TxHash    string           `gorm:"column:tx_hash;type:varchar(100)" json:"txHash"`
+	BalanceId uint             `gorm:"column:balance_id;type:bigint;default:0" json:"balance_id"`
 	Status    PayOutsideStatus `gorm:"column:status;type:smallint" json:"status"`
 }
 
 func (PayOutside) TableName() string {
-	return "user_out_inside"
+	return "user_outside"
 }
 
 type PayOutsideStatus int16

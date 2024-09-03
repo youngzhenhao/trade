@@ -25,9 +25,6 @@ func (s *AssetOutsideSever) Start() {
 func (s *AssetOutsideSever) runServer() {
 	for {
 		time.Sleep(60 * time.Second)
-		if s.Queue.isEmpty() {
-			continue
-		}
 		//获取可用资产列表
 		assets, err := rpc.ListAssets()
 		if err != nil {
@@ -40,6 +37,9 @@ func (s *AssetOutsideSever) runServer() {
 		}
 		firstAssetID := ""
 		for {
+			if s.Queue.isEmpty() {
+				break
+			}
 			//获取 一个外部支付任务
 			mission := s.Queue.getNextPkg()
 			if firstAssetID == "" {
@@ -61,10 +61,18 @@ func (s *AssetOutsideSever) runServer() {
 				continue
 			}
 			err = s.payToOutside(mission)
+			if err == nil {
+				btlLog.CUST.Info("payToOutside success: id=%v,amount=%v", mission.AssetID, mission.TotalAmount)
+			}
 			//返回错误信息
 			for index, _ := range mission.err {
 				select {
-				case mission.err[index] <- err:
+				case _, ok := <-mission.err[index]:
+					if !ok {
+						continue
+					} else {
+						mission.err[index] <- err
+					}
 				default:
 				}
 			}
@@ -78,7 +86,7 @@ func (s *AssetOutsideSever) payToOutside(mission *OutsideMission) error {
 	}
 	response, err := rpc.SendAssets(addr)
 	if err != nil {
-		btlLog.CUST.Error("rpc.SendAssets error:%w", err)
+		btlLog.CUST.Error("rpc.SendAssets error:%v", err)
 		return err
 	}
 	txId := hex.EncodeToString(response.Transfer.AnchorTxHash)
@@ -103,7 +111,17 @@ func (s *AssetOutsideSever) payToOutside(mission *OutsideMission) error {
 			btlLog.CUST.Error("btldb.UpdatePayOutside error:%w", err)
 		}
 		//todo：扣除手续费
-		//todo:更新Balance表
+
+		//更新Balance表
+		balance, err := btldb.ReadBalance(a.Mission.BalanceId)
+		if err != nil {
+			continue
+		}
+		balance.State = models.STATE_SUCCESS
+		err = btldb.UpdateBalance(balance)
+		if err != nil {
+			btlLog.CUST.Error("payToOutside db error")
+		}
 	}
 	return nil
 }
@@ -118,7 +136,10 @@ type AssetOutsideUniqueQueue struct {
 }
 
 func NewOutsideUniqueQueue() *AssetOutsideUniqueQueue {
-	return &AssetOutsideUniqueQueue{}
+	return &AssetOutsideUniqueQueue{
+		items:   []*OutsideMission{},
+		itemSet: make(map[string]*OutsideMission),
+	}
 }
 func (q *AssetOutsideUniqueQueue) addNewPkg(item *OutsideMission) bool {
 	// addNewPkg 入队操作

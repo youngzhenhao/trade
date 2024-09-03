@@ -14,7 +14,7 @@ type PayOutsideTx struct {
 }
 
 func (PayOutsideTx) TableName() string {
-	return "user_out_inside_tx"
+	return "user_outside_tx"
 }
 
 type PayOutsideTxStatus uint

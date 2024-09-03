@@ -25,14 +25,14 @@ func GetAccountBalance(id uint) (*models.AccountBalance, error) {
 // GetAccountBalanceByAccountId  retrieves an accountBalances by AccountId
 func GetAccountBalanceByAccountId(AccountID uint) (*[]models.AccountBalance, error) {
 	var accountBalances []models.AccountBalance
-	err := middleware.DB.Where("accountId =?", AccountID).First(&accountBalances).Error
+	err := middleware.DB.Where("account_Id =?", AccountID).Find(&accountBalances).Error
 	return &accountBalances, err
 }
 
 // GetAccountBalanceByGroup  retrieves an accountBalances by AccountId and AssetId
 func GetAccountBalanceByGroup(AccountID uint, AssetID string) (*models.AccountBalance, error) {
 	var accountBalance models.AccountBalance
-	err := middleware.DB.Where("accountId =? and assetId =?", AccountID, AssetID).First(&accountBalance).Error
+	err := middleware.DB.Where("account_Id =? and asset_Id =?", AccountID, AssetID).First(&accountBalance).Error
 	return &accountBalance, err
 }
 

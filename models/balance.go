@@ -25,12 +25,12 @@ func (Balance) TableName() string {
 type BalanceType int16
 
 const (
-	BillTypeRecharge         BalanceType = 0
-	BillTypePayment          BalanceType = 1
-	BILL_TYPE_ASSET_TRANSFER BalanceType = 2
-	BillTypeAssetMintedSend              = 3
-	BILL_TYPE_BACK_FEE                   = 4
-	BillTypeAwardSat                     = 5
+	BillTypeRecharge        BalanceType = 0
+	BillTypePayment         BalanceType = 1
+	BillTypeAssetTransfer   BalanceType = 2
+	BillTypeAssetMintedSend             = 3
+	BILL_TYPE_BACK_FEE                  = 4
+	BillTypeAwardSat                    = 5
 )
 
 type BalanceAway int16

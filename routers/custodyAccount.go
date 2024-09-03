@@ -2,7 +2,7 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
-	"trade/handlers"
+	"trade/handlers/test"
 	"trade/middleware"
 )
 
@@ -13,15 +13,15 @@ func SetupCustodyAccountRouter(router *gin.Engine) *gin.Engine {
 
 	custody.Use(middleware.AuthMiddleware())
 	{
-		custody.POST("/create", handlers.CreateCustodyAccount)
+		custody.POST("/create", test.CreateCustodyAccount)
 		Invoice := custody.Group("/invoice")
 		{
-			Invoice.POST("/apply", handlers.ApplyInvoice)
-			Invoice.POST("/pay", handlers.PayInvoice)
-			Invoice.POST("/querybalance", handlers.QueryBalance)
-			Invoice.POST("/queryinvoice", handlers.QueryInvoice)
-			Invoice.POST("/querypayment", handlers.QueryPayment)
-			Invoice.POST("/lookupinvoice", handlers.LookupInvoice)
+			Invoice.POST("/apply", test.ApplyInvoice)
+			Invoice.POST("/pay", test.PayInvoice)
+			Invoice.POST("/querybalance", test.QueryBalance)
+			Invoice.POST("/queryinvoice", test.QueryInvoice)
+			Invoice.POST("/querypayment", test.QueryPayment)
+			Invoice.POST("/lookupinvoice", test.LookupInvoice)
 		}
 	}
 	return router

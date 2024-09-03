@@ -2,6 +2,7 @@ package assets
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sync"
@@ -175,14 +176,38 @@ func (e *AssetEvent) payToInside(bt *AssetPacket) {
 	InSideSever.Queue.addNewPkg(bt.isInsideMission)
 }
 func (e *AssetEvent) payToOutside(bt *AssetPacket) {
+	assetId := hex.EncodeToString(bt.DecodePayReq.AssetId)
+	outsideBalance := models.Balance{
+		AccountId: e.UserInfo.Account.ID,
+		BillType:  models.BillTypeAssetTransfer,
+		Away:      models.AWAY_OUT,
+		Amount:    float64(bt.DecodePayReq.Amount),
+		Unit:      models.UNIT_ASSET_NORMAL,
+		ServerFee: 0,
+		AssetId:   &assetId,
+		Invoice:   &bt.PayReq,
+		State:     models.STATE_UNKNOW,
+	}
+	err := btldb.CreateBalance(&outsideBalance)
+	if err != nil {
+		btlLog.CUST.Error("payToOutside db error:balance %v", err)
+	}
+
 	outside := models.PayOutside{
 		AccountID: e.UserInfo.Account.ID,
-		AssetId:   string(bt.DecodePayReq.AssetId),
+		AssetId:   assetId,
 		Address:   bt.DecodePayReq.Encoded,
 		Amount:    float64(bt.DecodePayReq.Amount),
+		BalanceId: outsideBalance.ID,
 		Status:    models.PayOutsideStatusPending,
 	}
-	err := btldb.CreatePayOutside(&outside)
+	err = btldb.CreatePayOutside(&outside)
+	if err != nil {
+		btlLog.CUST.Error("payToOutside db error")
+	}
+	b, _ := btldb.GetAccountBalanceByGroup(e.UserInfo.Account.ID, assetId)
+	b.Amount -= float64(bt.DecodePayReq.Amount)
+	err = btldb.UpdateAccountBalance(b)
 	if err != nil {
 		btlLog.CUST.Error("payToOutside db error")
 	}

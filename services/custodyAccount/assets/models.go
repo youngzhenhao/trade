@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/lightninglabs/taproot-assets/taprpc"
@@ -68,9 +69,13 @@ func (p *AssetPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 	}
 	//TODO:验证地址版本
 
+	assetId := hex.EncodeToString(p.DecodePayReq.AssetId)
 	//验证资产金额
-	balance, err := btldb.GetAccountBalanceByGroup(userinfo.Account.ID, p.PayReq)
+	balance, err := btldb.GetAccountBalanceByGroup(userinfo.Account.ID, assetId)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return cBase.NotEnoughAssetFunds
+		}
 		btlLog.CUST.Error("获取账户余额失败", err)
 		return models.ReadDbErr
 	}
