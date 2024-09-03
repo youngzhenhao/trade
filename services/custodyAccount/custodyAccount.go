@@ -330,7 +330,7 @@ func PayInvoice(account *models.Account, PayInvoiceRequest *PayInvoiceRequest, H
 // QueryAccountBalanceByUserId 通过用户ID查询账户余额
 func QueryAccountBalanceByUserId(userId uint) (uint64, error) {
 	// 查询账户
-	account, err := btldb.ReadAccount(userId)
+	account, err := btldb.ReadAccountByUserId(userId)
 	if err != nil {
 		fmt.Println(err.Error())
 		return 0, err
@@ -412,7 +412,7 @@ type PaymentResponse struct {
 
 // QueryPaymentByUserId 查询用户支付记录
 func QueryPaymentByUserId(userId uint, assetId string) ([]PaymentResponse, error) {
-	accountId, err := btldb.ReadAccount(userId)
+	accountId, err := btldb.ReadAccountByUserId(userId)
 	if err != nil {
 		return nil, fmt.Errorf("not find account info")
 	}
@@ -576,7 +576,7 @@ func PollInvoice() {
 // PayAmountInside 内部转账比特币
 func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, invoice string, HasServerFee bool) (uint, error) {
 	amount := gasFee + serveFee
-	payAccount, err := btldb.ReadAccount(payUserId)
+	payAccount, err := btldb.ReadAccountByUserId(payUserId)
 	if err != nil {
 		btlLog.CUST.Error("ReadAccount error:%v", err)
 		return 0, err
@@ -604,7 +604,7 @@ func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, inv
 	}
 	mark(outId, gasFee, HasServerFee)
 
-	receiveAccount, err := btldb.ReadAccount(receiveUserId)
+	receiveAccount, err := btldb.ReadAccountByUserId(receiveUserId)
 	if err != nil {
 		btlLog.CUST.Error("ReadAccount error:%v", err)
 		return 0, err
@@ -620,7 +620,7 @@ func PayAmountInside(payUserId, receiveUserId uint, gasFee, serveFee uint64, inv
 // CreatePayInsideMission 创建内部转账任务
 func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint64, assetType string) (uint, error) {
 	//获取支付账户信息
-	payAccount, err := btldb.ReadAccount(payUserId)
+	payAccount, err := btldb.ReadAccountByUserId(payUserId)
 	if err != nil {
 		btlLog.CUST.Error("Not find pay account info(UserId=%v):%v", payUserId, err)
 		return 0, fmt.Errorf("not find pay account info")
@@ -661,7 +661,7 @@ func CreatePayInsideMission(payUserId, receiveUserId uint, gasFee, serveFee uint
 		payType = models.PayInsideToAdmin
 	default:
 		//获取非管理员账户信息
-		receiveAccount, err = btldb.ReadAccount(receiveUserId)
+		receiveAccount, err = btldb.ReadAccountByUserId(receiveUserId)
 		if err != nil {
 			btlLog.CUST.Error("Not find receive account info(UserId=%v):%v", receiveUserId, err)
 			return 0, fmt.Errorf("not find receive account info")
@@ -713,7 +713,7 @@ func PollPayInsideMission() {
 	for _, v := range a {
 		if v.AssetType == "00" {
 			//获取支付账户信息
-			payAccount, err := btldb.ReadAccount(v.PayUserId)
+			payAccount, err := btldb.ReadAccountByUserId(v.PayUserId)
 			if err != nil {
 				btlLog.CUST.Error("pollPayInsideMission find pay account error:%v", err)
 				continue
@@ -836,7 +836,7 @@ func PollBackFeeMission() {
 	var results []BackFeeSqlResult
 	middleware.DB.Raw(getBackFeeSql, 0).Scan(&results)
 	for _, r := range results {
-		account, err := btldb.ReadAccount(r.PayUserId)
+		account, err := btldb.ReadAccountByUserId(r.PayUserId)
 		if err != nil {
 			btlLog.CUST.Error("PollBackFeeMission find pay account error:%v", err.Error())
 			continue

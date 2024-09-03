@@ -54,7 +54,7 @@ func CheckAdminAccount() bool {
 		}
 	}
 
-	adminAccount, err := btldb.ReadAccount(adminUser.ID)
+	adminAccount, err := btldb.ReadAccountByUserId(adminUser.ID)
 
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {

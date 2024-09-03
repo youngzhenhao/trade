@@ -24,6 +24,13 @@ func ReadAccountByName(name string) (*models.Account, error) {
 	return &account, err
 }
 
+// ReadAccountByUserId retrieves an account by user Id
+func ReadAccountByUserId(userId uint) (*models.Account, error) {
+	var account models.Account
+	err := middleware.DB.Where("user_id =?", userId).First(&account).Error
+	return &account, err
+}
+
 // UpdateAccount updates an existing account
 func UpdateAccount(account *models.Account) error {
 	return middleware.DB.Save(account).Error

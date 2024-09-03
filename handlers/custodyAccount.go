@@ -23,7 +23,7 @@ func CreateCustodyAccount(c *gin.Context) {
 		return
 	}
 	// 判断用户是否已经创建账户
-	_, err = btldb.ReadAccount(user.ID)
+	_, err = btldb.ReadAccountByUserId(user.ID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		//创建账户
 		cstAccount, err := custodyAccount.CreateCustodyAccount(user)
@@ -52,7 +52,7 @@ func ApplyInvoice(c *gin.Context) {
 		return
 	}
 
-	account, err := btldb.ReadAccount(user.ID)
+	account, err := btldb.ReadAccountByUserId(user.ID)
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "service is default"})
@@ -121,7 +121,7 @@ func PayInvoice(c *gin.Context) {
 		return
 	}
 	// 选择托管账户
-	account, err := btldb.ReadAccount(user.ID)
+	account, err := btldb.ReadAccountByUserId(user.ID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		btlLog.CUST.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询账户信息失败"})
@@ -204,7 +204,7 @@ func LookupInvoice(c *gin.Context) {
 		return
 	}
 	// 选择托管账户
-	account, err := btldb.ReadAccount(user.ID)
+	account, err := btldb.ReadAccountByUserId(user.ID)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
