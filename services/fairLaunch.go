@@ -2749,7 +2749,90 @@ func UpdateFairLaunchMintedInfosWhoseUsernameIsNull() error {
 	return btldb.UpdateFairLaunchMintedInfos(fairLaunchMintedInfos)
 }
 
-func GetUserFirstFairLaunchMintedInfosByUserIdSlice(userIdSlice []int) (*map[int]models.FairLaunchMintedInfo, error) {
+func GetUserFirstFairLaunchMintedInfoByUserId(userId int) (*models.FairLaunchMintedInfo, error) {
+	return btldb.ReadUserFirstFairLaunchMintedInfoByUserId(userId)
+}
 
-	return nil, nil
+func GetUserFirstFairLaunchMintedInfoByUserIdAndAssetId(userId int, assetId string) (*models.FairLaunchMintedInfo, error) {
+	return btldb.ReadUserFirstFairLaunchMintedInfoByUserIdAndAssetId(userId, assetId)
+}
+
+func GetUserFirstFairLaunchMintedInfoByUsernameAndAssetId(username string, assetId string) (*models.FairLaunchMintedInfo, error) {
+	return btldb.ReadUserFirstFairLaunchMintedInfoByUsernameAndAssetId(username, assetId)
+}
+
+func GetUserFirstFairLaunchMintedInfosByUserIdSlice(userIdSlice []int) (*map[int]models.FairLaunchMintedInfo, error) {
+	userIdMapFairLaunchMintedInfo := make(map[int]models.FairLaunchMintedInfo)
+	for _, userId := range userIdSlice {
+		if _, ok := userIdMapFairLaunchMintedInfo[userId]; ok {
+			continue
+		}
+		fairLaunchMintedInfo, err := GetUserFirstFairLaunchMintedInfoByUserId(userId)
+		if err != nil {
+			continue
+		}
+		userIdMapFairLaunchMintedInfo[userId] = *fairLaunchMintedInfo
+	}
+	return &userIdMapFairLaunchMintedInfo, nil
+}
+
+// GetUserFirstFairLaunchMintedInfosByUserIdSliceAndAssetId
+// @Description: Get user first fair launch minted infos by user id slice and asset id
+func GetUserFirstFairLaunchMintedInfosByUserIdSliceAndAssetId(userIdSlice []int, assetId string) (*map[int]models.FairLaunchMintedInfo, error) {
+	userIdMapFairLaunchMintedInfo := make(map[int]models.FairLaunchMintedInfo)
+	for _, userId := range userIdSlice {
+		if _, ok := userIdMapFairLaunchMintedInfo[userId]; ok {
+			continue
+		}
+		fairLaunchMintedInfo, err := GetUserFirstFairLaunchMintedInfoByUserIdAndAssetId(userId, assetId)
+		if err != nil {
+			continue
+		}
+		userIdMapFairLaunchMintedInfo[userId] = *fairLaunchMintedInfo
+	}
+	return &userIdMapFairLaunchMintedInfo, nil
+}
+
+func GetUserFirstFairLaunchMintedInfosByUsernameSliceAndAssetId(usernameSlice []string, assetId string) (*map[string]models.FairLaunchMintedInfo, error) {
+	usernameMapFairLaunchMintedInfo := make(map[string]models.FairLaunchMintedInfo)
+	for _, username := range usernameSlice {
+		if _, ok := usernameMapFairLaunchMintedInfo[username]; ok {
+			continue
+		}
+		fairLaunchMintedInfo, err := GetUserFirstFairLaunchMintedInfoByUsernameAndAssetId(username, assetId)
+		if err != nil {
+			continue
+		}
+		usernameMapFairLaunchMintedInfo[username] = *fairLaunchMintedInfo
+	}
+	return &usernameMapFairLaunchMintedInfo, nil
+}
+
+type FairLaunchMintedInfoSimplified struct {
+	ID              uint                         `gorm:"primarykey"`
+	MintedGasFee    int                          `json:"minted_gas_fee"`
+	MintFeePaidID   int                          `json:"mint_fee_paid_id"`
+	PaidSuccessTime int                          `json:"paid_success_time"`
+	UserID          int                          `json:"user_id" gorm:"index"`
+	Username        string                       `json:"username" gorm:"type:varchar(255)"`
+	AssetID         string                       `json:"asset_id" gorm:"type:varchar(255)" gorm:"index"`
+	AssetName       string                       `json:"asset_name" gorm:"type:varchar(255)"`
+	State           models.FairLaunchMintedState `json:"state"`
+}
+
+func FairLaunchMintedInfoToFairLaunchMintedInfoSimplified(fairLaunchMintedInfo *models.FairLaunchMintedInfo) *FairLaunchMintedInfoSimplified {
+	if fairLaunchMintedInfo == nil {
+		return nil
+	}
+	return &FairLaunchMintedInfoSimplified{
+		ID:              fairLaunchMintedInfo.ID,
+		MintedGasFee:    fairLaunchMintedInfo.MintedGasFee,
+		MintFeePaidID:   fairLaunchMintedInfo.MintFeePaidID,
+		PaidSuccessTime: fairLaunchMintedInfo.PaidSuccessTime,
+		UserID:          fairLaunchMintedInfo.UserID,
+		Username:        fairLaunchMintedInfo.Username,
+		AssetID:         fairLaunchMintedInfo.AssetID,
+		AssetName:       fairLaunchMintedInfo.AssetName,
+		State:           fairLaunchMintedInfo.State,
+	}
 }

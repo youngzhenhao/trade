@@ -148,6 +148,33 @@ func ReadFairLaunchMintedInfosWhoseUsernameIsNull() (*[]models.FairLaunchMintedI
 	return &fairLaunchMintedInfos, nil
 }
 
+func ReadUserFirstFairLaunchMintedInfoByUserId(userId int) (*models.FairLaunchMintedInfo, error) {
+	var fairLaunchMintedInfo models.FairLaunchMintedInfo
+	err := middleware.DB.Where("state > ? AND user_id = ?", models.FairLaunchMintedStateFail, userId).Order("minted_set_time").First(&fairLaunchMintedInfo).Error
+	if err != nil {
+		return nil, err
+	}
+	return &fairLaunchMintedInfo, nil
+}
+
+func ReadUserFirstFairLaunchMintedInfoByUserIdAndAssetId(userId int, assetId string) (*models.FairLaunchMintedInfo, error) {
+	var fairLaunchMintedInfo models.FairLaunchMintedInfo
+	err := middleware.DB.Where("state > ? AND user_id = ? AND asset_id = ?", models.FairLaunchMintedStateFail, userId, assetId).Order("minted_set_time").First(&fairLaunchMintedInfo).Error
+	if err != nil {
+		return nil, err
+	}
+	return &fairLaunchMintedInfo, nil
+}
+
+func ReadUserFirstFairLaunchMintedInfoByUsernameAndAssetId(username string, assetId string) (*models.FairLaunchMintedInfo, error) {
+	var fairLaunchMintedInfo models.FairLaunchMintedInfo
+	err := middleware.DB.Where("state > ? AND username = ? AND asset_id = ?", models.FairLaunchMintedStateFail, username, assetId).Order("minted_set_time").First(&fairLaunchMintedInfo).Error
+	if err != nil {
+		return nil, err
+	}
+	return &fairLaunchMintedInfo, nil
+}
+
 // FairLaunchInventoryInfo
 
 func (f *FairLaunchStore) CreateFairLaunchInventoryInfo(fairLaunchInventoryInfo *models.FairLaunchInventoryInfo) error {
