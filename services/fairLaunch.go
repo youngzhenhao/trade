@@ -2728,3 +2728,28 @@ func RefundBlockFairLaunchMintedInfos() (missionIds []int, err error) {
 	}
 	return
 }
+
+func GetFairLaunchMintedInfosWhoseUsernameIsNull() (*[]models.FairLaunchMintedInfo, error) {
+	return btldb.ReadFairLaunchMintedInfosWhoseUsernameIsNull()
+}
+
+func UpdateFairLaunchMintedInfosWhoseUsernameIsNull() error {
+	fairLaunchMintedInfos, err := GetFairLaunchMintedInfosWhoseUsernameIsNull()
+	if err != nil {
+		return utils.AppendErrorInfo(err, "GetFairLaunchMintedInfosWhoseUsernameIsNull")
+	}
+	for i, fairLaunchMintedInfo := range *fairLaunchMintedInfos {
+		var username string
+		username, err = IdToName(fairLaunchMintedInfo.UserID)
+		if err != nil {
+			continue
+		}
+		(*fairLaunchMintedInfos)[i].Username = username
+	}
+	return btldb.UpdateFairLaunchMintedInfos(fairLaunchMintedInfos)
+}
+
+func GetUserFirstFairLaunchMintedInfosByUserIdSlice(userIdSlice []int) (*map[int]models.FairLaunchMintedInfo, error) {
+
+	return nil, nil
+}

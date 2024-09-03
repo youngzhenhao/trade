@@ -107,6 +107,10 @@ func UpdateFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInf
 	return middleware.DB.Save(fairLaunchMintedInfo).Error
 }
 
+func UpdateFairLaunchMintedInfos(fairLaunchMintedInfos *[]models.FairLaunchMintedInfo) error {
+	return middleware.DB.Save(fairLaunchMintedInfos).Error
+}
+
 func (f *FairLaunchStore) DeleteFairLaunchMintedInfo(id uint) error {
 	var fairLaunchMintedInfo models.FairLaunchMintedInfo
 	return f.DB.Delete(&fairLaunchMintedInfo, id).Error
@@ -131,6 +135,15 @@ func ReadFairLaunchMintedInfoWhoseProcessNumberIsMoreThanTenThousand() (*[]model
 	err := middleware.DB.Where("state BETWEEN ? AND ? AND process_number > ?", models.FairLaunchMintedStateNoPay, models.FairLaunchMintedStateSentPending, 10000).Find(&fairLaunchMintedInfos).Error
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "Read fairLaunchMintedInfos")
+	}
+	return &fairLaunchMintedInfos, nil
+}
+
+func ReadFairLaunchMintedInfosWhoseUsernameIsNull() (*[]models.FairLaunchMintedInfo, error) {
+	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
+	err := middleware.DB.Where("username = ?", "").Find(&fairLaunchMintedInfos).Error
+	if err != nil {
+		return nil, err
 	}
 	return &fairLaunchMintedInfos, nil
 }
