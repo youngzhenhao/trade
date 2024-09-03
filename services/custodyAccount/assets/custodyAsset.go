@@ -217,7 +217,7 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 				Mission: &outside,
 			},
 		},
-		AssetID:     string(bt.DecodePayReq.AssetId),
+		AssetID:     assetId,
 		TotalAmount: int64(bt.DecodePayReq.Amount),
 		err:         []chan error{bt.err},
 	}

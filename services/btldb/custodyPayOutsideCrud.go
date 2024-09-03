@@ -22,6 +22,12 @@ func ReadPayOutside(id uint) (*models.PayOutside, error) {
 	return &pay, err
 }
 
+func LoadPendingOutsides() (*[]models.PayOutside, error) {
+	var pay []models.PayOutside
+	err := middleware.DB.Where("status =?", models.PayOutsideStatusPending).Find(&pay).Error
+	return &pay, err
+}
+
 // UpdatePayOutside updates an existing payOutside
 func UpdatePayOutside(pay *models.PayOutside) error {
 	payOutsideMutex.Lock()

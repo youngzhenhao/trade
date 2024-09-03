@@ -24,7 +24,7 @@ func (s *AssetOutsideSever) Start() {
 }
 func (s *AssetOutsideSever) runServer() {
 	for {
-		time.Sleep(60 * time.Second)
+		time.Sleep(5 * time.Second)
 		//获取可用资产列表
 		assets, err := rpc.ListAssets()
 		if err != nil {
@@ -33,7 +33,8 @@ func (s *AssetOutsideSever) runServer() {
 		}
 		list := make(map[string]uint64)
 		for _, asset := range assets.Assets {
-			list[string(asset.AssetGenesis.AssetId)] += asset.Amount
+			assetId := hex.EncodeToString(asset.AssetGenesis.AssetId)
+			list[assetId] += asset.Amount
 		}
 		firstAssetID := ""
 		for {
@@ -63,6 +64,9 @@ func (s *AssetOutsideSever) runServer() {
 			err = s.payToOutside(mission)
 			if err == nil {
 				btlLog.CUST.Info("payToOutside success: id=%v,amount=%v", mission.AssetID, mission.TotalAmount)
+			}
+			if err != nil {
+				s.Queue.addNewPkg(mission)
 			}
 			//返回错误信息
 			for index, _ := range mission.err {
@@ -117,7 +121,9 @@ func (s *AssetOutsideSever) payToOutside(mission *OutsideMission) error {
 		if err != nil {
 			continue
 		}
+
 		balance.State = models.STATE_SUCCESS
+		balance.PaymentHash = &txId
 		err = btldb.UpdateBalance(balance)
 		if err != nil {
 			btlLog.CUST.Error("payToOutside db error")
@@ -126,7 +132,22 @@ func (s *AssetOutsideSever) payToOutside(mission *OutsideMission) error {
 	return nil
 }
 func (s *AssetOutsideSever) LoadMission() {
-
+	outsides, err := btldb.LoadPendingOutsides()
+	if err != nil {
+		return
+	}
+	for index, outside := range *outsides {
+		m := OutsideMission{
+			AddrTarget: []*target{
+				{
+					Mission: &(*outsides)[index],
+				},
+			},
+			AssetID:     outside.AssetId,
+			TotalAmount: int64(outside.Amount),
+		}
+		OutsideSever.Queue.addNewPkg(&m)
+	}
 }
 
 // AssetOutsideUniqueQueue 构建一个外部支付任务队列
