@@ -2,6 +2,7 @@ package task
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"reflect"
 	"time"
@@ -30,6 +31,7 @@ func LoadJobs() ([]Job, error) {
 	}
 	for _, job := range jobs {
 		fn := getFunction(job.Package, job.FunctionName)
+		fmt.Println(job.FunctionName)
 		if fn.IsValid() {
 			taskFunc := func() {
 				fn.Call(nil)

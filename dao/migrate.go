@@ -124,5 +124,8 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.PayOutsideTx{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.AwardInventory{}); err != nil {
+		return err
+	}
 	return err
 }

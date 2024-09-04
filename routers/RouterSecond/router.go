@@ -7,7 +7,8 @@ import (
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
-	addrReceive := r.Group("/award")
-	addrReceive.POST("/PutInSatoshiAward", SecondHander.PutInSatoshiAward)
+	award := r.Group("/award")
+	award.POST("/PutInSatoshiAward", SecondHander.PutInSatoshiAward)
+	award.POST("/PutAssetAward", SecondHander.PutAssetAward)
 	return r
 }

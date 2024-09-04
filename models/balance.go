@@ -31,6 +31,7 @@ const (
 	BillTypeAssetMintedSend             = 3
 	BILL_TYPE_BACK_FEE                  = 4
 	BillTypeAwardSat                    = 5
+	BillTypeAwardAsset                  = 6
 )
 
 type BalanceAway int16

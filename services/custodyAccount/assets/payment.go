@@ -2,6 +2,9 @@ package assets
 
 import (
 	"encoding/hex"
+	"errors"
+	"fmt"
+	"gorm.io/gorm"
 	"time"
 	"trade/btlLog"
 	"trade/models"
@@ -193,7 +196,7 @@ func (q *AssetOutsideUniqueQueue) size() int {
 	return len(q.items)
 }
 
-// TODO: AssetInSideSever 资产内部支付转账服务
+// AssetInSideSever  TODO:  资产内部支付转账服务
 type AssetInSideSever struct {
 	Queue *AssetInsideUniqueQueue
 }
@@ -220,29 +223,91 @@ func (s *AssetInSideSever) runServer() {
 		//处理
 		var err error
 		err = s.payToInside(mission)
-		if err != nil {
-			mission.insideMission.Status = models.PayInsideStatusFailed
-		} else {
-			mission.insideMission.Status = models.PayInsideStatusSuccess
-			btlLog.CUST.Info("inside transfer success: id=%v,amount=%v", mission.insideMission.ID, mission.insideMission.GasFee)
-		}
 		select {
 		case mission.err <- err:
 		default:
 		}
-		err = btldb.UpdatePayInside(mission.insideMission)
-		if err != nil {
-			btlLog.CUST.Error("更新内部转账记录失败, mission_id:%v，error:%v", mission.insideMission.ID, err)
-		}
-
 	}
 }
-func (s *AssetInSideSever) payToInside(mission *isInsideMission) error {
+func (s *AssetInSideSever) NewMission(mission *isInsideMission) bool {
+	return s.Queue.addNewPkg(mission)
+}
 
-	return nil
+func (s *AssetInSideSever) payToInside(mission *isInsideMission) error {
+	switch mission.insideMission.PayType {
+	case models.PayInsideByAddress:
+		receiveAcc, _ := btldb.ReadAccountByUserId(mission.insideMission.ReceiveUserId)
+		receiveBalance, err := btldb.GetAccountBalanceByGroup(receiveAcc.ID, mission.insideMission.AssetType)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return models.ReadDbErr
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			receiveBalance = &models.AccountBalance{
+				AccountID: receiveAcc.ID,
+				AssetId:   mission.insideMission.AssetType,
+				Amount:    float64(mission.insideMission.GasFee),
+			}
+		} else {
+			receiveBalance.Amount += float64(mission.insideMission.GasFee)
+		}
+		err = btldb.UpdateAccountBalance(receiveBalance)
+		if err != nil {
+			return models.ReadDbErr
+		}
+		bill := models.Balance{
+			AccountId:   receiveAcc.ID,
+			BillType:    models.BillTypeAssetTransfer,
+			Away:        models.AWAY_IN,
+			Amount:      float64(mission.insideMission.GasFee),
+			Unit:        models.UNIT_ASSET_NORMAL,
+			ServerFee:   0,
+			AssetId:     &mission.insideMission.AssetType,
+			Invoice:     mission.insideMission.PayReq,
+			PaymentHash: nil,
+			State:       models.STATE_SUCCESS,
+		}
+		err = btldb.CreateBalance(&bill)
+		if err != nil {
+			return models.ReadDbErr
+		}
+		mission.insideMission.Status = models.PayInsideStatusSuccess
+		mission.insideMission.BalanceId = bill.ID
+		err = btldb.UpdatePayInside(mission.insideMission)
+		if err != nil {
+			return models.ReadDbErr
+		}
+		return nil
+	default:
+		return fmt.Errorf("错误的内部转账类型:%v", mission.insideMission.PayType)
+	}
 }
 func (s *AssetInSideSever) LoadMission() {
-
+	//获取所有待处理任务
+	params := btldb.QueryParams{
+		"Status": models.PayInsideStatusPending,
+	}
+	a, err := btldb.GenericQuery(&models.PayInside{}, params)
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+		return
+	}
+	//	处理转账任务
+	for _, v := range a {
+		if v.AssetType != "00" {
+			i, err := btldb.GetInvoiceByReq(*v.PayReq)
+			if err != nil {
+				btlLog.CUST.Error("pollPayInsideMission find invoice error:%v", err)
+				continue
+			}
+			mission := isInsideMission{
+				isInside:      true,
+				insideMission: v,
+				insideInvoice: i,
+			}
+			//推送任务
+			s.NewMission(&mission)
+		}
+	}
 }
 
 // AssetInsideUniqueQueue 构建一个内部支付任务队列

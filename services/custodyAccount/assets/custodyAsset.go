@@ -153,19 +153,45 @@ func (e *AssetEvent) SendPayment(payRequest cBase.PayPacket) error {
 }
 
 func (e *AssetEvent) payToInside(bt *AssetPacket) {
+	AssetId := hex.EncodeToString(bt.DecodePayReq.AssetId)
+	receiveBalance, err := btldb.GetAccountBalanceByGroup(e.UserInfo.Account.ID, AssetId)
+	if err != nil {
+		btlLog.CUST.Error("err:%v", models.ReadDbErr)
+	}
+	receiveBalance.Amount -= float64(bt.DecodePayReq.Amount)
+	err = btldb.UpdateAccountBalance(receiveBalance)
+	if err != nil {
+		btlLog.CUST.Error("err:%v", models.ReadDbErr)
+	}
+	bill := models.Balance{
+		AccountId:   e.UserInfo.Account.ID,
+		BillType:    models.BillTypeAssetTransfer,
+		Away:        models.AWAY_OUT,
+		Amount:      float64(bt.DecodePayReq.Amount),
+		Unit:        models.UNIT_ASSET_NORMAL,
+		ServerFee:   0,
+		AssetId:     &AssetId,
+		Invoice:     &bt.PayReq,
+		PaymentHash: nil,
+		State:       models.STATE_SUCCESS,
+	}
+	err = btldb.CreateBalance(&bill)
+	if err != nil {
+		btlLog.CUST.Error("err:%v", models.ReadDbErr)
+	}
 	//创建内部转账任务
 	payInside := models.PayInside{
 		PayUserId:     e.UserInfo.User.ID,
-		GasFee:        1000,
+		GasFee:        bt.DecodePayReq.Amount,
 		ServeFee:      uint64(cBase.ServerFee),
 		ReceiveUserId: bt.isInsideMission.insideInvoice.UserID,
 		PayType:       models.PayInsideByAddress,
-		AssetType:     string(bt.DecodePayReq.AssetId),
+		AssetType:     AssetId,
 		PayReq:        &bt.PayReq,
 		Status:        models.PayInsideStatusPending,
 	}
 	//写入数据库
-	err := btldb.CreatePayInside(&payInside)
+	err = btldb.CreatePayInside(&payInside)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		bt.err <- err

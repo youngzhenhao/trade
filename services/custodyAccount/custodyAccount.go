@@ -488,7 +488,7 @@ func PollPayment() {
 	}
 	if len(a) > 0 {
 		for _, v := range a {
-			if v.Invoice == nil {
+			if v.Invoice == nil || *v.AssetId != "00" || v.PaymentHash == nil {
 				continue
 			}
 			temp, err := rpc.PaymentTrack(*v.PaymentHash)
@@ -509,7 +509,6 @@ func PollPayment() {
 					btlLog.CUST.Warning(err.Error())
 				}
 			}
-
 		}
 	}
 }
