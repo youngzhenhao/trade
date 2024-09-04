@@ -7,8 +7,10 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"trade/btlLog"
+	"trade/models"
 	"trade/services/btldb"
 	"trade/services/custodyAccount"
+	"trade/services/custodyAccount/assets"
 )
 
 // CreateCustodyAccount 创建托管账户
@@ -231,3 +233,18 @@ func LookupInvoice(c *gin.Context) {
 
 // LookupPayment 查看支付记录
 func LookupPayment(c *gin.Context) {}
+
+func QueryAssets(c *gin.Context) {
+	userName := c.MustGet("username").(string)
+	e, err := assets.NewAssetEvent(userName, "")
+	if err != nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
+		return
+	}
+	balance, err := e.GetBalances()
+	if err != nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
+		return
+	}
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", balance))
+}

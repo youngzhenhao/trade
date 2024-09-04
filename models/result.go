@@ -196,19 +196,32 @@ func (e ErrCode) Error() string {
 }
 
 func MakeJsonErrorResult(code ErrCode, errorString string, data any) string {
-	jsonResult := JsonResult{
+	jsr := JsonResult{
 		Error: errorString,
 		Code:  code,
 		Data:  data,
 	}
 	if errors.Is(code, SUCCESS) {
-		jsonResult.Success = true
+		jsr.Success = true
 	} else {
-		jsonResult.Success = false
+		jsr.Success = false
 	}
-	jsonStr, err := json.Marshal(jsonResult)
+	jstr, err := json.Marshal(jsr)
 	if err != nil {
 		return MakeJsonErrorResult(DefaultErr, err.Error(), nil)
 	}
-	return string(jsonStr)
+	return string(jstr)
+}
+func MakeJsonErrorResultForHttp(code ErrCode, errorString string, data any) *JsonResult {
+	jsr := JsonResult{
+		Error: errorString,
+		Code:  code,
+		Data:  data,
+	}
+	if errors.Is(code, SUCCESS) {
+		jsr.Success = true
+	} else {
+		jsr.Success = false
+	}
+	return &jsr
 }
