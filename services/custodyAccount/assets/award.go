@@ -12,7 +12,7 @@ import (
 
 func PutInAward(account *models.Account, AssetId string, amount int, memo *string) error {
 	var in models.AwardInventory
-	err := middleware.DB.Where("assetId =? ", AssetId).First(&in).Error
+	err := middleware.DB.Where("asset_Id =? ", AssetId).First(&in).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		btlLog.CUST.Error("err:%v", models.ReadDbErr)
 	}
