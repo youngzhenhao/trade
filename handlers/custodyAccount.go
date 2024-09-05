@@ -1,16 +1,21 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"trade/btlLog"
 	"trade/models"
 	"trade/services/btldb"
 	"trade/services/custodyAccount"
 	"trade/services/custodyAccount/assets"
+	"trade/services/custodyAccount/custodyBase"
 )
 
 // CreateCustodyAccount 创建托管账户
@@ -234,6 +239,12 @@ func LookupInvoice(c *gin.Context) {
 // LookupPayment 查看支付记录
 func LookupPayment(c *gin.Context) {}
 
+type AssetBalance struct {
+	AssetId string `json:"assetId"`
+	Amount  int64  `json:"amount"`
+	Price   int64  `json:"prices"`
+}
+
 func QueryAssets(c *gin.Context) {
 	userName := c.MustGet("username").(string)
 	e, err := assets.NewAssetEvent(userName, "")
@@ -246,5 +257,57 @@ func QueryAssets(c *gin.Context) {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
-	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", balance))
+	request := DealBalance(balance)
+	if request == nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", balance))
+	} else {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", request))
+	}
+}
+
+func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
+	baseURL := "http://api.nostr.microlinktoken.com/realtime/one_price"
+	queryParams := url.Values{}
+	t := make(map[string]int64)
+	for _, v := range b {
+		queryParams.Add("ids", v.AssetId)
+		queryParams.Add("numbers", strconv.FormatInt(v.Amount, 10))
+		t[v.AssetId] = v.Amount
+	}
+	reqURL := baseURL + "?" + queryParams.Encode()
+	resp, err := http.Get(reqURL)
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return nil
+	}
+	type temp struct {
+		AssetsId string `json:"ids"`
+		Price    int64  `json:"prices"`
+	}
+	r := struct {
+		Success bool           `json:"success"`
+		Error   string         `json:"error"`
+		Code    models.ErrCode `json:"code"`
+		Data    temp           `json:"data"`
+	}{}
+	err = json.Unmarshal(body, &r)
+	if err != nil {
+		return nil
+	}
+	var list []AssetBalance
+	for _, v := range b {
+		list = append(list, AssetBalance{
+			AssetId: v.AssetId,
+			Amount:  t[v.AssetId],
+			Price:   r.Data.Price,
+		})
+	}
+	return &list
 }
