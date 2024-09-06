@@ -287,7 +287,6 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 		btlLog.CUST.Error("Error reading response body:", err)
 		return nil
 	}
-	fmt.Println(string(body))
 	type temp struct {
 		AssetsId string  `json:"id"`
 		Price    float64 `json:"price"`
@@ -306,14 +305,13 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 		btlLog.CUST.Error(err.Error())
 		return nil
 	}
-	fmt.Println(r)
 	var list []AssetBalance
 	for _, v := range r.Data.List {
 		list = append(list, AssetBalance{
 			AssetId: v.AssetsId,
 			Amount:  t[v.AssetsId],
-			Price:   v.Price,
-			//Price: 3000,
+			//Price:   v.Price,
+			Price: 0,
 		})
 	}
 	return &list
