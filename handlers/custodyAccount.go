@@ -240,9 +240,9 @@ func LookupInvoice(c *gin.Context) {
 func LookupPayment(c *gin.Context) {}
 
 type AssetBalance struct {
-	AssetId string `json:"assetId"`
-	Amount  int64  `json:"amount"`
-	Price   int64  `json:"prices"`
+	AssetId string  `json:"assetId"`
+	Amount  int64   `json:"amount"`
+	Price   float64 `json:"prices"`
 }
 
 func QueryAssets(c *gin.Context) {
@@ -289,8 +289,8 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 	}
 	fmt.Println(string(body))
 	type temp struct {
-		AssetsId string `json:"ids"`
-		Price    int64  `json:"prices"`
+		AssetsId string  `json:"id"`
+		Price    float64 `json:"price"`
 	}
 	type List struct {
 		List []temp `json:"list"`
