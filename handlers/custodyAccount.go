@@ -277,14 +277,14 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 	reqURL := baseURL + "?" + queryParams.Encode()
 	resp, err := http.Get(reqURL)
 	if err != nil {
-		fmt.Println("Error making request:", err)
+		btlLog.CUST.Error("Error making request:", err)
 		return nil
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
+		btlLog.CUST.Error("Error reading response body:", err)
 		return nil
 	}
 	type temp struct {
@@ -299,6 +299,7 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 	}{}
 	err = json.Unmarshal(body, &r)
 	if err != nil {
+		btlLog.CUST.Error(err.Error())
 		return nil
 	}
 	var list []AssetBalance
