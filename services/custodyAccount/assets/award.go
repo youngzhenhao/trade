@@ -27,14 +27,25 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 	}
 
 	receiveBalance, err := btldb.GetAccountBalanceByGroup(account.ID, AssetId)
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		btlLog.CUST.Error("err:%v", models.ReadDbErr)
 	}
-	receiveBalance.Amount += float64(amount)
-
-	err = btldb.UpdateAccountBalance(receiveBalance)
-	if err != nil {
-		btlLog.CUST.Error("err:%v", models.ReadDbErr)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		r := models.AccountBalance{
+			AccountID: account.ID,
+			AssetId:   AssetId,
+			Amount:    float64(amount),
+		}
+		err = btldb.UpdateAccountBalance(&r)
+		if err != nil {
+			btlLog.CUST.Error("err:%v", models.ReadDbErr)
+		}
+	} else {
+		receiveBalance.Amount += float64(amount)
+		err = btldb.UpdateAccountBalance(receiveBalance)
+		if err != nil {
+			btlLog.CUST.Error("err:%v", models.ReadDbErr)
+		}
 	}
 
 	// Build a database storage object

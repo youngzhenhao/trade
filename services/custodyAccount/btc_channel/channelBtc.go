@@ -109,6 +109,31 @@ func (e *BtcChannelEvent) ApplyPayReq(Request cBase.PayReqApplyRequest) (cBase.P
 	}, nil
 }
 
+func (e *BtcChannelEvent) QueryPayReq() ([]InvoiceResponce, error) {
+	params := btldb.QueryParams{
+		"UserID":  e.UserInfo.User.ID,
+		"AssetId": "00",
+	}
+	a, err := btldb.GenericQuery(&models.Invoice{}, params)
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+		return nil, err
+	}
+	if len(a) > 0 {
+		var invoices []InvoiceResponce
+		for j := len(a) - 1; j >= 0; j-- {
+			var i InvoiceResponce
+			i.Invoice = a[j].Invoice
+			i.AssetId = a[j].AssetId
+			i.Amount = int64(a[j].Amount)
+			i.Status = a[j].Status
+			invoices = append(invoices, i)
+		}
+		return invoices, nil
+	}
+	return nil, nil
+}
+
 func (e *BtcChannelEvent) SendPayment(payRequest cBase.PayPacket) error {
 	var bt *BtcPacket
 	var ok bool

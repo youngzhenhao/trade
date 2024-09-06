@@ -115,3 +115,10 @@ type PaymentResponse struct {
 	State     models.BalanceState `json:"state"`
 	Fee       uint64              `json:"fee"`
 }
+
+type InvoiceResponce struct {
+	Invoice string               `json:"invoice"`
+	AssetId string               `json:"asset_id"`
+	Amount  int64                `json:"amount"`
+	Status  models.InvoiceStatus `json:"status"`
+}
