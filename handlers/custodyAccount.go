@@ -296,10 +296,10 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 		List []temp `json:"list"`
 	}
 	r := struct {
-		Success bool           `json:"success"`
-		Error   string         `json:"error"`
-		Code    models.ErrCode `json:"code"`
-		Data    List           `json:"list"`
+		Success bool   `json:"success"`
+		Error   string `json:"error"`
+		Code    int    `json:"code"`
+		Data    List   `json:"data"`
 	}{}
 	err = json.Unmarshal(body, &r)
 	if err != nil {
