@@ -308,7 +308,7 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 	}
 	fmt.Println(r)
 	var list []AssetBalance
-	for _, v := range r.Data {
+	for _, v := range r.Data.List {
 		list = append(list, AssetBalance{
 			AssetId: v.AssetsId,
 			Amount:  t[v.AssetsId],
