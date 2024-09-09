@@ -2,13 +2,16 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
+	"trade/config"
 	"trade/handlers"
 )
 
 func SetupLogFileUploadRouter(router *gin.Engine) *gin.Engine {
-	logFileUpload := router.Group("/log_file_upload")
+	authorized := router.Group("/log_file_upload", gin.BasicAuth(gin.Accounts{
+		config.GetLoadConfig().AdminUser.Username: config.GetLoadConfig().AdminUser.Password,
+	}))
 	{
-		logFileUpload.POST("/upload", handlers.UploadLogFile)
+		authorized.POST("/upload", handlers.UploadLogFile)
 	}
 	return router
 }
