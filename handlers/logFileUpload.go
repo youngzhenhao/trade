@@ -23,6 +23,15 @@ func UploadLogFile(c *gin.Context) {
 		})
 		return
 	}
+	if file.Size > 15*1024*1024 {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   errors.New("file too large, its size is more than 15MB").Error(),
+			Code:    models.OsGetPwdErr,
+			Data:    nil,
+		})
+		return
+	}
 	deviceId := c.PostForm("device_id")
 	if deviceId == "" {
 		c.JSON(http.StatusOK, models.JsonResult{
