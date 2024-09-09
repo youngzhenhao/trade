@@ -1,9 +1,10 @@
-package assets
+package custodyAssets
 
 import (
 	"context"
 	"github.com/lightninglabs/taproot-assets/taprpc"
 	"strconv"
+	"trade/btlLog"
 	"trade/config"
 	"trade/utils"
 )
@@ -30,13 +31,21 @@ func (s *SubscribeAddressServer) runServer() {
 	if err != nil {
 		return
 	}
+	btlLog.CUST.Info("AddressServer start")
 	for {
 		event, err := stream.Recv()
 		if err != nil {
 			return
 		}
-		if event.Status == taprpc.AddrEventStatus_ADDR_EVENT_STATUS_COMPLETED {
 
+		if event != nil {
+			btlLog.CUST.Info("%v", event)
+			switch event.Status {
+			case taprpc.AddrEventStatus_ADDR_EVENT_STATUS_COMPLETED:
+
+			default:
+
+			}
 		}
 	}
 }
