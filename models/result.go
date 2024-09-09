@@ -163,6 +163,12 @@ const (
 	CreateFairLaunchIncomeOfServerPaySendReservedFeeErr
 	GetAssetBalanceByUserIdAndAssetIdErr
 	GetAssetTransferByTxidErr
+	FormFileErr
+	DeviceIdIsNullErr
+	OsGetPwdErr
+	SaveUploadedFileErr
+	CreateLogFileUploadErr
+	FileSizeTooLargeErr
 )
 
 // Err type:CustodyAccount
