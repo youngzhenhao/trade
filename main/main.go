@@ -96,7 +96,7 @@ func main() {
 	}
 	localPort := loadConfig.GinConfig.LocalPort
 	if localPort == "" {
-		port = "10080"
+		localPort = "10080"
 	}
 	utils.PrintTitle(true, "Run local Router")
 	go func() {
@@ -106,17 +106,13 @@ func main() {
 		}
 	}()
 	utils.PrintTitle(true, "Run Router")
-	if err = r.Run(fmt.Sprintf("%s:%s", bind, port)); err != nil {
-		log.Println(err)
-		return
-	}
 	// Create a channel to listen to interrupt signals
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 	// Start HTTP server in a goroutine
 	go func() {
-		if err = r.Run(fmt.Sprintf(":%s", port)); err != nil {
-			log.Printf("Failed to start server: %v", err)
+		if err = r.Run(fmt.Sprintf("%s:%s", bind, port)); err != nil {
+			log.Println(err)
 			return
 		}
 	}()
