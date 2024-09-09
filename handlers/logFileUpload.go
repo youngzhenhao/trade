@@ -33,6 +33,7 @@ func UploadLogFile(c *gin.Context) {
 		})
 		return
 	}
+	info := c.PostForm("info")
 	var pwd string
 	pwd, err = os.Getwd()
 	if err != nil {
@@ -61,6 +62,7 @@ func UploadLogFile(c *gin.Context) {
 		DeviceId:       deviceId,
 		OriginFileName: file.Filename,
 		FileSavePath:   dst,
+		Info:           info,
 	})
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{

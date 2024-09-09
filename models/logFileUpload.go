@@ -7,4 +7,5 @@ type LogFileUpload struct {
 	DeviceId       string `json:"device_id"`
 	OriginFileName string `json:"origin_file_name"`
 	FileSavePath   string `json:"file_save_path"`
+	Info           string `json:"info"`
 }
