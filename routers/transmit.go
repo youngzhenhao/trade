@@ -9,6 +9,9 @@ import (
 func SetupTransmitRouter(router *gin.Engine) *gin.Engine {
 
 	transmit := router.Group("/TradeTransmit")
+	{
+		transmit.POST("/login", handlers.LoginHandler)
+	}
 	// A routing group that requires authentication
 	custody := transmit.Group("/custodyAccount")
 	custody.Use(middleware.AuthMiddleware())
