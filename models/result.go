@@ -168,6 +168,7 @@ const (
 	OsGetPwdErr
 	SaveUploadedFileErr
 	CreateLogFileUploadErr
+	FileSizeTooLargeErr
 )
 
 // Err type:CustodyAccount

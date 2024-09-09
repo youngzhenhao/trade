@@ -27,7 +27,7 @@ func UploadLogFile(c *gin.Context) {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   errors.New("file too large, its size is more than 15MB").Error(),
-			Code:    models.OsGetPwdErr,
+			Code:    models.FileSizeTooLargeErr,
 			Data:    nil,
 		})
 		return
