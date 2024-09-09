@@ -240,9 +240,9 @@ func LookupInvoice(c *gin.Context) {
 func LookupPayment(c *gin.Context) {}
 
 type AssetBalance struct {
-	AssetId string `json:"assetId"`
-	Amount  int64  `json:"amount"`
-	Price   int64  `json:"prices"`
+	AssetId string  `json:"assetId"`
+	Amount  int64   `json:"amount"`
+	Price   float64 `json:"prices"`
 }
 
 func QueryAssets(c *gin.Context) {
@@ -288,14 +288,17 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 		return nil
 	}
 	type temp struct {
-		AssetsId string `json:"ids"`
-		Price    int64  `json:"prices"`
+		AssetsId string  `json:"id"`
+		Price    float64 `json:"price"`
+	}
+	type List struct {
+		List []temp `json:"list"`
 	}
 	r := struct {
-		Success bool           `json:"success"`
-		Error   string         `json:"error"`
-		Code    models.ErrCode `json:"code"`
-		Data    temp           `json:"data"`
+		Success bool   `json:"success"`
+		Error   string `json:"error"`
+		Code    int    `json:"code"`
+		Data    List   `json:"data"`
 	}{}
 	err = json.Unmarshal(body, &r)
 	if err != nil {
@@ -303,11 +306,12 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 		return nil
 	}
 	var list []AssetBalance
-	for _, v := range b {
+	for _, v := range r.Data.List {
 		list = append(list, AssetBalance{
-			AssetId: v.AssetId,
-			Amount:  t[v.AssetId],
-			Price:   r.Data.Price,
+			AssetId: v.AssetsId,
+			Amount:  t[v.AssetsId],
+			//Price:   v.Price,
+			Price: 0,
 		})
 	}
 	return &list
