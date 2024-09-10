@@ -1,4 +1,4 @@
-package assets
+package custodyAssets
 
 import (
 	"context"

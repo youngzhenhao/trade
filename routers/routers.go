@@ -89,6 +89,7 @@ func SetupRouter() *gin.Engine {
 		SetupAccountAssetRouter(r)
 	}
 	SetupWsRouter(r)
+	SetupTransmitRouter(r)
 	return r
 
 }

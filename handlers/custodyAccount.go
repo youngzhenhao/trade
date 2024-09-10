@@ -14,7 +14,7 @@ import (
 	"trade/models"
 	"trade/services/btldb"
 	"trade/services/custodyAccount"
-	"trade/services/custodyAccount/assets"
+	"trade/services/custodyAccount/custodyAssets"
 	"trade/services/custodyAccount/custodyBase"
 )
 
@@ -247,7 +247,7 @@ type AssetBalance struct {
 
 func QueryAssets(c *gin.Context) {
 	userName := c.MustGet("username").(string)
-	e, err := assets.NewAssetEvent(userName, "")
+	e, err := custodyAssets.NewAssetEvent(userName, "")
 	if err != nil {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return

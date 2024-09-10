@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"trade/btlLog"
 	"trade/models"
-	"trade/services/custodyAccount/assets"
 	"trade/services/custodyAccount/btc_channel"
+	"trade/services/custodyAccount/custodyAssets"
 )
 
 type AwardRequest struct {
@@ -59,13 +59,13 @@ func PutAssetAward(c *gin.Context) {
 		return
 	}
 	btlLog.CUST.Info("%v", creds)
-	e, err := assets.NewAssetEvent(creds.Username, "")
+	e, err := custodyAssets.NewAssetEvent(creds.Username, "")
 	if err != nil {
 		btlLog.CUST.Error("%v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	err = assets.PutInAward(e.UserInfo.Account, creds.AssetId, creds.Amount, &creds.Memo)
+	err = custodyAssets.PutInAward(e.UserInfo.Account, creds.AssetId, creds.Amount, &creds.Memo)
 	if err != nil {
 		btlLog.CUST.Error("%v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
