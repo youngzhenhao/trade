@@ -169,6 +169,7 @@ const (
 	SaveUploadedFileErr
 	CreateLogFileUploadErr
 	FileSizeTooLargeErr
+	GetAccountAssetBalanceExtendsByAssetIdErr
 )
 
 // Err type:CustodyAccount
