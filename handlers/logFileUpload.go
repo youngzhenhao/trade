@@ -113,7 +113,7 @@ func GetAllLogFiles(c *gin.Context) {
 }
 
 func DownloadLogFileById(c *gin.Context) {
-	idStr := c.Query("id")
+	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
