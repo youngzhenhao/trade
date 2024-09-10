@@ -170,6 +170,11 @@ const (
 	CreateLogFileUploadErr
 	FileSizeTooLargeErr
 	GetAccountAssetBalanceExtendsByAssetIdErr
+	BackAmountErr
+	GetAllLogFilesErr
+	GetFileUploadErr
+	OsOpenFileErr
+	IoCopyFIleErr
 )
 
 // Err type:CustodyAccount

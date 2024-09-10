@@ -2836,3 +2836,27 @@ func FairLaunchMintedInfoToFairLaunchMintedInfoSimplified(fairLaunchMintedInfo *
 		State:           fairLaunchMintedInfo.State,
 	}
 }
+
+func BackAmountForFairLaunchMintedInfos(fairLaunchMintedInfos *[]models.FairLaunchMintedInfo) (*[]models.JsonResult, error) {
+	var jsonResults []models.JsonResult
+	for _, fairLaunchMintedInfo := range *fairLaunchMintedInfos {
+		paidId := fairLaunchMintedInfo.MintFeePaidID
+		backAmountId, err := custodyAccount.BackAmount(uint(paidId))
+		if err != nil {
+			jsonResults = append(jsonResults, models.JsonResult{
+				Success: false,
+				Error:   "fairLaunchMintedInfoId:" + strconv.Itoa(int(fairLaunchMintedInfo.ID)) + ";" + "paidId:" + strconv.Itoa(paidId) + ";" + (err.Error()),
+				Code:    models.BackAmountErr,
+				Data:    backAmountId,
+			})
+		} else {
+			jsonResults = append(jsonResults, models.JsonResult{
+				Success: true,
+				Error:   "",
+				Code:    models.SUCCESS,
+				Data:    backAmountId,
+			})
+		}
+	}
+	return &jsonResults, nil
+}
