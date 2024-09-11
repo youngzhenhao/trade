@@ -1,9 +1,7 @@
 package routers
 
 import (
-	"encoding/base64"
 	"github.com/gin-gonic/gin"
-	"trade/config"
 	"trade/handlers"
 	"trade/middleware"
 )
@@ -36,11 +34,5 @@ func SetupFairLaunchRouter(router *gin.Engine) *gin.Engine {
 			//query.GET("/inventory_mint_number/:asset_id", handlers.GetFairLaunchInventoryMintNumberAssetId)
 		}
 	}
-	username := base64.StdEncoding.EncodeToString([]byte(config.GetLoadConfig().AdminUser.Username))
-	password := base64.StdEncoding.EncodeToString([]byte(config.GetLoadConfig().AdminUser.Password))
-	authorized := router.Group("/fair_launch/auth_op", gin.BasicAuth(gin.Accounts{
-		username: password,
-	}))
-	authorized.POST("/refund", handlers.RefundUserFirstMintByUsernameAndAssetId)
 	return router
 }
