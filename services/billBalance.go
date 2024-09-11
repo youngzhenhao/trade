@@ -27,6 +27,6 @@ func GetBillBalanceAwardAsset() (*[]models.Balance, error) {
 
 func ReadBillBalanceAssetTransferAndAwardAssetByAssetId(assetId string) (*[]models.Balance, error) {
 	var billBalances []models.Balance
-	err := middleware.DB.Where("amount <> ? AND bill_type IN ? AND asset_id = ?", 0, []models.BalanceType{models.BillTypeAssetTransfer, models.BillTypeAwardAsset}, assetId).Find(&billBalances).Error
+	err := middleware.DB.Where("amount <> ? AND bill_type IN ? AND asset_id = ?", 0, []models.BalanceType{models.BillTypeAssetTransfer, models.BillTypeAwardAsset}, assetId).Order("updated_at desc").Find(&billBalances).Error
 	return &billBalances, err
 }
