@@ -78,11 +78,20 @@ func GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAsset(assetId 
 	return accountAssetTransfers, nil
 }
 
+func GetAllAccountAssetTransfersByBillBalanceAssetTransfer(assetId string) (*[]AccountAssetTransfer, error) {
+	billBalances, err := ReadBillBalanceAssetTransferByAssetId(assetId)
+	if err != nil {
+		return nil, err
+	}
+	accountAssetTransfers := BillBalancesToAccountAssetTransfers(billBalances)
+	return accountAssetTransfers, nil
+}
+
 // GetAllAccountAssetTransfersByAssetId
 // @Description: Get all account asset transfers by asset id
 func GetAllAccountAssetTransfersByAssetId(assetId string) (*[]AccountAssetTransfer, error) {
 	if assetId == "00" {
 		return nil, errors.New("invalid asset id")
 	}
-	return GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAsset(assetId)
+	return GetAllAccountAssetTransfersByBillBalanceAssetTransfer(assetId)
 }
