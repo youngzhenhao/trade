@@ -34,12 +34,33 @@ const (
 	BillTypeAwardAsset                  = 6
 )
 
+func (bt BalanceType) String() string {
+	balanceTypeMapString := map[BalanceType]string{
+		BillTypeRecharge:        "BillTypeRecharge",
+		BillTypePayment:         "BillTypePayment",
+		BillTypeAssetTransfer:   "BillTypeAssetTransfer",
+		BillTypeAssetMintedSend: "BillTypeAssetMintedSend",
+		BILL_TYPE_BACK_FEE:      "BILL_TYPE_BACK_FEE",
+		BillTypeAwardSat:        "BillTypeAwardSat",
+		BillTypeAwardAsset:      "BillTypeAwardAsset",
+	}
+	return balanceTypeMapString[bt]
+}
+
 type BalanceAway int16
 
 const (
 	AWAY_IN  BalanceAway = 0
 	AWAY_OUT BalanceAway = 1
 )
+
+func (ba BalanceAway) String() string {
+	balanceAwayMapString := map[BalanceAway]string{
+		AWAY_IN:  "AWAY_IN",
+		AWAY_OUT: "AWAY_OUT",
+	}
+	return balanceAwayMapString[ba]
+}
 
 type BalanceUnit int16
 
@@ -49,6 +70,15 @@ const (
 	UNIT_ASSET_COLLECTIBLE BalanceUnit = 2
 )
 
+func (bu BalanceUnit) String() string {
+	balanceAwayMapString := map[BalanceUnit]string{
+		UNIT_SATOSHIS:          "UNIT_SATOSHIS",
+		UNIT_ASSET_NORMAL:      "UNIT_ASSET_NORMAL",
+		UNIT_ASSET_COLLECTIBLE: "UNIT_ASSET_COLLECTIBLE",
+	}
+	return balanceAwayMapString[bu]
+}
+
 type BalanceState int16
 
 const (
@@ -56,3 +86,12 @@ const (
 	STATE_SUCCESS BalanceState = 1
 	STATE_FAILED  BalanceState = 2
 )
+
+func (bs BalanceState) String() string {
+	balanceStateMapString := map[BalanceState]string{
+		STATE_UNKNOW:  "STATE_UNKNOW",
+		STATE_SUCCESS: "STATE_SUCCESS",
+		STATE_FAILED:  "STATE_FAILED",
+	}
+	return balanceStateMapString[bs]
+}

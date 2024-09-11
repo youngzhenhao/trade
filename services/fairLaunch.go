@@ -2837,6 +2837,9 @@ func FairLaunchMintedInfoToFairLaunchMintedInfoSimplified(fairLaunchMintedInfo *
 	}
 }
 
+// BackAmountForFairLaunchMintedInfos
+// @Description: Refund mint fee to user
+// @dev: Should write log to file
 func BackAmountForFairLaunchMintedInfos(fairLaunchMintedInfos *[]models.FairLaunchMintedInfo) (*[]models.JsonResult, error) {
 	var jsonResults []models.JsonResult
 	for _, fairLaunchMintedInfo := range *fairLaunchMintedInfos {

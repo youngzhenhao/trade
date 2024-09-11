@@ -175,6 +175,7 @@ const (
 	GetFileUploadErr
 	OsOpenFileErr
 	IoCopyFIleErr
+	GetAllAccountAssetTransfersByAssetIdErr
 )
 
 // Err type:CustodyAccount
