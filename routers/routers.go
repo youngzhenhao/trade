@@ -86,7 +86,5 @@ func SetupRouter() *gin.Engine {
 		SetupLogFileUploadRouter(r)
 	}
 	SetupWsRouter(r)
-	SetupTransmitRouter(r)
 	return r
-
 }

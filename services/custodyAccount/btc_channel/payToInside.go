@@ -1,6 +1,7 @@
 package btc_channel
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -20,44 +21,51 @@ type BTCPayInsideSever struct {
 
 var BtcSever BTCPayInsideSever
 
-func (m *BTCPayInsideSever) Start() {
+func (m *BTCPayInsideSever) Start(ctx context.Context) {
 	// Start 启动服务
 	m.Queue = NewUniqueQueue()
 	m.LoadMission()
-	go m.runServer()
+	go m.runServer(ctx)
 }
-func (m *BTCPayInsideSever) runServer() {
+func (m *BTCPayInsideSever) runServer(ctx context.Context) {
 	for {
-		if len(m.Queue.items) == 0 {
-			time.Sleep(5 * time.Second)
-			continue
-		}
-		//取出队首元素
-		mission := m.Queue.getNextPkg()
-		if mission == nil {
-			continue
-		}
-		//处理
-		var err error
-		if mission.insideInvoice.Status != models.InvoiceStatusPending {
-			err = fmt.Errorf("invoice is close")
-		} else {
-			err = m.payToInside(mission)
-		}
-		if err != nil {
-			mission.insideMission.Status = models.PayInsideStatusFailed
-		} else {
-			mission.insideMission.Status = models.PayInsideStatusSuccess
-			CloseInvoice(mission.insideInvoice)
-			btlLog.CUST.Info("inside transfer success: id=%v,amount=%v", mission.insideMission.ID, mission.insideMission.GasFee)
-		}
 		select {
-		case mission.err <- err:
+		case <-ctx.Done():
+			fmt.Println("收到结束信号，退出循环")
+			return
+
 		default:
-		}
-		err = btldb.UpdatePayInside(mission.insideMission)
-		if err != nil {
-			btlLog.CUST.Error("更新内部转账记录失败, mission_id:%v，error:%v", mission.insideMission.ID, err)
+			if len(m.Queue.items) == 0 {
+				time.Sleep(5 * time.Second)
+				continue
+			}
+			//取出队首元素
+			mission := m.Queue.getNextPkg()
+			if mission == nil {
+				continue
+			}
+			//处理
+			var err error
+			if mission.insideInvoice.Status != models.InvoiceStatusPending {
+				err = fmt.Errorf("invoice is close")
+			} else {
+				err = m.payToInside(mission)
+			}
+			if err != nil {
+				mission.insideMission.Status = models.PayInsideStatusFailed
+			} else {
+				mission.insideMission.Status = models.PayInsideStatusSuccess
+				CloseInvoice(mission.insideInvoice)
+				btlLog.CUST.Info("inside transfer success: id=%v,amount=%v", mission.insideMission.ID, mission.insideMission.GasFee)
+			}
+			select {
+			case mission.err <- err:
+			default:
+			}
+			err = btldb.UpdatePayInside(mission.insideMission)
+			if err != nil {
+				btlLog.CUST.Error("更新内部转账记录失败, mission_id:%v，error:%v", mission.insideMission.ID, err)
+			}
 		}
 	}
 }
