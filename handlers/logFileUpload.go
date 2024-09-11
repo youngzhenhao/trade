@@ -104,11 +104,12 @@ func GetAllLogFiles(c *gin.Context) {
 		})
 		return
 	}
+	allDeviceIdMapLogFileUploads := services.LogFileUploadsToDeviceIdMapLogFileUploads(allLogFiles)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
 		Code:    models.SUCCESS,
-		Data:    allLogFiles,
+		Data:    allDeviceIdMapLogFileUploads,
 	})
 }
 
