@@ -17,6 +17,7 @@ type AccountAssetTransfer struct {
 	AssetId       string `json:"asset_id"`
 	Invoice       string `json:"invoice"`
 	Outpoint      string `json:"outpoint"`
+	Time          int    `json:"time"`
 }
 
 func BillBalanceToAccountAssetTransfer(billBalance *models.Balance, username string) *AccountAssetTransfer {
@@ -46,6 +47,7 @@ func BillBalanceToAccountAssetTransfer(billBalance *models.Balance, username str
 		AssetId:       assetId,
 		Invoice:       invoice,
 		Outpoint:      outpoint,
+		Time:          int(billBalance.CreatedAt.Unix()),
 	}
 }
 
