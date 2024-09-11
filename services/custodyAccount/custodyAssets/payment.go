@@ -27,11 +27,15 @@ func (s *AssetOutsideSever) Start() {
 }
 func (s *AssetOutsideSever) runServer() {
 	for {
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
+		if s.Queue.isEmpty() {
+			continue
+		}
+
 		//获取可用资产列表
 		assets, err := rpc.ListAssets()
 		if err != nil {
-			btlLog.CUST.Error("rpc.ListAssets error:%w", err)
+			btlLog.CUST.Error("rpc.ListAssets error:%v", err)
 			continue
 		}
 		list := make(map[string]uint64)

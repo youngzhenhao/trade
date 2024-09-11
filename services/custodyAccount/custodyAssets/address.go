@@ -184,6 +184,7 @@ func loadEvent() {
 	response, err := client.AddrReceives(context.Background(), request)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
+		return
 	}
 	btlLog.CUST.Info("%v", uint64(time.Now().Unix()-3600*24))
 	for i := len(response.Events) - 1; i >= 0; i-- {

@@ -161,7 +161,7 @@ func (e *BtcChannelEvent) SendPayment(payRequest cBase.PayPacket) error {
 	case <-ctx.Done():
 		//超时处理
 		return cBase.TimeoutErr
-	case err = <-bt.err:
+	case err := <-bt.err:
 		//错误处理
 		return err
 	}
@@ -188,6 +188,7 @@ func (e *BtcChannelEvent) payToInside(bt *BtcPacket) {
 	}
 	//递交给内部转账服务
 	bt.isInsideMission.insideMission = &payInside
+	bt.isInsideMission.err = bt.err
 	BtcSever.NewMission(bt.isInsideMission)
 }
 

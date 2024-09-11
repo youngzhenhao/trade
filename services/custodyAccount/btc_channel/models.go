@@ -66,6 +66,9 @@ func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		p.isInsideMission = nil
 	} else {
+		if i.Status != models.InvoiceStatusPending {
+			return fmt.Errorf("发票已被使用")
+		}
 		p.isInsideMission = &isInsideMission{
 			isInside:      true,
 			insideInvoice: i,
@@ -75,7 +78,7 @@ func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 	p.DecodePayReq, err = rpc.InvoiceDecode(p.PayReq)
 	if err != nil {
 		btlLog.CUST.Error("发票解析失败", err)
-		return fmt.Errorf("%w(pay_request=%s)", DecodeInvoiceFail, p.PayReq)
+		return fmt.Errorf("(pay_request=%s)", "发票解析失败：", p.PayReq)
 	}
 	//验证金额
 	useableBalance, err := rpc.AccountInfo(userinfo.Account.UserAccountCode)
