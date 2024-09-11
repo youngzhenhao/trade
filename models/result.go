@@ -176,6 +176,7 @@ const (
 	OsOpenFileErr
 	IoCopyFIleErr
 	GetAllAccountAssetTransfersByAssetIdErr
+	RefundUserFirstMintByUsernameAndAssetIdErr
 )
 
 // Err type:CustodyAccount

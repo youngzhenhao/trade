@@ -2801,7 +2801,7 @@ func GetUserFirstFairLaunchMintedInfosByUsernameSliceAndAssetId(usernameSlice []
 		}
 		fairLaunchMintedInfo, err := GetUserFirstFairLaunchMintedInfoByUsernameAndAssetId(username, assetId)
 		if err != nil {
-			continue
+			return nil, err
 		}
 		usernameMapFairLaunchMintedInfo[username] = *fairLaunchMintedInfo
 	}
@@ -2862,4 +2862,50 @@ func BackAmountForFairLaunchMintedInfos(fairLaunchMintedInfos *[]models.FairLaun
 		}
 	}
 	return &jsonResults, nil
+}
+
+func UsernameMapFairLaunchMintedInfoToFairLaunchMintedInfos(usernameMapFairLaunchMintedInfo *map[string]models.FairLaunchMintedInfo) *[]models.FairLaunchMintedInfo {
+	if usernameMapFairLaunchMintedInfo == nil {
+		return nil
+	}
+	var fairLaunchMintedInfos []models.FairLaunchMintedInfo
+	for _, fairLaunchMintedInfo := range *usernameMapFairLaunchMintedInfo {
+		fairLaunchMintedInfos = append(fairLaunchMintedInfos, fairLaunchMintedInfo)
+	}
+	return &fairLaunchMintedInfos
+}
+
+type RefundResult struct {
+	Results    *[]models.JsonResult `json:"results"`
+	FailNumber int                  `json:"fail_number"`
+}
+
+// RefundUserFirstMintByUsernameAndAssetId
+// @Description: Refund user first mint by username and asset id
+func RefundUserFirstMintByUsernameAndAssetId(usernameSlice []string, assetId string) (*RefundResult, error) {
+	usernameMapFairLaunchMintedInfo, err := GetUserFirstFairLaunchMintedInfosByUsernameSliceAndAssetId(usernameSlice, assetId)
+	if err != nil {
+		return nil, err
+	}
+	fairLaunchMintedInfos := UsernameMapFairLaunchMintedInfoToFairLaunchMintedInfos(usernameMapFairLaunchMintedInfo)
+	var refundResult *[]models.JsonResult
+	refundResult, err = BackAmountForFairLaunchMintedInfos(fairLaunchMintedInfos)
+	if err != nil {
+		return nil, err
+	}
+	var failNumber int
+	for _, result := range *refundResult {
+		if !result.Success {
+			failNumber++
+		}
+	}
+	return &RefundResult{
+		Results:    refundResult,
+		FailNumber: failNumber,
+	}, nil
+}
+
+type RefundUserFirstMintRequest struct {
+	Usernames []string `json:"usernames"`
+	AssetId   string   `json:"asset_id"`
 }
