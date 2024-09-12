@@ -644,6 +644,9 @@ func IsLimitAndOffsetValid(assetId string, limit int, offset int) (bool, error) 
 	if err != nil {
 		return false, err
 	}
+	if recordsNum == 0 && offset == 0 {
+		return true, nil
+	}
 	return recordsNum > offset, nil
 }
 
