@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"math"
 	"sort"
 	"time"
 	"trade/models"
@@ -660,7 +661,7 @@ func GetAssetHolderBalancePageNumberByPageSize(assetId string, pageSize int) (pa
 	if err != nil {
 		return 0, err
 	}
-	return recordsNum / pageSize, nil
+	return int(math.Ceil(float64(recordsNum) / float64(pageSize))), nil
 }
 
 // @dev: Use receives and transfers
