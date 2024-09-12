@@ -8,7 +8,7 @@ import (
 
 func ReadUserAccountBalancesByAssetId(assetId string) (*[]models.AccountBalance, error) {
 	var accountBalances []models.AccountBalance
-	err := middleware.DB.Where("amount <> ? AND asset_id = ?", 0, assetId).Find(&accountBalances).Order("amount desc").Error
+	err := middleware.DB.Where("amount <> ? AND asset_id = ?", 0, assetId).Order("amount desc").Find(&accountBalances).Error
 	return &accountBalances, err
 }
 
