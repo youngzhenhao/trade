@@ -83,6 +83,10 @@ func (m *BTCPayInsideSever) payToInside(mission *isInsideMission) error {
 		fee = 0
 	}
 	amount := mission.insideMission.GasFee + mission.insideMission.ServeFee
+	if amount < 0 || amount > 300000 {
+		btlLog.CUST.Error("amount>300000,请审核, mission_id:%v，error:%v", mission.insideMission.ID)
+		return fmt.Errorf("amount>300000,请审核")
+	}
 	//变更付款方账户
 	payAcc, err := caccount.GetUserInfoById(mission.insideMission.PayUserId)
 	if err != nil {
