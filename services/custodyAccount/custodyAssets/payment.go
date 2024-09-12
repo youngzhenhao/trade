@@ -59,13 +59,15 @@ func (s *AssetOutsideSever) runServer() {
 			//检查是否可交易：LIST AND UTXO
 			if list[mission.AssetID] < uint64(mission.TotalAmount) {
 				s.Queue.addNewPkg(mission)
-				continue
+				break
 			}
 			balance, err := rpc.GetBalance()
 			if err != nil {
+				s.Queue.addNewPkg(mission)
 				continue
 			}
 			if balance.AccountBalance["default"].ConfirmedBalance < int64(len(mission.AddrTarget)*1000) {
+				s.Queue.addNewPkg(mission)
 				continue
 			}
 			err = s.payToOutside(mission)
@@ -73,20 +75,10 @@ func (s *AssetOutsideSever) runServer() {
 				btlLog.CUST.Info("payToOutside success: id=%v,amount=%v", mission.AssetID, mission.TotalAmount)
 			}
 			if err != nil {
+				btlLog.CUST.Info("payToOutside Fail: id=%v,amount=%v", mission.AssetID, mission.TotalAmount)
 				s.Queue.addNewPkg(mission)
 			}
-			//返回错误信息
-			for index, _ := range mission.err {
-				select {
-				case _, ok := <-mission.err[index]:
-					if !ok {
-						continue
-					} else {
-						mission.err[index] <- err
-					}
-				default:
-				}
-			}
+
 		}
 	}
 }
@@ -128,7 +120,6 @@ func (s *AssetOutsideSever) payToOutside(mission *OutsideMission) error {
 		if err != nil {
 			continue
 		}
-
 		balance.State = models.STATE_SUCCESS
 		balance.PaymentHash = &txId
 		err = btldb.UpdateBalance(balance)
@@ -174,7 +165,6 @@ func (q *AssetOutsideUniqueQueue) addNewPkg(item *OutsideMission) bool {
 	if i, exists := q.itemSet[item.AssetID]; exists {
 		i.AddrTarget = append(i.AddrTarget, item.AddrTarget...)
 		i.TotalAmount = i.TotalAmount + item.TotalAmount
-		i.err = append(i.err, item.err...)
 		return true // 元素已存在，入队失败
 	}
 	q.items = append(q.items, item)

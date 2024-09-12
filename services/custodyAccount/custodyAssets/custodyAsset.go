@@ -9,6 +9,7 @@ import (
 	"time"
 	"trade/btlLog"
 	"trade/config"
+	"trade/middleware"
 	"trade/models"
 	"trade/services/assetsyncinfo"
 	"trade/services/btldb"
@@ -245,10 +246,90 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		},
 		AssetID:     assetId,
 		TotalAmount: int64(bt.DecodePayReq.Amount),
-		err:         []chan error{bt.err},
 	}
+	bt.err <- fmt.Errorf("success")
 	OutsideSever.Queue.addNewPkg(&m)
 }
-func (e *AssetEvent) GetTransactionHistory() {
 
+func (e *AssetEvent) QueryPayReq() ([]*models.Invoice, error) {
+	params := btldb.QueryParams{
+		"UserID":  e.UserInfo.User.ID,
+		"Status":  "10",
+		"AssetId": *e.AssetId,
+	}
+	a, err := btldb.GenericQuery(&models.Invoice{}, params)
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+		return nil, err
+	}
+	return a, nil
+}
+func (e *AssetEvent) QueryPayReqs() ([]*models.Invoice, error) {
+	params := btldb.QueryParams{
+		"UserID": e.UserInfo.User.ID,
+		"Status": "10",
+	}
+	a, err := btldb.GenericQuery(&models.Invoice{}, params)
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+		return nil, err
+	}
+	return a, nil
+}
+
+func (e *AssetEvent) GetTransactionHistory() (cBase.TxHistory, error) {
+	var a []models.Balance
+	err := middleware.DB.Where("account_id = ?", e.UserInfo.Account.ID).Where("asset_id != ?", "00").Find(&a).Error
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+		return nil, err
+	}
+	var results BtcPaymentList
+	if len(a) > 0 {
+		for i := len(a) - 1; i >= 0; i-- {
+			if a[i].State == models.STATE_FAILED {
+				continue
+			}
+			v := a[i]
+			r := PaymentResponse{}
+			r.Timestamp = v.CreatedAt.Unix()
+			r.BillType = v.BillType
+			r.Away = v.Away
+			r.Invoice = v.Invoice
+			r.Amount = v.Amount
+			r.AssetId = a[i].AssetId
+			r.State = v.State
+			r.Fee = v.ServerFee
+			results.PaymentList = append(results.PaymentList, r)
+		}
+	}
+	return &results, nil
+}
+func (e *AssetEvent) GetTransactionHistoryByAsset() (cBase.TxHistory, error) {
+	var a []models.Balance
+	err := middleware.DB.Where("account_id = ?", e.UserInfo.Account.ID).Where("asset_id = ?", *e.AssetId).Find(&a).Error
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+		return nil, err
+	}
+	var results BtcPaymentList
+	if len(a) > 0 {
+		for i := len(a) - 1; i >= 0; i-- {
+			if a[i].State == models.STATE_FAILED {
+				continue
+			}
+			v := a[i]
+			r := PaymentResponse{}
+			r.Timestamp = v.CreatedAt.Unix()
+			r.BillType = v.BillType
+			r.Away = v.Away
+			r.Invoice = v.Invoice
+			r.Amount = v.Amount
+			r.AssetId = a[i].AssetId
+			r.State = v.State
+			r.Fee = v.ServerFee
+			results.PaymentList = append(results.PaymentList, r)
+		}
+	}
+	return &results, nil
 }

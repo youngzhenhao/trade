@@ -45,7 +45,7 @@ func (s *SubscribeAddressServer) runServer(ctx context.Context) {
 	for {
 		event, err := stream.Recv()
 		if err != nil {
-			btlLog.CUST.Info("AddressServer stop")
+			btlLog.CUST.Info("AddressServer stop:%v", err.Error())
 			s.running = false
 			return
 		}

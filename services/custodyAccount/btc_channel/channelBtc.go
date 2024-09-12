@@ -30,9 +30,10 @@ func NewBtcChannelEvent(UserName string) (*BtcChannelEvent, error) {
 	)
 	e.UserInfo, err = caccount.GetUserInfo(UserName)
 	if err != nil {
-		btlLog.CUST.Error(err.Error())
+		btlLog.CUST.Error("%s,UserName:%s", err.Error(), UserName)
 		return nil, caccount.CustodyAccountGetErr
 	}
+	btlLog.CUST.Info("UserName:%s", UserName)
 	return &e, nil
 }
 

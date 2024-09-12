@@ -94,6 +94,25 @@ func (p *AssetPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 	return nil
 }
 
+type PaymentResponse struct {
+	Timestamp int64               `json:"timestamp"`
+	BillType  models.BalanceType  `json:"bill_type"`
+	Away      models.BalanceAway  `json:"away"`
+	Invoice   *string             `json:"invoice"`
+	Amount    float64             `json:"amount"`
+	AssetId   *string             `json:"asset_id"`
+	State     models.BalanceState `json:"state"`
+	Fee       uint64              `json:"fee"`
+}
+
+type BtcPaymentList struct {
+	PaymentList []PaymentResponse `json:"payment_responses"`
+}
+
+func (r *BtcPaymentList) GetTxString() string {
+	return ""
+}
+
 // isInsideMission 内部任务结构体
 type isInsideMission struct {
 	isInside      bool
@@ -109,7 +128,6 @@ type OutsideMission struct {
 	TotalAmount      int64
 	RollBackNumber   int64
 	MinPaymentNumber int64
-	err              []chan error
 }
 
 type target struct {
