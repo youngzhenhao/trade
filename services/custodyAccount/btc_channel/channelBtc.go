@@ -36,6 +36,19 @@ func NewBtcChannelEvent(UserName string) (*BtcChannelEvent, error) {
 	btlLog.CUST.Info("UserName:%s", UserName)
 	return &e, nil
 }
+func NewBtcChannelEventByUserId(UserId uint) (*BtcChannelEvent, error) {
+	var (
+		e   BtcChannelEvent
+		err error
+	)
+	e.UserInfo, err = caccount.GetUserInfoById(UserId)
+	if err != nil {
+		btlLog.CUST.Error("%s,UserName:%s", err.Error(), UserId)
+		return nil, caccount.CustodyAccountGetErr
+	}
+	btlLog.CUST.Info("UserName:%s", UserId)
+	return &e, nil
+}
 
 //获取余额
 

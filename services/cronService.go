@@ -202,21 +202,6 @@ func (cs *CronService) RemoveMintedInventories() {
 func CreateCustodyAccountProcessions() (err error) {
 	return CreateOrUpdateScheduledTasks(&[]models.ScheduledTask{
 		{
-			Name:           "PollPaymentCron",
-			CronExpression: "*/25 * * * * *",
-			FunctionName:   "PollPaymentCron",
-			Package:        "services",
-		}, {
-			Name:           "PollInvoiceCron",
-			CronExpression: "*/25 * * * * *",
-			FunctionName:   "PollInvoiceCron",
-			Package:        "services",
-		}, {
-			Name:           "PollPayInsideMission",
-			CronExpression: "*/25 * * * * *",
-			FunctionName:   "PollPayInsideMission",
-			Package:        "services",
-		}, {
 			Name:           "PollBackFeeMission",
 			CronExpression: "*/25 * * * * *",
 			FunctionName:   "PollBackFeeMission",
@@ -225,17 +210,6 @@ func CreateCustodyAccountProcessions() (err error) {
 	})
 }
 
-func (cs *CronService) PollPaymentCron() {
-	custodyAccount.PollPayment()
-}
-
-func (cs *CronService) PollInvoiceCron() {
-	custodyAccount.PollInvoice()
-}
-
-func (cs *CronService) PollPayInsideMission() {
-	custodyAccount.PollPayInsideMission()
-}
 func (cs *CronService) PollBackFeeMission() {
 	custodyAccount.PollBackFeeMission()
 }

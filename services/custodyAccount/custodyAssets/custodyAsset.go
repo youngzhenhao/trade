@@ -202,6 +202,7 @@ func (e *AssetEvent) payToInside(bt *AssetPacket) {
 	bt.isInsideMission.insideMission = &payInside
 	InSideSever.Queue.addNewPkg(bt.isInsideMission)
 }
+
 func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 	assetId := hex.EncodeToString(bt.DecodePayReq.AssetId)
 	outsideBalance := models.Balance{
@@ -264,6 +265,7 @@ func (e *AssetEvent) QueryPayReq() ([]*models.Invoice, error) {
 	}
 	return a, nil
 }
+
 func (e *AssetEvent) QueryPayReqs() ([]*models.Invoice, error) {
 	params := btldb.QueryParams{
 		"UserID": e.UserInfo.User.ID,
@@ -305,6 +307,7 @@ func (e *AssetEvent) GetTransactionHistory() (cBase.TxHistory, error) {
 	}
 	return &results, nil
 }
+
 func (e *AssetEvent) GetTransactionHistoryByAsset() (cBase.TxHistory, error) {
 	var a []models.Balance
 	err := middleware.DB.Where("account_id = ?", e.UserInfo.Account.ID).Where("asset_id = ?", *e.AssetId).Find(&a).Error
