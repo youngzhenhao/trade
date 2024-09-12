@@ -2,8 +2,10 @@ package servicesrpc
 
 import (
 	"context"
+	"errors"
 	"github.com/lightninglabs/lightning-terminal/litrpc"
 	"strconv"
+	"trade/btlLog"
 	"trade/config"
 	"trade/utils"
 )
@@ -119,6 +121,11 @@ func AccountUpdate(id string, balance int64, expirationDate int64) (*litrpc.Acco
 
 	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
 	defer connClose()
+
+	if balance < 0 || balance > 5000000 {
+		btlLog.CUST.Error("balance must be between 0 and 5000000 sat")
+		return nil, errors.New("balance must be between 0 and 5000000 sat")
+	}
 
 	request := &litrpc.UpdateAccountRequest{
 		Id:             id,

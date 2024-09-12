@@ -23,7 +23,7 @@ func (in *BtcApplyInvoice) GetAmount() int64 {
 	return in.Amount
 }
 func (in *BtcApplyInvoice) GetPayReq() string {
-	return in.LnInvoice.String()
+	return in.LnInvoice.PaymentRequest
 }
 
 // BtcApplyInvoiceRequest 发票申请请求结构体
@@ -101,7 +101,7 @@ type isInsideMission struct {
 }
 
 type BtcPaymentList struct {
-	PaymentList []PaymentResponse `json:"payment_responses"`
+	PaymentList []PaymentResponse `json:"payments"`
 }
 
 func (r *BtcPaymentList) GetTxString() string {

@@ -4,15 +4,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"trade/models"
 	"trade/services/custodyAccount"
 	"trade/services/custodyAccount/btc_channel"
 )
-
-// CreateCustodyAccount 创建托管账户
-func CreateCustodyAccount(c *gin.Context) {
-	//TODO
-}
 
 // ApplyInvoice CustodyAccount开具发票
 func ApplyInvoice(c *gin.Context) {
@@ -20,7 +14,7 @@ func ApplyInvoice(c *gin.Context) {
 	userName := c.MustGet("username").(string)
 	e, err := btc_channel.NewBtcChannelEvent(userName)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, models.MakeJsonErrorResultForHttp(models.DefaultErr, "用户不存在", nil))
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
 		return
 	}
 	apply := custodyAccount.ApplyRequest{}
@@ -37,7 +31,7 @@ func ApplyInvoice(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"invoice": req})
+	c.JSON(http.StatusOK, gin.H{"invoice": req.GetPayReq()})
 }
 
 func QueryInvoice(c *gin.Context) {
@@ -45,7 +39,7 @@ func QueryInvoice(c *gin.Context) {
 	userName := c.MustGet("username").(string)
 	e, err := btc_channel.NewBtcChannelEvent(userName)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, models.MakeJsonErrorResultForHttp(models.DefaultErr, "用户不存在", nil))
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
 		return
 	}
 	invoiceRequest := struct {
@@ -71,13 +65,13 @@ func PayInvoice(c *gin.Context) {
 	userName := c.MustGet("username").(string)
 	e, err := btc_channel.NewBtcChannelEvent(userName)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, models.MakeJsonErrorResultForHttp(models.DefaultErr, "用户不存在", nil))
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
 		return
 	}
 	//获取支付发票请求
 	pay := custodyAccount.PayInvoiceRequest{}
 	if err := c.ShouldBindJSON(&pay); err != nil {
-		c.JSON(http.StatusUnauthorized, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "请求参数错误"})
 		return
 	}
 	a := btc_channel.BtcPacket{
@@ -86,10 +80,10 @@ func PayInvoice(c *gin.Context) {
 	}
 	err2 := e.SendPayment(&a)
 	if err2 != nil {
-		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err2.Error(), nil))
+		c.JSON(http.StatusOK, gin.H{"error": "SendPayment error:" + err2.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "支付成功", "Success"))
+	c.JSON(http.StatusOK, gin.H{"payment": "success"})
 }
 
 // QueryBalance CustodyAccount查询发票
@@ -98,11 +92,12 @@ func QueryBalance(c *gin.Context) {
 	userName := c.MustGet("username").(string)
 	e, err := btc_channel.NewBtcChannelEvent(userName)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, models.MakeJsonErrorResultForHttp(models.DefaultErr, "用户不存在", nil))
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
 		return
 	}
 	getBalance, err := e.GetBalance()
 	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"balance": getBalance[0].Amount})
@@ -114,10 +109,9 @@ func QueryPayment(c *gin.Context) {
 	userName := c.MustGet("username").(string)
 	e, err := btc_channel.NewBtcChannelEvent(userName)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, models.MakeJsonErrorResultForHttp(models.DefaultErr, "用户不存在", nil))
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
 		return
 	}
-
 	//获取交易查询请求
 	query := custodyAccount.PaymentRequest{}
 	if err := c.ShouldBindJSON(&query); err != nil {
@@ -125,18 +119,11 @@ func QueryPayment(c *gin.Context) {
 		return
 	}
 	if query.AssetId != "00" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "asset_id类型错误"})
 		return
 	}
 	p, _ := e.GetTransactionHistory()
 	if s, ok := p.(*btc_channel.BtcPaymentList); ok {
-		c.JSON(http.StatusOK, gin.H{"payments": s})
+		c.JSON(http.StatusOK, gin.H{"payments": s.PaymentList})
 	}
 }
-
-// LookupInvoice 查询发票状态
-func LookupInvoice(c *gin.Context) {
-	//todo
-}
-
-// LookupPayment 查看支付记录
-func LookupPayment(c *gin.Context) {}
