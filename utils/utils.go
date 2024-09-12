@@ -588,6 +588,6 @@ func WriteToLogFile(filename string, prefix string, content string) error {
 		}
 	}(file)
 	logger := GetNewFileLogger(file, prefix)
-	logger.Println(content)
+	logger.Println("\n", content)
 	return nil
 }
