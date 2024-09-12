@@ -177,6 +177,8 @@ const (
 	IoCopyFIleErr
 	GetAllAccountAssetTransfersByAssetIdErr
 	RefundUserFirstMintByUsernameAndAssetIdErr
+	GetAssetHolderBalancePageNumberRequestInvalidErr
+	GetAssetHolderBalancePageNumberByPageSizeErr
 )
 
 // Err type:CustodyAccount

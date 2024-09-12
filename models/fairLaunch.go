@@ -93,7 +93,7 @@ type FairLaunchInfo struct {
 	MintedNumber                   int              `json:"minted_number"`
 	IsMintAll                      bool             `json:"is_mint_all"`
 	Status                         FairLaunchStatus `json:"status" default:"1" gorm:"default:1;index"`
-	State                          FairLaunchState  `json:"state"`
+	State                          FairLaunchState  `json:"state" gorm:"index"`
 	ProcessNumber                  int              `json:"process_number"`
 }
 
