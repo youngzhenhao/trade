@@ -169,6 +169,14 @@ const (
 	SaveUploadedFileErr
 	CreateLogFileUploadErr
 	FileSizeTooLargeErr
+	GetAccountAssetBalanceExtendsByAssetIdErr
+	BackAmountErr
+	GetAllLogFilesErr
+	GetFileUploadErr
+	OsOpenFileErr
+	IoCopyFIleErr
+	GetAllAccountAssetTransfersByAssetIdErr
+	RefundUserFirstMintByUsernameAndAssetIdErr
 )
 
 // Err type:CustodyAccount

@@ -19,6 +19,12 @@ func ReadLogFileUpload(id uint) (*models.LogFileUpload, error) {
 	return &logFileUpload, err
 }
 
+func ReadAllLogFileUploads() (*[]models.LogFileUpload, error) {
+	var logFileUploads []models.LogFileUpload
+	err := middleware.DB.Order("updated_at desc").Find(&logFileUploads).Error
+	return &logFileUploads, err
+}
+
 func ReadLogFileUploadsByDeviceId(deviceId string) (*[]models.LogFileUpload, error) {
 	var logFileUploads []models.LogFileUpload
 	err := middleware.DB.Where("device_id = ?", deviceId).Find(&logFileUploads).Error

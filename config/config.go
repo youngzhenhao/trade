@@ -59,6 +59,7 @@ type Config struct {
 		AssetLocalMintHistory bool `yaml:"asset_local_mint_history" json:"asset_local_mint_history"`
 		AssetManagedUtxo      bool `yaml:"asset_managed_utxo" json:"asset_managed_utxo"`
 		LogFileUpload         bool `yaml:"log_file_upload" json:"log_file_upload"`
+		AccountAsset          bool `yaml:"account_asset" json:"account_asset"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {
