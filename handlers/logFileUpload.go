@@ -93,7 +93,7 @@ func UploadLogFile(c *gin.Context) {
 	})
 }
 
-func GetAllLogFiles(c *gin.Context) {
+func GetAllLogFilesByDeviceId(c *gin.Context) {
 	allLogFiles, err := services.GetAllLogFiles()
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
@@ -110,6 +110,25 @@ func GetAllLogFiles(c *gin.Context) {
 		Error:   models.SUCCESS.Error(),
 		Code:    models.SUCCESS,
 		Data:    allDeviceIdMapLogFileUploads,
+	})
+}
+
+func GetAllLogFiles(c *gin.Context) {
+	allLogFiles, err := services.GetAllLogFiles()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAllLogFilesErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
+		Data:    allLogFiles,
 	})
 }
 
