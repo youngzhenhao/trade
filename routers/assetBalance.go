@@ -17,6 +17,7 @@ func SetupAssetBalanceRouter(router *gin.Engine) *gin.Engine {
 		assetBalance.GET("/get/holder/balance/all/:asset_id", handlers.GetAssetHolderBalance)
 		assetBalance.GET("/get/holder/balance/records/:asset_id", handlers.GetAssetHolderBalanceRecordsNumber)
 		assetBalance.POST("/get/holder/balance/limit_offset", handlers.GetAssetHolderBalanceLimitAndOffset)
+		assetBalance.POST("/get/holder/balance/page_number", handlers.GetAssetHolderBalancePageNumberByPageSize)
 		assetBalance.POST("/get/balance/asset_id_and_user_id", handlers.GetAssetBalanceByAssetIdAndUserId)
 		assetBalance.POST("/set", handlers.SetAssetBalance)
 		assetBalance.POST("/set_slice", handlers.SetAssetBalances)

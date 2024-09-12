@@ -322,3 +322,44 @@ func GetAssetBalanceByAssetIdAndUserId(c *gin.Context) {
 		Data:    assetBalance,
 	})
 }
+
+func GetAssetHolderBalancePageNumberByPageSize(c *gin.Context) {
+	var getAssetHolderBalancePageNumberRequest services.GetAssetHolderBalancePageNumberRequest
+	err := c.ShouldBindJSON(&getAssetHolderBalancePageNumberRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	pageSize := getAssetHolderBalancePageNumberRequest.PageSize
+	assetId := getAssetHolderBalancePageNumberRequest.AssetId
+	if pageSize <= 0 || assetId == "" {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   errors.New("invalid asset id or page size").Error(),
+			Code:    models.GetAssetHolderBalancePageNumberRequestInvalidErr,
+			Data:    nil,
+		})
+		return
+	}
+	pageNumber, err := services.GetAssetHolderBalancePageNumberByPageSize(assetId, pageSize)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetHolderBalancePageNumberByPageSizeErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    pageNumber,
+	})
+}
