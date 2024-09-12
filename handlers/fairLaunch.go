@@ -752,6 +752,10 @@ func RefundUserFirstMintByUsernameAndAssetId(c *gin.Context) {
 		return
 	}
 	refundResult, err := services.RefundUserFirstMintByUsernameAndAssetId(refundUserFirstMintRequest.Usernames, refundUserFirstMintRequest.AssetId)
+	err = utils.WriteToLogFile("./trade.record.log", "[TRADE.RECORD]", utils.ValueJsonString(refundResult))
+	if err != nil {
+		utils.LogError("Write refund results to log file", err)
+	}
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,

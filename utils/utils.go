@@ -567,3 +567,27 @@ func GetNowTimeStringWithHyphens() string {
 	now = strings.ReplaceAll(now, ".", "-")
 	return now
 }
+
+func GetNewFileLogger(file *os.File, prefix string) *log.Logger {
+	return log.New(file, prefix, log.Lshortfile|log.Ldate|log.Ltime)
+}
+
+func GetLogFile(filename string) (*os.File, error) {
+	return os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0664)
+}
+
+func WriteToLogFile(filename string, prefix string, content string) error {
+	file, err := GetLogFile(filename)
+	if err != nil {
+		return err
+	}
+	defer func(file *os.File) {
+		err = file.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(file)
+	logger := GetNewFileLogger(file, prefix)
+	logger.Println(content)
+	return nil
+}
