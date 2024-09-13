@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	ChannelBtcServiceFee = uint64(100)
-	AssetServiceFee      = 100
+	ChannelBtcInsideServiceFee = uint64(10)
+	ChannelBtcServiceFee       = uint64(100)
+	AssetServiceFee            = 100
 )
 
 func PayServerFee(account *models.Account, fee uint64) error {

@@ -77,7 +77,7 @@ func (m *BTCPayInsideSever) payToInside(mission *isInsideMission) error {
 		return nil
 	}
 	var payToAdmin bool
-	fee := ChannelBtcServiceFee
+	fee := ChannelBtcInsideServiceFee
 	if mission.insideMission.PayType == models.PayInsideToAdmin {
 		payToAdmin = true
 		fee = 0
