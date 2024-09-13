@@ -106,7 +106,7 @@ type PaymentResponse struct {
 }
 
 type BtcPaymentList struct {
-	PaymentList []PaymentResponse `json:"payment_responses"`
+	PaymentList []PaymentResponse `json:"payments"`
 }
 
 func (r *BtcPaymentList) GetTxString() string {
