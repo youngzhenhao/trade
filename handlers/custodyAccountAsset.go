@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,7 @@ import (
 	"trade/models"
 	"trade/services/custodyAccount/custodyAssets"
 	"trade/services/custodyAccount/custodyBase"
+	rpc "trade/services/servicesrpc"
 )
 
 type ApplyAddressRequest struct {
@@ -24,22 +26,22 @@ func ApplyAddress(c *gin.Context) {
 	userName := c.MustGet("username").(string)
 	apply := ApplyAddressRequest{}
 	if err := c.ShouldBindJSON(&apply); err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
 	e, err := custodyAssets.NewAssetEvent(userName, apply.AssetId)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
 	req, err := e.ApplyPayReq(&custodyAssets.AssetAddressApplyRequest{
 		Amount: int64(apply.Amount),
 	})
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"req": req})
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", req))
 }
 
 type SendAssetRequest struct {
@@ -51,22 +53,27 @@ func SendAsset(c *gin.Context) {
 	userName := c.MustGet("username").(string)
 	apply := SendAssetRequest{}
 	if err := c.ShouldBindJSON(&apply); err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
 	e, err := custodyAssets.NewAssetEvent(userName, "")
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
 	err = e.SendPayment(&custodyAssets.AssetPacket{
 		PayReq: apply.Address,
 	})
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	result := struct {
+		Success string `json:"success"`
+	}{
+		Success: "success",
+	}
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", result))
 }
 
 type QueryAssetRequest struct {
@@ -77,19 +84,20 @@ func QueryAsset(c *gin.Context) {
 	userName := c.MustGet("username").(string)
 	apply := QueryAssetRequest{}
 	if err := c.ShouldBindJSON(&apply); err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
 	e, err := custodyAssets.NewAssetEvent(userName, apply.AssetId)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
 	balance, err := e.GetBalance()
 	if err != nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"balance": balance})
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", balance))
 }
 
 func QueryAssets(c *gin.Context) {
@@ -119,31 +127,6 @@ type AwardAssetRequest struct {
 	Memo     string `json:"memo"`
 }
 
-func Award(c *gin.Context) {
-	var creds AwardAssetRequest
-	if err := c.ShouldBindJSON(&creds); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	e, err := custodyAssets.NewAssetEvent(creds.Username, "")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	err = custodyAssets.PutInAward(e.UserInfo.Account, creds.AssetId, creds.Amount, &creds.Memo)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, models.JsonResult{
-		Success: true,
-		Error:   "",
-		Code:    models.SUCCESS,
-		Data:    nil,
-	})
-}
-
 func QueryAddress(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
@@ -151,7 +134,7 @@ func QueryAddress(c *gin.Context) {
 		AssetId string `json:"asset_id"`
 	}{}
 	if err := c.ShouldBindJSON(&invoiceRequest); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Request is erro"})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
 	e, err := custodyAssets.NewAssetEvent(userName, invoiceRequest.AssetId)
@@ -160,13 +143,13 @@ func QueryAddress(c *gin.Context) {
 		return
 	}
 	// 查询账户发票
-	invoices, err := e.QueryPayReq()
+	addr, err := e.QueryPayReq()
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "service error"})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"addr": invoices})
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", addr))
 }
 
 func QueryAddresses(c *gin.Context) {
@@ -181,17 +164,17 @@ func QueryAddresses(c *gin.Context) {
 		AssetId string `json:"asset_id"`
 	}{}
 	if err := c.ShouldBindJSON(&invoiceRequest); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Request is erro"})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
 	// 查询账户发票
-	invoices, err := e.QueryPayReqs()
+	addrs, err := e.QueryPayReqs()
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "service error"})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"addrs": invoices})
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", addrs))
 }
 
 func QueryAssetPayment(c *gin.Context) {
@@ -201,7 +184,7 @@ func QueryAssetPayment(c *gin.Context) {
 		AssetId string `json:"asset_id"`
 	}{}
 	if err := c.ShouldBindJSON(&invoiceRequest); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Request is erro"})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
 	e, err := custodyAssets.NewAssetEvent(userName, invoiceRequest.AssetId)
@@ -210,13 +193,13 @@ func QueryAssetPayment(c *gin.Context) {
 		return
 	}
 	// 查询账户发票
-	invoices, err := e.GetTransactionHistoryByAsset()
+	payment, err := e.GetTransactionHistoryByAsset()
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "service error"})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"addr": invoices})
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", payment))
 }
 
 func QueryAssetPayments(c *gin.Context) {
@@ -231,17 +214,17 @@ func QueryAssetPayments(c *gin.Context) {
 		AssetId string `json:"asset_id"`
 	}{}
 	if err := c.ShouldBindJSON(&invoiceRequest); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Request is erro"})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
 	// 查询账户发票
-	invoices, err := e.GetTransactionHistory()
+	payments, err := e.GetTransactionHistory()
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "service error"})
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"addrs": invoices})
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", payments))
 }
 
 type AssetBalance struct {
@@ -305,4 +288,32 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 		})
 	}
 	return &list
+}
+
+type DecodeAddressRequest struct {
+	Address string `json:"addr"`
+}
+
+func DecodeAddress(c *gin.Context) {
+	query := DecodeAddressRequest{}
+	if err := c.ShouldBindJSON(&query); err != nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "请求参数错误", nil))
+		return
+	}
+	q, err := rpc.DecodeAddr(query.Address)
+	if err != nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "地址解析失败："+err.Error(), nil))
+		return
+	}
+	AssetId := hex.EncodeToString(q.AssetId)
+	result := struct {
+		AssetId   string `json:"AssetId"`
+		AssetType string `json:"timestamp"`
+		Amount    uint64 `json:"expiry"`
+	}{
+		AssetId:   AssetId,
+		AssetType: q.AssetType.String(),
+		Amount:    q.Amount,
+	}
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", result))
 }

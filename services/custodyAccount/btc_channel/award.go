@@ -8,14 +8,14 @@ import (
 	rpc "trade/services/servicesrpc"
 )
 
-func PutInAward(account *models.Account, _ string, amount int, memo *string) error {
+func PutInAward(account *models.Account, _ string, amount int, memo *string) (*models.AccountAward, error) {
 	var err error
 	acc, err := rpc.AccountInfo(account.UserAccountCode)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if amount < 0 {
-		return errors.New("award amount is error")
+		return nil, errors.New("award amount is error")
 	}
 	newBalance := acc.CurrentBalance + int64(amount)
 	// Change the escrow account balance
@@ -42,14 +42,15 @@ func PutInAward(account *models.Account, _ string, amount int, memo *string) err
 	if dbErr != nil {
 		btlLog.CUST.Error(dbErr.Error())
 	}
-	err = btldb.CreateAward(&models.AccountAward{
+	award := models.AccountAward{
 		AccountID: account.ID,
 		AssetId:   "00",
 		Amount:    float64(amount),
 		Memo:      memo,
-	})
+	}
+	err = btldb.CreateAward(&award)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 	}
-	return nil
+	return &award, nil
 }

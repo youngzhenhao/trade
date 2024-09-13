@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"trade/models"
 	"trade/services/custodyAccount"
 	"trade/services/custodyAccount/btc_channel"
+	rpc "trade/services/servicesrpc"
 )
 
 // ApplyInvoice CustodyAccount开具发票
@@ -126,4 +128,28 @@ func QueryPayment(c *gin.Context) {
 	if s, ok := p.(*btc_channel.BtcPaymentList); ok {
 		c.JSON(http.StatusOK, gin.H{"payments": s.PaymentList})
 	}
+}
+
+// DecodeInvoice  解析发票
+func DecodeInvoice(c *gin.Context) {
+	query := custodyAccount.DecodeInvoiceRequest{}
+	if err := c.ShouldBindJSON(&query); err != nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "请求参数错误", nil))
+		return
+	}
+	q, err := rpc.InvoiceDecode(query.Invoice)
+	if err != nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "发票解析失败："+err.Error(), nil))
+		return
+	}
+	result := struct {
+		Amount    int64 `json:"amount"`
+		Timestamp int64 `json:"timestamp"`
+		Expiry    int64 `json:"expiry"`
+	}{
+		Amount:    q.NumSatoshis,
+		Timestamp: q.Timestamp,
+		Expiry:    q.Expiry,
+	}
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", result))
 }

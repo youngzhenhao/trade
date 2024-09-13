@@ -20,6 +20,8 @@ func SetupCustodyAccountRouter(router *gin.Engine) *gin.Engine {
 			Invoice.POST("/querybalance", handlers.QueryBalance)
 			Invoice.POST("/queryinvoice", handlers.QueryInvoice)
 			Invoice.POST("/querypayment", handlers.QueryPayment)
+			Invoice.POST("/decodeinvoice", handlers.DecodeInvoice)
+
 		}
 		Asset := custody.Group("/Asset")
 		{
@@ -31,6 +33,7 @@ func SetupCustodyAccountRouter(router *gin.Engine) *gin.Engine {
 			Asset.POST("/queryaddresses", handlers.QueryAddresses)
 			Asset.POST("/querypayment", handlers.QueryAssetPayment)
 			Asset.POST("/querypayments", handlers.QueryAssetPayments)
+			Invoice.POST("/decodeaddr", handlers.DecodeAddress)
 		}
 	}
 	return router

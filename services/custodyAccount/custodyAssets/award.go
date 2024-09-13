@@ -10,20 +10,20 @@ import (
 	"trade/services/btldb"
 )
 
-func PutInAward(account *models.Account, AssetId string, amount int, memo *string) error {
+func PutInAward(account *models.Account, AssetId string, amount int, memo *string) (*models.AccountAward, error) {
 	var in models.AwardInventory
 	err := middleware.DB.Where("asset_Id =? ", AssetId).First(&in).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		btlLog.CUST.Error("err:%v", models.ReadDbErr)
 	}
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return fmt.Errorf("no award type")
+		return nil, fmt.Errorf("no award type")
 	}
 	if in.Status != models.AwardInventoryAble {
-		return fmt.Errorf("award is lock")
+		return nil, fmt.Errorf("award is lock")
 	}
 	if in.Amount < float64(amount) {
-		return fmt.Errorf("not enough award")
+		return nil, fmt.Errorf("not enough award")
 	}
 
 	receiveBalance, err := btldb.GetAccountBalanceByGroup(account.ID, AssetId)
@@ -71,14 +71,15 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 	if dbErr != nil {
 		btlLog.CUST.Error(dbErr.Error())
 	}
-	err = btldb.CreateAward(&models.AccountAward{
+	award := models.AccountAward{
 		AccountID: account.ID,
 		AssetId:   AssetId,
 		Amount:    float64(amount),
 		Memo:      memo,
-	})
+	}
+	err = btldb.CreateAward(&award)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 	}
-	return nil
+	return &award, nil
 }

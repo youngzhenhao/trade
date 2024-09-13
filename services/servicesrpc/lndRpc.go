@@ -242,30 +242,3 @@ func GetBalance() (*lnrpc.WalletBalanceResponse, error) {
 	}
 	return response, nil
 }
-
-func SubscribeInvoices() {
-	lndconf := config.GetConfig().ApiConfig.Lnd
-
-	grpcHost := lndconf.Host + ":" + strconv.Itoa(lndconf.Port)
-	tlsCertPath := lndconf.TlsCertPath
-	macaroonPath := lndconf.MacaroonPath
-
-	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
-	defer connClose()
-
-	client := lnrpc.NewLightningClient(conn)
-	request := &lnrpc.InvoiceSubscription{}
-	stream, err := client.SubscribeInvoices(context.Background(), request)
-	if err != nil {
-		return
-	}
-	for {
-		invoice, err := stream.Recv()
-		if err != nil {
-			return
-		}
-		if invoice != nil {
-			//todo 处理invoice
-		}
-	}
-}

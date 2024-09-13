@@ -69,12 +69,13 @@ type ApplyRequest struct {
 	Amount int64  `json:"amount"`
 	Memo   string `json:"memo"`
 }
-
 type PayInvoiceRequest struct {
 	Invoice  string `json:"invoice"`
 	FeeLimit int64  `json:"feeLimit"`
 }
-
 type PaymentRequest struct {
 	AssetId string `json:"asset_id"`
+}
+type DecodeInvoiceRequest struct {
+	Invoice string `json:"invoice"`
 }
