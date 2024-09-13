@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"strconv"
+	"time"
 	"trade/btlLog"
 	"trade/config"
 	"trade/middleware"
@@ -49,6 +50,10 @@ func (s *SubscribeInvoiceServer) runServer() {
 				tx := middleware.DB.Begin()
 				if tx.Error != nil {
 					btlLog.CUST.Error("invoice server 创建事务失败")
+					continue
+				}
+				if invoice.CreationDate < time.Now().Unix()-60*60*24*3 {
+					tx.Rollback()
 					continue
 				}
 				var i models.Invoice
