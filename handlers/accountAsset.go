@@ -50,7 +50,7 @@ func GetAllAccountAssetTransferByAssetId(c *gin.Context) {
 
 func GetAccountAssetTransferLimitAndOffset(c *gin.Context) {
 	var getAccountAssetTransferLimitAndOffsetRequest services.GetAccountAssetTransferLimitAndOffsetRequest
-	err := c.ShouldBindQuery(&getAccountAssetTransferLimitAndOffsetRequest)
+	err := c.ShouldBind(&getAccountAssetTransferLimitAndOffsetRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
