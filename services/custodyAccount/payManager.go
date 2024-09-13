@@ -1,11 +1,89 @@
 package custodyAccount
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"gorm.io/gorm"
+	"log"
 	"trade/btlLog"
+	"trade/config"
 	"trade/models"
 	"trade/services/btldb"
 	"trade/services/custodyAccount/btc_channel"
+	"trade/services/custodyAccount/custodyAssets"
 )
+
+var (
+	AdminUserId    uint = 1
+	AdminAccount   *models.Account
+	AdminAccountId uint = 1
+)
+
+func CustodyStart(ctx context.Context, cfg *config.Config) bool {
+	// Check the admin account
+	if !checkAdminAccount() {
+		log.Println("Admin account is not set")
+		return false
+	}
+	// Check the custody account MacaroonDir
+	if cfg.ApiConfig.CustodyAccount.MacaroonDir == "" {
+		log.Println("Custody account MacaroonDir is not set")
+		return false
+	}
+	fmt.Println("Custody account MacaroonDir is set:", cfg.ApiConfig.CustodyAccount.MacaroonDir)
+	// Start the custody account service
+	btc_channel.BtcSever.Start(ctx)
+	btc_channel.InvoiceServer.Start()
+	custodyAssets.OutsideSever.Start()
+	custodyAssets.InSideSever.Start()
+	custodyAssets.AddressServer.Start(ctx)
+	//Check the custody service status
+
+	return true
+}
+
+func checkAdminAccount() bool {
+	adminUser, err := btldb.ReadUserByUsername("admin")
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			btlLog.CUST.Error("CheckAdminAccount failed:%s", err)
+			return false
+		}
+		// 创建管理员USER
+		adminUser.Username = "admin"
+		adminUser.Password = "admin"
+		adminUser.Status = 1
+		err = btldb.CreateUser(adminUser)
+		if err != nil {
+			btlLog.CUST.Error("create AdminUser failed:%s", err)
+			return false
+		}
+	}
+	adminAccount, err := btldb.ReadAccountByUserId(adminUser.ID)
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			btlLog.CUST.Error("CheckAdminAccount failed:%s", err)
+			return false
+		}
+		// 创建管理员ACCOUNT
+		adminAccount.UserId = adminUser.ID
+		adminAccount.UserName = adminUser.Username
+		adminAccount.UserAccountCode = "admin"
+		adminAccount.Status = models.AccountStatusEnable
+		err = btldb.CreateAccount(adminAccount)
+		if err != nil {
+			btlLog.CUST.Error("create AdminAccount failed:%s", err)
+			return false
+		}
+	}
+	AdminUserId = adminUser.ID
+	AdminAccountId = adminAccount.ID
+	AdminAccount = adminAccount
+	btlLog.CUST.Info("admin user id:%d", AdminUserId)
+	btlLog.CUST.Info("admin account id:%d", AdminAccount.ID)
+	return true
+}
 
 // 托管账户划扣费用
 func PayAmountToAdmin(payUserId uint, gasFee uint64) (uint, error) {
