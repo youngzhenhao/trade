@@ -41,7 +41,12 @@ func ApplyAddress(c *gin.Context) {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
-	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", req))
+	addr := struct {
+		Address string `json:"addr"`
+	}{
+		Address: req.GetPayReq(),
+	}
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", addr))
 }
 
 type SendAssetRequest struct {
