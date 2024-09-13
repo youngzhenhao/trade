@@ -12,6 +12,7 @@ func SetupLogFileUploadRouter(router *gin.Engine) *gin.Engine {
 	}))
 	{
 		authorized.POST("/upload", handlers.UploadLogFile)
+		authorized.GET("/get/all/device_id", handlers.GetAllLogFilesByDeviceId)
 		authorized.GET("/get/all", handlers.GetAllLogFiles)
 		authorized.GET("/get/download/id/:id", handlers.DownloadLogFileById)
 	}

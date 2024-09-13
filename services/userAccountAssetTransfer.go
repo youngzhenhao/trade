@@ -69,6 +69,7 @@ func BillBalancesToAccountAssetTransfers(billBalances *[]models.Balance) *[]Acco
 	return &accountAssetTransfer
 }
 
+// @dev: Use this now
 func GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAsset(assetId string) (*[]AccountAssetTransfer, error) {
 	billBalances, err := ReadBillBalanceAssetTransferAndAwardAssetByAssetId(assetId)
 	if err != nil {
@@ -93,5 +94,5 @@ func GetAllAccountAssetTransfersByAssetId(assetId string) (*[]AccountAssetTransf
 	if assetId == "00" {
 		return nil, errors.New("invalid asset id")
 	}
-	return GetAllAccountAssetTransfersByBillBalanceAssetTransfer(assetId)
+	return GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAsset(assetId)
 }
