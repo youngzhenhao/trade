@@ -33,7 +33,7 @@ func SetupCustodyAccountRouter(router *gin.Engine) *gin.Engine {
 			Asset.POST("/queryaddresses", handlers.QueryAddresses)
 			Asset.POST("/querypayment", handlers.QueryAssetPayment)
 			Asset.POST("/querypayments", handlers.QueryAssetPayments)
-			Invoice.POST("/decodeaddr", handlers.DecodeAddress)
+			Asset.POST("/decodeaddr", handlers.DecodeAddress)
 		}
 	}
 	return router

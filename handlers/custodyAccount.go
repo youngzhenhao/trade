@@ -143,13 +143,15 @@ func DecodeInvoice(c *gin.Context) {
 		return
 	}
 	result := struct {
-		Amount    int64 `json:"amount"`
-		Timestamp int64 `json:"timestamp"`
-		Expiry    int64 `json:"expiry"`
+		Amount    int64  `json:"amount"`
+		Timestamp int64  `json:"timestamp"`
+		Expiry    int64  `json:"expiry"`
+		Memo      string `json:"memo"`
 	}{
 		Amount:    q.NumSatoshis,
 		Timestamp: q.Timestamp,
 		Expiry:    q.Expiry,
+		Memo:      q.Description,
 	}
 	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", result))
 }

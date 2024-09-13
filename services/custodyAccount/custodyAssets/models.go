@@ -98,7 +98,7 @@ type PaymentResponse struct {
 	Timestamp int64               `json:"timestamp"`
 	BillType  models.BalanceType  `json:"bill_type"`
 	Away      models.BalanceAway  `json:"away"`
-	Invoice   *string             `json:"invoice"`
+	Invoice   *string             `json:"addr"`
 	Amount    float64             `json:"amount"`
 	AssetId   *string             `json:"asset_id"`
 	State     models.BalanceState `json:"state"`
@@ -106,7 +106,7 @@ type PaymentResponse struct {
 }
 
 type BtcPaymentList struct {
-	PaymentList []PaymentResponse `json:"payment_responses"`
+	PaymentList []PaymentResponse `json:"payments"`
 }
 
 func (r *BtcPaymentList) GetTxString() string {
