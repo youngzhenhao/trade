@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"sync"
 	"time"
 	"trade/btlLog"
@@ -39,6 +40,9 @@ func NewAssetEvent(UserName string, AssetId string) (*AssetEvent, error) {
 
 func (e *AssetEvent) GetBalance() ([]cBase.Balance, error) {
 	balance, err := btldb.GetAccountBalanceByGroup(e.UserInfo.Account.ID, *e.AssetId)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, models.ReadDbErr
 	}

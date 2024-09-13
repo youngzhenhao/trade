@@ -125,11 +125,10 @@ func QueryAssets(c *gin.Context) {
 	}
 }
 
-type AwardAssetRequest struct {
-	Username string `json:"username"`
-	AssetId  string `json:"assetId"`
-	Amount   int    `json:"amount"`
-	Memo     string `json:"memo"`
+type AddressResponce struct {
+	Address string  `json:"addr"`
+	AssetId string  `json:"asset_id"`
+	Amount  float64 `json:"amount"`
 }
 
 func QueryAddress(c *gin.Context) {
@@ -154,7 +153,15 @@ func QueryAddress(c *gin.Context) {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
-	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", addr))
+	var addrs []AddressResponce
+	for _, v := range addr {
+		addrs = append(addrs, AddressResponce{
+			Address: v.Invoice,
+			AssetId: v.AssetId,
+			Amount:  v.Amount,
+		})
+	}
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", addrs))
 }
 
 func QueryAddresses(c *gin.Context) {
@@ -165,19 +172,20 @@ func QueryAddresses(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, models.MakeJsonErrorResultForHttp(models.DefaultErr, "用户不存在", nil))
 		return
 	}
-	invoiceRequest := struct {
-		AssetId string `json:"asset_id"`
-	}{}
-	if err := c.ShouldBindJSON(&invoiceRequest); err != nil {
-		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
-		return
-	}
 	// 查询账户发票
-	addrs, err := e.QueryPayReqs()
+	addr, err := e.QueryPayReqs()
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
+	}
+	var addrs []AddressResponce
+	for _, v := range addr {
+		addrs = append(addrs, AddressResponce{
+			Address: v.Invoice,
+			AssetId: v.AssetId,
+			Amount:  v.Amount,
+		})
 	}
 	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", addrs))
 }
