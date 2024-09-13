@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"math"
 	"strings"
 	"trade/models"
 )
@@ -79,6 +80,15 @@ func GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAsset(assetId 
 	return accountAssetTransfers, nil
 }
 
+func GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAssetLimitAndOffset(assetId string, limit int, offset int) (*[]AccountAssetTransfer, error) {
+	billBalances, err := ReadBillBalanceAssetTransferAndAwardAssetByAssetIdLimitAndOffset(assetId, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	accountAssetTransfers := BillBalancesToAccountAssetTransfers(billBalances)
+	return accountAssetTransfers, nil
+}
+
 func GetAllAccountAssetTransfersByBillBalanceAssetTransfer(assetId string) (*[]AccountAssetTransfer, error) {
 	billBalances, err := ReadBillBalanceAssetTransferByAssetId(assetId)
 	if err != nil {
@@ -95,4 +105,43 @@ func GetAllAccountAssetTransfersByAssetId(assetId string) (*[]AccountAssetTransf
 		return nil, errors.New("invalid asset id")
 	}
 	return GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAsset(assetId)
+}
+
+// GetAllAccountAssetTransfersByAssetIdLimitAndOffset
+// @Description: Get all account asset transfers by asset id limit and offset
+func GetAllAccountAssetTransfersByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*[]AccountAssetTransfer, error) {
+	if assetId == "00" {
+		return nil, errors.New("invalid asset id")
+	}
+	return GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAssetLimitAndOffset(assetId, limit, offset)
+}
+
+type GetAccountAssetTransferLimitAndOffsetRequest struct {
+	AssetId string `json:"asset_id"`
+	Limit   int    `json:"limit"`
+	Offset  int    `json:"offset"`
+}
+
+type GetAccountAssetTransferPageNumberByPageSizeRequest struct {
+	AssetId  string `json:"asset_id"`
+	PageSize int    `json:"page_size"`
+}
+
+func GetAccountAssetTransferLength(assetId string) (int, error) {
+	response, err := GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAsset(assetId)
+	if err != nil {
+		return 0, err
+	}
+	if response == nil || len(*(response)) == 0 {
+		return 0, nil
+	}
+	return len(*response), nil
+}
+
+func GetAccountAssetTransferPageNumberByPageSize(assetId string, pageSize int) (int, error) {
+	recordsNum, err := GetAccountAssetTransferLength(assetId)
+	if err != nil {
+		return 0, err
+	}
+	return int(math.Ceil(float64(recordsNum) / float64(pageSize))), nil
 }
