@@ -82,8 +82,8 @@ func GetAccountAssetBalanceLimitAndOffset(c *gin.Context) {
 }
 
 func GetAccountAssetBalancePageNumberByPageSize(c *gin.Context) {
-	var GetAccountAssetBalancePageNumberByPageSizeRequest services.GetAccountAssetBalancePageNumberByPageSizeRequest
-	err := c.ShouldBindJSON(&GetAccountAssetBalancePageNumberByPageSizeRequest)
+	var getAccountAssetBalancePageNumberByPageSizeRequest services.GetAccountAssetBalancePageNumberByPageSizeRequest
+	err := c.ShouldBindJSON(&getAccountAssetBalancePageNumberByPageSizeRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -93,8 +93,8 @@ func GetAccountAssetBalancePageNumberByPageSize(c *gin.Context) {
 		})
 		return
 	}
-	pageSize := GetAccountAssetBalancePageNumberByPageSizeRequest.PageSize
-	assetId := GetAccountAssetBalancePageNumberByPageSizeRequest.AssetId
+	pageSize := getAccountAssetBalancePageNumberByPageSizeRequest.PageSize
+	assetId := getAccountAssetBalancePageNumberByPageSizeRequest.AssetId
 	if pageSize <= 0 || assetId == "" {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,

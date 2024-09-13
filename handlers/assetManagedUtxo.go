@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"trade/models"
@@ -228,5 +229,79 @@ func GetAllAssetManagedUtxoSimplified(c *gin.Context) {
 		Error:   models.SuccessErr,
 		Code:    models.SUCCESS,
 		Data:    assetManagedUtxoSimplified,
+	})
+}
+
+func GetAssetManagedUtxoLimitAndOffset(c *gin.Context) {
+	var getAssetManagedUtxoLimitAndOffsetRequest services.GetAssetManagedUtxoLimitAndOffsetRequest
+	err := c.ShouldBindJSON(&getAssetManagedUtxoLimitAndOffsetRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	assetId := getAssetManagedUtxoLimitAndOffsetRequest.AssetId
+	limit := getAssetManagedUtxoLimitAndOffsetRequest.Limit
+	offset := getAssetManagedUtxoLimitAndOffsetRequest.Offset
+	assetManagedUtxo, err := services.GetAssetManagedUtxoLimitAndOffset(assetId, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetManagedUtxoLimitAndOffsetErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
+		Data:    assetManagedUtxo,
+	})
+}
+
+func GetAssetManagedUtxoPageNumberByPageSize(c *gin.Context) {
+	var getAssetManagedUtxoPageNumberByPageSizeRequest services.GetAssetManagedUtxoPageNumberByPageSizeRequest
+	err := c.ShouldBindJSON(&getAssetManagedUtxoPageNumberByPageSizeRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	pageSize := getAssetManagedUtxoPageNumberByPageSizeRequest.PageSize
+	assetId := getAssetManagedUtxoPageNumberByPageSizeRequest.AssetId
+	if pageSize <= 0 || assetId == "" {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   errors.New("invalid asset id or page size").Error(),
+			Code:    models.GetAssetManagedUtxoPageNumberByPageSizeRequestInvalidErr,
+			Data:    nil,
+		})
+		return
+	}
+	pageNumber, err := services.GetAssetManagedUtxoPageNumberByPageSize(assetId, pageSize)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAssetManagedUtxoPageNumberByPageSizeErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    pageNumber,
 	})
 }
