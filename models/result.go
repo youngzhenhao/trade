@@ -182,6 +182,9 @@ const (
 	GetAccountAssetTransfersLimitAndOffsetErr
 	GetAccountAssetTransferPageNumberByPageSizeRequestInvalidErr
 	GetAccountAssetTransferPageNumberByPageSizeErr
+	GetAccountAssetBalancesLimitAndOffsetErr
+	GetAccountAssetBalancePageNumberByPageSizeRequestInvalidErr
+	GetAccountAssetBalancePageNumberByPageSizeErr
 )
 
 // Err type:CustodyAccount

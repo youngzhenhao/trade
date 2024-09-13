@@ -155,7 +155,7 @@ func GetAssetRecommendByUserIdAndAssetId(c *gin.Context) {
 		AssetId string `json:"asset_id"`
 	}
 	var userIdAndAssetId UserIdAndAssetId
-	err := c.ShouldBind(&userIdAndAssetId)
+	err := c.ShouldBindJSON(&userIdAndAssetId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
