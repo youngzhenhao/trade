@@ -172,13 +172,6 @@ func QueryAddresses(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, models.MakeJsonErrorResultForHttp(models.DefaultErr, "用户不存在", nil))
 		return
 	}
-	invoiceRequest := struct {
-		AssetId string `json:"asset_id"`
-	}{}
-	if err := c.ShouldBindJSON(&invoiceRequest); err != nil {
-		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
-		return
-	}
 	// 查询账户发票
 	addr, err := e.QueryPayReqs()
 	if err != nil {
