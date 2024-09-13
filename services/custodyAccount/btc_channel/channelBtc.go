@@ -226,7 +226,6 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 		bt.err <- err
 		return
 	}
-
 	bt.err <- nil
 	var balanceModel models.Balance
 	//扣除服务费
@@ -250,8 +249,25 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	balanceModel.Unit = models.UNIT_SATOSHIS
 	balanceModel.Invoice = &payment.PaymentRequest
 	balanceModel.PaymentHash = &payment.PaymentHash
-
 	err = btldb.CreateBalance(&balanceModel)
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+	}
+	track, err := rpc.PaymentTrack(payment.PaymentHash)
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+		return
+	}
+	switch track.Status {
+	case lnrpc.Payment_SUCCEEDED:
+		balanceModel.State = models.STATE_SUCCESS
+	case lnrpc.Payment_FAILED:
+		balanceModel.State = models.STATE_FAILED
+	default:
+		balanceModel.State = models.STATE_UNKNOW
+	}
+	balanceModel.ServerFee = ChannelBtcServiceFee + uint64(track.FeeSat)
+	err = btldb.UpdateBalance(&balanceModel)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 	}

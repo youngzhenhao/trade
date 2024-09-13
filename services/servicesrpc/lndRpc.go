@@ -179,7 +179,9 @@ func PaymentTrack(paymentHash string) (*lnrpc.Payment, error) {
 			return nil, err
 		}
 		if payment != nil {
-			return payment, nil
+			if payment.Status == lnrpc.Payment_SUCCEEDED || payment.Status == lnrpc.Payment_FAILED {
+				return payment, nil
+			}
 		}
 	}
 }
