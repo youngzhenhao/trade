@@ -63,12 +63,12 @@ func GetAccountAssetTransferLimitAndOffset(c *gin.Context) {
 	assetId := getAccountAssetTransferLimitAndOffsetRequest.AssetId
 	limit := getAccountAssetTransferLimitAndOffsetRequest.Limit
 	offset := getAccountAssetTransferLimitAndOffsetRequest.Offset
-	accountAssetTransfers, err := services.GetAllAccountAssetTransfersByAssetIdLimitAndOffset(assetId, limit, offset)
+	accountAssetTransfers, err := services.GetAccountAssetTransfersLimitAndOffset(assetId, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetAllAccountAssetTransfersByAssetIdLimitAndOffsetErr,
+			Code:    models.GetAccountAssetTransfersLimitAndOffsetErr,
 			Data:    nil,
 		})
 		return

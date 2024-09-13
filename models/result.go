@@ -179,7 +179,7 @@ const (
 	RefundUserFirstMintByUsernameAndAssetIdErr
 	GetAssetHolderBalancePageNumberRequestInvalidErr
 	GetAssetHolderBalancePageNumberByPageSizeErr
-	GetAllAccountAssetTransfersByAssetIdLimitAndOffsetErr
+	GetAccountAssetTransfersLimitAndOffsetErr
 	GetAccountAssetTransferPageNumberByPageSizeRequestInvalidErr
 	GetAccountAssetTransferPageNumberByPageSizeErr
 )

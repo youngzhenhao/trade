@@ -80,7 +80,7 @@ func GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAsset(assetId 
 	return accountAssetTransfers, nil
 }
 
-func GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAssetLimitAndOffset(assetId string, limit int, offset int) (*[]AccountAssetTransfer, error) {
+func GetAccountAssetTransfersByBillBalanceAssetTransferAndAwardAssetLimitAndOffset(assetId string, limit int, offset int) (*[]AccountAssetTransfer, error) {
 	billBalances, err := ReadBillBalanceAssetTransferAndAwardAssetByAssetIdLimitAndOffset(assetId, limit, offset)
 	if err != nil {
 		return nil, err
@@ -107,13 +107,13 @@ func GetAllAccountAssetTransfersByAssetId(assetId string) (*[]AccountAssetTransf
 	return GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAsset(assetId)
 }
 
-// GetAllAccountAssetTransfersByAssetIdLimitAndOffset
+// GetAccountAssetTransfersLimitAndOffset
 // @Description: Get all account asset transfers by asset id limit and offset
-func GetAllAccountAssetTransfersByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*[]AccountAssetTransfer, error) {
+func GetAccountAssetTransfersLimitAndOffset(assetId string, limit int, offset int) (*[]AccountAssetTransfer, error) {
 	if assetId == "00" {
 		return nil, errors.New("invalid asset id")
 	}
-	return GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAssetLimitAndOffset(assetId, limit, offset)
+	return GetAccountAssetTransfersByBillBalanceAssetTransferAndAwardAssetLimitAndOffset(assetId, limit, offset)
 }
 
 type GetAccountAssetTransferLimitAndOffsetRequest struct {
