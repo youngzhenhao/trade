@@ -635,7 +635,6 @@ func GetAssetBalanceByAssetIdNonZeroLength(assetId string) (int, error) {
 }
 
 // IsLimitAndOffsetValid
-// TODO: Need to test
 // @dev: Check limit and offset is valid by total amount
 func IsLimitAndOffsetValid(assetId string, limit int, offset int) (bool, error) {
 	if !(limit > 0 && offset >= 0) {

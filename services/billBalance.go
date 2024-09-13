@@ -31,8 +31,20 @@ func ReadBillBalanceAssetTransferAndAwardAssetByAssetId(assetId string) (*[]mode
 	return &billBalances, err
 }
 
+func ReadBillBalanceAssetTransferAndAwardAssetByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*[]models.Balance, error) {
+	var billBalances []models.Balance
+	err := middleware.DB.Where("amount <> ? AND bill_type IN ? AND asset_id = ?", 0, []models.BalanceType{models.BillTypeAssetTransfer, models.BillTypeAwardAsset}, assetId).Order("updated_at desc").Limit(limit).Offset(offset).Find(&billBalances).Error
+	return &billBalances, err
+}
+
 func ReadBillBalanceAssetTransferByAssetId(assetId string) (*[]models.Balance, error) {
 	var billBalances []models.Balance
 	err := middleware.DB.Where("amount <> ? AND bill_type IN ? AND asset_id = ?", 0, []models.BalanceType{models.BillTypeAssetTransfer}, assetId).Order("updated_at desc").Find(&billBalances).Error
+	return &billBalances, err
+}
+
+func ReadBillBalanceAssetTransferByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*[]models.Balance, error) {
+	var billBalances []models.Balance
+	err := middleware.DB.Where("amount <> ? AND bill_type IN ? AND asset_id = ?", 0, []models.BalanceType{models.BillTypeAssetTransfer}, assetId).Order("updated_at desc").Limit(limit).Offset(offset).Find(&billBalances).Error
 	return &billBalances, err
 }

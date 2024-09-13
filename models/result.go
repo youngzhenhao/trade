@@ -179,6 +179,9 @@ const (
 	RefundUserFirstMintByUsernameAndAssetIdErr
 	GetAssetHolderBalancePageNumberRequestInvalidErr
 	GetAssetHolderBalancePageNumberByPageSizeErr
+	GetAllAccountAssetTransfersByAssetIdLimitAndOffsetErr
+	GetAccountAssetTransferPageNumberByPageSizeRequestInvalidErr
+	GetAccountAssetTransferPageNumberByPageSizeErr
 )
 
 // Err type:CustodyAccount
