@@ -321,8 +321,8 @@ func DecodeAddress(c *gin.Context) {
 	AssetId := hex.EncodeToString(q.AssetId)
 	result := struct {
 		AssetId   string `json:"AssetId"`
-		AssetType string `json:"timestamp"`
-		Amount    uint64 `json:"expiry"`
+		AssetType string `json:"assetType"`
+		Amount    uint64 `json:"amount"`
 	}{
 		AssetId:   AssetId,
 		AssetType: q.AssetType.String(),
