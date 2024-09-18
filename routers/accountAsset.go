@@ -14,6 +14,9 @@ func SetupAccountAssetRouter(router *gin.Engine) *gin.Engine {
 		balance := accountAsset.Group("/balance")
 		{
 			balance.GET("/get/asset_id/:asset_id", handlers.GetAccountAssetBalanceByAssetId)
+			// @dev: Split page
+			balance.POST("/get/limit_offset", handlers.GetAccountAssetBalanceLimitAndOffset)
+			balance.POST("/get/page_number", handlers.GetAccountAssetBalancePageNumberByPageSize)
 		}
 		transfer := accountAsset.Group("/transfer")
 		{

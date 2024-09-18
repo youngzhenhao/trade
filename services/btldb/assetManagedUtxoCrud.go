@@ -49,6 +49,12 @@ func ReadAssetManagedUtxosByAssetId(assetId string) (*[]models.AssetManagedUtxo,
 	return &assetManagedUtxos, err
 }
 
+func ReadAssetManagedUtxosByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*[]models.AssetManagedUtxo, error) {
+	var assetManagedUtxos []models.AssetManagedUtxo
+	err := middleware.DB.Where("asset_genesis_asset_id = ?", assetId).Order("id desc").Limit(limit).Offset(offset).Find(&assetManagedUtxos).Error
+	return &assetManagedUtxos, err
+}
+
 func ReadAssetManagedUtxoByUserIdAndAssetId(userId int, assetId string) (*models.AssetManagedUtxo, error) {
 	var assetManagedUtxo models.AssetManagedUtxo
 	err := middleware.DB.Where("user_id = ? AND asset_genesis_asset_id = ?", userId, assetId).First(&assetManagedUtxo).Error

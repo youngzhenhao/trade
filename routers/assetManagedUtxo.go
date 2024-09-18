@@ -20,6 +20,9 @@ func SetupAssetManagedUtxoRouter(router *gin.Engine) *gin.Engine {
 		assetManagedUtxo.GET("/get/asset_id/:asset_id", handlers.GetAssetManagedUtxoAssetId)
 		assetManagedUtxo.POST("/set", handlers.SetAssetManagedUtxos)
 		assetManagedUtxo.POST("/remove", handlers.RemoveAssetManagedUtxos)
+		// @dev: Split page
+		assetManagedUtxo.POST("/get/limit_offset", handlers.GetAssetManagedUtxoLimitAndOffset)
+		assetManagedUtxo.POST("/get/page_number", handlers.GetAssetManagedUtxoPageNumberByPageSize)
 	}
 	authorized := router.Group("/asset_managed_utxo", gin.BasicAuth(gin.Accounts{
 		config.GetLoadConfig().AdminUser.Username: config.GetLoadConfig().AdminUser.Password,

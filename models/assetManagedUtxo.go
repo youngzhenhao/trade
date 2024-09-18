@@ -15,7 +15,7 @@ type AssetManagedUtxo struct {
 	AssetGenesisPoint           string `json:"asset_genesis_point" gorm:"type:varchar(255)"`
 	AssetGenesisName            string `json:"asset_genesis_name" gorm:"type:varchar(255)"`
 	AssetGenesisMetaHash        string `json:"asset_genesis_meta_hash" gorm:"type:varchar(255)"`
-	AssetGenesisAssetID         string `json:"asset_genesis_asset_id" gorm:"type:varchar(255)"`
+	AssetGenesisAssetID         string `json:"asset_genesis_asset_id" gorm:"type:varchar(255);index"`
 	AssetGenesisAssetType       string `json:"asset_genesis_asset_type" gorm:"type:varchar(255)"`
 	AssetGenesisOutputIndex     int    `json:"asset_genesis_output_index"`
 	AssetGenesisVersion         int    `json:"asset_genesis_version"`

@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"math"
 	"time"
 	"trade/models"
 	"trade/services/btldb"
@@ -389,4 +390,46 @@ func ValidateUserIdAndAssetManagedUtxoIds(userId int, assetManagedUtxoIds *[]int
 		}
 	}
 	return nil
+}
+
+type GetAssetManagedUtxoLimitAndOffsetRequest struct {
+	AssetId string `json:"asset_id"`
+	Limit   int    `json:"limit"`
+	Offset  int    `json:"offset"`
+}
+
+type GetAssetManagedUtxoPageNumberByPageSizeRequest struct {
+	AssetId  string `json:"asset_id"`
+	PageSize int    `json:"page_size"`
+}
+
+func GetAssetManagedUtxoByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*[]models.AssetManagedUtxo, error) {
+	return btldb.ReadAssetManagedUtxosByAssetIdLimitAndOffset(assetId, limit, offset)
+}
+
+func GetAssetManagedUtxoLimitAndOffset(assetId string, limit int, offset int) (*[]models.AssetManagedUtxo, error) {
+	return GetAssetManagedUtxoByAssetIdLimitAndOffset(assetId, limit, offset)
+}
+
+func GetAssetManagedUtxoPageNumberByPageSize(assetId string, pageSize int) (int, error) {
+	recordsNum, err := GetAssetManagedUtxoLength(assetId)
+	if err != nil {
+		return 0, err
+	}
+	return int(math.Ceil(float64(recordsNum) / float64(pageSize))), nil
+}
+
+func GetAllAssetManagedUtxosByAssetId(assetId string) (*[]models.AssetManagedUtxo, error) {
+	return btldb.ReadAssetManagedUtxosByAssetId(assetId)
+}
+
+func GetAssetManagedUtxoLength(assetId string) (int, error) {
+	response, err := GetAllAssetManagedUtxosByAssetId(assetId)
+	if err != nil {
+		return 0, err
+	}
+	if response == nil || len(*(response)) == 0 {
+		return 0, nil
+	}
+	return len(*response), nil
 }

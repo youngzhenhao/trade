@@ -48,9 +48,83 @@ func GetAllAccountAssetTransferByAssetId(c *gin.Context) {
 	})
 }
 
+func GetAccountAssetBalanceLimitAndOffset(c *gin.Context) {
+	var getAccountAssetBalanceLimitAndOffsetRequest services.GetAccountAssetBalanceLimitAndOffsetRequest
+	err := c.ShouldBindJSON(&getAccountAssetBalanceLimitAndOffsetRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	assetId := getAccountAssetBalanceLimitAndOffsetRequest.AssetId
+	limit := getAccountAssetBalanceLimitAndOffsetRequest.Limit
+	offset := getAccountAssetBalanceLimitAndOffsetRequest.Offset
+	accountAssetBalances, err := services.GetAccountAssetBalanceExtendsLimitAndOffset(assetId, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAccountAssetBalancesLimitAndOffsetErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
+		Data:    accountAssetBalances,
+	})
+}
+
+func GetAccountAssetBalancePageNumberByPageSize(c *gin.Context) {
+	var getAccountAssetBalancePageNumberByPageSizeRequest services.GetAccountAssetBalancePageNumberByPageSizeRequest
+	err := c.ShouldBindJSON(&getAccountAssetBalancePageNumberByPageSizeRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	pageSize := getAccountAssetBalancePageNumberByPageSizeRequest.PageSize
+	assetId := getAccountAssetBalancePageNumberByPageSizeRequest.AssetId
+	if pageSize <= 0 || assetId == "" {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   errors.New("invalid asset id or page size").Error(),
+			Code:    models.GetAccountAssetBalancePageNumberByPageSizeRequestInvalidErr,
+			Data:    nil,
+		})
+		return
+	}
+	pageNumber, err := services.GetAccountAssetBalancePageNumberByPageSize(assetId, pageSize)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAccountAssetBalancePageNumberByPageSizeErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    pageNumber,
+	})
+}
+
 func GetAccountAssetTransferLimitAndOffset(c *gin.Context) {
 	var getAccountAssetTransferLimitAndOffsetRequest services.GetAccountAssetTransferLimitAndOffsetRequest
-	err := c.ShouldBind(&getAccountAssetTransferLimitAndOffsetRequest)
+	err := c.ShouldBindJSON(&getAccountAssetTransferLimitAndOffsetRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,

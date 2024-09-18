@@ -125,6 +125,10 @@ func FairLaunchMint() {
 func SendFairLaunchAsset() {
 	err := SendFairLaunchMintedAssetLocked()
 	if err != nil {
+		err = utils.WriteToLogFile("./trade.SendFairLaunchAsset.log", "[TRADE.SFLA]", utils.ValueJsonString(err))
+		if err != nil {
+			utils.LogError("Write SendFairLaunchAsset err to log file", err)
+		}
 		btlLog.FairLaunchDebugLogger.Info("SendFairLaunchAsset: %v", err)
 		return
 	}
@@ -1730,13 +1734,22 @@ func UpdateFairLaunchMintedInfosBySendAssetResponse(fairLaunchMintedInfos *[]mod
 	return middleware.DB.Save(&fairLaunchMintedInfosUpdated).Error
 }
 
+func FairLaunchMintedInfosIdToString(fairLaunchMintedInfos *[]models.FairLaunchMintedInfo) string {
+	var ids string
+	for _, fairLaunchMintedInfo := range *fairLaunchMintedInfos {
+		ids += strconv.Itoa(int(fairLaunchMintedInfo.ID)) + ";"
+	}
+	return ids
+}
+
 // SendFairLaunchMintedAssetLocked
 // @dev: Trigger after ProcessFairLaunchMintedStatePaidNoSendInfo
 func SendFairLaunchMintedAssetLocked() error {
 	// @dev: all unsent
 	unsentFairLaunchMintedInfos, err := GetAllUnsentFairLaunchMintedInfos()
+	ids := "(id:" + FairLaunchMintedInfosIdToString(unsentFairLaunchMintedInfos) + ")"
 	if err != nil {
-		return utils.AppendErrorInfo(err, "GetAllUnsentFairLaunchMintedInfos")
+		return utils.AppendErrorInfo(err, "GetAllUnsentFairLaunchMintedInfos"+ids)
 	}
 	assetIdToFairLaunchInfoId := make(map[string]int)
 	assetIdToAddrs := make(map[string][]string)
@@ -1764,22 +1777,22 @@ func SendFairLaunchMintedAssetLocked() error {
 	for assetId, addrs := range assetIdToAddrs {
 		// @dev: Check if confirmed btc balance enough
 		if !IsWalletBalanceEnough(assetIdToGasFeeTotal[assetId]) {
-			err = errors.New("lnd wallet balance is not enough")
+			err = errors.New("lnd wallet balance is not enough" + ids)
 			return err
 		}
 		// @dev: Check if asset balance enough
 		if !IsAssetBalanceEnough(assetId, assetIdToAmount[assetId]) {
-			err = errors.New("tapd asset balance is not enough")
+			err = errors.New("tapd asset balance is not enough" + ids)
 			return err
 		}
 		// @dev: Check if asset utxo is enough
 		if !IsAssetUtxoEnough(assetId, assetIdToAmount[assetId]) {
-			err = errors.New("tapd asset utxo is not enough")
+			err = errors.New("tapd asset utxo is not enough" + ids)
 			return err
 		}
 		feeRate, err = UpdateAndGetFeeRateResponseTransformed()
 		if err != nil {
-			return utils.AppendErrorInfo(err, "UpdateAndGetFeeRateResponseTransformed")
+			return utils.AppendErrorInfo(err, "UpdateAndGetFeeRateResponseTransformed"+ids)
 		}
 		// @dev: Append fee of 2 sat per b
 		feeRateSatPerKw := feeRate.SatPerKw.FastestFee + FeeRateSatPerBToSatPerKw(2)
@@ -1788,7 +1801,7 @@ func SendFairLaunchMintedAssetLocked() error {
 		// @notice: 2024-8-14 16:37:34 This check should be removed
 		// @note: Use greater restrictions instead of removing check
 		if assetIdToGasFeeRateAverage[assetId]+FeeRateSatPerBToSatPerKw(100) < feeRateSatPerKw {
-			return errors.New("too high fee rate to send minted asset now")
+			return errors.New("too high fee rate to send minted asset now" + ids)
 		}
 		if len(addrs) == 0 {
 			//err = errors.New("length of addrs slice is zero, can't send assets and update")
@@ -1798,7 +1811,7 @@ func SendFairLaunchMintedAssetLocked() error {
 		// @dev: Send Asset
 		response, err = api.SendAssetAddrSliceAndGetResponse(addrs, feeRateSatPerKw)
 		if err != nil {
-			return utils.AppendErrorInfo(err, "SendAssetAddrSliceAndGetResponse")
+			return utils.AppendErrorInfo(err, "SendAssetAddrSliceAndGetResponse"+ids)
 		}
 		// @dev: Record paid fee
 		outpoint := response.Transfer.Outputs[0].Anchor.Outpoint
@@ -1806,12 +1819,12 @@ func SendFairLaunchMintedAssetLocked() error {
 		addrsStr := AddrsToString(addrs)
 		err = CreateFairLaunchIncomeOfServerPaySendAssetFee(assetId, assetIdToFairLaunchInfoId[assetId], txid, addrsStr)
 		if err != nil {
-			return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfServerPaySendAssetFee")
+			return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfServerPaySendAssetFee"+ids)
 		}
 		// @dev: Update minted info
 		err = UpdateFairLaunchMintedInfosBySendAssetResponse(unsentFairLaunchMintedInfos, response)
 		if err != nil {
-			return utils.AppendErrorInfo(err, "UpdateFairLaunchMintedInfosBySendAssetResponse")
+			return utils.AppendErrorInfo(err, "UpdateFairLaunchMintedInfosBySendAssetResponse"+ids)
 		}
 	}
 	return nil
