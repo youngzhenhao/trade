@@ -125,7 +125,7 @@ func InvoicePay(macaroonPath string, invoice string, amt, feeLimit int64) (*lnrp
 	request := &routerrpc.SendPaymentRequest{
 		PaymentRequest: invoice,
 		//FeeLimitSat:    feeLimit,
-		TimeoutSeconds: 10,
+		TimeoutSeconds: 60,
 	}
 	if feeLimit > 1 {
 		request.FeeLimitSat = feeLimit

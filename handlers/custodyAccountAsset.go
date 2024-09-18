@@ -313,6 +313,9 @@ func DecodeAddress(c *gin.Context) {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "请求参数错误", nil))
 		return
 	}
+	if query.Address == "" {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "请求参数错误", nil))
+	}
 	q, err := rpc.DecodeAddr(query.Address)
 	if err != nil {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "地址解析失败："+err.Error(), nil))
