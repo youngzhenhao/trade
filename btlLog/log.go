@@ -36,7 +36,7 @@ type ServicesLogger struct {
 func NewLogger(logName string, level LogLevel, Writer ...io.Writer) *ServicesLogger {
 	var multiWriter io.Writer
 	multiWriter = io.MultiWriter(os.Stdout)
-	for i, _ := range Writer {
+	for i := range Writer {
 		multiWriter = io.MultiWriter(multiWriter, Writer[i])
 	}
 	return &ServicesLogger{
@@ -118,7 +118,7 @@ func backupLogFile(filePath string) {
 		newName := filePath + "." + time.Now().Format("200601021504") + ".bak"
 		err := os.Rename(filePath, newName)
 		if err != nil {
-			fmt.Printf("Backup file failed: %w", err)
+			fmt.Printf("Backup file failed: %v", err)
 		}
 	}
 }
