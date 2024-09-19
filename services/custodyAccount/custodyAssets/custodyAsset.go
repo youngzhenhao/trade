@@ -252,7 +252,7 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		AssetID:     assetId,
 		TotalAmount: int64(bt.DecodePayReq.Amount),
 	}
-	bt.err <- fmt.Errorf("success")
+	bt.err <- nil
 	OutsideSever.Queue.addNewPkg(&m)
 }
 
