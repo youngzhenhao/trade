@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"trade/btlLog"
 	"trade/config"
 	"trade/dao"
 	"trade/middleware"
@@ -153,6 +154,7 @@ func main() {
 // Check config
 func checkStart() bool {
 	cfg := config.GetConfig()
+	//检查区块网络配置
 	switch cfg.NetWork {
 	case "testnet":
 		log.Println("Running on testnet")
@@ -164,6 +166,12 @@ func checkStart() bool {
 		log.Println("NetWork need set testnet, mainnet or regtest")
 		return false
 	}
+	//加载日志系统
+	if err := btlLog.InitBtlLog(); err != nil {
+		log.Printf("Failed to initialize btl log: %v", err)
+		return false
+	}
+	//加载托管账户系统
 	ctx := context.Background()
 	if !custodyAccount.CustodyStart(ctx, cfg) {
 		return false
