@@ -219,7 +219,7 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	}
 	payment, err := rpc.InvoicePay(macaroonFile, bt.PayReq, bt.DecodePayReq.NumSatoshis, bt.FeeLimit)
 	if err != nil {
-		btlLog.CUST.Error("pay invoice fail")
+		btlLog.CUST.Error("pay invoice fail %w", err)
 		bt.err <- err
 		return
 	}
@@ -249,14 +249,14 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 		if err != nil {
 			btlLog.CUST.Error(err.Error())
 		}
-		balanceModel.ServerFee = ChannelBtcServiceFee + uint64(payment.FeeSat)
+		balanceModel.ServerFee = ChannelBtcServiceFee + uint64(track.FeeSat)
 		balanceModel.State = models.STATE_SUCCESS
 		bt.err <- nil
 		btlLog.CUST.Info("payment outside success balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
 	case lnrpc.Payment_FAILED:
 		btlLog.CUST.Error("payment outside failed balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
-		btlLog.CUST.Error(payment.FailureReason.String())
-		bt.err <- fmt.Errorf(payment.FailureReason.String())
+		btlLog.CUST.Error(track.FailureReason.String())
+		bt.err <- fmt.Errorf(track.FailureReason.String())
 		balanceModel.State = models.STATE_FAILED
 	default:
 		btlLog.CUST.Error("payment outside unknown balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
