@@ -2814,7 +2814,9 @@ func GetUserFirstFairLaunchMintedInfosByUsernameSliceAndAssetId(usernameSlice []
 		}
 		fairLaunchMintedInfo, err := GetUserFirstFairLaunchMintedInfoByUsernameAndAssetId(username, assetId)
 		if err != nil {
-			return nil, err
+			//@dev: do not return
+			continue
+			//return nil, err
 		}
 		usernameMapFairLaunchMintedInfo[username] = *fairLaunchMintedInfo
 	}
