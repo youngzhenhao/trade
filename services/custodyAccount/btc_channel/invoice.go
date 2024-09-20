@@ -18,10 +18,10 @@ type SubscribeInvoiceServer struct {
 
 var InvoiceServer SubscribeInvoiceServer
 
-func (s *SubscribeInvoiceServer) Start() {
-	go s.runServer()
+func (s *SubscribeInvoiceServer) Start(ctx context.Context) {
+	go s.runServer(ctx)
 }
-func (s *SubscribeInvoiceServer) runServer() {
+func (s *SubscribeInvoiceServer) runServer(ctx context.Context) {
 	lndconf := config.GetConfig().ApiConfig.Lnd
 
 	grpcHost := lndconf.Host + ":" + strconv.Itoa(lndconf.Port)
@@ -35,7 +35,7 @@ func (s *SubscribeInvoiceServer) runServer() {
 	request := &lnrpc.InvoiceSubscription{
 		AddIndex: 1,
 	}
-	stream, err := client.SubscribeInvoices(context.Background(), request)
+	stream, err := client.SubscribeInvoices(ctx, request)
 	if err != nil {
 		return
 	}

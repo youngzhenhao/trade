@@ -1,6 +1,7 @@
 package custodyAssets
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -19,66 +20,69 @@ type AssetOutsideSever struct {
 
 var OutsideSever AssetOutsideSever
 
-func (s *AssetOutsideSever) Start() {
+func (s *AssetOutsideSever) Start(ctx context.Context) {
 	// Start 启动服务
 	s.Queue = NewOutsideUniqueQueue()
 	s.LoadMission()
-	go s.runServer()
+	go s.runServer(ctx)
 }
-func (s *AssetOutsideSever) runServer() {
+func (s *AssetOutsideSever) runServer(ctx context.Context) {
 	for {
-		time.Sleep(10 * time.Second)
-		if s.Queue.isEmpty() {
-			continue
-		}
-
-		//获取可用资产列表
-		assets, err := rpc.ListAssets()
-		if err != nil {
-			btlLog.CUST.Error("rpc.ListAssets error:%v", err)
-			continue
-		}
-		list := make(map[string]uint64)
-		for _, asset := range assets.Assets {
-			assetId := hex.EncodeToString(asset.AssetGenesis.AssetId)
-			list[assetId] += asset.Amount
-		}
-		firstAssetID := ""
-		for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			time.Sleep(10 * time.Second)
 			if s.Queue.isEmpty() {
-				break
-			}
-			//获取 一个外部支付任务
-			mission := s.Queue.getNextPkg()
-			if firstAssetID == "" {
-				firstAssetID = mission.AssetID
-			} else if firstAssetID == mission.AssetID {
-				s.Queue.addNewPkg(mission)
-				break
-			}
-			//检查是否可交易：LIST AND UTXO
-			if list[mission.AssetID] < uint64(mission.TotalAmount) {
-				s.Queue.addNewPkg(mission)
-				break
-			}
-			balance, err := rpc.GetBalance()
-			if err != nil {
-				s.Queue.addNewPkg(mission)
 				continue
 			}
-			if balance.AccountBalance["default"].ConfirmedBalance < int64(len(mission.AddrTarget)*1000) {
-				s.Queue.addNewPkg(mission)
+			//获取可用资产列表
+			assets, err := rpc.ListAssets()
+			if err != nil {
+				btlLog.CUST.Error("rpc.ListAssets error:%v", err)
 				continue
 			}
-			err = s.payToOutside(mission)
-			if err == nil {
-				btlLog.CUST.Info("payToOutside success: id=%v,amount=%v", mission.AssetID, mission.TotalAmount)
+			list := make(map[string]uint64)
+			for _, asset := range assets.Assets {
+				assetId := hex.EncodeToString(asset.AssetGenesis.AssetId)
+				list[assetId] += asset.Amount
 			}
-			if err != nil {
-				btlLog.CUST.Info("payToOutside Fail: id=%v,amount=%v", mission.AssetID, mission.TotalAmount)
-				s.Queue.addNewPkg(mission)
+			firstAssetID := ""
+			for {
+				if s.Queue.isEmpty() {
+					break
+				}
+				//获取 一个外部支付任务
+				mission := s.Queue.getNextPkg()
+				if firstAssetID == "" {
+					firstAssetID = mission.AssetID
+				} else if firstAssetID == mission.AssetID {
+					s.Queue.addNewPkg(mission)
+					break
+				}
+				//检查是否可交易：LIST AND UTXO
+				if list[mission.AssetID] < uint64(mission.TotalAmount) {
+					s.Queue.addNewPkg(mission)
+					break
+				}
+				balance, err := rpc.GetBalance()
+				if err != nil {
+					s.Queue.addNewPkg(mission)
+					continue
+				}
+				if balance.AccountBalance["default"].ConfirmedBalance < int64(len(mission.AddrTarget)*1000) {
+					s.Queue.addNewPkg(mission)
+					continue
+				}
+				err = s.payToOutside(mission)
+				if err == nil {
+					btlLog.CUST.Info("payToOutside success: id=%v,amount=%v", mission.AssetID, mission.TotalAmount)
+				}
+				if err != nil {
+					btlLog.CUST.Info("payToOutside Fail: id=%v,amount=%v", mission.AssetID, mission.TotalAmount)
+					s.Queue.addNewPkg(mission)
+				}
 			}
-
 		}
 	}
 }

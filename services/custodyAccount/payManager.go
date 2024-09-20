@@ -34,8 +34,8 @@ func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 	fmt.Println("Custody account MacaroonDir is set:", cfg.ApiConfig.CustodyAccount.MacaroonDir)
 	// Start the custody account service
 	btc_channel.BtcSever.Start(ctx)
-	btc_channel.InvoiceServer.Start()
-	custodyAssets.OutsideSever.Start()
+	btc_channel.InvoiceServer.Start(ctx)
+	custodyAssets.OutsideSever.Start(ctx)
 	custodyAssets.InSideSever.Start()
 	custodyAssets.AddressServer.Start(ctx)
 	//Check the custody service status

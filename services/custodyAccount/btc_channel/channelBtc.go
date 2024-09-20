@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"path/filepath"
-	"sync"
 	"time"
 	"trade/btlLog"
 	"trade/config"
@@ -67,8 +66,6 @@ func (e *BtcChannelEvent) GetBalance() ([]cBase.Balance, error) {
 }
 
 //请求发票
-
-var ApplyInvoiceMutex sync.Mutex
 
 var CreateInvoiceErr = errors.New("CreateInvoiceErr")
 
@@ -217,7 +214,7 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	}
 	if macaroonFile == "" {
 		btlLog.CUST.Error("macaroon file not found")
-		bt.err <- nil
+		bt.err <- fmt.Errorf("account is abnormal")
 		return
 	}
 	payment, err := rpc.InvoicePay(macaroonFile, bt.PayReq, bt.DecodePayReq.NumSatoshis, bt.FeeLimit)
@@ -226,22 +223,9 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 		bt.err <- err
 		return
 	}
-	bt.err <- nil
+	//todo： 在支付发票前创建记录
 	var balanceModel models.Balance
-	//扣除服务费
-	err = PayServerFee(e.UserInfo.Account, ChannelBtcServiceFee)
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
-	}
-	balanceModel.ServerFee = ChannelBtcServiceFee + uint64(payment.FeeSat)
-	switch payment.Status {
-	case lnrpc.Payment_SUCCEEDED:
-		balanceModel.State = models.STATE_SUCCESS
-	case lnrpc.Payment_FAILED:
-		balanceModel.State = models.STATE_FAILED
-	default:
-		balanceModel.State = models.STATE_UNKNOW
-	}
+	balanceModel.State = models.STATE_UNKNOW
 	balanceModel.AccountId = e.UserInfo.Account.ID
 	balanceModel.BillType = models.BillTypePayment
 	balanceModel.Away = models.AWAY_OUT
@@ -256,22 +240,34 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	track, err := rpc.PaymentTrack(payment.PaymentHash)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
+		bt.err <- fmt.Errorf("payment outside unknown,Please contact the administrator")
 		return
 	}
 	switch track.Status {
 	case lnrpc.Payment_SUCCEEDED:
+		err = PayServerFee(e.UserInfo.Account, ChannelBtcServiceFee)
+		if err != nil {
+			btlLog.CUST.Error(err.Error())
+		}
+		balanceModel.ServerFee = ChannelBtcServiceFee + uint64(payment.FeeSat)
 		balanceModel.State = models.STATE_SUCCESS
+		bt.err <- nil
+		btlLog.CUST.Info("payment outside success balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
 	case lnrpc.Payment_FAILED:
+		btlLog.CUST.Error("payment outside failed balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
+		btlLog.CUST.Error(payment.FailureReason.String())
+		bt.err <- fmt.Errorf(payment.FailureReason.String())
 		balanceModel.State = models.STATE_FAILED
 	default:
+		btlLog.CUST.Error("payment outside unknown balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
 		balanceModel.State = models.STATE_UNKNOW
+		bt.err <- fmt.Errorf("payment outside unknown,Please contact the administrator")
+		return
 	}
-	balanceModel.ServerFee = ChannelBtcServiceFee + uint64(track.FeeSat)
 	err = btldb.UpdateBalance(&balanceModel)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 	}
-	btlLog.CUST.Info("payment outside success balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
 }
 
 func (e *BtcChannelEvent) GetTransactionHistory() (cBase.TxHistory, error) {
