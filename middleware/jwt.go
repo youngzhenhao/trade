@@ -36,14 +36,15 @@ func GenerateToken(username string) (string, error) {
 	}
 	validateToken, err := RedisGet(username)
 	if validateToken != "" {
-		err := RedisDel(validateToken)
-		if err != nil {
-			return "", err
-		}
-		err1 := RedisDel(username)
-		if err1 != nil {
-			return "", err1
-		}
+		//err := RedisDel(validateToken)
+		//if err != nil {
+		//	return "", err
+		//}
+		//err1 := RedisDel(username)
+		//if err1 != nil {
+		//	return "", err1
+		//}
+		return validateToken, nil
 	}
 
 	if err != nil && !errors.Is(err, redis.Nil) {

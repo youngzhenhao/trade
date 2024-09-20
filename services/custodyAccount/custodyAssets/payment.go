@@ -92,7 +92,13 @@ func (s *AssetOutsideSever) payToOutside(mission *OutsideMission) error {
 		btlLog.CUST.Error("rpc.SendAssets error:%v", err)
 		return err
 	}
-	txId := hex.EncodeToString(response.Transfer.AnchorTxHash)
+	b := response.Transfer.AnchorTxHash
+	for i := 0; i < len(b)/2; i++ {
+		temp := b[i]
+		b[i] = b[len(b)-i-1]
+		b[len(b)-i-1] = temp
+	}
+	txId := hex.EncodeToString(b)
 	tx := models.PayOutsideTx{
 		TxHash:     txId,
 		Timestamp:  response.Transfer.TransferTimestamp,
