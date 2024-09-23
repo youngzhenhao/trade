@@ -207,29 +207,34 @@ type AssetInSideSever struct {
 
 var InSideSever AssetInSideSever
 
-func (s *AssetInSideSever) Start() {
+func (s *AssetInSideSever) Start(ctx context.Context) {
 	// Start 启动服务
 	s.Queue = NewInsideUniqueQueue()
 	s.LoadMission()
-	go s.runServer()
+	go s.runServer(ctx)
 }
-func (s *AssetInSideSever) runServer() {
+func (s *AssetInSideSever) runServer(ctx context.Context) {
 	for {
-		if len(s.Queue.items) == 0 {
-			time.Sleep(5 * time.Second)
-			continue
-		}
-		//取出队首元素
-		mission := s.Queue.getNextPkg()
-		if mission == nil {
-			continue
-		}
-		//处理
-		var err error
-		err = s.payToInside(mission)
 		select {
-		case mission.err <- err:
+		case <-ctx.Done():
+			return
 		default:
+			if len(s.Queue.items) == 0 {
+				time.Sleep(5 * time.Second)
+				continue
+			}
+			//取出队首元素
+			mission := s.Queue.getNextPkg()
+			if mission == nil {
+				continue
+			}
+			//处理
+			var err error
+			err = s.payToInside(mission)
+			select {
+			case mission.err <- err:
+			default:
+			}
 		}
 	}
 }
