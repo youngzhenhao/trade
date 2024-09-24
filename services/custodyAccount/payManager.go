@@ -36,7 +36,7 @@ func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 	btc_channel.BtcSever.Start(ctx)
 	btc_channel.InvoiceServer.Start(ctx)
 	custodyAssets.OutsideSever.Start(ctx)
-	custodyAssets.InSideSever.Start()
+	custodyAssets.InSideSever.Start(ctx)
 	custodyAssets.AddressServer.Start(ctx)
 	//Check the custody service status
 

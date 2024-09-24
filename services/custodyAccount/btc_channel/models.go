@@ -36,10 +36,6 @@ func (req *BtcApplyInvoiceRequest) GetPayReqAmount() int64 {
 	return req.Amount
 }
 
-const (
-	defaultServerFee = 100
-)
-
 type BtcPacketErr error
 
 var (
@@ -57,6 +53,7 @@ type BtcPacket struct {
 }
 
 func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
+	ServerFee := ChannelBtcServiceFee
 	//验证是否为本地发票
 	i, err := btldb.GetInvoiceByReq(p.PayReq)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -73,6 +70,7 @@ func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 			isInside:      true,
 			insideInvoice: i,
 		}
+		ServerFee = ChannelBtcInsideServiceFee
 	}
 	//解码发票
 	p.DecodePayReq, err = rpc.InvoiceDecode(p.PayReq)
@@ -80,15 +78,21 @@ func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 		btlLog.CUST.Error("发票解析失败", err)
 		return fmt.Errorf("(pay_request=%s)", "发票解析失败：", p.PayReq)
 	}
+	//TODO:限额，暂时做单次限额，后续改为每日限额
+	if (p.DecodePayReq.NumSatoshis + p.FeeLimit + int64(ServerFee)) > 500000 {
+		btlLog.CUST.Error("amount>500000,超过当前转账限制")
+		return fmt.Errorf("amount>500000,超过当前转账限制")
+	}
 	//验证金额
 	useableBalance, err := rpc.AccountInfo(userinfo.Account.UserAccountCode)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return cBase.GetbalanceErr
 	}
-	if useableBalance.CurrentBalance < (p.DecodePayReq.NumSatoshis + p.FeeLimit + defaultServerFee) {
+	if useableBalance.CurrentBalance < (p.DecodePayReq.NumSatoshis + p.FeeLimit + int64(ServerFee)) {
 		return NotSufficientFunds
 	}
+
 	return nil
 }
 
