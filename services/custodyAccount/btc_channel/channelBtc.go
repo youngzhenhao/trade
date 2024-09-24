@@ -152,7 +152,7 @@ func (e *BtcChannelEvent) SendPayment(payRequest cBase.PayPacket) error {
 		return errors.New("invalid pay request")
 	}
 	bt.err = make(chan error, 1)
-	defer close(bt.err)
+	//defer close(bt.err)
 
 	err := bt.VerifyPayReq(e.UserInfo)
 	if err != nil {
@@ -170,6 +170,13 @@ func (e *BtcChannelEvent) SendPayment(payRequest cBase.PayPacket) error {
 	defer cancel()
 	select {
 	case <-ctx.Done():
+		go func(c chan error) {
+			err := <-c
+			if err != nil {
+				btlLog.CUST.Error("btc sendPayment timeout:%s", err.Error())
+			}
+			close(c)
+		}(bt.err)
 		//超时处理
 		return cBase.TimeoutErr
 	case err := <-bt.err:
@@ -183,7 +190,7 @@ func (e *BtcChannelEvent) payToInside(bt *BtcPacket) {
 	payInside := models.PayInside{
 		PayUserId:     e.UserInfo.User.ID,
 		GasFee:        uint64(bt.DecodePayReq.NumSatoshis),
-		ServeFee:      uint64(cBase.ServerFee),
+		ServeFee:      0,
 		ReceiveUserId: bt.isInsideMission.insideInvoice.UserID,
 		PayType:       models.PayInsideByInvoice,
 		AssetType:     "00",
@@ -245,7 +252,7 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	}
 	switch track.Status {
 	case lnrpc.Payment_SUCCEEDED:
-		err = PayServerFee(e.UserInfo.Account, ChannelBtcServiceFee)
+		err = PayServiceFeeSync(e.UserInfo, ChannelBtcServiceFee, balanceModel.ID, models.ChannelBTCOutSideFee, "payToOutside Fee")
 		if err != nil {
 			btlLog.CUST.Error(err.Error())
 		}

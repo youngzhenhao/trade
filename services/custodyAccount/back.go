@@ -6,7 +6,7 @@ import (
 	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
-	"trade/services/custodyAccount/btc_channel"
+	rpc "trade/services/servicesrpc"
 )
 
 // CreateBackFeeMission 创建退费任务
@@ -26,6 +26,7 @@ func CreateBackFeeMission(payInsideId uint) (uint, error) {
 		btlLog.CUST.Error("CreateBackFeeMission error:%v", err.Error())
 		return 0, err
 	}
+	btlLog.CUST.Info("CreateBackFeeMission back fee mission success:%v", backMission.ID)
 	return backMission.ID, nil
 }
 
@@ -43,7 +44,7 @@ func PollBackFeeMission() {
 			btlLog.CUST.Error("PollBackFeeMission find pay account error:%v", err.Error())
 			continue
 		}
-		balanceId, err := btc_channel.UpdateCustodyAccount(account, models.AWAY_IN, r.GasFee+r.ServeFee, "backFee", 0)
+		balanceId, err := updateAccount(account, r.GasFee+r.ServeFee)
 		if err != nil {
 			btlLog.CUST.Error("PollBackFeeMission update custody account error:%v", err.Error())
 			continue
@@ -53,7 +54,43 @@ func PollBackFeeMission() {
 			btlLog.CUST.Error("PollBackFeeMission update balance_id error:%v", err.Error())
 			continue
 		}
+		btlLog.CUST.Info("PollBackFeeMission back fee mission success:%v paid", r.BackFeeId)
 	}
+}
+func updateAccount(account *models.Account, balance uint64) (uint, error) {
+	var err error
+	acc, err := rpc.AccountInfo(account.UserAccountCode)
+	if err != nil {
+		return 0, err
+	}
+	var amount int64
+	amount = acc.CurrentBalance + int64(balance)
+	// Change the escrow account balance
+	_, err = rpc.AccountUpdate(account.UserAccountCode, amount, -1)
+	// Build a database storage object
+	ba := models.Balance{}
+	ba.AccountId = account.ID
+	ba.Amount = float64(balance)
+	ba.Unit = models.UNIT_SATOSHIS
+	ba.BillType = models.BillTypePayment
+	ba.Away = models.AWAY_IN
+	if err != nil {
+		ba.State = models.STATE_FAILED
+	} else {
+		ba.State = models.STATE_SUCCESS
+	}
+	invoice := "backFee"
+	//paymentHash := ""
+	ba.ServerFee = 0
+	ba.Invoice = &invoice
+	ba.PaymentHash = nil
+	// Update the database
+	dbErr := btldb.CreateBalance(&ba)
+	if dbErr != nil {
+		btlLog.CUST.Error(dbErr.Error())
+		return 0, nil
+	}
+	return ba.ID, nil
 }
 
 type BackFeeSqlResult struct {

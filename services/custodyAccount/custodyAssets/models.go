@@ -10,6 +10,7 @@ import (
 	"trade/models"
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
+	"trade/services/custodyAccount/btc_channel"
 	cBase "trade/services/custodyAccount/custodyBase"
 	rpc "trade/services/servicesrpc"
 )
@@ -45,6 +46,7 @@ type AssetPacket struct {
 }
 
 func (p *AssetPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
+	ServerFee := btc_channel.AssetOutsideFee
 	//验证是否为本地发票
 	i, err := btldb.GetInvoiceByReq(p.PayReq)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -58,6 +60,7 @@ func (p *AssetPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 			isInside:      true,
 			insideInvoice: i,
 		}
+		ServerFee = btc_channel.AssetInsideFee
 	}
 	//TODO:验证网络
 
@@ -88,7 +91,7 @@ func (p *AssetPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 		btlLog.CUST.Error(err.Error())
 		return cBase.GetBalanceErr
 	}
-	if useAbleBalance.CurrentBalance < cBase.AssetPaymentFee {
+	if useAbleBalance.CurrentBalance < int64(ServerFee) {
 		return cBase.NotEnoughFeeFunds
 	}
 	return nil

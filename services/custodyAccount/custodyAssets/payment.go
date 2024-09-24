@@ -123,8 +123,6 @@ func (s *AssetOutsideSever) payToOutside(mission *OutsideMission) error {
 		if err != nil {
 			btlLog.CUST.Error("btldb.UpdatePayOutside error:%w", err)
 		}
-		//todo：扣除手续费
-
 		//更新Balance表
 		balance, err := btldb.ReadBalance(a.Mission.BalanceId)
 		if err != nil {
@@ -220,7 +218,7 @@ func (s *AssetInSideSever) runServer(ctx context.Context) {
 			return
 		default:
 			if len(s.Queue.items) == 0 {
-				time.Sleep(5 * time.Second)
+				time.Sleep(1 * time.Second)
 				continue
 			}
 			//取出队首元素
@@ -231,6 +229,10 @@ func (s *AssetInSideSever) runServer(ctx context.Context) {
 			//处理
 			var err error
 			err = s.payToInside(mission)
+			if err != nil {
+				btlLog.CUST.Info("payToInside fail: id=%v,amount=%v", mission.insideMission.AssetType, mission.insideMission.GasFee)
+			}
+			btlLog.CUST.Info("payToInside success: id=%v,amount=%v", mission.insideMission.AssetType, mission.insideMission.GasFee)
 			select {
 			case mission.err <- err:
 			default:
@@ -280,7 +282,6 @@ func (s *AssetInSideSever) payToInside(mission *isInsideMission) error {
 			return models.ReadDbErr
 		}
 		mission.insideMission.Status = models.PayInsideStatusSuccess
-		mission.insideMission.BalanceId = bill.ID
 		err = btldb.UpdatePayInside(mission.insideMission)
 		if err != nil {
 			return models.ReadDbErr
