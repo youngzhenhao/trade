@@ -8,8 +8,6 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"strings"
-	"time"
-	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
@@ -69,13 +67,9 @@ func Login(creds models.User) (string, error) {
 			}
 		}
 	}
-	startTime := time.Now()
 	if !CheckPassword(user.Password, creds.Password) {
 		return "", errors.New("invalid credentials")
 	}
-	elapsedTime := time.Since(startTime) // 计算耗时
-	btlLog.CUST.Info("密码比较函数运行时间: %s", elapsedTime)
-
 	token, err := middleware.GenerateToken(creds.Username)
 	if err != nil {
 		return "", err
