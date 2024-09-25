@@ -676,8 +676,8 @@ type AssetIdAndUserAssetBalanceByRat struct {
 }
 
 // @dev: Use to maps to compute
+// GetAllAddressAmountMapByRatPositiveAmount
 func GetAssetIdAndUserAssetBalanceByRat() *[]AssetIdAndUserAssetBalanceByRat {
-
 	// TODO: Compute asset Balance by receives and transfers' maps
 	return nil
 }
