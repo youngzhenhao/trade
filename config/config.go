@@ -60,6 +60,7 @@ type Config struct {
 		AssetManagedUtxo      bool `yaml:"asset_managed_utxo" json:"asset_managed_utxo"`
 		LogFileUpload         bool `yaml:"log_file_upload" json:"log_file_upload"`
 		AccountAsset          bool `yaml:"account_asset" json:"account_asset"`
+		AssetGroup            bool `yaml:"asset_group" json:"asset_group"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {

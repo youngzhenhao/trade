@@ -88,6 +88,9 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AccountAsset {
 		SetupAccountAssetRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.AssetGroup {
+		SetupAssetGroupRouter(r)
+	}
 	SetupWsRouter(r)
 	return r
 }
