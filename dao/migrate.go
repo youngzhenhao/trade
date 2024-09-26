@@ -133,6 +133,9 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.AccountAssetReceive{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.AssetGroup{}); err != nil {
+		return err
+	}
 
 	return err
 }

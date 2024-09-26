@@ -188,6 +188,9 @@ const (
 	GetAssetManagedUtxoLimitAndOffsetErr
 	GetAssetManagedUtxoPageNumberByPageSizeRequestInvalidErr
 	GetAssetManagedUtxoPageNumberByPageSizeErr
+	InvalidTweakedGroupKeyErr
+	SetAssetGroupErr
+	GetAssetGroupErr
 )
 
 // Err type:CustodyAccount
