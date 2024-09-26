@@ -4,31 +4,52 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"sync"
 	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
-	"trade/services/btldb"
+)
+
+var (
+	ServerBusy    = errors.New("seriver is busy, please try again later")
+	NoAwardType   = fmt.Errorf("no award type")
+	AssetIdLock   = fmt.Errorf("award is lock")
+	NoEnoughAward = fmt.Errorf("not enough award")
+)
+var (
+	AwardLock = sync.Mutex{}
 )
 
 func PutInAward(account *models.Account, AssetId string, amount int, memo *string) (*models.AccountAward, error) {
+	tx := middleware.DB.Begin()
+	if tx.Error != nil {
+		btlLog.CUST.Error("PutInAward err:%v", tx.Error)
+		return nil, ServerBusy
+	}
 	var in models.AwardInventory
-	err := middleware.DB.Where("asset_Id =? ", AssetId).First(&in).Error
+	err := tx.Where("asset_Id =? ", AssetId).First(&in).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		btlLog.CUST.Error("err:%v", models.ReadDbErr)
+		btlLog.CUST.Error("err:%v", err)
+		return nil, ServerBusy
 	}
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("no award type")
+		return nil, NoAwardType
 	}
 	if in.Status != models.AwardInventoryAble {
-		return nil, fmt.Errorf("award is lock")
+		return nil, AssetIdLock
 	}
 	if in.Amount < float64(amount) {
-		return nil, fmt.Errorf("not enough award")
+		return nil, NoEnoughAward
 	}
 
-	receiveBalance, err := btldb.GetAccountBalanceByGroup(account.ID, AssetId)
+	AwardLock.Lock()
+	defer AwardLock.Unlock()
+
+	var receiveBalance models.AccountBalance
+	err = tx.Where("account_Id =? and asset_Id =?", account.ID, AssetId).First(&receiveBalance).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		btlLog.CUST.Error("err:%v", models.ReadDbErr)
+		btlLog.CUST.Error("err:%v", err)
+		return nil, ServerBusy
 	}
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		r := models.AccountBalance{
@@ -36,18 +57,19 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 			AssetId:   AssetId,
 			Amount:    float64(amount),
 		}
-		err = btldb.UpdateAccountBalance(&r)
+		err = tx.Save(&r).Error
 		if err != nil {
-			btlLog.CUST.Error("err:%v", models.ReadDbErr)
+			btlLog.CUST.Error("err:%v", err)
+			return nil, ServerBusy
 		}
 	} else {
 		receiveBalance.Amount += float64(amount)
-		err = btldb.UpdateAccountBalance(receiveBalance)
+		err = tx.Save(&receiveBalance).Error
 		if err != nil {
-			btlLog.CUST.Error("err:%v", models.ReadDbErr)
+			btlLog.CUST.Error("err:%v", err)
+			return nil, ServerBusy
 		}
 	}
-
 	// Build a database storage object
 	ba := models.Balance{}
 	ba.AccountId = account.ID
@@ -56,20 +78,17 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 	ba.BillType = models.BillTypeAwardAsset
 	ba.Away = models.AWAY_IN
 	ba.AssetId = &AssetId
-	if err != nil {
-		ba.State = models.STATE_FAILED
-	} else {
-		ba.State = models.STATE_SUCCESS
-	}
+	ba.State = models.STATE_SUCCESS
 	invoiceType := "award"
 	ba.Invoice = nil
 	ba.PaymentHash = nil
 	ba.ServerFee = 0
 	ba.Invoice = &invoiceType
 	// Update the database
-	dbErr := btldb.CreateBalance(&ba)
+	dbErr := tx.Create(&ba).Error
 	if dbErr != nil {
 		btlLog.CUST.Error(dbErr.Error())
+		return nil, ServerBusy
 	}
 	award := models.AccountAward{
 		AccountID: account.ID,
@@ -77,9 +96,22 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 		Amount:    float64(amount),
 		Memo:      memo,
 	}
-	err = btldb.CreateAward(&award)
+	err = tx.Create(&award).Error
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
+		return nil, ServerBusy
+	}
+
+	in.Amount -= float64(amount)
+	err = tx.Save(&in).Error
+	if err != nil {
+		btlLog.CUST.Error("err:%v", err)
+		return nil, ServerBusy
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		btlLog.CUST.Error("award failed,not commit:%v", err)
+		return nil, ServerBusy
 	}
 	return &award, nil
 }

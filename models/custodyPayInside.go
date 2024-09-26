@@ -25,6 +25,12 @@ const (
 	PayInsideToAdmin   PayInsideType = 1
 	PayInsideByInvoice PayInsideType = 2
 	PayInsideByAddress PayInsideType = 3
+
+	FairLunchFee         PayInsideType = 5
+	ChannelBTCFee        PayInsideType = 6
+	ChannelBTCOutSideFee PayInsideType = 7
+	AssetInSideFee       PayInsideType = 8
+	AssetOutSideFee      PayInsideType = 9
 )
 
 type PayInsideStatus uint16

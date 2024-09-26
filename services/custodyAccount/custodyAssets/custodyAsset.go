@@ -15,6 +15,7 @@ import (
 	"trade/services/assetsyncinfo"
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
+	"trade/services/custodyAccount/btc_channel"
 	cBase "trade/services/custodyAccount/custodyBase"
 	rpc "trade/services/servicesrpc"
 )
@@ -131,7 +132,7 @@ func (e *AssetEvent) SendPayment(payRequest cBase.PayPacket) error {
 		return errors.New("invalid pay request")
 	}
 	bt.err = make(chan error, 1)
-	defer close(bt.err)
+	//defer close(bt.err)
 
 	err := bt.VerifyPayReq(e.UserInfo)
 	if err != nil {
@@ -150,6 +151,13 @@ func (e *AssetEvent) SendPayment(payRequest cBase.PayPacket) error {
 	select {
 	case <-ctx.Done():
 		//超时处理
+		go func(c chan error) {
+			err := <-c
+			if err != nil {
+				btlLog.CUST.Error("btc sendPayment timeout:%s", err.Error())
+			}
+			close(c)
+		}(bt.err)
 		return cBase.TimeoutErr
 	case err = <-bt.err:
 		//错误处理
@@ -174,7 +182,7 @@ func (e *AssetEvent) payToInside(bt *AssetPacket) {
 		Away:        models.AWAY_OUT,
 		Amount:      float64(bt.DecodePayReq.Amount),
 		Unit:        models.UNIT_ASSET_NORMAL,
-		ServerFee:   0,
+		ServerFee:   btc_channel.AssetInsideFee,
 		AssetId:     &AssetId,
 		Invoice:     &bt.PayReq,
 		PaymentHash: nil,
@@ -184,19 +192,28 @@ func (e *AssetEvent) payToInside(bt *AssetPacket) {
 	if err != nil {
 		btlLog.CUST.Error("err:%v", models.ReadDbErr)
 	}
+
 	//创建内部转账任务
 	payInside := models.PayInside{
 		PayUserId:     e.UserInfo.User.ID,
 		GasFee:        bt.DecodePayReq.Amount,
-		ServeFee:      uint64(cBase.ServerFee),
+		ServeFee:      0,
 		ReceiveUserId: bt.isInsideMission.insideInvoice.UserID,
 		PayType:       models.PayInsideByAddress,
 		AssetType:     AssetId,
 		PayReq:        &bt.PayReq,
+		BalanceId:     bill.ID,
 		Status:        models.PayInsideStatusPending,
 	}
 	//写入数据库
 	err = btldb.CreatePayInside(&payInside)
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+		bt.err <- err
+		return
+	}
+	//收取手续费
+	err = btc_channel.PayServiceFeeSync(e.UserInfo, btc_channel.AssetInsideFee, bill.ID, models.AssetInSideFee, "payToInside Asset Fee")
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		bt.err <- err
@@ -215,7 +232,7 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		Away:      models.AWAY_OUT,
 		Amount:    float64(bt.DecodePayReq.Amount),
 		Unit:      models.UNIT_ASSET_NORMAL,
-		ServerFee: 0,
+		ServerFee: btc_channel.AssetOutsideFee,
 		AssetId:   &assetId,
 		Invoice:   &bt.PayReq,
 		State:     models.STATE_UNKNOW,
@@ -252,8 +269,16 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		AssetID:     assetId,
 		TotalAmount: int64(bt.DecodePayReq.Amount),
 	}
+	//收取手续费
+	err = btc_channel.PayServiceFeeSync(e.UserInfo, btc_channel.AssetOutsideFee, outsideBalance.ID, models.AssetOutSideFee, "payToOutside Asset Fee")
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
+		bt.err <- err
+		return
+	}
 	bt.err <- nil
 	OutsideSever.Queue.addNewPkg(&m)
+	btlLog.CUST.Info("Create payToOutside mission success: id=%v,amount=%v", assetId, float64(bt.DecodePayReq.Amount))
 }
 
 func (e *AssetEvent) QueryPayReq() ([]*models.Invoice, error) {
