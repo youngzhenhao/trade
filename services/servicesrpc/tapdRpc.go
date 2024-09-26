@@ -317,6 +317,28 @@ func SendAssets(addr []string) (*taprpc.SendAssetResponse, error) {
 	return response, nil
 }
 
+func QueryAssetRoot(Id string) *universerpc.QueryRootResponse {
+	tapdconf := config.GetConfig().ApiConfig.Tapd
+	grpcHost := tapdconf.Host + ":" + strconv.Itoa(tapdconf.Port)
+	tlsCertPath := tapdconf.TlsCertPath
+	macaroonPath := tapdconf.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+
+	defer connClose()
+	in := &universerpc.AssetRootQuery{}
+	in.Id = &universerpc.ID{
+		Id: &universerpc.ID_AssetIdStr{
+			AssetIdStr: Id,
+		},
+	}
+	client := universerpc.NewUniverseClient(conn)
+	roots, err := client.QueryAssetRoots(context.Background(), in)
+	if err != nil {
+		return nil
+	}
+	return roots
+}
+
 func SubscribeReceiveEvents() (*taprpc.ReceiveEvent, error) {
 	tapdconf := config.GetConfig().ApiConfig.Tapd
 	grpcHost := tapdconf.Host + ":" + strconv.Itoa(tapdconf.Port)

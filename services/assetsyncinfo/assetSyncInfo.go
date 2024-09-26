@@ -12,6 +12,7 @@ import (
 	"github.com/lightninglabs/taproot-assets/fn"
 	"github.com/lightninglabs/taproot-assets/proof"
 	"github.com/lightninglabs/taproot-assets/taprpc"
+	"github.com/lightninglabs/taproot-assets/taprpc/universerpc"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	"gorm.io/gorm"
 	"net"
@@ -49,8 +50,6 @@ func GetAssetSyncInfo(req *SyncInfoRequest) (*models.AssetSyncInfo, error) {
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
-	//TODO: 区分资产和组key
-
 	if AssetSyncInfo.AssetId != "" {
 		return AssetSyncInfo, nil
 	}
@@ -102,7 +101,17 @@ func GetAssetSyncInfo(req *SyncInfoRequest) (*models.AssetSyncInfo, error) {
 }
 
 func getAssetInfoFromLeaves(assetId string) (*models.AssetSyncInfo, error) {
-	response, err := servicesrpc.GetAssetLeaves(assetId, false, "issuance")
+	root := servicesrpc.QueryAssetRoot(assetId)
+	if root == nil || root.IssuanceRoot.Id == nil {
+		return nil, AssetNotFoundErr
+	}
+	queryId := assetId
+	isGroup := false
+	if groupKey, ok := root.IssuanceRoot.Id.Id.(*universerpc.ID_GroupKey); ok {
+		isGroup = true
+		queryId = hex.EncodeToString(groupKey.GroupKey)
+	}
+	response, err := servicesrpc.GetAssetLeaves(queryId, isGroup, "issuance")
 	if err != nil {
 		var etcdError *rpctypes.EtcdError
 		if errors.As(err, &etcdError) {
@@ -115,52 +124,44 @@ func getAssetInfoFromLeaves(assetId string) (*models.AssetSyncInfo, error) {
 	if response.Leaves == nil {
 		return nil, AssetNotFoundErr
 	}
-
-	var assetSyncInfo models.AssetSyncInfo
-	assetSyncInfo.AssetId = hex.EncodeToString(response.Leaves[0].Asset.AssetGenesis.AssetId)
-	assetSyncInfo.Name = response.Leaves[0].Asset.AssetGenesis.Name
-	assetSyncInfo.AssetType = models.AssetType(response.Leaves[0].Asset.AssetGenesis.AssetType)
-	assetSyncInfo.Amount = response.Leaves[0].Asset.Amount
-	assetSyncInfo.Point = response.Leaves[0].Asset.AssetGenesis.GenesisPoint
-	assetSyncInfo.Universe = config.GetConfig().ApiConfig.Tapd.UniverseHost
-
-	//获取元数据
-	meta, err := servicesrpc.GetAssetMeta(assetSyncInfo.AssetId, false)
-	if err != nil {
-		return nil, err
-	}
-	m := api.Meta{}
-	m.GetMetaFromStr(string(meta.GetData()))
-	assetSyncInfo.Meta = &m.Description
-	//获取组信息
-	if response.Leaves[0].Asset.AssetGroup != nil {
-		groupKey := hex.EncodeToString(response.Leaves[0].Asset.AssetGroup.RawGroupKey)
-		assetSyncInfo.GroupKey = &groupKey
-		if m.GroupName != "" {
-			assetSyncInfo.GroupName = &m.GroupName
+	var blob proof.Blob
+	for index, leaf := range response.Leaves {
+		if hex.EncodeToString(leaf.Asset.AssetGenesis.GetAssetId()) == assetId {
+			blob = response.Leaves[index].Proof
+			break
 		}
 	}
-	//获取创建资产
-	decode := newDecodeProofOffline()
-	decodeProof, err := decode.decodeProof(context.Background(), &taprpc.DecodeProofRequest{
-		RawProof: response.Leaves[0].Proof,
-	})
-	if err != nil {
-		return nil, err
+	if len(blob) == 0 {
+		return nil, AssetRequestErr
+	}
+	p, _ := blob.AsSingleProof()
+	assetName := p.Asset.Tag
+	assetPoint := p.Asset.FirstPrevOut.String()
+	amount := p.Asset.Amount
+	createHeight := p.BlockHeight
+	createTime := p.BlockHeader.Timestamp
+	var (
+		newMeta api.Meta
+		m       = ""
+	)
+	if p.MetaReveal != nil {
+		m = string(p.MetaReveal.Data)
+	}
+	newMeta.GetMetaFromStr(m)
+	assetSyncInfo := models.AssetSyncInfo{
+		AssetId:      assetId,
+		Name:         assetName,
+		Point:        assetPoint,
+		AssetType:    models.AssetType(p.Asset.Type),
+		Amount:       amount,
+		CreateHeight: int64(createHeight),
+		CreateTime:   &createTime,
+	}
+	if isGroup {
+		assetSyncInfo.GroupName = &newMeta.GroupName
+		assetSyncInfo.GroupKey = &queryId
 	}
 
-	assetSyncInfo.CreateHeight = int64(decodeProof.DecodedProof.Asset.ChainAnchor.BlockHeight)
-	info, err := servicesrpc.GetBlockInfo(decodeProof.DecodedProof.Asset.ChainAnchor.AnchorBlockHash)
-	if err != nil {
-		return nil, err
-	}
-	msgBlock := &wire.MsgBlock{}
-	blockReader := bytes.NewReader(info.RawBlock)
-	err = msgBlock.Deserialize(blockReader)
-	if err != nil {
-		return nil, err
-	}
-	assetSyncInfo.CreateTime = &msgBlock.Header.Timestamp
 	return &assetSyncInfo, nil
 }
 
