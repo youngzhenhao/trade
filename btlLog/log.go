@@ -66,7 +66,7 @@ func (ml *ServicesLogger) Warning(format string, v ...interface{}) {
 	if ml.level >= WARNING {
 		_, callerFile, callerLine, _ := runtime.Caller(1)
 		msg := fmt.Sprintf(format, v...)
-		ml.errorLogger.Printf(" %s：%d [Warning]: %s\n", callerFile, callerLine, msg)
+		ml.logger.Printf(" %s：%d [Warning]: %s\n", callerFile, callerLine, msg)
 	}
 }
 

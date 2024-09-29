@@ -29,7 +29,7 @@ func NewBtcChannelEvent(UserName string) (*BtcChannelEvent, error) {
 	)
 	e.UserInfo, err = caccount.GetUserInfo(UserName)
 	if err != nil {
-		btlLog.CUST.Error("%s,UserName:%s", err.Error(), UserName)
+		btlLog.CUST.Warning("%s,UserName:%s", err.Error(), UserName)
 		return nil, caccount.CustodyAccountGetErr
 	}
 	btlLog.CUST.Info("UserName:%s", UserName)
@@ -224,25 +224,26 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 		bt.err <- fmt.Errorf("account is abnormal")
 		return
 	}
-	payment, err := rpc.InvoicePay(macaroonFile, bt.PayReq, bt.DecodePayReq.NumSatoshis, bt.FeeLimit)
-	if err != nil {
-		btlLog.CUST.Error("pay invoice fail %w", err)
-		bt.err <- err
-		return
-	}
-	//todo： 在支付发票前创建记录
 	var balanceModel models.Balance
 	balanceModel.State = models.STATE_UNKNOW
 	balanceModel.AccountId = e.UserInfo.Account.ID
 	balanceModel.BillType = models.BillTypePayment
 	balanceModel.Away = models.AWAY_OUT
-	balanceModel.Amount = float64(payment.ValueSat)
+	balanceModel.Amount = float64(bt.DecodePayReq.NumSatoshis)
 	balanceModel.Unit = models.UNIT_SATOSHIS
-	balanceModel.Invoice = &payment.PaymentRequest
-	balanceModel.PaymentHash = &payment.PaymentHash
-	err = btldb.CreateBalance(&balanceModel)
+	balanceModel.Invoice = &bt.PayReq
+	balanceModel.PaymentHash = &bt.DecodePayReq.PaymentHash
+	balanceModel.State = models.STATE_UNKNOW
+	err := btldb.CreateBalance(&balanceModel)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
+	}
+
+	payment, err := rpc.InvoicePay(macaroonFile, bt.PayReq, bt.DecodePayReq.NumSatoshis, bt.FeeLimit)
+	if err != nil {
+		btlLog.CUST.Error("pay invoice fail %s", err.Error())
+		bt.err <- err
+		return
 	}
 	track, err := rpc.PaymentTrack(payment.PaymentHash)
 	if err != nil {
@@ -290,9 +291,6 @@ func (e *BtcChannelEvent) GetTransactionHistory() (cBase.TxHistory, error) {
 	var results BtcPaymentList
 	if len(a) > 0 {
 		for i := len(a) - 1; i >= 0; i-- {
-			if a[i].State == models.STATE_FAILED {
-				continue
-			}
 			v := a[i]
 			r := PaymentResponse{}
 			r.Timestamp = v.CreatedAt.Unix()
