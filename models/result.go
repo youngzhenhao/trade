@@ -191,6 +191,8 @@ const (
 	InvalidTweakedGroupKeyErr
 	SetAssetGroupErr
 	GetAssetGroupErr
+	CreateNftTransferErr
+	GetNftTransferByAssetIdErr
 )
 
 // Err type:CustodyAccount

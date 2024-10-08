@@ -61,6 +61,7 @@ type Config struct {
 		LogFileUpload         bool `yaml:"log_file_upload" json:"log_file_upload"`
 		AccountAsset          bool `yaml:"account_asset" json:"account_asset"`
 		AssetGroup            bool `yaml:"asset_group" json:"asset_group"`
+		NftTransfer           bool `yaml:"nft_transfer" json:"nft_transfer"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {
