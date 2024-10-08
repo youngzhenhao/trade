@@ -7,10 +7,10 @@ type NftTransfer struct {
 	Txid     string `json:"txid" gorm:"type:varchar(255)"`
 	AssetId  string `json:"asset_id" gorm:"type:varchar(255);index"`
 	Time     int    `json:"time"`
-	FromAddr string `json:"from" gorm:"type:varchar(255)"`
-	ToAddr   string `json:"to" gorm:"type:varchar(255)"`
-	FromInfo string `json:"from_info" gorm:"type:varchar(255)"`
-	ToInfo   string `json:"to_info" gorm:"type:varchar(255)"`
+	FromAddr string `json:"from_addr"`
+	ToAddr   string `json:"to_addr"`
+	FromInfo string `json:"from_info"`
+	ToInfo   string `json:"to_info"`
 	DeviceId string `json:"device_id" gorm:"type:varchar(255);index"`
 	UserId   int    `json:"user_id" gorm:"index"`
 	Username string `json:"username" gorm:"type:varchar(255);index"`
@@ -20,9 +20,9 @@ type NftTransferSetRequest struct {
 	Txid     string `json:"txid" gorm:"type:varchar(255)"`
 	AssetId  string `json:"asset_id" gorm:"type:varchar(255);index"`
 	Time     int    `json:"time"`
-	FromAddr string `json:"from" gorm:"type:varchar(255)"`
-	ToAddr   string `json:"to" gorm:"type:varchar(255)"`
-	FromInfo string `json:"from_info" gorm:"type:varchar(255)"`
-	ToInfo   string `json:"to_info" gorm:"type:varchar(255)"`
+	FromAddr string `json:"from_addr"`
+	ToAddr   string `json:"to_addr"`
+	FromInfo string `json:"from_info"`
+	ToInfo   string `json:"to_info"`
 	DeviceId string `json:"device_id" gorm:"type:varchar(255);index"`
 }
