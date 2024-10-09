@@ -157,7 +157,6 @@ func getAssetInfoFromLeaves(assetId string) (*models.AssetSyncInfo, error) {
 		CreateHeight: int64(createHeight),
 		CreateTime:   &createTime,
 		Meta:         &newMeta.Description,
-		Universe:     config.GetConfig().ApiConfig.Tapd.UniverseHost,
 	}
 	if isGroup {
 		assetSyncInfo.GroupName = &newMeta.GroupName
