@@ -16,6 +16,7 @@ type AssetIssuanceLeaf struct {
 	ScriptVersion      int              `json:"script_version"`
 	ScriptKey          string           `json:"script_key"`
 	ScriptKeyIsLocal   bool             `json:"script_key_is_local"`
+	TweakedGroupKey    string           `json:"tweaked_group_key"`
 	IsSpent            bool             `json:"is_spent"`
 	LeaseOwner         string           `json:"lease_owner"`
 	LeaseExpiry        int              `json:"lease_expiry"`

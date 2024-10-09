@@ -128,6 +128,7 @@ var (
 	FairLaunchDebugLogger *ServicesLogger
 	FEE                   *ServicesLogger
 	ScheduledTask         *ServicesLogger
+	PreSale               *ServicesLogger
 )
 
 func loadDefaultLog() {
@@ -136,4 +137,5 @@ func loadDefaultLog() {
 	FairLaunchDebugLogger = NewLogger("FLDL", Level, defaultLogFile)
 	FEE = NewLogger("FEE", Level, defaultLogFile)
 	ScheduledTask = NewLogger("CRON", Level, defaultLogFile)
+	PreSale = NewLogger("PRSL", Level, defaultLogFile)
 }

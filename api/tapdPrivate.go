@@ -54,8 +54,13 @@ func assetLeavesSpecified(id string, proofType string) (*universerpc.AssetLeafRe
 }
 
 func processAssetIssuanceLeaf(response *universerpc.AssetLeafResponse) *models.AssetIssuanceLeaf {
-	if response == nil || response.Leaves == nil {
+	if response == nil || response.Leaves == nil || len(response.Leaves) == 0 {
 		return nil
+	}
+	var groupKey string
+	assetGroup := response.Leaves[0].Asset.AssetGroup
+	if assetGroup != nil {
+		groupKey = hex.EncodeToString(assetGroup.TweakedGroupKey)
 	}
 	return &models.AssetIssuanceLeaf{
 		Version:            response.Leaves[0].Asset.Version.String(),
@@ -71,6 +76,7 @@ func processAssetIssuanceLeaf(response *universerpc.AssetLeafResponse) *models.A
 		ScriptVersion:      int(response.Leaves[0].Asset.ScriptVersion),
 		ScriptKey:          hex.EncodeToString(response.Leaves[0].Asset.ScriptKey),
 		ScriptKeyIsLocal:   response.Leaves[0].Asset.ScriptKeyIsLocal,
+		TweakedGroupKey:    groupKey,
 		IsSpent:            response.Leaves[0].Asset.IsSpent,
 		LeaseOwner:         hex.EncodeToString(response.Leaves[0].Asset.LeaseOwner),
 		LeaseExpiry:        int(response.Leaves[0].Asset.LeaseExpiry),
@@ -353,5 +359,21 @@ func listUtxos() (*taprpc.ListUtxosResponse, error) {
 	request := &taprpc.ListUtxosRequest{}
 	client := taprpc.NewTaprootAssetsClient(conn)
 	response, err := client.ListUtxos(context.Background(), request)
+	return response, err
+}
+
+func fetchAssetMetaByAssetId(assetId string) (*taprpc.AssetMeta, error) {
+	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
+	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
+	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	request := &taprpc.FetchAssetMetaRequest{
+		Asset: &taprpc.FetchAssetMetaRequest_AssetIdStr{
+			AssetIdStr: assetId,
+		},
+	}
+	client := taprpc.NewTaprootAssetsClient(conn)
+	response, err := client.FetchAssetMeta(context.Background(), request)
 	return response, err
 }

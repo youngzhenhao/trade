@@ -19,6 +19,12 @@ func ReadNftPresale(id uint) (*models.NftPresale, error) {
 	return &nftPresale, err
 }
 
+func ReadNftPresalesByAssetId(assetId string) (*models.NftPresale, error) {
+	var nftPresale models.NftPresale
+	err := middleware.DB.Where("asset_id = ?", assetId).First(&nftPresale).Error
+	return &nftPresale, err
+}
+
 func ReadAllNftPresales() (*[]models.NftPresale, error) {
 	var nftPresales []models.NftPresale
 	err := middleware.DB.Order("launch_time desc").Find(&nftPresales).Error

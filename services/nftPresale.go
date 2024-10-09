@@ -1,8 +1,11 @@
 package services
 
 import (
+	"trade/api"
+	"trade/btlLog"
 	"trade/models"
 	"trade/services/btldb"
+	"trade/utils"
 )
 
 func CreateNftPresale(nftPresale *models.NftPresale) error {
@@ -15,6 +18,10 @@ func CreateNftPresales(nftPresales *[]models.NftPresale) error {
 
 func ReadNftPresale(id uint) (*models.NftPresale, error) {
 	return btldb.ReadNftPresale(id)
+}
+
+func ReadNftPresalesByAssetId(assetId string) (*models.NftPresale, error) {
+	return btldb.ReadNftPresalesByAssetId(assetId)
 }
 
 func ReadAllNftPresales() (*[]models.NftPresale, error) {
@@ -43,4 +50,46 @@ func UpdateNftPresales(nftPresales *[]models.NftPresale) error {
 
 func DeleteNftPresale(id uint) error {
 	return btldb.DeleteNftPresale(id)
+}
+
+func ProcessNftPresale(nftPresaleSetRequest *models.NftPresaleSetRequest) *models.NftPresale {
+
+	var assetId string
+	assetId = nftPresaleSetRequest.AssetId
+	var name string
+	var assetType string
+	var groupKey string
+	var amount int
+
+	assetInfo, err := api.GetAssetInfo(assetId)
+	if err != nil {
+		// @dev: Do not return
+		btlLog.PreSale.Error("api GetAssetInfo(AssetLeaves) err")
+	} else {
+		name = assetInfo.Name
+		assetType = assetInfo.AssetType.String()
+		groupKey = assetInfo.TweakedGroupKey
+		amount = assetInfo.Amount
+	}
+	var meta string
+	assetMeta, err := api.FetchAssetMetaByAssetId(assetId)
+	if err != nil {
+		// @dev: Do not return
+		btlLog.PreSale.Error("api FetchAssetMetaByAssetId err")
+	} else {
+		meta = assetMeta.String()
+	}
+
+	return &models.NftPresale{
+		AssetId:    assetId,
+		Name:       name,
+		AssetType:  assetType,
+		Meta:       meta,
+		GroupKey:   groupKey,
+		Amount:     amount,
+		Price:      nftPresaleSetRequest.Price,
+		Info:       nftPresaleSetRequest.Info,
+		LaunchTime: utils.GetTimestamp(),
+		State:      models.NftPresaleStateLaunched,
+	}
 }
