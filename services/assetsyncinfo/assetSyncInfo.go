@@ -156,6 +156,7 @@ func getAssetInfoFromLeaves(assetId string) (*models.AssetSyncInfo, error) {
 		Amount:       amount,
 		CreateHeight: int64(createHeight),
 		CreateTime:   &createTime,
+		Meta:         &newMeta.Description,
 	}
 	if isGroup {
 		assetSyncInfo.GroupName = &newMeta.GroupName
