@@ -193,6 +193,7 @@ const (
 	GetAssetGroupErr
 	CreateNftTransferErr
 	GetNftTransferByAssetIdErr
+	PageNumberExceedsTotalNumberErr
 )
 
 // Err type:CustodyAccount

@@ -7,11 +7,11 @@ import (
 )
 
 func SetupNftTransferRouter(router *gin.Engine) *gin.Engine {
-	assetGroup := router.Group("/nft_transfer")
-	assetGroup.Use(middleware.AuthMiddleware())
+	nftTransfer := router.Group("/nft_transfer")
+	nftTransfer.Use(middleware.AuthMiddleware())
 	{
-		assetGroup.GET("/get/asset_id/:asset_id", handlers.GetNftTransferByAssetId)
-		assetGroup.POST("/set", handlers.SetNftTransfer)
+		nftTransfer.GET("/get/asset_id/:asset_id", handlers.GetNftTransferByAssetId)
+		nftTransfer.POST("/set", handlers.SetNftTransfer)
 	}
 	return router
 }

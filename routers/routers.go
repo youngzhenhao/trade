@@ -94,6 +94,9 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.NftTransfer {
 		SetupNftTransferRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.NftInfo {
+		SetupNftInfoRouter(r)
+	}
 	SetupWsRouter(r)
 	return r
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 	"trade/models"
 	"trade/services"
 )
@@ -63,6 +64,24 @@ func GetAccountAssetBalanceLimitAndOffset(c *gin.Context) {
 	assetId := getAccountAssetBalanceLimitAndOffsetRequest.AssetId
 	limit := getAccountAssetBalanceLimitAndOffsetRequest.Limit
 	offset := getAccountAssetBalanceLimitAndOffsetRequest.Offset
+
+	{
+		// @dev: total page number
+		number, err := services.GetAccountAssetBalancePageNumberByPageSize(assetId, limit)
+		// @dev: limit is pageSize
+		pageNumber := offset/limit + 1
+		if pageNumber > number {
+			err = errors.New("page number must be greater than max value " + strconv.Itoa(number))
+			c.JSON(http.StatusOK, models.JsonResult{
+				Success: false,
+				Error:   err.Error(),
+				Code:    models.PageNumberExceedsTotalNumberErr,
+				Data:    nil,
+			})
+			return
+		}
+	}
+
 	accountAssetBalances, err := services.GetAccountAssetBalanceExtendsLimitAndOffset(assetId, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
