@@ -2,13 +2,11 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 	"trade/models"
 	"trade/services"
-	"trade/utils"
 )
 
 func GetAccountAssetBalanceByAssetId(c *gin.Context) {
@@ -53,9 +51,6 @@ func GetAllAccountAssetTransferByAssetId(c *gin.Context) {
 
 func GetAccountAssetBalanceLimitAndOffset(c *gin.Context) {
 	var getAccountAssetBalanceLimitAndOffsetRequest services.GetAccountAssetBalanceLimitAndOffsetRequest
-	// @dev: only for test
-	fmt.Println(utils.ValueJsonString(getAccountAssetBalanceLimitAndOffsetRequest))
-
 	err := c.ShouldBindJSON(&getAccountAssetBalanceLimitAndOffsetRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
@@ -75,9 +70,6 @@ func GetAccountAssetBalanceLimitAndOffset(c *gin.Context) {
 		number, err := services.GetAccountAssetBalancePageNumberByPageSize(assetId, limit)
 		// @dev: limit is pageSize
 		pageNumber := offset/limit + 1
-
-		// @dev: only for test
-		fmt.Printf("pageNumber: %d;numebr: %d.\n", pageNumber, number)
 		if pageNumber > number {
 			err = errors.New("page number must be greater than max value " + strconv.Itoa(number))
 			c.JSON(http.StatusOK, models.JsonResult{
@@ -164,6 +156,24 @@ func GetAccountAssetTransferLimitAndOffset(c *gin.Context) {
 	assetId := getAccountAssetTransferLimitAndOffsetRequest.AssetId
 	limit := getAccountAssetTransferLimitAndOffsetRequest.Limit
 	offset := getAccountAssetTransferLimitAndOffsetRequest.Offset
+
+	{
+		// @dev: total page number
+		number, err := services.GetAccountAssetTransferPageNumberByPageSize(assetId, limit)
+		// @dev: limit is pageSize
+		pageNumber := offset/limit + 1
+		if pageNumber > number {
+			err = errors.New("page number must be greater than max value " + strconv.Itoa(number))
+			c.JSON(http.StatusOK, models.JsonResult{
+				Success: false,
+				Error:   err.Error(),
+				Code:    models.PageNumberExceedsTotalNumberErr,
+				Data:    nil,
+			})
+			return
+		}
+	}
+
 	accountAssetTransfers, err := services.GetAccountAssetTransfersLimitAndOffset(assetId, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
