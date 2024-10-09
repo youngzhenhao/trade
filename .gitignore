@@ -18,3 +18,4 @@ tls.key
 frpc.ini
 frpc.yaml
 config.yaml
+logs/*.log
