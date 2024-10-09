@@ -199,7 +199,7 @@ func GetAssetHolderBalanceLimitAndOffset(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	{
 		// @dev: total page number
 		number, err := services.GetAssetHolderBalancePageNumberByPageSize(assetId, limit)
