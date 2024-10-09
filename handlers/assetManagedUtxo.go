@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 	"trade/models"
 	"trade/services"
 )
@@ -247,6 +248,24 @@ func GetAssetManagedUtxoLimitAndOffset(c *gin.Context) {
 	assetId := getAssetManagedUtxoLimitAndOffsetRequest.AssetId
 	limit := getAssetManagedUtxoLimitAndOffsetRequest.Limit
 	offset := getAssetManagedUtxoLimitAndOffsetRequest.Offset
+
+	{
+		// @dev: total page number
+		number, err := services.GetAssetManagedUtxoPageNumberByPageSize(assetId, limit)
+		// @dev: limit is pageSize
+		pageNumber := offset/limit + 1
+		if pageNumber > number {
+			err = errors.New("page number must be greater than max value " + strconv.Itoa(number))
+			c.JSON(http.StatusOK, models.JsonResult{
+				Success: false,
+				Error:   err.Error(),
+				Code:    models.PageNumberExceedsTotalNumberErr,
+				Data:    nil,
+			})
+			return
+		}
+	}
+
 	assetManagedUtxo, err := services.GetAssetManagedUtxoLimitAndOffset(assetId, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
