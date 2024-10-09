@@ -48,6 +48,9 @@ router_disable:
     log_file_upload: false
     account_asset: false
     asset_group: false
+    nft_transfer: false
+    nft_info: false
+    nft_presale: false
 api_config:
     lnd:
         host: ""

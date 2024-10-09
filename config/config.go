@@ -63,6 +63,7 @@ type Config struct {
 		AssetGroup            bool `yaml:"asset_group" json:"asset_group"`
 		NftTransfer           bool `yaml:"nft_transfer" json:"nft_transfer"`
 		NftInfo               bool `yaml:"nft_info" json:"nft_info"`
+		NftPresale            bool `yaml:"nft_presale" json:"nft_presale"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {
