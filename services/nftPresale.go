@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/lightninglabs/taproot-assets/taprpc"
 	"strconv"
+	"strings"
 	"trade/api"
 	"trade/btlLog"
 	"trade/models"
@@ -136,8 +137,8 @@ func IsNftPresaleAddrValid(nftPresale *models.NftPresale, addr *taprpc.Addr) (bo
 		return false, err
 	}
 	addrAssetType := addr.AssetType.String()
-	if addrAssetType != nftPresale.AssetType {
-		err = errors.New("addrAssetType(" + addrAssetType + ") is not equal nftPresale.AssetType(" + nftPresale.AssetType + ")")
+	if strings.ToLower(addrAssetType) != strings.ToLower(nftPresale.AssetType) {
+		err = errors.New("addrAssetType(" + strings.ToLower(addrAssetType) + "[ToLower]) is not equal nftPresale.AssetType(" + strings.ToLower(nftPresale.AssetType) + "[ToLower])")
 		return false, err
 	}
 	addrAmount := addr.Amount
