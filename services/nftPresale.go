@@ -154,10 +154,14 @@ func IsNftPresaleAddrValid(nftPresale *models.NftPresale, addr *taprpc.Addr) (bo
 	}
 	addrGroupKey := hex.EncodeToString(addr.GroupKey)
 	var isGroupKeyEqual bool
-	if len(nftPresale.GroupKey) == 66 {
-		isGroupKeyEqual = addrGroupKey == nftPresale.GroupKey
-	} else if len(nftPresale.GroupKey) == 64 {
+	// Without prefix
+	if len(nftPresale.GroupKey) == 64 {
 		isGroupKeyEqual = strings.Contains(addrGroupKey, nftPresale.GroupKey)
+		// @dev: With prefix 0x02 or 0x03
+	} else if len(nftPresale.GroupKey) == 66 {
+		isGroupKeyEqual = addrGroupKey == nftPresale.GroupKey
+	} else {
+		isGroupKeyEqual = addrGroupKey == nftPresale.GroupKey
 	}
 	if !isGroupKeyEqual {
 		err = errors.New("addrGroupKey(" + addrGroupKey + ") is not equal or contains nftPresale.GroupKey(" + nftPresale.GroupKey + ")")
@@ -273,3 +277,4 @@ func NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales *[]models.NftPresale
 }
 
 // TODO: scheduled task Process NftPresale
+// TODO: Refer fair launch
