@@ -154,9 +154,9 @@ func IsNftPresaleAddrValid(nftPresale *models.NftPresale, addr *taprpc.Addr) (bo
 	}
 	addrGroupKey := hex.EncodeToString(addr.GroupKey)
 	var isGroupKeyEqual bool
-	if len(nftPresale.GroupKey) == 32 {
+	if len(nftPresale.GroupKey) == 66 {
 		isGroupKeyEqual = addrGroupKey == nftPresale.GroupKey
-	} else if len(nftPresale.GroupKey) == 30 {
+	} else if len(nftPresale.GroupKey) == 64 {
 		isGroupKeyEqual = strings.Contains(addrGroupKey, nftPresale.GroupKey)
 	}
 	if !isGroupKeyEqual {
