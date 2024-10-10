@@ -2038,7 +2038,7 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 			return utils.AppendErrorInfo(err, "CreateFairLaunchMintedUserInfo")
 		}
 		err = btldb.CreateBalance(&models.Balance{
-			AccountId:   custodyAccount.AdminAccountId,
+			AccountId:   custodyAccount.AdminUserInfo.Account.ID,
 			BillType:    models.BillTypeAssetMintedSend,
 			Away:        models.AWAY_OUT,
 			Amount:      float64(fairLaunchMintedInfo.AddrAmount),

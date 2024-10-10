@@ -32,6 +32,8 @@ const (
 	BILL_TYPE_BACK_FEE                  = 4
 	BillTypeAwardSat                    = 5
 	BillTypeAwardAsset                  = 6
+	BiLLTypeLock                        = 7
+	BillTypePendingOder                 = 8
 )
 
 func (bt BalanceType) String() string {

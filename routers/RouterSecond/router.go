@@ -19,5 +19,15 @@ func SetupRouter() *gin.Engine {
 		username: password,
 	}))
 	authorized.POST("/refund", handlers.RefundUserFirstMintByUsernameAndAssetId)
+
+	locked := r.Group("/lockAccount")
+	locked.POST("/getBalance", SecondHander.GetBalance)
+	locked.POST("/lock", SecondHander.Lock)
+	locked.POST("/unlock", SecondHander.Unlock)
+	locked.POST("/payAsset", SecondHander.PayAsset)
+
+	//todo: add more api
+	locked.POST("/getLockedBalanceList", SecondHander.GetLockedBalanceList)
+
 	return r
 }

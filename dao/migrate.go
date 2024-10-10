@@ -3,10 +3,12 @@ package dao
 import (
 	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 )
 
 func Migrate() error {
 	var err error
+	err = custodyMigrate(err)
 	if err = middleware.DB.AutoMigrate(&models.Account{}); err != nil {
 		return err
 	}
@@ -142,6 +144,20 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.NftInfo{}); err != nil {
 		return err
 	}
-
+	return err
+}
+func custodyMigrate(err error) error {
+	if err = middleware.DB.AutoMigrate(&custodyModels.LockBill{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&custodyModels.LockAccount{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&custodyModels.LockBalance{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&custodyModels.LockBillExt{}); err != nil {
+		return err
+	}
 	return err
 }
