@@ -265,7 +265,7 @@ func NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales *[]models.NftPresale
 		return nil
 	}
 	var nftPresaleSimplifiedSlice []models.NftPresaleSimplified
-	nftPresaleSimplifiedSlice = make([]models.NftPresaleSimplified, len(*nftPresales))
+	nftPresaleSimplifiedSlice = make([]models.NftPresaleSimplified, 0)
 	for _, nftPresale := range *nftPresales {
 		nftPresaleSimplifiedSlice = append(nftPresaleSimplifiedSlice, *(NftPresaleToNftPresaleSimplified(&nftPresale)))
 	}
