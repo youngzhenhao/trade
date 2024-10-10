@@ -159,3 +159,44 @@ func SetNftPresales(c *gin.Context) {
 		Data:    nil,
 	})
 }
+
+func BuyNftPresale(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	var buyNftPresaleRequest models.BuyNftPresaleRequest
+	err = c.ShouldBindJSON(&buyNftPresaleRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	err = services.BuyNftPresale(userId, username, buyNftPresaleRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.BuyNftPresaleErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    nil,
+	})
+}

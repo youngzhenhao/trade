@@ -199,6 +199,7 @@ const (
 	GetNftPresalesByAssetIdErr
 	GetLaunchedNftPresalesErr
 	GetNftPresalesByBuyerUserIdErr
+	BuyNftPresaleErr
 )
 
 // Err type:CustodyAccount
