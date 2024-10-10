@@ -132,22 +132,22 @@ func IsNftPresaleAddrValid(nftPresale *models.NftPresale, addr *taprpc.Addr) (bo
 	}
 	addrAssetId := hex.EncodeToString(addr.AssetId)
 	if addrAssetId != nftPresale.AssetId {
-		err = errors.New("addrAssetId is not equal nftPresale.AssetId")
+		err = errors.New("addrAssetId(" + addrAssetId + ") is not equal nftPresale.AssetId(" + nftPresale.AssetId + ")")
 		return false, err
 	}
 	addrAssetType := addr.AssetType.String()
 	if addrAssetType != nftPresale.AssetType {
-		err = errors.New("addrAssetType is not equal nftPresale.AssetType")
+		err = errors.New("addrAssetType(" + addrAssetType + ") is not equal nftPresale.AssetType(" + nftPresale.AssetType + ")")
 		return false, err
 	}
-	addrAmount := int(addr.Amount)
-	if addrAmount != nftPresale.Amount {
-		err = errors.New("addrAmount is not equal nftPresale.Amount")
+	addrAmount := addr.Amount
+	if addrAmount != uint64(nftPresale.Amount) {
+		err = errors.New("addrAmount(" + strconv.FormatUint(addrAmount, 10) + ") is not equal nftPresale.Amount(" + strconv.Itoa(nftPresale.Amount) + ")")
 		return false, err
 	}
 	addrGroupKey := hex.EncodeToString(addr.GroupKey)
 	if addrGroupKey != nftPresale.GroupKey {
-		err = errors.New("addrGroupKey is not equal nftPresale.GroupKey")
+		err = errors.New("addrGroupKey(" + addrGroupKey + ") is not equal nftPresale.GroupKey(" + nftPresale.GroupKey + ")")
 		return false, err
 	}
 	return true, nil
