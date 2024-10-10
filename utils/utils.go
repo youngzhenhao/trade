@@ -100,7 +100,7 @@ func RoundToDecimalPlace(number float64, places int) float64 {
 func NewTlsCert(tlsCertPath string) credentials.TransportCredentials {
 	cert, err := os.ReadFile(tlsCertPath)
 	if err != nil {
-		log.Fatalf("Failed to read cert file: %s", err)
+		log.Fatalf("Failed to read cert file: %s(%s)", err, tlsCertPath)
 	}
 	certPool := x509.NewCertPool()
 	if !certPool.AppendCertsFromPEM(cert) {

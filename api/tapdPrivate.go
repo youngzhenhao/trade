@@ -377,3 +377,23 @@ func fetchAssetMetaByAssetId(assetId string) (*taprpc.AssetMeta, error) {
 	response, err := client.FetchAssetMeta(context.Background(), request)
 	return response, err
 }
+
+func queryAssetRoots(assetId string) *universerpc.QueryRootResponse {
+	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
+	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
+	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	client := universerpc.NewUniverseClient(conn)
+	in := &universerpc.AssetRootQuery{}
+	in.Id = &universerpc.ID{
+		Id: &universerpc.ID_AssetIdStr{
+			AssetIdStr: assetId,
+		},
+	}
+	roots, err := client.QueryAssetRoots(context.Background(), in)
+	if err != nil {
+		return nil
+	}
+	return roots
+}

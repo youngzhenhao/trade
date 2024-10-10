@@ -195,6 +195,10 @@ const (
 	GetNftTransferByAssetIdErr
 	PageNumberExceedsTotalNumberErr
 	CreateNftPresaleErr
+	CreateNftPresalesErr
+	GetNftPresalesByAssetIdErr
+	GetLaunchedNftPresalesErr
+	GetNftPresalesByBuyerUserIdErr
 )
 
 // Err type:CustodyAccount

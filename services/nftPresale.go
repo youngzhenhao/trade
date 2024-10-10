@@ -20,8 +20,8 @@ func ReadNftPresale(id uint) (*models.NftPresale, error) {
 	return btldb.ReadNftPresale(id)
 }
 
-func ReadNftPresalesByAssetId(assetId string) (*models.NftPresale, error) {
-	return btldb.ReadNftPresalesByAssetId(assetId)
+func ReadNftPresaleByAssetId(assetId string) (*models.NftPresale, error) {
+	return btldb.ReadNftPresaleByAssetId(assetId)
 }
 
 func ReadAllNftPresales() (*[]models.NftPresale, error) {
@@ -53,33 +53,28 @@ func DeleteNftPresale(id uint) error {
 }
 
 func ProcessNftPresale(nftPresaleSetRequest *models.NftPresaleSetRequest) *models.NftPresale {
-
 	var assetId string
 	assetId = nftPresaleSetRequest.AssetId
 	var name string
 	var assetType string
 	var groupKey string
 	var amount int
-
-	assetInfo, err := api.GetAssetInfo(assetId)
+	var meta string
+	assetInfo, err := api.GetAssetInfoApi(assetId)
 	if err != nil {
 		// @dev: Do not return
-		btlLog.PreSale.Error("api GetAssetInfo(AssetLeaves) err")
+		btlLog.PreSale.Error("api GetAssetInfoApi err")
 	} else {
 		name = assetInfo.Name
-		assetType = assetInfo.AssetType.String()
-		groupKey = assetInfo.TweakedGroupKey
-		amount = assetInfo.Amount
+		assetType = assetInfo.AssetType
+		if assetInfo.GroupKey != nil {
+			groupKey = *assetInfo.GroupKey
+		}
+		amount = int(assetInfo.Amount)
+		if assetInfo.Meta != nil {
+			meta = *assetInfo.Meta
+		}
 	}
-	var meta string
-	assetMeta, err := api.FetchAssetMetaByAssetId(assetId)
-	if err != nil {
-		// @dev: Do not return
-		btlLog.PreSale.Error("api FetchAssetMetaByAssetId err")
-	} else {
-		meta = assetMeta.String()
-	}
-
 	return &models.NftPresale{
 		AssetId:    assetId,
 		Name:       name,
@@ -92,4 +87,27 @@ func ProcessNftPresale(nftPresaleSetRequest *models.NftPresaleSetRequest) *model
 		LaunchTime: utils.GetTimestamp(),
 		State:      models.NftPresaleStateLaunched,
 	}
+}
+
+func ProcessNftPresales(nftPresaleSetRequests *[]models.NftPresaleSetRequest) *[]models.NftPresale {
+	if nftPresaleSetRequests == nil {
+		return nil
+	}
+	var nftPresales []models.NftPresale
+	for _, nftPresaleSetRequest := range *nftPresaleSetRequests {
+		nftPresales = append(nftPresales, *(ProcessNftPresale(&nftPresaleSetRequest)))
+	}
+	return &nftPresales
+}
+
+func GetNftPresaleByAssetId(assetId string) (*models.NftPresale, error) {
+	return ReadNftPresaleByAssetId(assetId)
+}
+
+func GetLaunchedNftPresales() (*[]models.NftPresale, error) {
+	return ReadNftPresalesByNftPresaleState(models.NftPresaleStateLaunched)
+}
+
+func GetNftPresalesByBuyerUserId(userId int) (*[]models.NftPresale, error) {
+	return btldb.ReadNftPresalesByBuyerUserId(userId)
 }
