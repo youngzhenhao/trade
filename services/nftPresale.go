@@ -81,6 +81,12 @@ func ProcessNftPresale(nftPresaleSetRequest *models.NftPresaleSetRequest) *model
 			meta = *assetInfo.Meta
 		}
 	}
+	groupKeyByAssetId, err := api.GetGroupKeyByAssetId(assetId)
+	if err != nil {
+		btlLog.PreSale.Error("api GetGroupKeyByAssetId err")
+	} else {
+		groupKey = groupKeyByAssetId
+	}
 	return &models.NftPresale{
 		AssetId:    assetId,
 		Name:       name,
@@ -147,8 +153,14 @@ func IsNftPresaleAddrValid(nftPresale *models.NftPresale, addr *taprpc.Addr) (bo
 		return false, err
 	}
 	addrGroupKey := hex.EncodeToString(addr.GroupKey)
-	if addrGroupKey != nftPresale.GroupKey {
-		err = errors.New("addrGroupKey(" + addrGroupKey + ") is not equal nftPresale.GroupKey(" + nftPresale.GroupKey + ")")
+	var isGroupKeyEqual bool
+	if len(nftPresale.GroupKey) == 32 {
+		isGroupKeyEqual = addrGroupKey == nftPresale.GroupKey
+	} else if len(nftPresale.GroupKey) == 30 {
+		isGroupKeyEqual = strings.Contains(addrGroupKey, nftPresale.GroupKey)
+	}
+	if !isGroupKeyEqual {
+		err = errors.New("addrGroupKey(" + addrGroupKey + ") is not equal or contains nftPresale.GroupKey(" + nftPresale.GroupKey + ")")
 		return false, err
 	}
 	return true, nil

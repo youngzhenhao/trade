@@ -419,3 +419,17 @@ func GetAssetInfoApi(id string) (*AssetInfoApi, error) {
 	}
 	return &assetInfo, nil
 }
+
+func GetGroupKeyByAssetId(assetId string) (string, error) {
+	response, err := GetListAssetsResponse(false, true, false)
+	if err != nil {
+		return "", err
+	}
+	for _, asset := range response.Assets {
+		if assetId == hex.EncodeToString(asset.AssetGenesis.AssetId) {
+			return hex.EncodeToString(asset.AssetGroup.TweakedGroupKey), nil
+		}
+	}
+	err = errors.New("asset group key not found")
+	return "", err
+}
