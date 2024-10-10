@@ -30,11 +30,12 @@ func GetNftPresaleByAssetId(c *gin.Context) {
 		})
 		return
 	}
+	result := services.NftPresaleToNftPresaleSimplified(nftPresale)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
 		Code:    models.SUCCESS,
-		Data:    nftPresale,
+		Data:    result,
 	})
 }
 
@@ -60,11 +61,12 @@ func GetLaunchedNftPresale(c *gin.Context) {
 		})
 		return
 	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
 		Code:    models.SUCCESS,
-		Data:    nftPresales,
+		Data:    result,
 	})
 }
 
@@ -90,11 +92,12 @@ func GetUserBoughtNftPresale(c *gin.Context) {
 		})
 		return
 	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
 		Code:    models.SUCCESS,
-		Data:    nftPresales,
+		Data:    result,
 	})
 }
 

@@ -218,4 +218,44 @@ func BuyNftPresale(userId int, username string, buyNftPresaleRequest models.BuyN
 	return nil
 }
 
-// TODO: Process NftPresale
+func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale) *models.NftPresaleSimplified {
+	if nftPresale == nil {
+		return nil
+	}
+	return &models.NftPresaleSimplified{
+		ID:              nftPresale.ID,
+		UpdatedAt:       nftPresale.UpdatedAt,
+		AssetId:         nftPresale.AssetId,
+		Name:            nftPresale.Name,
+		AssetType:       nftPresale.AssetType,
+		Meta:            nftPresale.Meta,
+		GroupKey:        nftPresale.GroupKey,
+		Amount:          nftPresale.Amount,
+		Price:           nftPresale.Price,
+		Info:            nftPresale.Info,
+		BuyerUserId:     nftPresale.BuyerUserId,
+		BuyerUsername:   nftPresale.BuyerUsername,
+		BuyerDeviceId:   nftPresale.BuyerDeviceId,
+		ReceiveAddr:     nftPresale.ReceiveAddr,
+		PayMethod:       nftPresale.PayMethod,
+		LaunchTime:      nftPresale.LaunchTime,
+		BoughtTime:      nftPresale.BoughtTime,
+		PaidSuccessTime: nftPresale.PaidSuccessTime,
+		SentTime:        nftPresale.SentTime,
+		State:           nftPresale.State,
+		ProcessNumber:   nftPresale.ProcessNumber,
+	}
+}
+
+func NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales *[]models.NftPresale) *[]models.NftPresaleSimplified {
+	if nftPresales == nil {
+		return nil
+	}
+	var nftPresaleSimplifiedSlice []models.NftPresaleSimplified
+	for _, nftPresale := range *nftPresales {
+		nftPresaleSimplifiedSlice = append(nftPresaleSimplifiedSlice, *(NftPresaleToNftPresaleSimplified(&nftPresale)))
+	}
+	return &nftPresaleSimplifiedSlice
+}
+
+// TODO: scheduled task Process NftPresale
