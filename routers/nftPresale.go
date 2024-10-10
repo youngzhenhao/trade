@@ -17,7 +17,7 @@ func SetupNftPresaleRouter(router *gin.Engine) *gin.Engine {
 			nftPresale.GET("/get/launched", handlers.GetLaunchedNftPresale)
 			nftPresale.GET("/get/user_bought", handlers.GetUserBoughtNftPresale)
 		}
-		nftPresale.POST("/bug", handlers.BuyNftPresale)
+		nftPresale.POST("/buy", handlers.BuyNftPresale)
 
 	}
 	username := base64.StdEncoding.EncodeToString([]byte(config.GetLoadConfig().AdminUser.Username))
