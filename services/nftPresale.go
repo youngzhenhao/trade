@@ -257,6 +257,7 @@ func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale) *models.Nft
 		PayMethod:       nftPresale.PayMethod,
 		LaunchTime:      nftPresale.LaunchTime,
 		BoughtTime:      nftPresale.BoughtTime,
+		PaidId:          nftPresale.PaidId,
 		PaidSuccessTime: nftPresale.PaidSuccessTime,
 		SentTime:        nftPresale.SentTime,
 		State:           nftPresale.State,
