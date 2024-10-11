@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/lightninglabs/taproot-assets/taprpc"
 	"strconv"
 	"strings"
@@ -316,6 +317,7 @@ func IncreaseNftPresaleProcessNumber(nftPresale *models.NftPresale) (err error) 
 }
 
 func StorePaidIdThenChangeStateAndClearProcessNumber(paidId int, nftPresale *models.NftPresale) error {
+	nftPresale.PayMethod = models.FeePaymentMethodCustodyAccount
 	nftPresale.PaidId = paidId
 	nftPresale.State = models.NftPresaleStatePaidPending
 	nftPresale.ProcessNumber = 0
@@ -739,4 +741,23 @@ func ProcessNftPresaleSentPending() {
 	if err != nil {
 		utils.LogError("WriteToLogFile ./trade.presale.log", err)
 	}
+}
+
+// @dev: Other Operations
+
+func GetProcessingNftPresale() (*[]models.NftPresale, error) {
+	return ReadNftPresalesBetweenNftPresaleState(models.NftPresaleStateBoughtNotPay, models.NftPresaleStatePaidNotSend)
+}
+
+func CheckIsNftPresaleProcessing() error {
+	processingNftPresale, err := GetProcessingNftPresale()
+	if err != nil {
+		return err
+	}
+	if processingNftPresale == nil || len(*processingNftPresale) == 0 {
+		return nil
+	}
+	err = errors.New("processing nft presale exists")
+	info := fmt.Sprintf("num: %d", len(*processingNftPresale))
+	return utils.AppendErrorInfo(err, info)
 }
