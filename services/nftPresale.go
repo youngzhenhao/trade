@@ -445,9 +445,13 @@ func ProcessNftPresaleStatePaidPendingService(nftPresale *models.NftPresale) err
 }
 
 func ProcessNftPresaleStatePaidNotSendService(nftPresale *models.NftPresale) error {
-	// @dev: Do not check if confirmed balance enough
-	// if necessity, use IsWalletBalanceEnough
 	var err error
+	// @dev: Check if confirmed balance enough
+	minBalance := 2000
+	if !IsWalletBalanceEnough(minBalance) {
+		err = errors.New("lnd wallet balance is not enough(less than " + strconv.Itoa(minBalance) + ")")
+		return err
+	}
 	// @dev: Check if asset balance enough
 	if !IsAssetBalanceEnough(nftPresale.AssetId, nftPresale.Amount) {
 		err = errors.New("nft presale asset(" + strconv.Itoa(int(nftPresale.ID)) + ") balance is not enough")
