@@ -360,6 +360,17 @@ func IsIssuanceFeePaid(paidId int) (bool, error) {
 	return state, nil
 }
 
+func IsFeePaid(paidId int) (bool, error) {
+	isFeePaid, err := custodyAccount.CheckPayInsideStatus(uint(paidId))
+	if err != nil {
+		if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
+			return false, fmt.Errorf("%w;IsFeePaid(%d)", err, paidId)
+		}
+		return false, err
+	}
+	return isFeePaid, nil
+}
+
 type PayIssuanceAndMintedFeeResult struct {
 	PaidId int `json:"paid_id"`
 	Fee    int `json:"fee"`
