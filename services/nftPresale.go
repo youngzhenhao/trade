@@ -754,10 +754,10 @@ func CheckIsNftPresaleProcessing() error {
 	if err != nil {
 		return err
 	}
-	if processingNftPresale == nil {
+	if processingNftPresale == nil || len(*processingNftPresale) == 0 {
 		return nil
 	}
-	err = errors.New("processing issuance and mint exists")
+	err = errors.New("processing nft presale exists")
 	info := fmt.Sprintf("num: %d", len(*processingNftPresale))
 	return utils.AppendErrorInfo(err, info)
 }
