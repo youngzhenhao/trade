@@ -316,6 +316,7 @@ func IncreaseNftPresaleProcessNumber(nftPresale *models.NftPresale) (err error) 
 }
 
 func StorePaidIdThenChangeStateAndClearProcessNumber(paidId int, nftPresale *models.NftPresale) error {
+	nftPresale.PayMethod = models.FeePaymentMethodCustodyAccount
 	nftPresale.PaidId = paidId
 	nftPresale.State = models.NftPresaleStatePaidPending
 	nftPresale.ProcessNumber = 0
