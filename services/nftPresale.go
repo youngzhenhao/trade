@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/lightninglabs/taproot-assets/taprpc"
 	"strconv"
 	"strings"
@@ -740,4 +741,23 @@ func ProcessNftPresaleSentPending() {
 	if err != nil {
 		utils.LogError("WriteToLogFile ./trade.presale.log", err)
 	}
+}
+
+// @dev: Other Operations
+
+func GetProcessingNftPresale() (*[]models.NftPresale, error) {
+	return ReadNftPresalesBetweenNftPresaleState(models.NftPresaleStateBoughtNotPay, models.NftPresaleStatePaidNotSend)
+}
+
+func CheckIsNftPresaleProcessing() error {
+	processingNftPresale, err := GetProcessingNftPresale()
+	if err != nil {
+		return err
+	}
+	if processingNftPresale == nil {
+		return nil
+	}
+	err = errors.New("processing issuance and mint exists")
+	info := fmt.Sprintf("num: %d", len(*processingNftPresale))
+	return utils.AppendErrorInfo(err, info)
 }
