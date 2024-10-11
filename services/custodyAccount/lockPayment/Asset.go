@@ -51,7 +51,7 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 		assetBalance.Amount = 0
 	}
 	if assetBalance.Amount < amount {
-		return nil
+		return NoEnoughBalance
 	}
 
 	// lock btc
@@ -119,16 +119,15 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 	// check locked balance
 	lockedBalance := cModels.LockBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, assetId).First(&lockedBalance).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
 			return err
 		}
-		tx.Rollback()
-		return err
+		lockedBalance.Amount = 0
 	}
 	if lockedBalance.Amount < amount {
 		tx.Rollback()
-		return err
+		return NoEnoughBalance
 	}
 
 	// update locked balance
@@ -200,12 +199,11 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 			tx.Rollback()
 			return err
 		}
-		tx.Rollback()
-		return err
+		lockedBalance.Amount = 0
 	}
 	if lockedBalance.Amount < amount {
 		tx.Rollback()
-		return err
+		return NoEnoughBalance
 	}
 
 	// update locked balance
@@ -296,7 +294,7 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 		assetBalance.Amount = 0
 	}
 	if assetBalance.Amount < amount {
-		return nil
+		return NoEnoughBalance
 	}
 
 	// Create transferBTC Bill

@@ -42,7 +42,7 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 		return err
 	}
 	if float64(acc.CurrentBalance) < amount {
-		return nil
+		return NoEnoughBalance
 	}
 	// lock btc
 	lockedBalance := cModels.LockBalance{}
@@ -116,12 +116,11 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 			tx.Rollback()
 			return err
 		}
-		tx.Rollback()
-		return err
+		lockedBalance.Amount = 0
 	}
 	if lockedBalance.Amount < amount {
 		tx.Rollback()
-		return err
+		return NoEnoughBalance
 	}
 
 	// update locked balance
@@ -195,12 +194,11 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 			tx.Rollback()
 			return err
 		}
-		tx.Rollback()
-		return err
+		lockedBalance.Amount = 0
 	}
 	if lockedBalance.Amount < amount {
 		tx.Rollback()
-		return err
+		return NoEnoughBalance
 	}
 
 	// update locked balance
@@ -286,7 +284,7 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 		return err
 	}
 	if float64(acc.CurrentBalance) < amount {
-		return nil
+		return NoEnoughBalance
 	}
 
 	// Create transferBTC Bill

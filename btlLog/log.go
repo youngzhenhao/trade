@@ -143,5 +143,5 @@ func loadDefaultLog() {
 	FairLaunchDebugLogger = NewLogger("FLDL", Level, defaultLogFile)
 	FEE = NewLogger("FEE", Level, defaultLogFile)
 	ScheduledTask = NewLogger("CRON", Level, defaultLogFile)
-	PreSale = NewLogger("PRSL", Level, presaleLogFile)
+	PreSale = NewLogger("PRSL", Level, defaultLogFile, presaleLogFile)
 }

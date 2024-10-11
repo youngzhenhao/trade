@@ -1,16 +1,48 @@
 package lockPayment
 
-import caccount "trade/services/custodyAccount/account"
+import (
+	"errors"
+	"fmt"
+	caccount "trade/services/custodyAccount/account"
+)
 
 const (
 	FeeNpubkey = "btlong"
 	btcId      = "00"
 )
 
+var (
+	NoEnoughBalance    = errors.New("NoEnoughBalance")
+	GetAccountError    = errors.New("GetAccountError")
+	RevNpubKeyNotFound = errors.New("RevNpubKeyNotFound")
+	AssetIdNotFound    = errors.New("AssetIdNotFound")
+	ServiceError       = errors.New("ServiceError")
+	BadRequest         = errors.New("BadRequest")
+)
+
+func GetErrorCode(err error) int {
+	switch {
+	case errors.Is(err, NoEnoughBalance):
+		return 10001
+	case errors.Is(err, GetAccountError):
+		return 10002
+	case errors.Is(err, RevNpubKeyNotFound):
+		return 10003
+	case errors.Is(err, AssetIdNotFound):
+		return 10004
+	case errors.Is(err, ServiceError):
+		return 10005
+	case errors.Is(err, BadRequest):
+		return 10006
+	default:
+		return 10000
+	}
+}
+
 func GetBalance(npubkey, assetId string) (err error, unlockedBalance float64, lockedBalance float64) {
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
-		return err, 0, 0
+		return GetAccountError, 0, 0
 	}
 	if assetId != btcId {
 		err, unlockedBalance, lockedBalance = GetAssetBalance(usr, assetId)
@@ -29,7 +61,7 @@ func GetBalance(npubkey, assetId string) (err error, unlockedBalance float64, lo
 func Lock(npubkey, lockedId, assetId string, amount float64) error {
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %s", GetAccountError, err.Error())
 	}
 	if assetId != btcId {
 		err := LockAsset(usr, lockedId, assetId, amount)
@@ -48,7 +80,7 @@ func Lock(npubkey, lockedId, assetId string, amount float64) error {
 func Unlock(npubkey, lockedId, assetId string, amount float64) error {
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
-		return err
+		return GetAccountError
 	}
 	if assetId != btcId {
 		err := UnlockAsset(usr, lockedId, assetId, amount)
@@ -67,12 +99,16 @@ func Unlock(npubkey, lockedId, assetId string, amount float64) error {
 func TransferByUnlock(lockedId, npubkey, toNpubkey, assetId string, amount float64) error {
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
-		return err
+		return GetAccountError
+	}
+	if toNpubkey == FeeNpubkey {
+		toNpubkey = "admin"
 	}
 	toUsr, err := caccount.GetUserInfo(toNpubkey)
 	if err != nil {
-		return err
+		return RevNpubKeyNotFound
 	}
+
 	if assetId != btcId {
 		err := transferAsset(usr, lockedId, assetId, amount, toUsr)
 		if err != nil {
@@ -90,11 +126,14 @@ func TransferByUnlock(lockedId, npubkey, toNpubkey, assetId string, amount float
 func TransferByLock(lockedId, npubkey, toNpubkey, assetId string, amount float64) error {
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
-		return err
+		return GetAccountError
+	}
+	if toNpubkey == FeeNpubkey {
+		toNpubkey = "admin"
 	}
 	toUsr, err := caccount.GetUserInfo(toNpubkey)
 	if err != nil {
-		return err
+		return RevNpubKeyNotFound
 	}
 	if assetId != btcId {
 		err := transferLockedAsset(usr, lockedId, assetId, amount, toUsr)

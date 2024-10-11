@@ -18,20 +18,21 @@ type GetBalanceResponse struct {
 
 func GetBalance(c *gin.Context) {
 	var creds GetBalanceRequest
+	var res GetBalanceResponse
 	if err := c.ShouldBindJSON(&creds); err != nil {
 		btlLog.CUST.Error("%v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, res)
 		return
 	}
+
 	err, unlockedBalance, lockedBalance := lockPayment.GetBalance(creds.Npubkey, creds.AssetId)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, res)
 		return
 	}
-	var res GetBalanceResponse
 	res.UnlockedBalance = unlockedBalance
 	res.LockedBalance = lockedBalance
-	c.JSON(http.StatusOK, gin.H{"error": res})
+	c.JSON(http.StatusOK, res)
 }
 
 type LockRequest struct {
@@ -41,23 +42,26 @@ type LockRequest struct {
 	Amount   float64 `json:"amount"`
 }
 type LockResponse struct {
-	Error error `json:"error"`
+	Error string `json:"error"`
 }
 
 func Lock(c *gin.Context) {
 	var creds LockRequest
+	var res LockResponse
 	if err := c.ShouldBindJSON(&creds); err != nil {
 		btlLog.CUST.Error("%v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		res.Error = err.Error()
+		c.JSON(http.StatusBadRequest, &res)
 		return
 	}
 	//TODO Verification request
 	err := lockPayment.Lock(creds.Npubkey, creds.LockedId, creds.AssetId, creds.Amount)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res.Error = err.Error()
+		c.JSON(http.StatusInternalServerError, &res)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"error": nil})
+	c.JSON(http.StatusOK, &res)
 }
 
 type UnlockRequest struct {
@@ -67,24 +71,26 @@ type UnlockRequest struct {
 	Amount   float64 `json:"amount"`
 }
 type UnlockResponse struct {
-	Error error `json:"error"`
+	Error string `json:"error"`
 }
 
 func Unlock(c *gin.Context) {
 	var creds UnlockRequest
+	var res UnlockResponse
 	if err := c.ShouldBindJSON(&creds); err != nil {
 		btlLog.CUST.Error("%v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		res.Error = err.Error()
+		c.JSON(http.StatusBadRequest, &res)
 		return
 	}
 	//TODO Verification request
 	err := lockPayment.Unlock(creds.Npubkey, creds.LockedId, creds.AssetId, creds.Amount)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res.Error = err.Error()
+		c.JSON(http.StatusInternalServerError, &res)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"error": nil})
-
+	c.JSON(http.StatusOK, &res)
 }
 
 type PayByLockedRequest struct {
@@ -103,14 +109,17 @@ const (
 )
 
 type PayByLockedResponse struct {
-	TxId string `json:"txId"`
+	TxId      string `json:"txId"`
+	ErrorCode int    `json:"code"`
 }
 
 func PayAsset(c *gin.Context) {
 	var creds PayByLockedRequest
+	var res PayByLockedResponse
 	if err := c.ShouldBindJSON(&creds); err != nil {
 		btlLog.CUST.Error("%v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		res.ErrorCode = lockPayment.GetErrorCode(lockPayment.BadRequest)
+		c.JSON(http.StatusBadRequest, &res)
 		return
 	}
 	//TODO Verification request
@@ -121,10 +130,12 @@ func PayAsset(c *gin.Context) {
 		err = lockPayment.TransferByUnlock(creds.LockedId, creds.PayerNpubkey, creds.ReceiverNpubkey, creds.AssetId, creds.Amount)
 	}
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res.ErrorCode = lockPayment.GetErrorCode(err)
+		c.JSON(http.StatusInternalServerError, &res)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"error": nil})
+	res.TxId = "txId"
+	c.JSON(http.StatusOK, &res)
 }
 
 // TODO: add more api
