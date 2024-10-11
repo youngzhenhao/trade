@@ -19,6 +19,24 @@ var (
 	AdminUserInfo *account.UserInfo
 )
 
+type ApplyRequest struct {
+	Amount int64  `json:"amount"`
+	Memo   string `json:"memo"`
+}
+
+type PayInvoiceRequest struct {
+	Invoice  string `json:"invoice"`
+	FeeLimit int64  `json:"feeLimit"`
+}
+
+type PaymentRequest struct {
+	AssetId string `json:"asset_id"`
+}
+
+type DecodeInvoiceRequest struct {
+	Invoice string `json:"invoice"`
+}
+
 func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 	// Check the admin account
 	if !checkAdminAccount() {
@@ -77,6 +95,7 @@ func checkAdminAccount() bool {
 	return true
 }
 
+// PayAmountToAdmin
 // 托管账户划扣费用
 func PayAmountToAdmin(payUserId uint, gasFee uint64) (uint, error) {
 	e, err := btc_channel.NewBtcChannelEventByUserId(payUserId)
@@ -104,7 +123,8 @@ func CheckBackFeeMission(missionId uint) bool {
 	return checkBackFeeMissionById(missionId)
 }
 
-// CheckPayInsideStatus 检查内部转账任务状态是否成功
+// CheckPayInsideStatus
+// 检查内部转账任务状态是否成功
 func CheckPayInsideStatus(id uint) (bool, error) {
 	p, err := btldb.ReadPayInside(id)
 	if err != nil {
@@ -120,7 +140,8 @@ func CheckPayInsideStatus(id uint) (bool, error) {
 	}
 }
 
-// IsAccountBalanceEnoughByUserId  判断账户余额是否足够
+// IsAccountBalanceEnoughByUserId
+// 判断账户余额是否足够
 func IsAccountBalanceEnoughByUserId(userId uint, value uint64) bool {
 	e, err := btc_channel.NewBtcChannelEventByUserId(userId)
 	if err != nil {
@@ -135,17 +156,16 @@ func IsAccountBalanceEnoughByUserId(userId uint, value uint64) bool {
 	return balance[0].Amount >= int64(value)
 }
 
-type ApplyRequest struct {
-	Amount int64  `json:"amount"`
-	Memo   string `json:"memo"`
-}
-type PayInvoiceRequest struct {
-	Invoice  string `json:"invoice"`
-	FeeLimit int64  `json:"feeLimit"`
-}
-type PaymentRequest struct {
-	AssetId string `json:"asset_id"`
-}
-type DecodeInvoiceRequest struct {
-	Invoice string `json:"invoice"`
+// GetAccountBalance
+// @Description: Get account balance
+func GetAccountBalance(userId uint) (int64, error) {
+	e, err := btc_channel.NewBtcChannelEventByUserId(userId)
+	if err != nil {
+		return 0, err
+	}
+	balance, err := e.GetBalance()
+	if err != nil {
+		return 0, err
+	}
+	return balance[0].Amount, nil
 }

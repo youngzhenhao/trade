@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
+	"trade/utils"
 )
 
 type LogLevel int
@@ -81,6 +82,7 @@ func (ml *ServicesLogger) Error(format string, v ...any) {
 var (
 	defaultLogFile      *os.File
 	defaultErrorLogFile *os.File
+	presaleLogFile      *os.File
 )
 
 func openLogFile() error {
@@ -106,6 +108,10 @@ func openLogFile() error {
 	if err != nil {
 		return err
 	}
+	presaleLogFile, err = utils.GetLogFile("./trade.presale.log")
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -128,6 +134,7 @@ var (
 	FairLaunchDebugLogger *ServicesLogger
 	FEE                   *ServicesLogger
 	ScheduledTask         *ServicesLogger
+	PreSale               *ServicesLogger
 )
 
 func loadDefaultLog() {
@@ -136,4 +143,5 @@ func loadDefaultLog() {
 	FairLaunchDebugLogger = NewLogger("FLDL", Level, defaultLogFile)
 	FEE = NewLogger("FEE", Level, defaultLogFile)
 	ScheduledTask = NewLogger("CRON", Level, defaultLogFile)
+	PreSale = NewLogger("PRSL", Level, presaleLogFile)
 }

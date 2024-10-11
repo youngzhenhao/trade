@@ -36,6 +36,10 @@ func CheckIfAutoUpdateScheduledTask() {
 		if err != nil {
 			btlLog.ScheduledTask.Info("%v", err)
 		}
+		err = CreateNftPresaleProcessions()
+		if err != nil {
+			btlLog.ScheduledTask.Info("%v", err)
+		}
 	}
 }
 
@@ -281,4 +285,65 @@ func (cs *CronService) UpdateFairLaunchIncomesSatAmountByTxids() {
 	if err != nil {
 		return
 	}
+}
+
+func (cs *CronService) ProcessNftPresaleBoughtNotPay() {
+	ProcessNftPresaleBoughtNotPay()
+	err := TaskCountRecordByRedis("ProcessNftPresaleBoughtNotPay")
+	if err != nil {
+		return
+	}
+}
+
+func (cs *CronService) ProcessNftPresalePaidPending() {
+	ProcessNftPresalePaidPending()
+	err := TaskCountRecordByRedis("ProcessNftPresalePaidPending")
+	if err != nil {
+		return
+	}
+}
+
+func (cs *CronService) ProcessNftPresalePaidNotSend() {
+	ProcessNftPresalePaidNotSend()
+	err := TaskCountRecordByRedis("ProcessNftPresalePaidNotSend")
+	if err != nil {
+		return
+	}
+}
+
+func (cs *CronService) ProcessNftPresaleSentPending() {
+	ProcessNftPresaleSentPending()
+	err := TaskCountRecordByRedis("ProcessNftPresaleSentPending")
+	if err != nil {
+		return
+	}
+}
+
+func CreateNftPresaleProcessions() (err error) {
+	return CreateOrUpdateScheduledTasks(&[]models.ScheduledTask{
+		{
+			Name:           "ProcessNftPresaleBoughtNotPay",
+			CronExpression: "*/20 * * * * *",
+			FunctionName:   "ProcessNftPresaleBoughtNotPay",
+			Package:        "services",
+		},
+		{
+			Name:           "ProcessNftPresalePaidPending",
+			CronExpression: "*/20 * * * * *",
+			FunctionName:   "ProcessNftPresalePaidPending",
+			Package:        "services",
+		},
+		{
+			Name:           "ProcessNftPresalePaidNotSend",
+			CronExpression: "0 */5 * * * *",
+			FunctionName:   "ProcessNftPresalePaidNotSend",
+			Package:        "services",
+		},
+		{
+			Name:           "ProcessNftPresaleSentPending",
+			CronExpression: "*/20 * * * * *",
+			FunctionName:   "ProcessNftPresaleSentPending",
+			Package:        "services",
+		},
+	})
 }

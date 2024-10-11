@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/hex"
 	"errors"
+	"github.com/lightninglabs/taproot-assets/proof"
 	"github.com/lightninglabs/taproot-assets/taprpc"
 	"github.com/lightninglabs/taproot-assets/taprpc/mintrpc"
 	"github.com/lightninglabs/taproot-assets/taprpc/universerpc"
@@ -333,4 +334,102 @@ func GetAssetNameByAssetId(assetId string) string {
 
 func ListUtxosAndGetResponse() (*taprpc.ListUtxosResponse, error) {
 	return listUtxos()
+}
+
+func FetchAssetMetaByAssetId(assetId string) (*taprpc.AssetMeta, error) {
+	return fetchAssetMetaByAssetId(assetId)
+}
+
+type AssetInfoApi struct {
+	AssetId      string  `json:"asset_Id"`
+	Name         string  `json:"name"`
+	Point        string  `json:"point"`
+	AssetType    string  `json:"assetType"`
+	GroupName    *string `json:"group_name"`
+	GroupKey     *string `json:"group_key"`
+	Amount       uint64  `json:"amount"`
+	Meta         *string `json:"meta"`
+	CreateHeight int64   `json:"create_height"`
+	CreateTime   int64   `json:"create_time"`
+	Universe     string  `json:"universe"`
+}
+
+func QueryAssetRoots(assetId string) *universerpc.QueryRootResponse {
+	return queryAssetRoots(assetId)
+}
+
+func GetAssetInfoApi(id string) (*AssetInfoApi, error) {
+	root := QueryAssetRoots(id)
+	if root == nil || root.IssuanceRoot.Id == nil {
+		return nil, errors.New("query asset roots err")
+	}
+	queryId := id
+	isGroup := false
+	if groupKey, ok := root.IssuanceRoot.Id.Id.(*universerpc.ID_GroupKey); ok {
+		isGroup = true
+		queryId = hex.EncodeToString(groupKey.GroupKey)
+	}
+	response, err := assetLeaves(isGroup, queryId, universerpc.ProofType_PROOF_TYPE_ISSUANCE)
+	if err != nil {
+		return nil, err
+	}
+	if response.Leaves == nil {
+		return nil, errors.New("response leaves null err")
+	}
+	var blob proof.Blob
+	for index, leaf := range response.Leaves {
+		if hex.EncodeToString(leaf.Asset.AssetGenesis.GetAssetId()) == id {
+			blob = response.Leaves[index].Proof
+			break
+		}
+	}
+	if len(blob) == 0 {
+		return nil, errors.New("blob length zero err")
+	}
+	p, _ := blob.AsSingleProof()
+	assetId := p.Asset.ID().String()
+	assetName := p.Asset.Tag
+	assetPoint := p.Asset.FirstPrevOut.String()
+	assetType := p.Asset.Type.String()
+	amount := p.Asset.Amount
+	createHeight := p.BlockHeight
+	createTime := p.BlockHeader.Timestamp
+	var (
+		newMeta Meta
+		m       = ""
+	)
+	if p.MetaReveal != nil {
+		m = string(p.MetaReveal.Data)
+	}
+	newMeta.GetMetaFromStr(m)
+	var assetInfo = AssetInfoApi{
+		AssetId:      assetId,
+		Name:         assetName,
+		Point:        assetPoint,
+		AssetType:    assetType,
+		GroupName:    &newMeta.GroupName,
+		Amount:       amount,
+		Meta:         &newMeta.Description,
+		CreateHeight: int64(createHeight),
+		CreateTime:   createTime.Unix(),
+		Universe:     "localhost",
+	}
+	if isGroup {
+		assetInfo.GroupKey = &queryId
+	}
+	return &assetInfo, nil
+}
+
+func GetGroupKeyByAssetId(assetId string) (string, error) {
+	response, err := GetListAssetsResponse(false, true, false)
+	if err != nil {
+		return "", err
+	}
+	for _, asset := range response.Assets {
+		if assetId == hex.EncodeToString(asset.AssetGenesis.AssetId) {
+			return hex.EncodeToString(asset.AssetGroup.TweakedGroupKey), nil
+		}
+	}
+	err = errors.New("asset group key not found")
+	return "", err
 }
