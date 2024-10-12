@@ -41,6 +41,36 @@ func assetLeaves(isGroup bool, id string, proofType universerpc.ProofType) (*uni
 	return response, nil
 }
 
+func assetLeafKeys(isGroup bool, id string, proofType universerpc.ProofType) (*universerpc.AssetLeafKeyResponse, error) {
+	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
+	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
+	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	request := &universerpc.AssetLeafKeysRequest{
+		Id: &universerpc.ID{
+			ProofType: proofType,
+		},
+	}
+	if isGroup {
+		groupKey := &universerpc.ID_GroupKeyStr{
+			GroupKeyStr: id,
+		}
+		request.Id.Id = groupKey
+	} else {
+		AssetId := &universerpc.ID_AssetIdStr{
+			AssetIdStr: id,
+		}
+		request.Id.Id = AssetId
+	}
+	client := universerpc.NewUniverseClient(conn)
+	response, err := client.AssetLeafKeys(context.Background(), request)
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "AssetLeafKeys")
+	}
+	return response, nil
+}
+
 func assetLeavesSpecified(id string, proofType string) (*universerpc.AssetLeafResponse, error) {
 	var _proofType universerpc.ProofType
 	if proofType == "issuance" || proofType == "ISSUANCE" || proofType == "PROOF_TYPE_ISSUANCE" {
