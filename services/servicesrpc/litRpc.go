@@ -122,7 +122,7 @@ func AccountUpdate(id string, balance int64, expirationDate int64) (*litrpc.Acco
 	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
 	defer connClose()
 
-	if balance < 0 || balance > 50000000 {
+	if balance < 0 || balance > 500000000 {
 		btlLog.CUST.Error("balance must be between 0 and 5000000 sat")
 		return nil, errors.New("balance must be between 0 and 5000000 sat")
 	}

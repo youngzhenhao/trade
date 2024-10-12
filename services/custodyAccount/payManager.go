@@ -10,14 +10,13 @@ import (
 	"trade/config"
 	"trade/models"
 	"trade/services/btldb"
+	"trade/services/custodyAccount/account"
 	"trade/services/custodyAccount/btc_channel"
 	"trade/services/custodyAccount/custodyAssets"
 )
 
 var (
-	AdminUserId    uint = 1
-	AdminAccount   *models.Account
-	AdminAccountId uint = 1
+	AdminUserInfo *account.UserInfo
 )
 
 type ApplyRequest struct {
@@ -41,7 +40,7 @@ type DecodeInvoiceRequest struct {
 func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 	// Check the admin account
 	if !checkAdminAccount() {
-		log.Println("Admin account is not set")
+		btlLog.CUST.Error("Admin account is not set")
 		return false
 	}
 	// Check the custody account MacaroonDir
@@ -78,28 +77,21 @@ func checkAdminAccount() bool {
 			return false
 		}
 	}
-	adminAccount, err := btldb.ReadAccountByUserId(adminUser.ID)
+	adminAccount, err := account.GetUserInfo("admin")
 	if err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			btlLog.CUST.Error("CheckAdminAccount failed:%s", err)
-			return false
-		}
-		// 创建管理员ACCOUNT
-		adminAccount.UserId = adminUser.ID
-		adminAccount.UserName = adminUser.Username
-		adminAccount.UserAccountCode = "admin"
-		adminAccount.Status = models.AccountStatusEnable
-		err = btldb.CreateAccount(adminAccount)
-		if err != nil {
-			btlLog.CUST.Error("create AdminAccount failed:%s", err)
-			return false
-		}
+		btlLog.CUST.Error("CheckAdminAccount failed:%s", err)
+		return false
 	}
-	AdminUserId = adminUser.ID
-	AdminAccountId = adminAccount.ID
-	AdminAccount = adminAccount
-	btlLog.CUST.Info("admin user id:%d", AdminUserId)
-	btlLog.CUST.Info("admin account id:%d", AdminAccount.ID)
+	if adminAccount.Account.UserAccountCode == "admin" {
+		btlLog.CUST.Error("admin user is old : admin")
+		return false
+	}
+	AdminUserInfo = adminAccount
+
+	btlLog.CUST.Info("admin user id:%d", AdminUserInfo.User.ID)
+	btlLog.CUST.Info("admin account id:%d", AdminUserInfo.Account.ID)
+	btlLog.CUST.Info("admin account lit id:%s", AdminUserInfo.Account.UserAccountCode)
+	btlLog.CUST.Info("admin lockAccount id:%d", AdminUserInfo.LockAccount.ID)
 	return true
 }
 
