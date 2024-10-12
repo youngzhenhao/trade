@@ -62,6 +62,7 @@ func (s *SubscribeInvoiceServer) runServer(ctx context.Context) {
 					continue
 				}
 				if i.Status == 1 {
+					tx.Rollback()
 					continue
 				}
 				i.Status = 1

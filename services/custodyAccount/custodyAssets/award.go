@@ -22,6 +22,7 @@ var (
 
 func PutInAward(account *models.Account, AssetId string, amount int, memo *string) (*models.AccountAward, error) {
 	tx := middleware.DB.Begin()
+	defer tx.Rollback()
 	if tx.Error != nil {
 		btlLog.CUST.Error("PutInAward err:%v", tx.Error)
 		return nil, ServerBusy

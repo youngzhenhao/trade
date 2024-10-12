@@ -8,6 +8,7 @@ import (
 
 func CreateLockAccount(user *models.User) (*cModels.LockAccount, error) {
 	tx := middleware.DB.Begin()
+	defer tx.Rollback()
 	account := cModels.LockAccount{
 		UserId:   user.ID,
 		UserName: user.Username,
@@ -23,6 +24,7 @@ func CreateLockAccount(user *models.User) (*cModels.LockAccount, error) {
 
 func GetLockAccountByUserName(username string) (*cModels.LockAccount, error) {
 	tx := middleware.DB.Begin()
+	defer tx.Rollback()
 	account := cModels.LockAccount{}
 	if err := tx.Where("user_name =?", username).First(&account).Error; err != nil {
 		tx.Rollback()
