@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
+	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
 	cModels "trade/models/custodyModels"
@@ -26,6 +27,7 @@ func GetBtcBalance(usr *caccount.UserInfo) (err error, unlock float64, locked fl
 
 	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
 	if err != nil {
+		btlLog.CUST.Error("GetBtcBalance rpc.AccountInfo error", err)
 		return ServiceError, 0, 0
 	}
 	unlock = float64(acc.CurrentBalance)
@@ -40,6 +42,7 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	// check balance
 	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
 	if err != nil {
+		btlLog.CUST.Error("LockBTC rpc.AccountInfo error", err)
 		return ServiceError
 	}
 	if float64(acc.CurrentBalance) < amount {
@@ -104,6 +107,7 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	resultAmount := float64(acc.CurrentBalance) - amount
 	_, err = rpc.AccountUpdate(usr.Account.UserAccountCode, int64(resultAmount), -1)
 	if err != nil {
+		btlLog.CUST.Error("LockBTC rpc.AccountUpdate error", err)
 		tx.Rollback()
 		return ServiceError
 	}
@@ -179,12 +183,14 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	// update user account
 	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
 	if err != nil {
+		btlLog.CUST.Error("UnlockBTC rpc.AccountInfo error", err)
 		tx.Rollback()
 		return ServiceError
 	}
 	resultAmount := float64(acc.CurrentBalance) + amount
 	_, err = rpc.AccountUpdate(usr.Account.UserAccountCode, int64(resultAmount), -1)
 	if err != nil {
+		btlLog.CUST.Error("UnlockBTC rpc.AccountUpdate error", err)
 		tx.Rollback()
 		return ServiceError
 	}
@@ -283,12 +289,14 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 	// update user account
 	acc, err := rpc.AccountInfo(toUser.Account.UserAccountCode)
 	if err != nil {
+		btlLog.CUST.Error("transferLockedBTC rpc.AccountInfo error", err)
 		tx.Rollback()
 		return ServiceError
 	}
 	resultAmount := float64(acc.CurrentBalance) + amount
 	_, err = rpc.AccountUpdate(toUser.Account.UserAccountCode, int64(resultAmount), -1)
 	if err != nil {
+		btlLog.CUST.Error("transferLockedBTC rpc.AccountUpdate error", err)
 		tx.Rollback()
 		return ServiceError
 	}
@@ -306,6 +314,7 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 	// check balance
 	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
 	if err != nil {
+		btlLog.CUST.Error("transferBTC rpc.AccountInfo error", err)
 		return ServiceError
 	}
 	if float64(acc.CurrentBalance) < amount {
@@ -367,6 +376,7 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 	resultAmount := float64(acc.CurrentBalance) - amount
 	_, err = rpc.AccountUpdate(usr.Account.UserAccountCode, int64(resultAmount), -1)
 	if err != nil {
+		btlLog.CUST.Error("transferBTC rpc.AccountUpdate error", err)
 		tx.Rollback()
 		return ServiceError
 	}
@@ -401,12 +411,14 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 	// update user account
 	accRev, err := rpc.AccountInfo(toUser.Account.UserAccountCode)
 	if err != nil {
+		btlLog.CUST.Error("transferBTC rpc.AccountInfo error", err)
 		txRev.Rollback()
 		return ServiceError
 	}
 	resultAmountRev := float64(accRev.CurrentBalance) + amount
 	_, err = rpc.AccountUpdate(toUser.Account.UserAccountCode, int64(resultAmountRev), -1)
 	if err != nil {
+		btlLog.CUST.Error("transferBTC rpc.AccountUpdate error", err)
 		txRev.Rollback()
 		return ServiceError
 	}
