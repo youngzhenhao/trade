@@ -16,6 +16,7 @@ func LoginHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	fmt.Println("login service start")
 	token, err := services.Login(creds)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -23,7 +24,6 @@ func LoginHandler(c *gin.Context) {
 	}
 	// @dev: Update user ip by client ip
 	ip := c.ClientIP()
-	fmt.Println("login ip:", ip)
 	path := c.Request.URL.Path
 	go middleware.InsertLoginInfo(creds.Username, ip, path)
 
