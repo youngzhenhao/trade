@@ -52,6 +52,7 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 		assetBalance.Amount = 0
 	}
 	if assetBalance.Amount < amount {
+		tx.Rollback()
 		return NoEnoughBalance
 	}
 
@@ -313,6 +314,7 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 		assetBalance.Amount = 0
 	}
 	if assetBalance.Amount < amount {
+		tx.Rollback()
 		return NoEnoughBalance
 	}
 

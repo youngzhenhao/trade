@@ -28,6 +28,7 @@ func GetBtcBalance(usr *caccount.UserInfo) (err error, unlock float64, locked fl
 	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
 	if err != nil {
 		btlLog.CUST.Error("GetBtcBalance rpc.AccountInfo error", err)
+		tx.Rollback()
 		return ServiceError, 0, 0
 	}
 	unlock = float64(acc.CurrentBalance)
@@ -43,9 +44,11 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
 	if err != nil {
 		btlLog.CUST.Error("LockBTC rpc.AccountInfo error", err)
+		tx.Rollback()
 		return ServiceError
 	}
 	if float64(acc.CurrentBalance) < amount {
+		tx.Rollback()
 		return NoEnoughBalance
 	}
 	// lock btc
@@ -315,9 +318,11 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
 	if err != nil {
 		btlLog.CUST.Error("transferBTC rpc.AccountInfo error", err)
+		tx.Rollback()
 		return ServiceError
 	}
 	if float64(acc.CurrentBalance) < amount {
+		tx.Rollback()
 		return NoEnoughBalance
 	}
 
