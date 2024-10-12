@@ -336,7 +336,7 @@ func ListUtxosAndGetResponse() (*taprpc.ListUtxosResponse, error) {
 	return listUtxos()
 }
 
-func FetchAssetMetaByAssetId(assetId string) (*taprpc.AssetMeta, error) {
+func FetchAssetMetaAndGetResponse(assetId string) (*taprpc.AssetMeta, error) {
 	return fetchAssetMetaByAssetId(assetId)
 }
 
@@ -465,4 +465,120 @@ func AssetLeafKeys(isGroup bool, id string, proofType universerpc.ProofType) (*[
 	var assetKeys *[]AssetKeys
 	assetKeys = AssetLeafKeyResponseToAssetKeys(response)
 	return assetKeys, nil
+}
+
+type AssetMeta struct {
+	Data     string `json:"data"`
+	Type     string `json:"type"`
+	MetaHash string `json:"meta_hash"`
+}
+
+// FetchAssetMetaByAssetId
+// @Description: Fetch asset meta by asset id
+func FetchAssetMetaByAssetId(assetId string) (*AssetMeta, error) {
+	response, err := FetchAssetMetaAndGetResponse(assetId)
+	if err != nil {
+		return nil, err
+	}
+	assetMeta := AssetMeta{
+		Data:     string(response.Data),
+		Type:     response.Type.String(),
+		MetaHash: hex.EncodeToString(response.MetaHash),
+	}
+	return &assetMeta, nil
+}
+
+func QueryProofAndGetResponse(isGroup bool, id string, outpoint string, scriptKey string, proofType universerpc.ProofType) (*universerpc.AssetProofResponse, error) {
+	return queryProof(isGroup, id, outpoint, scriptKey, proofType)
+}
+
+// @dev: Has not been used now
+type QueryProofAndResponse struct {
+	Req struct {
+		ID struct {
+			GroupKey  string `json:"group_key"`
+			ProofType string `json:"proof_type"`
+		} `json:"id"`
+		LeafKey struct {
+			Op struct {
+				HashStr string `json:"hash_str"`
+				Index   int    `json:"index"`
+			} `json:"op"`
+			ScriptKeyStr string `json:"script_key_str"`
+		} `json:"leaf_key"`
+	} `json:"req"`
+	UniverseRoot struct {
+		ID struct {
+			GroupKey  string `json:"group_key"`
+			ProofType string `json:"proof_type"`
+		} `json:"id"`
+		MssmtRoot struct {
+			RootHash string `json:"root_hash"`
+			RootSum  string `json:"root_sum"`
+		} `json:"mssmt_root"`
+		AssetName        string `json:"asset_name"`
+		AmountsByAssetID struct {
+		} `json:"amounts_by_asset_id"`
+	} `json:"universe_root"`
+	UniverseInclusionProof string `json:"universe_inclusion_proof"`
+	AssetLeaf              struct {
+		Asset struct {
+			Version      string `json:"version"`
+			AssetGenesis struct {
+				GenesisPoint string `json:"genesis_point"`
+				Name         string `json:"name"`
+				MetaHash     string `json:"meta_hash"`
+				AssetID      string `json:"asset_id"`
+				AssetType    string `json:"asset_type"`
+				OutputIndex  int    `json:"output_index"`
+			} `json:"asset_genesis"`
+			Amount           string `json:"amount"`
+			LockTime         int    `json:"lock_time"`
+			RelativeLockTime int    `json:"relative_lock_time"`
+			ScriptVersion    int    `json:"script_version"`
+			ScriptKey        string `json:"script_key"`
+			ScriptKeyIsLocal bool   `json:"script_key_is_local"`
+			AssetGroup       struct {
+				RawGroupKey     string `json:"raw_group_key"`
+				TweakedGroupKey string `json:"tweaked_group_key"`
+				AssetWitness    string `json:"asset_witness"`
+				TapscriptRoot   string `json:"tapscript_root"`
+			} `json:"asset_group"`
+			ChainAnchor   interface{} `json:"chain_anchor"`
+			PrevWitnesses []struct {
+				PrevID struct {
+					AnchorPoint string `json:"anchor_point"`
+					AssetID     string `json:"asset_id"`
+					ScriptKey   string `json:"script_key"`
+					Amount      string `json:"amount"`
+				} `json:"prev_id"`
+				TxWitness       []string    `json:"tx_witness"`
+				SplitCommitment interface{} `json:"split_commitment"`
+			} `json:"prev_witnesses"`
+			IsSpent                bool        `json:"is_spent"`
+			LeaseOwner             string      `json:"lease_owner"`
+			LeaseExpiry            string      `json:"lease_expiry"`
+			IsBurn                 bool        `json:"is_burn"`
+			ScriptKeyDeclaredKnown bool        `json:"script_key_declared_known"`
+			ScriptKeyHasScriptPath bool        `json:"script_key_has_script_path"`
+			DecimalDisplay         interface{} `json:"decimal_display"`
+		} `json:"asset"`
+		Proof string `json:"proof"`
+	} `json:"asset_leaf"`
+	MultiverseRoot struct {
+		RootHash string `json:"root_hash"`
+		RootSum  string `json:"root_sum"`
+	} `json:"multiverse_root"`
+	MultiverseInclusionProof string `json:"multiverse_inclusion_proof"`
+}
+
+// QueryProofToGetAssetId
+// @Description: Query proof to get asset id
+func QueryProofToGetAssetId(groupKey string, outpoint string, scriptKey string) (string, error) {
+	response, err := QueryProofAndGetResponse(true, groupKey, outpoint, scriptKey, universerpc.ProofType_PROOF_TYPE_ISSUANCE)
+	if err != nil {
+		return "", err
+	}
+	assetId := hex.EncodeToString(response.AssetLeaf.Asset.AssetGenesis.AssetId)
+	return assetId, nil
 }
