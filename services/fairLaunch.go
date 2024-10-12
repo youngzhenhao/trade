@@ -22,7 +22,7 @@ import (
 func PrintProcessionResult(processionResult *[]ProcessionResult) {
 	for _, result := range *processionResult {
 		if !result.Success {
-			btlLog.FairLaunchDebugLogger.Info("%d:%v", result.id, utils.ValueJsonString(result.Error))
+			btlLog.FairLaunchDebugLogger.Info("%d:%v", result.Id, utils.ValueJsonString(result.Error))
 		}
 	}
 }
@@ -738,7 +738,7 @@ func GetAllValidFairLaunchInfos() (fairLaunchInfos *[]models.FairLaunchInfo, err
 }
 
 type ProcessionResult struct {
-	id int
+	Id int `json:"id"`
 	models.JsonResult
 }
 
@@ -753,7 +753,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 			err = ProcessFairLaunchStateNoPayInfoService(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -763,7 +763,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -775,7 +775,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 			err = ProcessFairLaunchStatePaidPendingInfoService(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -785,7 +785,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -797,7 +797,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 			err = ProcessFairLaunchStatePaidNoIssueInfoService(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -807,7 +807,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -819,7 +819,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 			err = ProcessFairLaunchStateIssuedPendingInfoService(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -829,7 +829,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -841,7 +841,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 			err = ProcessFairLaunchStateReservedSentPending(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -851,7 +851,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -887,7 +887,7 @@ func ProcessAllFairLaunchStateNoPayInfoService() (*[]ProcessionResult, error) {
 			err = ProcessFairLaunchStateNoPayInfoService(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -897,7 +897,7 @@ func ProcessAllFairLaunchStateNoPayInfoService() (*[]ProcessionResult, error) {
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -931,7 +931,7 @@ func ProcessAllFairLaunchStatePaidPendingInfoService() (*[]ProcessionResult, err
 			err = ProcessFairLaunchStatePaidPendingInfoService(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -941,7 +941,7 @@ func ProcessAllFairLaunchStatePaidPendingInfoService() (*[]ProcessionResult, err
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -975,7 +975,7 @@ func ProcessAllFairLaunchStatePaidNoIssueInfoService() (*[]ProcessionResult, err
 			err = ProcessFairLaunchStatePaidNoIssueInfoService(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -985,7 +985,7 @@ func ProcessAllFairLaunchStatePaidNoIssueInfoService() (*[]ProcessionResult, err
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -1019,7 +1019,7 @@ func ProcessAllFairLaunchStateIssuedPendingInfoService() (*[]ProcessionResult, e
 			err = ProcessFairLaunchStateIssuedPendingInfoService(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -1029,7 +1029,7 @@ func ProcessAllFairLaunchStateIssuedPendingInfoService() (*[]ProcessionResult, e
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -1063,7 +1063,7 @@ func ProcessAllFairLaunchStateReservedSentPending() (*[]ProcessionResult, error)
 			err = ProcessFairLaunchStateReservedSentPending(&fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -1073,7 +1073,7 @@ func ProcessAllFairLaunchStateReservedSentPending() (*[]ProcessionResult, error)
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchInfo.ID),
+					Id: int(fairLaunchInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -1543,7 +1543,7 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 			err = ProcessFairLaunchMintedStateNoPayInfo(&fairLaunchMintedInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchMintedInfo.ID),
+					Id: int(fairLaunchMintedInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -1553,7 +1553,7 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchMintedInfo.ID),
+					Id: int(fairLaunchMintedInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -1569,7 +1569,7 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 			err = ProcessFairLaunchMintedStatePaidPendingInfo(&fairLaunchMintedInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchMintedInfo.ID),
+					Id: int(fairLaunchMintedInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -1579,7 +1579,7 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchMintedInfo.ID),
+					Id: int(fairLaunchMintedInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -1595,7 +1595,7 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 			err = ProcessFairLaunchMintedStatePaidNoSendInfo(&fairLaunchMintedInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchMintedInfo.ID),
+					Id: int(fairLaunchMintedInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -1605,7 +1605,7 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchMintedInfo.ID),
+					Id: int(fairLaunchMintedInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -1621,7 +1621,7 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 			err = ProcessFairLaunchMintedStateSentPendingInfo(&fairLaunchMintedInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchMintedInfo.ID),
+					Id: int(fairLaunchMintedInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -1631,7 +1631,7 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(fairLaunchMintedInfo.ID),
+					Id: int(fairLaunchMintedInfo.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
