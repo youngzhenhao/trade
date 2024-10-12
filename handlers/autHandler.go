@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"trade/middleware"
@@ -21,6 +22,7 @@ func LoginHandler(c *gin.Context) {
 	}
 	// @dev: Update user ip by client ip
 	ip := c.ClientIP()
+	fmt.Println("login ip:", ip)
 	path := c.Request.URL.Path
 	go middleware.InsertLoginInfo(creds.Username, ip, path)
 

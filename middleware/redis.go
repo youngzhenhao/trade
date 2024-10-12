@@ -26,7 +26,7 @@ func RedisConnect() error {
 		Username: loadConfig.Redis.Username,
 		Password: loadConfig.Redis.Password,
 		DB:       loadConfig.Redis.DB,
-		PoolSize: 200,
+		PoolSize: 2000,
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

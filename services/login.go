@@ -67,9 +67,11 @@ func Login(creds models.User) (string, error) {
 			}
 		}
 	}
+	fmt.Println("login user:", user)
 	if !CheckPassword(user.Password, creds.Password) {
 		return "", errors.New("invalid credentials")
 	}
+	fmt.Println("CheckPassword user success:", user)
 	token, err := middleware.GenerateToken(creds.Username)
 	if err != nil {
 		return "", err
