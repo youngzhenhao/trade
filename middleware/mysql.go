@@ -50,8 +50,8 @@ func InitMysql() error {
 
 		// 配置连接池
 		sqlDB.SetMaxIdleConns(10)                  // 最大空闲连接数
-		sqlDB.SetMaxOpenConns(200)                 // 最大打开连接数
-		sqlDB.SetConnMaxLifetime(time.Minute * 10) // 连接的最大存活时间
+		sqlDB.SetMaxOpenConns(300)                 // 最大打开连接数
+		sqlDB.SetConnMaxLifetime(time.Second * 30) // 连接的最大存活时间
 
 		DB = gormDB
 	})
