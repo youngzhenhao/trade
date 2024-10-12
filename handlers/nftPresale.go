@@ -103,7 +103,7 @@ func GetUserBoughtNftPresale(c *gin.Context) {
 	})
 }
 
-func GetNftPresaleByGroupKey(c *gin.Context) {
+func GetNftPresaleByGroupKeyPurchasable(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	_, err := services.NameToId(username)
 	if err != nil {
@@ -116,7 +116,7 @@ func GetNftPresaleByGroupKey(c *gin.Context) {
 		return
 	}
 	groupKey := c.Param("group_key")
-	nftPresales, err := services.GetNftPresaleByGroupKey(groupKey)
+	nftPresales, err := services.GetNftPresaleByGroupKeyPurchasable(groupKey)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -135,7 +135,7 @@ func GetNftPresaleByGroupKey(c *gin.Context) {
 	})
 }
 
-func GetNftPresaleNoGroupKey(c *gin.Context) {
+func GetNftPresaleNoGroupKeyPurchasable(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	_, err := services.NameToId(username)
 	if err != nil {
@@ -147,7 +147,7 @@ func GetNftPresaleNoGroupKey(c *gin.Context) {
 		})
 		return
 	}
-	nftPresales, err := services.GetNftPresaleNoGroupKey()
+	nftPresales, err := services.GetNftPresaleNoGroupKeyPurchasable()
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -275,7 +275,7 @@ func SetNftPresales(c *gin.Context) {
 
 // @dev: Query
 
-func QueryNftPresaleGroupKey(c *gin.Context) {
+func QueryNftPresaleGroupKeyPurchasable(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	_, err := services.NameToId(username)
 	if err != nil {
@@ -287,7 +287,7 @@ func QueryNftPresaleGroupKey(c *gin.Context) {
 		})
 		return
 	}
-	groupKeys, err := services.GetAllNftPresaleGroupKey()
+	groupKeys, err := services.GetAllNftPresaleGroupKeyPurchasable()
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,

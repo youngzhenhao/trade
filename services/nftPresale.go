@@ -33,20 +33,20 @@ func ReadNftPresaleByAssetId(assetId string) (*models.NftPresale, error) {
 	return btldb.ReadNftPresaleByAssetId(assetId)
 }
 
-func ReadNftPresaleByGroupKey(groupKey string) (*[]models.NftPresale, error) {
-	return btldb.ReadNftPresaleByGroupKey(groupKey)
+func ReadNftPresaleByGroupKeyPurchasable(groupKey string) (*[]models.NftPresale, error) {
+	return btldb.ReadNftPresaleByGroupKeyPurchasable(groupKey)
 }
 
-func ReadNftPresaleByGroupKeyLike(groupKeyPart string) (*[]models.NftPresale, error) {
-	return btldb.ReadNftPresaleByGroupKeyLike(groupKeyPart)
+func ReadNftPresaleByGroupKeyLikePurchasable(groupKeyPart string) (*[]models.NftPresale, error) {
+	return btldb.ReadNftPresaleByGroupKeyLikePurchasable(groupKeyPart)
 }
 
 func ReadAllNftPresales() (*[]models.NftPresale, error) {
 	return btldb.ReadAllNftPresales()
 }
 
-func ReadAllNftPresalesOnlyGroupKey() (*[]models.NftPresale, error) {
-	return btldb.ReadAllNftPresalesOnlyGroupKey()
+func ReadAllNftPresalesOnlyGroupKeyPurchasable() (*[]models.NftPresale, error) {
+	return btldb.ReadAllNftPresalesOnlyGroupKeyPurchasable()
 }
 
 func ReadNftPresalesByNftPresaleState(nftPresaleState models.NftPresaleState) (*[]models.NftPresale, error) {
@@ -129,44 +129,46 @@ func ProcessNftPresales(nftPresaleSetRequests *[]models.NftPresaleSetRequest) *[
 
 // @dev: Get
 
+// GetNftPresaleByAssetId
+// @Description:  This can return purchased nft
 func GetNftPresaleByAssetId(assetId string) (*models.NftPresale, error) {
 	return ReadNftPresaleByAssetId(assetId)
 }
 
-func GetNftPresaleByGroupKey(groupKey string) (*[]models.NftPresale, error) {
+func GetNftPresaleByGroupKeyPurchasable(groupKey string) (*[]models.NftPresale, error) {
 	var err error
 	if len(groupKey) == 0 {
 		err = errors.New("group_key is null string(" + groupKey + ")")
 		return nil, err
 	} else if len(groupKey) < 64 {
-		return ReadNftPresaleByGroupKeyLike(groupKey)
+		return ReadNftPresaleByGroupKeyLikePurchasable(groupKey)
 	} else if len(groupKey) == 64 || len(groupKey) == 66 {
-		return ReadNftPresaleByGroupKey(groupKey)
+		return ReadNftPresaleByGroupKeyPurchasable(groupKey)
 	} else {
-		return ReadNftPresaleByGroupKey(groupKey)
+		return ReadNftPresaleByGroupKeyPurchasable(groupKey)
 	}
 }
 
-func GetNftPresaleByGroupKeyLike(groupKeyPart string) (*[]models.NftPresale, error) {
-	return ReadNftPresaleByGroupKeyLike(groupKeyPart)
+func GetNftPresaleByGroupKeyLikePurchasable(groupKeyPart string) (*[]models.NftPresale, error) {
+	return ReadNftPresaleByGroupKeyLikePurchasable(groupKeyPart)
 }
 
-func GetNftPresaleNoGroupKey() (*[]models.NftPresale, error) {
-	return ReadNftPresaleByGroupKey("")
+func GetNftPresaleNoGroupKeyPurchasable() (*[]models.NftPresale, error) {
+	return ReadNftPresaleByGroupKeyPurchasable("")
 }
 
 func GetNftPresalesByBuyerUserId(userId int) (*[]models.NftPresale, error) {
 	return btldb.ReadNftPresalesByBuyerUserId(userId)
 }
 
-func GetAllNftPresalesOnlyGroupKey() (*[]models.NftPresale, error) {
-	return btldb.ReadAllNftPresalesOnlyGroupKey()
+func GetAllNftPresalesOnlyGroupKeyPurchasable() (*[]models.NftPresale, error) {
+	return btldb.ReadAllNftPresalesOnlyGroupKeyPurchasable()
 }
 
-func GetAllNftPresaleGroupKey() ([]string, error) {
-	presales, err := GetAllNftPresalesOnlyGroupKey()
+func GetAllNftPresaleGroupKeyPurchasable() ([]string, error) {
+	presales, err := GetAllNftPresalesOnlyGroupKeyPurchasable()
 	if err != nil {
-		return nil, utils.AppendErrorInfo(err, "GetAllNftPresalesOnlyGroupKey")
+		return nil, utils.AppendErrorInfo(err, "GetAllNftPresalesOnlyGroupKeyPurchasable")
 	}
 	groupKeyMap := make(map[string]bool)
 	for _, presale := range *presales {
