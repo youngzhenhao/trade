@@ -13,6 +13,7 @@ import (
 // GetAssetBalance 获取用户资产余额
 func GetAssetBalance(usr *caccount.UserInfo, assetId string) (err error, unlock float64, locked float64) {
 	tx := middleware.DB.Begin()
+	defer tx.Rollback()
 	lockedBalance := cModels.LockBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, assetId).First(&lockedBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -41,6 +42,7 @@ func GetAssetBalance(usr *caccount.UserInfo, assetId string) (err error, unlock 
 func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount float64) error {
 
 	tx := middleware.DB.Begin()
+	defer tx.Rollback()
 	var err error
 	// check balance
 	assetBalance := models.AccountBalance{}
@@ -122,6 +124,7 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 
 func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount float64) error {
 	tx := middleware.DB.Begin()
+	defer tx.Rollback()
 	var err error
 
 	// check locked balance
@@ -203,7 +206,7 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 
 func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount float64, toUser *caccount.UserInfo) error {
 	tx := middleware.DB.Begin()
-	defer tx.Commit()
+	defer tx.Rollback()
 
 	var err error
 	// check locked balance

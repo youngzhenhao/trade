@@ -15,6 +15,7 @@ import (
 
 func GetBtcBalance(usr *caccount.UserInfo) (err error, unlock float64, locked float64) {
 	tx := middleware.DB.Begin()
+	defer tx.Rollback()
 	lockedBalance := cModels.LockBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, btcId).First(&lockedBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -39,6 +40,7 @@ func GetBtcBalance(usr *caccount.UserInfo) (err error, unlock float64, locked fl
 // LockBTC 冻结BTC
 func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	tx := middleware.DB.Begin()
+	defer tx.Rollback()
 	var err error
 	// check balance
 	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
@@ -121,6 +123,7 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 // UnlockBTC 解冻BTC
 func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	tx := middleware.DB.Begin()
+	defer tx.Rollback()
 	var err error
 
 	// check locked balance
