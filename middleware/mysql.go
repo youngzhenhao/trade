@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"log"
 	"sync"
 	"time"
 	"trade/config"
@@ -57,4 +58,16 @@ func InitMysql() error {
 	})
 
 	return err
+}
+
+func MonitorDatabaseConnections() {
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		sqlDB, _ := DB.DB()
+		if err := sqlDB.Ping(); err != nil {
+			log.Printf("Database ping failed: %v", err)
+		}
+	}
 }

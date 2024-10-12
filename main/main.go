@@ -101,6 +101,7 @@ func main() {
 	if localPort == "" {
 		localPort = "10080"
 	}
+	go middleware.MonitorDatabaseConnections()
 
 	// Start HTTP server in a goroutine
 	go func() {
