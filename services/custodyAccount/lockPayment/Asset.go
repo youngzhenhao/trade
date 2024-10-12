@@ -2,6 +2,7 @@ package lockPayment
 
 import (
 	"errors"
+	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"trade/middleware"
 	"trade/models"
@@ -9,14 +10,14 @@ import (
 	caccount "trade/services/custodyAccount/account"
 )
 
-// 冻结Asset
+// GetAssetBalance 获取用户资产余额
 func GetAssetBalance(usr *caccount.UserInfo, assetId string) (err error, unlock float64, locked float64) {
 	tx := middleware.DB.Begin()
 	lockedBalance := cModels.LockBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, assetId).First(&lockedBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err, 0, 0
+			return ServiceError, 0, 0
 		}
 		locked = 0
 	}
@@ -26,7 +27,7 @@ func GetAssetBalance(usr *caccount.UserInfo, assetId string) (err error, unlock 
 	if err = tx.Where("account_id =? AND asset_id =?", usr.Account.ID, assetId).First(&assetBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err, 0, 0
+			return ServiceError, 0, 0
 		}
 		unlock = 0
 	}
@@ -36,7 +37,7 @@ func GetAssetBalance(usr *caccount.UserInfo, assetId string) (err error, unlock 
 	return
 }
 
-// 冻结Asset
+// LockAsset 冻结Asset
 func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount float64) error {
 
 	tx := middleware.DB.Begin()
@@ -46,7 +47,7 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 	if err = tx.Where("account_id =? AND asset_id =?", usr.Account.ID, assetId).First(&assetBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err
+			return ServiceError
 		}
 		assetBalance.Amount = 0
 	}
@@ -59,7 +60,7 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, assetId).First(&lockedBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err
+			return ServiceError
 		}
 		// Init Balance record
 		lockedBalance.AssetId = assetId
@@ -69,7 +70,7 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 	lockedBalance.Amount += amount
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// lockBill record
@@ -82,7 +83,13 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 	}
 	if err = tx.Create(&lockBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		var mySQLErr *mysql.MySQLError
+		if errors.As(err, &mySQLErr) {
+			if mySQLErr.Number == 1062 {
+				return RepeatedLockId
+			}
+		}
+		return ServiceError
 	}
 
 	// update user account record
@@ -100,13 +107,13 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	// update user account
 	assetBalance.Amount -= amount
 	if err = tx.Save(&assetBalance).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	tx.Commit()
 	return nil
@@ -121,7 +128,7 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, assetId).First(&lockedBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err
+			return ServiceError
 		}
 		lockedBalance.Amount = 0
 	}
@@ -134,7 +141,7 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 	lockedBalance.Amount -= amount
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// unlockBill record
@@ -147,7 +154,13 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 	}
 	if err = tx.Create(&unlockBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		var mySQLErr *mysql.MySQLError
+		if errors.As(err, &mySQLErr) {
+			if mySQLErr.Number == 1062 {
+				return RepeatedLockId
+			}
+		}
+		return ServiceError
 	}
 
 	// update user account record
@@ -165,14 +178,14 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	// update user account
 	assetBalance := models.AccountBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.Account.ID, assetId).First(&assetBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err
+			return ServiceError
 		}
 		assetBalance.AssetId = assetId
 		assetBalance.Amount = 0
@@ -181,7 +194,7 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 	assetBalance.Amount += amount
 	if err = tx.Save(&assetBalance).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	tx.Commit()
 	return nil
@@ -197,7 +210,7 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, assetId).First(&lockedBalance).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err
+			return ServiceError
 		}
 		lockedBalance.Amount = 0
 	}
@@ -210,7 +223,7 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 	lockedBalance.Amount -= amount
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// unlockBill record
@@ -223,7 +236,13 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 	}
 	if err = tx.Create(&transferBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		var mySQLErr *mysql.MySQLError
+		if errors.As(err, &mySQLErr) {
+			if mySQLErr.Number == 1062 {
+				return RepeatedLockId
+			}
+		}
+		return ServiceError
 	}
 
 	// Create transferBTC BillExt
@@ -239,7 +258,7 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 	}
 	if err = tx.Create(&BillExt).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// update user account record
@@ -257,7 +276,7 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// update user account
@@ -265,7 +284,7 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 	if err = tx.Where("account_id =? AND asset_id =?", toUser.Account.ID, assetId).First(&assetBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err
+			return ServiceError
 		}
 		assetBalance.AssetId = assetId
 		assetBalance.Amount = 0
@@ -274,7 +293,7 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 	assetBalance.Amount += amount
 	if err = tx.Save(&assetBalance).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	return nil
@@ -289,7 +308,7 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 	if err = tx.Where("account_id =? AND asset_id =?", usr.Account.ID, assetId).First(&assetBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err
+			return ServiceError
 		}
 		assetBalance.Amount = 0
 	}
@@ -307,7 +326,13 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 	}
 	if err = tx.Create(&transferBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		var mySQLErr *mysql.MySQLError
+		if errors.As(err, &mySQLErr) {
+			if mySQLErr.Number == 1062 {
+				return RepeatedLockId
+			}
+		}
+		return ServiceError
 	}
 	// Create transferBTC BillExt
 	BillExt := cModels.LockBillExt{
@@ -322,7 +347,13 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 	}
 	if err = tx.Create(&BillExt).Error; err != nil {
 		tx.Rollback()
-		return err
+		var mySQLErr *mysql.MySQLError
+		if errors.As(err, &mySQLErr) {
+			if mySQLErr.Number == 1062 {
+				return RepeatedLockId
+			}
+		}
+		return ServiceError
 	}
 
 	// transfer balance record
@@ -340,13 +371,13 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	// update user account
 	assetBalance.Amount -= amount
 	if err = tx.Save(&assetBalance).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	tx.Commit()
 
@@ -367,13 +398,13 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 	}
 	if err = txRev.Create(&balanceBillRev).Error; err != nil {
 		txRev.Rollback()
-		return err
+		return ServiceError
 	}
 	// update billExt record
 	BillExt.Status = cModels.LockBillExtStatusSuccess
 	if err = txRev.Save(&BillExt).Error; err != nil {
 		txRev.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// update user account
@@ -381,7 +412,7 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 	if err = txRev.Where("account_id =? AND asset_id =?", toUser.Account.ID, assetId).First(&assetBalanceRev).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			txRev.Rollback()
-			return err
+			return ServiceError
 		}
 		assetBalanceRev.AssetId = assetId
 		assetBalanceRev.Amount = 0
@@ -390,7 +421,7 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 	assetBalanceRev.Amount += amount
 	if err = txRev.Save(&assetBalanceRev).Error; err != nil {
 		txRev.Rollback()
-		return err
+		return ServiceError
 	}
 	txRev.Commit()
 	return nil

@@ -134,7 +134,7 @@ func PayAsset(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, &res)
 		return
 	}
-	res.TxId = "txId"
+	res.TxId = creds.LockedId
 	c.JSON(http.StatusOK, &res)
 }
 

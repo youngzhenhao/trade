@@ -2,6 +2,7 @@ package lockPayment
 
 import (
 	"errors"
+	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"trade/middleware"
 	"trade/models"
@@ -17,7 +18,7 @@ func GetBtcBalance(usr *caccount.UserInfo) (err error, unlock float64, locked fl
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, btcId).First(&lockedBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err, 0, 0
+			return ServiceError, 0, 0
 		}
 		locked = 0
 	}
@@ -25,7 +26,7 @@ func GetBtcBalance(usr *caccount.UserInfo) (err error, unlock float64, locked fl
 
 	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
 	if err != nil {
-		return err, 0, 0
+		return ServiceError, 0, 0
 	}
 	unlock = float64(acc.CurrentBalance)
 	tx.Commit()
@@ -39,7 +40,7 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	// check balance
 	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
 	if err != nil {
-		return err
+		return ServiceError
 	}
 	if float64(acc.CurrentBalance) < amount {
 		return NoEnoughBalance
@@ -49,7 +50,7 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, btcId).First(&lockedBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err
+			return ServiceError
 		}
 		// Init Balance record
 		lockedBalance.AssetId = btcId
@@ -59,7 +60,7 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	lockedBalance.Amount += amount
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// lockBill record
@@ -72,7 +73,13 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	}
 	if err = tx.Create(&lockBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		var mySQLErr *mysql.MySQLError
+		if errors.As(err, &mySQLErr) {
+			if mySQLErr.Number == 1062 {
+				return RepeatedLockId
+			}
+		}
+		return ServiceError
 	}
 
 	BtcId := btcId
@@ -91,14 +98,14 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	// update user account
 	resultAmount := float64(acc.CurrentBalance) - amount
 	_, err = rpc.AccountUpdate(usr.Account.UserAccountCode, int64(resultAmount), -1)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	tx.Commit()
 	return nil
@@ -114,7 +121,7 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, btcId).First(&lockedBalance).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err
+			return ServiceError
 		}
 		lockedBalance.Amount = 0
 	}
@@ -127,7 +134,7 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	lockedBalance.Amount -= amount
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// unlockBill record
@@ -140,7 +147,13 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	}
 	if err = tx.Create(&unlockBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		var mySQLErr *mysql.MySQLError
+		if errors.As(err, &mySQLErr) {
+			if mySQLErr.Number == 1062 {
+				return RepeatedLockId
+			}
+		}
+		return ServiceError
 	}
 
 	BtcId := btcId
@@ -160,20 +173,20 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// update user account
 	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	resultAmount := float64(acc.CurrentBalance) + amount
 	_, err = rpc.AccountUpdate(usr.Account.UserAccountCode, int64(resultAmount), -1)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	tx.Commit()
 	return nil
@@ -192,7 +205,7 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, btcId).First(&lockedBalance).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
-			return err
+			return ServiceError
 		}
 		lockedBalance.Amount = 0
 	}
@@ -205,7 +218,7 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 	lockedBalance.Amount -= amount
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// unlockBill record
@@ -218,7 +231,13 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 	}
 	if err = tx.Create(&transferBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		var mySQLErr *mysql.MySQLError
+		if errors.As(err, &mySQLErr) {
+			if mySQLErr.Number == 1062 {
+				return RepeatedLockId
+			}
+		}
+		return ServiceError
 	}
 
 	// Create transferBTC BillExt
@@ -234,7 +253,13 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 	}
 	if err = tx.Create(&BillExt).Error; err != nil {
 		tx.Rollback()
-		return err
+		var mySQLErr *mysql.MySQLError
+		if errors.As(err, &mySQLErr) {
+			if mySQLErr.Number == 1062 {
+				return RepeatedLockId
+			}
+		}
+		return ServiceError
 	}
 
 	// update user account record
@@ -252,20 +277,20 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// update user account
 	acc, err := rpc.AccountInfo(toUser.Account.UserAccountCode)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	resultAmount := float64(acc.CurrentBalance) + amount
 	_, err = rpc.AccountUpdate(toUser.Account.UserAccountCode, int64(resultAmount), -1)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	return nil
@@ -281,7 +306,7 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 	// check balance
 	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
 	if err != nil {
-		return err
+		return ServiceError
 	}
 	if float64(acc.CurrentBalance) < amount {
 		return NoEnoughBalance
@@ -297,7 +322,13 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 	}
 	if err = tx.Create(&transferBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		var mySQLErr *mysql.MySQLError
+		if errors.As(err, &mySQLErr) {
+			if mySQLErr.Number == 1062 {
+				return RepeatedLockId
+			}
+		}
+		return ServiceError
 	}
 	// Create transferBTC BillExt
 	BillExt := cModels.LockBillExt{
@@ -312,7 +343,7 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 	}
 	if err = tx.Create(&BillExt).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// transfer balance record
@@ -330,14 +361,14 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	// update user account
 	resultAmount := float64(acc.CurrentBalance) - amount
 	_, err = rpc.AccountUpdate(usr.Account.UserAccountCode, int64(resultAmount), -1)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return ServiceError
 	}
 	tx.Commit()
 
@@ -358,26 +389,26 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 	}
 	if err = txRev.Create(&balanceBillRev).Error; err != nil {
 		txRev.Rollback()
-		return err
+		return ServiceError
 	}
 	// update billExt record
 	BillExt.Status = cModels.LockBillExtStatusSuccess
 	if err = txRev.Save(&BillExt).Error; err != nil {
 		txRev.Rollback()
-		return err
+		return ServiceError
 	}
 
 	// update user account
 	accRev, err := rpc.AccountInfo(toUser.Account.UserAccountCode)
 	if err != nil {
 		txRev.Rollback()
-		return err
+		return ServiceError
 	}
 	resultAmountRev := float64(accRev.CurrentBalance) + amount
 	_, err = rpc.AccountUpdate(toUser.Account.UserAccountCode, int64(resultAmountRev), -1)
 	if err != nil {
 		txRev.Rollback()
-		return err
+		return ServiceError
 	}
 	txRev.Commit()
 	return nil

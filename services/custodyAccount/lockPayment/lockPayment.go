@@ -3,6 +3,9 @@ package lockPayment
 import (
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
+	"trade/middleware"
+	cModels "trade/models/custodyModels"
 	caccount "trade/services/custodyAccount/account"
 )
 
@@ -18,6 +21,7 @@ var (
 	AssetIdNotFound    = errors.New("AssetIdNotFound")
 	ServiceError       = errors.New("ServiceError")
 	BadRequest         = errors.New("BadRequest")
+	RepeatedLockId     = errors.New("RepeatedLockId")
 )
 
 func GetErrorCode(err error) int {
@@ -34,12 +38,17 @@ func GetErrorCode(err error) int {
 		return 10005
 	case errors.Is(err, BadRequest):
 		return 10006
+	case errors.Is(err, RepeatedLockId):
+		return 10007
 	default:
-		return 10000
+		return 10005
 	}
 }
 
 func GetBalance(npubkey, assetId string) (err error, unlockedBalance float64, lockedBalance float64) {
+	if npubkey == FeeNpubkey {
+		npubkey = "admin"
+	}
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
 		return GetAccountError, 0, 0
@@ -147,4 +156,12 @@ func TransferByLock(lockedId, npubkey, toNpubkey, assetId string, amount float64
 		}
 	}
 	return nil
+}
+
+func CheckLockId(lockedId string) error {
+	bill := cModels.LockBill{}
+	if err := middleware.DB.Where("locked_id = ?", lockedId).First(&bill).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil
+	}
+	return RepeatedLockId
 }
