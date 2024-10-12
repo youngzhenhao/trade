@@ -71,6 +71,40 @@ func assetLeafKeys(isGroup bool, id string, proofType universerpc.ProofType) (*u
 	return response, nil
 }
 
+func queryProof(isGroup bool, id string, outpoint string, scriptKey string, proofType universerpc.ProofType) (*universerpc.AssetProofResponse, error) {
+	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
+	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
+	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	request := &universerpc.UniverseKey{
+		Id: &universerpc.ID{
+			ProofType: proofType,
+		},
+		LeafKey: &universerpc.AssetKey{
+			Outpoint:  &universerpc.AssetKey_OpStr{OpStr: outpoint},
+			ScriptKey: &universerpc.AssetKey_ScriptKeyStr{ScriptKeyStr: scriptKey},
+		},
+	}
+	if isGroup {
+		groupKey := &universerpc.ID_GroupKeyStr{
+			GroupKeyStr: id,
+		}
+		request.Id.Id = groupKey
+	} else {
+		AssetId := &universerpc.ID_AssetIdStr{
+			AssetIdStr: id,
+		}
+		request.Id.Id = AssetId
+	}
+	client := universerpc.NewUniverseClient(conn)
+	response, err := client.QueryProof(context.Background(), request)
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "QueryProof")
+	}
+	return response, nil
+}
+
 func assetLeavesSpecified(id string, proofType string) (*universerpc.AssetLeafResponse, error) {
 	var _proofType universerpc.ProofType
 	if proofType == "issuance" || proofType == "ISSUANCE" || proofType == "PROOF_TYPE_ISSUANCE" {
