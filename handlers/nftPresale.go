@@ -7,6 +7,8 @@ import (
 	"trade/services"
 )
 
+// @dev: Get
+
 func GetNftPresaleByAssetId(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	_, err := services.NameToId(username)
@@ -101,6 +103,114 @@ func GetUserBoughtNftPresale(c *gin.Context) {
 	})
 }
 
+func GetNftPresaleByGroupKey(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	_, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	groupKey := c.Param("group_key")
+	nftPresales, err := services.GetNftPresaleByGroupKey(groupKey)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetNftPresaleByGroupKeyErr,
+			Data:    nil,
+		})
+		return
+	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales)
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
+		Data:    result,
+	})
+}
+
+func GetNftPresaleNoGroupKey(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	_, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	nftPresales, err := services.GetNftPresaleNoGroupKey()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetNftPresaleByGroupKeyErr,
+			Data:    nil,
+		})
+		return
+	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales)
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
+		Data:    result,
+	})
+}
+
+// @dev: Purchase
+
+func BuyNftPresale(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	userId, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	var buyNftPresaleRequest models.BuyNftPresaleRequest
+	err = c.ShouldBindJSON(&buyNftPresaleRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+	err = services.BuyNftPresale(userId, username, buyNftPresaleRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.BuyNftPresaleErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    nil,
+	})
+}
+
+// @dev: Set
+
 func SetNftPresale(c *gin.Context) {
 	var nftPresaleSetRequest models.NftPresaleSetRequest
 	err := c.ShouldBindJSON(&nftPresaleSetRequest)
@@ -163,9 +273,11 @@ func SetNftPresales(c *gin.Context) {
 	})
 }
 
-func BuyNftPresale(c *gin.Context) {
+// @dev: Query
+
+func QueryNftPresaleGroupKey(c *gin.Context) {
 	username := c.MustGet("username").(string)
-	userId, err := services.NameToId(username)
+	_, err := services.NameToId(username)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -175,31 +287,20 @@ func BuyNftPresale(c *gin.Context) {
 		})
 		return
 	}
-	var buyNftPresaleRequest models.BuyNftPresaleRequest
-	err = c.ShouldBindJSON(&buyNftPresaleRequest)
+	groupKeys, err := services.GetAllNftPresaleGroupKey()
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.ShouldBindJsonErr,
-			Data:    nil,
-		})
-		return
-	}
-	err = services.BuyNftPresale(userId, username, buyNftPresaleRequest)
-	if err != nil {
-		c.JSON(http.StatusOK, models.JsonResult{
-			Success: false,
-			Error:   err.Error(),
-			Code:    models.BuyNftPresaleErr,
+			Code:    models.GetLaunchedNftPresalesErr,
 			Data:    nil,
 		})
 		return
 	}
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
-		Error:   "",
+		Error:   models.SUCCESS.Error(),
 		Code:    models.SUCCESS,
-		Data:    nil,
+		Data:    groupKeys,
 	})
 }

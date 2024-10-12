@@ -12,13 +12,19 @@ func SetupNftPresaleRouter(router *gin.Engine) *gin.Engine {
 	nftPresale := router.Group("/nft_presale")
 	nftPresale.Use(middleware.AuthMiddleware())
 	{
+		get := nftPresale.Group("/get")
 		{
-			nftPresale.GET("/get/asset_id/:asset_id", handlers.GetNftPresaleByAssetId)
-			nftPresale.GET("/get/launched", handlers.GetLaunchedNftPresale)
-			nftPresale.GET("/get/user_bought", handlers.GetUserBoughtNftPresale)
+			get.GET("/asset_id/:asset_id", handlers.GetNftPresaleByAssetId)
+			get.GET("/launched", handlers.GetLaunchedNftPresale)
+			get.GET("/user_bought", handlers.GetUserBoughtNftPresale)
+			get.GET("/group_key/:group_key", handlers.GetNftPresaleByGroupKey)
+			get.GET("/no_group_key", handlers.GetNftPresaleNoGroupKey)
+		}
+		query := nftPresale.Group("/query")
+		{
+			query.GET("/group_key", handlers.QueryNftPresaleGroupKey)
 		}
 		nftPresale.POST("/buy", handlers.BuyNftPresale)
-
 	}
 	username := base64.StdEncoding.EncodeToString([]byte(config.GetLoadConfig().AdminUser.Username))
 	password := base64.StdEncoding.EncodeToString([]byte(config.GetLoadConfig().AdminUser.Password))

@@ -25,9 +25,15 @@ func ReadNftPresaleByAssetId(assetId string) (*models.NftPresale, error) {
 	return &nftPresale, err
 }
 
-func ReadAllNftPresales() (*[]models.NftPresale, error) {
+func ReadNftPresaleByGroupKey(groupKey string) (*[]models.NftPresale, error) {
 	var nftPresales []models.NftPresale
-	err := middleware.DB.Order("launch_time desc").Find(&nftPresales).Error
+	err := middleware.DB.Where("group_key = ?", groupKey).Order("launch_time desc").Find(&nftPresales).Error
+	return &nftPresales, err
+}
+
+func ReadNftPresaleByGroupKeyLike(groupKeyPart string) (*[]models.NftPresale, error) {
+	var nftPresales []models.NftPresale
+	err := middleware.DB.Where("group_key LIKE ?", "%"+groupKeyPart+"%").Order("launch_time desc").Find(&nftPresales).Error
 	return &nftPresales, err
 }
 
@@ -46,6 +52,18 @@ func ReadNftPresalesBetweenNftPresaleState(stateStart models.NftPresaleState, st
 func ReadNftPresalesByBuyerUserId(userId int) (*[]models.NftPresale, error) {
 	var nftPresales []models.NftPresale
 	err := middleware.DB.Where("buyer_user_id = ?", userId).Order("launch_time desc").Find(&nftPresales).Error
+	return &nftPresales, err
+}
+
+func ReadAllNftPresales() (*[]models.NftPresale, error) {
+	var nftPresales []models.NftPresale
+	err := middleware.DB.Order("launch_time desc").Find(&nftPresales).Error
+	return &nftPresales, err
+}
+
+func ReadAllNftPresalesOnlyGroupKey() (*[]models.NftPresale, error) {
+	var nftPresales []models.NftPresale
+	err := middleware.DB.Select("group_key").Order("launch_time desc").Find(&nftPresales).Error
 	return &nftPresales, err
 }
 
