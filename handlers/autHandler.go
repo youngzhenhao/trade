@@ -11,6 +11,7 @@ import (
 
 func LoginHandler(c *gin.Context) {
 	var creds models.User
+	fmt.Println("login start")
 	if err := c.ShouldBindJSON(&creds); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
