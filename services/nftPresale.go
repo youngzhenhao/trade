@@ -588,7 +588,7 @@ func ProcessAllNftPresaleStateBoughtNotPayService() (*[]ProcessionResult, error)
 			err = ProcessNftPresaleStateBoughtNotPayService(&nftPresale)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(nftPresale.ID),
+					Id: int(nftPresale.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -598,7 +598,7 @@ func ProcessAllNftPresaleStateBoughtNotPayService() (*[]ProcessionResult, error)
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(nftPresale.ID),
+					Id: int(nftPresale.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -630,7 +630,7 @@ func ProcessAllNftPresaleStatePaidPendingService() (*[]ProcessionResult, error) 
 			err = ProcessNftPresaleStatePaidPendingService(&nftPresale)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(nftPresale.ID),
+					Id: int(nftPresale.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -640,7 +640,7 @@ func ProcessAllNftPresaleStatePaidPendingService() (*[]ProcessionResult, error) 
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(nftPresale.ID),
+					Id: int(nftPresale.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -672,7 +672,7 @@ func ProcessAllNftPresaleStatePaidNotSendService() (*[]ProcessionResult, error) 
 			err = ProcessNftPresaleStatePaidNotSendService(&nftPresale)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(nftPresale.ID),
+					Id: int(nftPresale.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -682,7 +682,7 @@ func ProcessAllNftPresaleStatePaidNotSendService() (*[]ProcessionResult, error) 
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(nftPresale.ID),
+					Id: int(nftPresale.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",
@@ -715,7 +715,7 @@ func ProcessAllNftPresaleStateSentPendingService() (*[]ProcessionResult, error) 
 			err = ProcessNftPresaleStateSentPendingService(&nftPresale)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(nftPresale.ID),
+					Id: int(nftPresale.ID),
 					JsonResult: models.JsonResult{
 						Success: false,
 						Error:   err.Error(),
@@ -725,7 +725,7 @@ func ProcessAllNftPresaleStateSentPendingService() (*[]ProcessionResult, error) 
 				continue
 			} else {
 				processionResults = append(processionResults, ProcessionResult{
-					id: int(nftPresale.ID),
+					Id: int(nftPresale.ID),
 					JsonResult: models.JsonResult{
 						Success: true,
 						Error:   "",

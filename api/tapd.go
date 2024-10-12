@@ -433,3 +433,36 @@ func GetGroupKeyByAssetId(assetId string) (string, error) {
 	err = errors.New("asset group key not found")
 	return "", err
 }
+
+type AssetKeys struct {
+	OpStr          string `json:"op_str"`
+	ScriptKeyBytes string `json:"script_key_bytes"`
+}
+
+func AssetLeafKeysAndGetResponse(isGroup bool, id string, proofType universerpc.ProofType) (*universerpc.AssetLeafKeyResponse, error) {
+	return assetLeafKeys(isGroup, id, proofType)
+}
+
+func AssetLeafKeyResponseToAssetKeys(response *universerpc.AssetLeafKeyResponse) *[]AssetKeys {
+	if response == nil {
+		return nil
+	}
+	var assetKeys []AssetKeys
+	for _, key := range response.AssetKeys {
+		assetKeys = append(assetKeys, AssetKeys{
+			OpStr:          key.Outpoint.(*universerpc.AssetKey_OpStr).OpStr,
+			ScriptKeyBytes: hex.EncodeToString(key.GetScriptKeyBytes()),
+		})
+	}
+	return &assetKeys
+}
+
+func AssetLeafKeys(isGroup bool, id string, proofType universerpc.ProofType) (*[]AssetKeys, error) {
+	response, err := assetLeafKeys(isGroup, id, proofType)
+	if err != nil {
+		return nil, err
+	}
+	var assetKeys *[]AssetKeys
+	assetKeys = AssetLeafKeyResponseToAssetKeys(response)
+	return assetKeys, nil
+}
