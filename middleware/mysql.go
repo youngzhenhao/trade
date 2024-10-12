@@ -4,44 +4,57 @@ import (
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"sync"
 	"time"
 	"trade/config"
 	"trade/utils"
 )
 
 var (
-	DB *gorm.DB
+	DB   *gorm.DB
+	once sync.Once // 使用 sync.Once 确保只初始化一次
 )
 
+// InitMysql 初始化数据库连接
 func InitMysql() error {
-	loadConfig, err := config.LoadConfig("config.yaml")
-	if err != nil {
-		panic("failed to load config: " + err.Error())
-	}
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		loadConfig.GormConfig.Mysql.Username,
-		loadConfig.GormConfig.Mysql.Password,
-		loadConfig.GormConfig.Mysql.Host,
-		loadConfig.GormConfig.Mysql.Port,
-		loadConfig.GormConfig.Mysql.DBName,
-	)
-	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		utils.LogError("failed to connect database", err)
-		return err
-	}
-	// Get generic database object sql.DB to use its functions
-	sqlDB, err := gormDB.DB()
-	if err != nil {
-		utils.LogError("failed to get generic database object", err)
-		return err
-	}
-	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
-	sqlDB.SetMaxIdleConns(10)
-	// SetMaxOpenConns sets the maximum number of open connections to the database.
-	sqlDB.SetMaxOpenConns(200)
-	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
-	sqlDB.SetConnMaxLifetime(time.Minute * 10)
-	DB = gormDB
-	return nil
+	var err error
+
+	// 使用 sync.Once 确保只初始化一次，避免竞态条件
+	once.Do(func() {
+		loadConfig, loadErr := config.LoadConfig("config.yaml")
+		if loadErr != nil {
+			panic("failed to load config: " + loadErr.Error())
+		}
+
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+			loadConfig.GormConfig.Mysql.Username,
+			loadConfig.GormConfig.Mysql.Password,
+			loadConfig.GormConfig.Mysql.Host,
+			loadConfig.GormConfig.Mysql.Port,
+			loadConfig.GormConfig.Mysql.DBName,
+		)
+
+		gormDB, openErr := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		if openErr != nil {
+			utils.LogError("failed to connect database", openErr)
+			err = openErr
+			return
+		}
+
+		sqlDB, dbErr := gormDB.DB()
+		if dbErr != nil {
+			utils.LogError("failed to get generic database object", dbErr)
+			err = dbErr
+			return
+		}
+
+		// 配置连接池
+		sqlDB.SetMaxIdleConns(10)                  // 最大空闲连接数
+		sqlDB.SetMaxOpenConns(300)                 // 最大打开连接数
+		sqlDB.SetConnMaxLifetime(time.Second * 30) // 连接的最大存活时间
+
+		DB = gormDB
+	})
+
+	return err
 }
