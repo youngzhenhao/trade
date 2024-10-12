@@ -57,7 +57,6 @@ func Login(creds models.User) (string, error) {
 			// If there are other database errors, an error is returned
 			return "", result.Error
 		} else {
-			fmt.Println("login create user start")
 			user.Username = creds.Username
 			password, err := hashPassword(creds.Password)
 			if err != nil {
@@ -68,17 +67,12 @@ func Login(creds models.User) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			fmt.Println("login create user end")
 		}
 	}
-	fmt.Println("login CheckPassword start")
 	if !CheckPassword(user.Password, creds.Password) {
 		return "", errors.New("invalid credentials")
 	}
-	fmt.Println("login CheckPassword end")
-	fmt.Println("login GenerateToken start")
 	token, err := middleware.GenerateToken(creds.Username)
-	fmt.Println("login GenerateToken end")
 	if err != nil {
 		return "", err
 	}

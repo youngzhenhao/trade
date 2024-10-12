@@ -50,7 +50,7 @@ func InitMysql() error {
 		}
 
 		// 配置连接池
-		sqlDB.SetMaxIdleConns(10)  // 最大空闲连接数
+		sqlDB.SetMaxIdleConns(15)  // 最大空闲连接数
 		sqlDB.SetMaxOpenConns(300) // 最大打开连接数
 		sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 		sqlDB.SetConnMaxLifetime(5 * time.Minute) // 连接的最大存活时间
