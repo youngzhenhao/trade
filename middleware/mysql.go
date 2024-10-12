@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"log"
 	"sync"
 	"time"
 	"trade/config"
@@ -49,12 +50,25 @@ func InitMysql() error {
 		}
 
 		// 配置连接池
-		sqlDB.SetMaxIdleConns(10)                  // 最大空闲连接数
-		sqlDB.SetMaxOpenConns(300)                 // 最大打开连接数
-		sqlDB.SetConnMaxLifetime(time.Second * 30) // 连接的最大存活时间
+		sqlDB.SetMaxIdleConns(15)  // 最大空闲连接数
+		sqlDB.SetMaxOpenConns(300) // 最大打开连接数
+		sqlDB.SetConnMaxIdleTime(5 * time.Minute)
+		sqlDB.SetConnMaxLifetime(5 * time.Minute) // 连接的最大存活时间
 
 		DB = gormDB
 	})
 
 	return err
+}
+
+func MonitorDatabaseConnections() {
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		sqlDB, _ := DB.DB()
+		if err := sqlDB.Ping(); err != nil {
+			log.Printf("Database ping failed: %v", err)
+		}
+	}
 }

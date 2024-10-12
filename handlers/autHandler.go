@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"trade/middleware"
@@ -11,12 +10,10 @@ import (
 
 func LoginHandler(c *gin.Context) {
 	var creds models.User
-	fmt.Println("login start")
 	if err := c.ShouldBindJSON(&creds); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	fmt.Println("login service start")
 	token, err := services.Login(creds)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
