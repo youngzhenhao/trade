@@ -19,7 +19,7 @@ var (
 
 func RedisConnect() error {
 	var errs error
-	once.Do(func() {
+	ridesOne.Do(func() {
 		loadConfig, err := config.LoadConfig("config.yaml")
 		if err != nil {
 			panic("failed to load config: " + err.Error())
