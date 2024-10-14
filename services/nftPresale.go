@@ -11,6 +11,7 @@ import (
 	"strings"
 	"trade/api"
 	"trade/btlLog"
+	"trade/config"
 	"trade/models"
 	"trade/services/btldb"
 	"trade/services/custodyAccount"
@@ -171,7 +172,12 @@ func GetAllNftPresalesOnlyGroupKeyPurchasable() (*[]models.NftPresale, error) {
 	return btldb.ReadAllNftPresalesOnlyGroupKeyPurchasable()
 }
 
-func GetAllNftPresaleGroupKeyPurchasable() ([]string, error) {
+type GroupKeyAndGroupName struct {
+	GroupKey  string `json:"group_key"`
+	GroupName string `json:"group_name"`
+}
+
+func GetAllNftPresaleGroupKeyPurchasable() (*[]GroupKeyAndGroupName, error) {
 	presales, err := GetAllNftPresalesOnlyGroupKeyPurchasable()
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "GetAllNftPresalesOnlyGroupKeyPurchasable")
@@ -186,7 +192,28 @@ func GetAllNftPresaleGroupKeyPurchasable() ([]string, error) {
 	for key := range groupKeyMap {
 		groupKeys = append(groupKeys, key)
 	}
-	return groupKeys, nil
+	var groupKeyAndGroupNames []GroupKeyAndGroupName
+	var groupKeyMapName *map[string]string
+	network, err := api.NetworkStringToNetwork(config.GetLoadConfig().NetWork)
+	if err != nil {
+		btlLog.PreSale.Error("api NetworkStringToNetwork err:%v", err)
+	} else {
+		groupKeyMapName, err = GetGroupNamesByGroupKeys(network, groupKeys)
+		if err != nil {
+			btlLog.PreSale.Error("GetGroupNamesByGroupKeys err:%v", err)
+		}
+	}
+	for _, groupKey := range groupKeys {
+		var groupName string
+		if groupKeyMapName != nil {
+			groupName = (*groupKeyMapName)[groupKey]
+		}
+		groupKeyAndGroupNames = append(groupKeyAndGroupNames, GroupKeyAndGroupName{
+			GroupKey:  groupKey,
+			GroupName: groupName,
+		})
+	}
+	return &groupKeyAndGroupNames, nil
 }
 
 // GetLaunchedNftPresales
