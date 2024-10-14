@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
-	"sync"
 	"time"
 	"trade/btlLog"
 	"trade/config"
@@ -15,8 +14,8 @@ import (
 	"trade/services/assetsyncinfo"
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
-	"trade/services/custodyAccount/btc_channel"
 	cBase "trade/services/custodyAccount/custodyBase"
+	"trade/services/custodyAccount/custodyBase/custodyFee"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -55,6 +54,7 @@ func (e *AssetEvent) GetBalance() ([]cBase.Balance, error) {
 	}
 	return balances, nil
 }
+
 func (e *AssetEvent) GetBalances() ([]cBase.Balance, error) {
 	temp, err := btldb.GetAccountBalanceByAccountId(e.UserInfo.Account.ID)
 	if err != nil {
@@ -69,6 +69,7 @@ func (e *AssetEvent) GetBalances() ([]cBase.Balance, error) {
 	}
 	return balances, nil
 }
+
 func (e *AssetEvent) GetCustodyAssetPermission(assetId, universe string) (*models.AssetSyncInfo, error) {
 	r := assetsyncinfo.SyncInfoRequest{
 		Id:       assetId,
@@ -83,8 +84,6 @@ func (e *AssetEvent) GetCustodyAssetPermission(assetId, universe string) (*model
 	}
 	return s, nil
 }
-
-var ApplyAddrMutex sync.Mutex
 
 var CreateAddrErr = errors.New("CreateAddrErr")
 
@@ -182,7 +181,7 @@ func (e *AssetEvent) payToInside(bt *AssetPacket) {
 		Away:        models.AWAY_OUT,
 		Amount:      float64(bt.DecodePayReq.Amount),
 		Unit:        models.UNIT_ASSET_NORMAL,
-		ServerFee:   btc_channel.AssetInsideFee,
+		ServerFee:   custodyFee.AssetInsideFee,
 		AssetId:     &AssetId,
 		Invoice:     &bt.PayReq,
 		PaymentHash: nil,
@@ -213,7 +212,7 @@ func (e *AssetEvent) payToInside(bt *AssetPacket) {
 		return
 	}
 	//收取手续费
-	err = btc_channel.PayServiceFeeSync(e.UserInfo, btc_channel.AssetInsideFee, bill.ID, models.AssetInSideFee, "payToInside Asset Fee")
+	err = custodyFee.PayServiceFeeSync(e.UserInfo, custodyFee.AssetInsideFee, bill.ID, models.AssetInSideFee, "payToInside Asset Fee")
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		bt.err <- err
@@ -232,7 +231,7 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		Away:      models.AWAY_OUT,
 		Amount:    float64(bt.DecodePayReq.Amount),
 		Unit:      models.UNIT_ASSET_NORMAL,
-		ServerFee: btc_channel.AssetOutsideFee,
+		ServerFee: uint64(custodyFee.GetCustodyAssetFee()),
 		AssetId:   &assetId,
 		Invoice:   &bt.PayReq,
 		State:     models.STATE_UNKNOW,
@@ -270,7 +269,7 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		TotalAmount: int64(bt.DecodePayReq.Amount),
 	}
 	//收取手续费
-	err = btc_channel.PayServiceFeeSync(e.UserInfo, btc_channel.AssetOutsideFee, outsideBalance.ID, models.AssetOutSideFee, "payToOutside Asset Fee")
+	err = custodyFee.PayServiceFeeSync(e.UserInfo, uint64(custodyFee.GetCustodyAssetFee()), outsideBalance.ID, models.AssetOutSideFee, "payToOutside Asset Fee")
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		bt.err <- err

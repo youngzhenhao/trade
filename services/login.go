@@ -49,9 +49,7 @@ func verifyChecksumWithSalt(originalString, checksum string) bool {
 
 func Login(creds models.User) (string, error) {
 	var user models.User
-	fmt.Println("login Db start")
 	result := middleware.DB.Where("user_name = ?", creds.Username).First(&user).Limit(1)
-	fmt.Println("login Db end")
 	if result.Error != nil {
 		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			// If there are other database errors, an error is returned

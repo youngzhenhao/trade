@@ -13,6 +13,7 @@ import (
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
+	"trade/services/custodyAccount/custodyBase/custodyFee"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -253,11 +254,11 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	}
 	switch track.Status {
 	case lnrpc.Payment_SUCCEEDED:
-		err = PayServiceFeeSync(e.UserInfo, ChannelBtcServiceFee, balanceModel.ID, models.ChannelBTCOutSideFee, "payToOutside Fee")
+		err = custodyFee.PayServiceFeeSync(e.UserInfo, custodyFee.ChannelBtcServiceFee, balanceModel.ID, models.ChannelBTCOutSideFee, "payToOutside Fee")
 		if err != nil {
 			btlLog.CUST.Error(err.Error())
 		}
-		balanceModel.ServerFee = ChannelBtcServiceFee + uint64(track.FeeSat)
+		balanceModel.ServerFee = custodyFee.ChannelBtcServiceFee + uint64(track.FeeSat)
 		balanceModel.State = models.STATE_SUCCESS
 		bt.err <- nil
 		btlLog.CUST.Info("payment outside success balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
