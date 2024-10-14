@@ -78,6 +78,10 @@ func DeleteNftPresale(id uint) error {
 func ProcessNftPresale(nftPresaleSetRequest *models.NftPresaleSetRequest) *models.NftPresale {
 	var assetId string
 	assetId = nftPresaleSetRequest.AssetId
+	if assetId == "" {
+		btlLog.PreSale.Error("nftPresaleSetRequest.AssetId(" + assetId + ") is null")
+		return nil
+	}
 	var name string
 	var assetType string
 	var groupKey string
@@ -340,6 +344,7 @@ func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale) *models.Nft
 		SentAddress:     nftPresale.SentAddress,
 		State:           nftPresale.State,
 		ProcessNumber:   nftPresale.ProcessNumber,
+		IsReLaunched:    nftPresale.IsReLaunched,
 	}
 }
 
@@ -898,4 +903,89 @@ func GetGroupNameByGroupKey(network models.Network, groupKey string) (string, er
 	meta.GetMetaFromStr(assetMeta.Data)
 	groupName = meta.GroupName
 	return groupName, nil
+}
+
+// GetGroupNamesByGroupKeys
+// @dev: Get group names by group keys
+func GetGroupNamesByGroupKeys(network models.Network, groupKeys []string) (*map[string]string, error) {
+	var totalOutpoints []string
+	// groupKey => groupName
+	groupKeyMapName := make(map[string]string)
+	// groupKey => outpoints
+	groupKeyMapOps := make(map[string][]string)
+	// outpoint => scriptKey
+	opMapScriptKey := make(map[string]string)
+	for _, groupKey := range groupKeys {
+		// @dev: 1. Get outpoints by group key
+		assetKeys, err := api.AssetLeafKeys(true, groupKey, universerpc.ProofType_PROOF_TYPE_ISSUANCE)
+		if err != nil {
+			btlLog.PreSale.Error("api AssetLeafKeys err:%v", err)
+		}
+		if len(*assetKeys) == 0 {
+			err = errors.New("length of assetKeys(" + strconv.Itoa(len(*assetKeys)) + ") is zero, not fount AssetLeafKey")
+			if err != nil {
+				btlLog.PreSale.Error("%v", err)
+			}
+		}
+		var outpoints []string
+		for _, assetKey := range *assetKeys {
+			outpoints = append(outpoints, assetKey.OpStr)
+			opMapScriptKey[assetKey.OpStr] = assetKey.ScriptKeyBytes
+		}
+		totalOutpoints = append(totalOutpoints, outpoints...)
+		groupKeyMapOps[groupKey] = outpoints
+	}
+	// @dev: 2. Get time by outpoints
+	// outpoint => time
+	outpointTime, err := api.GetTimesByOutpointSlice(network, totalOutpoints)
+	if err != nil {
+		btlLog.PreSale.Error("api GetTimesByOutpointSlice err:%v", err)
+	}
+	type timeAndAssetKey struct {
+		Time           int    `json:"time"`
+		OpStr          string `json:"op_str"`
+		ScriptKeyBytes string `json:"script_key_bytes"`
+	}
+	for _, groupKey := range groupKeys {
+		var timeAndAssetKeys []timeAndAssetKey
+		ops := groupKeyMapOps[groupKey]
+		for _, op := range ops {
+			timeAndAssetKeys = append(timeAndAssetKeys, timeAndAssetKey{
+				Time:           outpointTime[op],
+				OpStr:          op,
+				ScriptKeyBytes: opMapScriptKey[op],
+			})
+		}
+		if len(timeAndAssetKeys) == 0 {
+			err = errors.New("length of timeAndAssetKey(" + strconv.Itoa(len(timeAndAssetKeys)) + ") is zero")
+			btlLog.PreSale.Error("%v", err)
+		}
+		if len(totalOutpoints) != len(outpointTime) {
+			err = errors.New("length of outpoints(" + strconv.Itoa(len(totalOutpoints)) + ") is not equal length of outpointTime(" + strconv.Itoa(len(outpointTime)) + ")")
+			btlLog.PreSale.Error("%v", err)
+		}
+		// @dev: 3. Sort outpoints by time
+		func(tak []timeAndAssetKey) {
+			sort.Slice(tak, func(i, j int) bool {
+				return (tak)[i].Time < (tak)[j].Time
+			})
+		}(timeAndAssetKeys)
+		// @dev: 4. Get first asset of group
+		firstAssetKey := timeAndAssetKeys[0]
+		// @dev: Get asset id by outpoint
+		assetId, err := api.QueryProofToGetAssetId(groupKey, firstAssetKey.OpStr, firstAssetKey.ScriptKeyBytes)
+		if err != nil {
+			btlLog.PreSale.Error("api QueryProofToGetAssetId err:%v", err)
+		}
+		// @dev: Get asset meta by asset id
+		assetMeta, err := api.FetchAssetMetaByAssetId(assetId)
+		if err != nil {
+			btlLog.PreSale.Error("api FetchAssetMetaByAssetId err:%v", err)
+		}
+		// @dev: Decode metadata and determines whether the group name is empty
+		var meta api.Meta
+		meta.GetMetaFromStr(assetMeta.Data)
+		groupKeyMapName[groupKey] = meta.GroupName
+	}
+	return &groupKeyMapName, nil
 }

@@ -32,6 +32,7 @@ type NftPresale struct {
 	SentAddress     string           `json:"sent_address" gorm:"type:varchar(255)"`
 	State           NftPresaleState  `json:"state" gorm:"index"`
 	ProcessNumber   int              `json:"process_number"`
+	IsReLaunched    bool             `json:"is_re_launched"`
 }
 
 type (
@@ -101,4 +102,5 @@ type NftPresaleSimplified struct {
 	SentAddress     string           `json:"sent_address" gorm:"type:varchar(255)"`
 	State           NftPresaleState  `json:"state" gorm:"index"`
 	ProcessNumber   int              `json:"process_number"`
+	IsReLaunched    bool             `json:"is_re_launched"`
 }
