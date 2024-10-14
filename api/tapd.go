@@ -422,11 +422,19 @@ func GetGroupKeyByAssetId(assetId string) (string, error) {
 		return "", err
 	}
 	for _, asset := range response.Assets {
-		if assetId == hex.EncodeToString(asset.AssetGenesis.AssetId) {
-			return hex.EncodeToString(asset.AssetGroup.TweakedGroupKey), nil
+		var assetGenesisAssetId string
+		if asset.AssetGenesis != nil {
+			assetGenesisAssetId = hex.EncodeToString(asset.AssetGenesis.AssetId)
+		}
+		if assetId == assetGenesisAssetId {
+			var groupKey string
+			if asset.AssetGroup != nil {
+				groupKey = hex.EncodeToString(asset.AssetGroup.TweakedGroupKey)
+			}
+			return groupKey, nil
 		}
 	}
-	err = errors.New("asset group key not found")
+	err = errors.New("asset(" + assetId + ") group key not found")
 	return "", err
 }
 
