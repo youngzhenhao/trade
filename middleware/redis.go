@@ -6,35 +6,40 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"log"
+	"sync"
 	"time"
 	"trade/config"
 )
 
 var (
-	ctx    = context.Background()
-	Client *redis.Client
+	ctx      = context.Background()
+	Client   *redis.Client
+	ridesOne sync.Once
 )
 
 func RedisConnect() error {
-	loadConfig, err := config.LoadConfig("config.yaml")
-	if err != nil {
-		panic("failed to load config: " + err.Error())
-	}
-	redisAddr := fmt.Sprintf("%s:%s", loadConfig.Redis.Host, loadConfig.Redis.Port)
-	Client = redis.NewClient(&redis.Options{
-		Addr:     redisAddr,
-		Username: loadConfig.Redis.Username,
-		Password: loadConfig.Redis.Password,
-		DB:       loadConfig.Redis.DB,
-		PoolSize: 2000,
+	var errs error
+	once.Do(func() {
+		loadConfig, err := config.LoadConfig("config.yaml")
+		if err != nil {
+			panic("failed to load config: " + err.Error())
+		}
+		redisAddr := fmt.Sprintf("%s:%s", loadConfig.Redis.Host, loadConfig.Redis.Port)
+		Client = redis.NewClient(&redis.Options{
+			Addr:     redisAddr,
+			Username: loadConfig.Redis.Username,
+			Password: loadConfig.Redis.Password,
+			DB:       loadConfig.Redis.DB,
+			PoolSize: 2000,
+		})
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		// 检查连接是否成功
+		if _, err := Client.Ping(ctx).Result(); err != nil {
+			errs = fmt.Errorf("failed to connect to Redis: %w", err)
+		}
 	})
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	// 检查连接是否成功
-	if _, err := Client.Ping(ctx).Result(); err != nil {
-		return fmt.Errorf("failed to connect to Redis: %w", err)
-	}
-	return nil
+	return errs
 }
 
 func RedisSet(key string, value interface{}, expiration time.Duration) error {
