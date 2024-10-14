@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"trade/btlLog"
 	"trade/models"
 	"trade/services"
 )
@@ -224,6 +225,14 @@ func SetNftPresale(c *gin.Context) {
 		return
 	}
 	nftPresale := services.ProcessNftPresale(&nftPresaleSetRequest)
+	// @dev: Store AssetMeta
+	{
+		assetId := nftPresaleSetRequest.AssetId
+		err = services.StoreAssetMetaIfNotExist(assetId)
+		if err != nil {
+			btlLog.PreSale.Error("api StoreAssetMetaIfNotExist err:%v", err)
+		}
+	}
 	err = services.CreateNftPresale(nftPresale)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
@@ -255,6 +264,17 @@ func SetNftPresales(c *gin.Context) {
 		return
 	}
 	nftPresales := services.ProcessNftPresales(&nftPresaleSetRequests)
+	// @dev: Store AssetMetas
+	{
+		var assetIds []string
+		for _, nftPresaleSetRequest := range nftPresaleSetRequests {
+			assetIds = append(assetIds, nftPresaleSetRequest.AssetId)
+		}
+		err = services.StoreAssetMetasIfNotExist(assetIds)
+		if err != nil {
+			btlLog.PreSale.Error("api StoreAssetMetasIfNotExist err:%v", err)
+		}
+	}
 	err = services.CreateNftPresales(nftPresales)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{

@@ -91,7 +91,7 @@ func ProcessNftPresale(nftPresaleSetRequest *models.NftPresaleSetRequest) *model
 	assetInfo, err := api.GetAssetInfoApi(assetId)
 	if err != nil {
 		// @dev: Do not return
-		btlLog.PreSale.Error("api GetAssetInfoApi err")
+		btlLog.PreSale.Error("api GetAssetInfoApi err:%v", err)
 	} else {
 		name = assetInfo.Name
 		assetType = assetInfo.AssetType
@@ -105,7 +105,7 @@ func ProcessNftPresale(nftPresaleSetRequest *models.NftPresaleSetRequest) *model
 	}
 	groupKeyByAssetId, err := api.GetGroupKeyByAssetId(assetId)
 	if err != nil {
-		btlLog.PreSale.Error("api GetGroupKeyByAssetId err")
+		btlLog.PreSale.Error("api GetGroupKeyByAssetId err:%v", err)
 	} else {
 		groupKey = groupKeyByAssetId
 	}
@@ -343,6 +343,11 @@ func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale) *models.Nft
 	if nftPresale == nil {
 		return nil
 	}
+	assetId := nftPresale.AssetId
+	imageData, err := GetAssetMetaImageDataByAssetId(assetId)
+	if err != nil {
+		btlLog.PreSale.Error("GetAssetMetaImageDataByAssetId err:%v", err)
+	}
 	return &models.NftPresaleSimplified{
 		ID:              nftPresale.ID,
 		UpdatedAt:       nftPresale.UpdatedAt,
@@ -372,6 +377,7 @@ func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale) *models.Nft
 		State:           nftPresale.State,
 		ProcessNumber:   nftPresale.ProcessNumber,
 		IsReLaunched:    nftPresale.IsReLaunched,
+		ImageData:       imageData,
 	}
 }
 
