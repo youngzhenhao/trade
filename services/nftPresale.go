@@ -1022,3 +1022,5 @@ func GetGroupNamesByGroupKeys(network models.Network, groupKeys []string) (*map[
 	}
 	return &groupKeyMapName, nil
 }
+
+// TODO: Re Launch Cancel And Fail NftPresales, use flag, instead of deleting past records
