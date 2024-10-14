@@ -8,6 +8,7 @@ import (
 	"github.com/lightninglabs/taproot-assets/taprpc/mintrpc"
 	"github.com/lightninglabs/taproot-assets/taprpc/universerpc"
 	"strconv"
+	"strings"
 	"trade/config"
 	"trade/models"
 	"trade/utils"
@@ -43,23 +44,18 @@ func AddGroupAsset(name string, assetTypeIsCollectible bool, assetMetaData *Meta
 	return utils.MakeJsonResult(true, "", response)
 }
 
-func NewAddr(assetId string, amt int) string {
-	proofCourierAddr := config.GetLoadConfig().ApiConfig.Tapd.UniverseHost
-	response, err := newAddr(assetId, amt, proofCourierAddr)
-	if err != nil {
-		return utils.MakeJsonResult(false, err.Error(), "")
-	}
-	return utils.MakeJsonResult(true, "", response)
-}
-
 func NewAddrAndGetResponse(assetId string, amt int) (*taprpc.Addr, error) {
 	proofCourierAddr := config.GetLoadConfig().ApiConfig.Tapd.UniverseHost
+	if proofCourierAddr != "" {
+		if !strings.HasPrefix(proofCourierAddr, "universerpc://") {
+			proofCourierAddr = "universerpc://" + proofCourierAddr
+		}
+	}
 	return newAddr(assetId, amt, proofCourierAddr)
 }
 
 func NewAddrAndGetStringResponse(assetId string, amt int) (string, error) {
-	proofCourierAddr := config.GetLoadConfig().ApiConfig.Tapd.UniverseHost
-	response, err := newAddr(assetId, amt, proofCourierAddr)
+	response, err := NewAddrAndGetResponse(assetId, amt)
 	if err != nil {
 		return "", err
 	}
