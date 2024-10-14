@@ -324,7 +324,7 @@ func GetTimesBatchProcess(network models.Network, outpoints []string) (outpointT
 	return outpointTime, nil
 }
 
-func GetTimesByOutpointSlice(network models.Network, outpoints []string) (addresses map[string]int, err error) {
+func GetTimesByOutpointSlice(network models.Network, outpoints []string) (outpointTime map[string]int, err error) {
 	return GetTimesBatchProcess(network, outpoints)
 }
 
