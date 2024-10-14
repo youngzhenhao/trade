@@ -10,6 +10,7 @@ import (
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
+	"trade/services/custodyAccount/custodyBase/custodyFee"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -53,7 +54,7 @@ type BtcPacket struct {
 }
 
 func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
-	ServerFee := ChannelBtcServiceFee
+	ServerFee := custodyFee.ChannelBtcServiceFee
 	//验证是否为本地发票
 	i, err := btldb.GetInvoiceByReq(p.PayReq)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -70,7 +71,7 @@ func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 			isInside:      true,
 			insideInvoice: i,
 		}
-		ServerFee = ChannelBtcInsideServiceFee
+		ServerFee = custodyFee.ChannelBtcInsideServiceFee
 	}
 	//解码发票
 	p.DecodePayReq, err = rpc.InvoiceDecode(p.PayReq)

@@ -3,16 +3,20 @@ package handlers
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"trade/btlLog"
 	"trade/models"
+	"trade/services/btldb"
 	"trade/services/custodyAccount/custodyAssets"
 	"trade/services/custodyAccount/custodyBase"
+	"trade/services/custodyAccount/custodyBase/custodyFee"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -323,13 +327,24 @@ func DecodeAddress(c *gin.Context) {
 	}
 	AssetId := hex.EncodeToString(q.AssetId)
 	result := struct {
-		AssetId   string `json:"AssetId"`
-		AssetType string `json:"assetType"`
-		Amount    uint64 `json:"amount"`
+		AssetId   string  `json:"AssetId"`
+		AssetType string  `json:"assetType"`
+		Amount    uint64  `json:"amount"`
+		FeeRate   float64 `json:"feeRate"`
 	}{
 		AssetId:   AssetId,
 		AssetType: q.AssetType.String(),
 		Amount:    q.Amount,
+	}
+	//判断地址是否为本地发票
+	_, err = btldb.GetInvoiceByReq(query.Address)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		result.FeeRate = 0
+	}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		result.FeeRate = float64(custodyFee.GetCustodyAssetFee())
+	} else {
+		result.FeeRate = float64(custodyFee.AssetInsideFee)
 	}
 	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", result))
 }

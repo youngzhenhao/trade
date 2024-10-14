@@ -11,6 +11,7 @@ import (
 	"trade/models"
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
+	"trade/services/custodyAccount/custodyBase/custodyFee"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -77,7 +78,7 @@ func (m *BTCPayInsideSever) payToInside(mission *isInsideMission) error {
 		return nil
 	}
 	var payToAdmin bool
-	fee := ChannelBtcInsideServiceFee
+	fee := custodyFee.ChannelBtcInsideServiceFee
 	switch mission.insideMission.PayType {
 	case models.PayInsideToAdmin, models.FairLunchFee, models.ChannelBTCFee, models.ChannelBTCOutSideFee:
 		payToAdmin = true
@@ -200,7 +201,7 @@ func updateCustodyAccount(usr *caccount.UserInfo, away models.BalanceAway, balan
 		return 0, nil
 	}
 	if ServerFee > 0 {
-		err = PayServiceFeeSync(usr, ServerFee, ba.ID, models.ChannelBTCFee, "payToInside Fee")
+		err = custodyFee.PayServiceFeeSync(usr, ServerFee, ba.ID, models.ChannelBTCFee, "payToInside Fee")
 	}
 	return ba.ID, nil
 }

@@ -8,60 +8,9 @@ import (
 	"trade/models"
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
+	"trade/services/custodyAccount/custodyBase/custodyFee"
 	rpc "trade/services/servicesrpc"
 )
-
-var (
-	ChannelBtcInsideServiceFee = uint64(10)
-	ChannelBtcServiceFee       = uint64(100)
-	AssetInsideFee             = uint64(10)
-	AssetOutsideFee            = uint64(2500)
-)
-
-func PayServerFee(u *caccount.UserInfo, fee uint64) error {
-	acc, err := rpc.AccountInfo(u.Account.UserAccountCode)
-	if err != nil {
-		return err
-	}
-	// Change the escrow account balance
-	_, err = rpc.AccountUpdate(u.Account.UserAccountCode, acc.CurrentBalance-int64(fee), -1)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func PayServiceFeeSync(u *caccount.UserInfo, fee uint64, balanceId uint, PayType models.PayInsideType, memo string) error {
-	switch PayType {
-	case models.ChannelBTCFee:
-	default:
-	}
-	//划扣手续费
-	err := PayServerFee(u, fee)
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
-		return err
-	}
-	//创建内部转账任务
-	payInside := models.PayInside{
-		PayUserId:     u.User.ID,
-		GasFee:        fee,
-		ServeFee:      0,
-		ReceiveUserId: 1,
-		PayType:       PayType,
-		AssetType:     "00",
-		PayReq:        &memo,
-		BalanceId:     balanceId,
-		Status:        models.PayInsideStatusSuccess,
-	}
-	//写入数据库
-	err = btldb.CreatePayInside(&payInside)
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
-		return err
-	}
-	return err
-}
 
 func PayFirLunchFee(e *BtcChannelEvent, gasFee uint64) (uint, error) {
 	//获取账户信息
@@ -82,7 +31,7 @@ func PayFirLunchFee(e *BtcChannelEvent, gasFee uint64) (uint, error) {
 		return 0, caccount.MacaroonFindErr
 	}
 	//调用Lit节点发票申请接口
-	res, err := rpc.InvoiceCreate(int64(gasFee), SetMemoSign(), macaroonFile)
+	res, err := rpc.InvoiceCreate(int64(gasFee), custodyFee.SetMemoSign(), macaroonFile)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return 0, fmt.Errorf("%w: %s", CreateInvoiceErr, err.Error())
@@ -149,8 +98,4 @@ func CheckFirLunchFee(id uint) (bool, error) {
 	default:
 		return false, models.CustodyAccountPayInsideMissionPending
 	}
-}
-
-func SetMemoSign() string {
-	return "internal transfer"
 }
