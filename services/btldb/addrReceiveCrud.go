@@ -43,6 +43,12 @@ func ReadAddrReceiveEventsByAssetId(assetId string) (*[]models.AddrReceiveEvent,
 	return &addrReceiveEvents, err
 }
 
+func ReadAddrReceiveEventsByUsername(username string) (*[]models.AddrReceiveEvent, error) {
+	var addrReceiveEvents []models.AddrReceiveEvent
+	err := middleware.DB.Where("username = ?", username).Order("creation_time_unix_seconds desc").Find(&addrReceiveEvents).Error
+	return &addrReceiveEvents, err
+}
+
 func UpdateAddrReceiveEvent(addrReceiveEvent *models.AddrReceiveEvent) error {
 	return middleware.DB.Save(addrReceiveEvent).Error
 }

@@ -202,6 +202,9 @@ const (
 	BuyNftPresaleErr
 	GetNftPresaleByGroupKeyErr
 	FetchAssetMetaErr
+	GetUserDataErr
+	GetUserDataYamlErr
+	ReSetFailOrCanceledNftPresaleErr
 )
 
 // Err type:CustodyAccount

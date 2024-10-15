@@ -72,6 +72,10 @@ func UpdateNftPresales(nftPresales *[]models.NftPresale) error {
 	return btldb.UpdateNftPresales(nftPresales)
 }
 
+func CreateAndUpdateNftPresales(newNftPresales *[]models.NftPresale, nftPresales *[]models.NftPresale) error {
+	return btldb.CreateAndUpdateNftPresales(newNftPresales, nftPresales)
+}
+
 func DeleteNftPresale(id uint) error {
 	return btldb.DeleteNftPresale(id)
 }
@@ -1027,4 +1031,46 @@ func GetGroupNamesByGroupKeys(network models.Network, groupKeys []string) (*map[
 	return &groupKeyMapName, nil
 }
 
-// TODO: Re Launch Cancel And Fail NftPresales, use flag, instead of deleting past records
+func GetFailOrCanceledNftPresale() (*[]models.NftPresale, error) {
+	return btldb.ReadFailOrCanceledNftPresale()
+}
+
+func ProcessFailOrCanceledNftPresale(nftPresale models.NftPresale) models.NftPresale {
+	return models.NftPresale{
+		AssetId:    nftPresale.AssetId,
+		Name:       nftPresale.Name,
+		AssetType:  nftPresale.AssetType,
+		Meta:       nftPresale.Meta,
+		GroupKey:   nftPresale.GroupKey,
+		Amount:     nftPresale.Amount,
+		Price:      nftPresale.Price,
+		Info:       nftPresale.Info,
+		LaunchTime: nftPresale.LaunchTime,
+		State:      models.NftPresaleStateLaunched,
+	}
+}
+
+func ProcessFailOrCanceledNftPresales(nftPresales *[]models.NftPresale) *[]models.NftPresale {
+	if *nftPresales == nil {
+		return nil
+	}
+	var newNftPresales []models.NftPresale
+	for _, nftPresale := range *nftPresales {
+		newNftPresales = append(newNftPresales, ProcessFailOrCanceledNftPresale(nftPresale))
+	}
+	return &newNftPresales
+}
+
+// ReSetFailOrCanceledNftPresale
+// @Description: ReSet fail or canceled nftPresale
+func ReSetFailOrCanceledNftPresale() error {
+	nftPresales, err := GetFailOrCanceledNftPresale()
+	if err != nil {
+		return utils.AppendErrorInfo(err, "ReadNftPresalesByNftPresaleState")
+	}
+	for i := range *nftPresales {
+		(*nftPresales)[i].IsReLaunched = true
+	}
+	newNftPresales := ProcessFailOrCanceledNftPresales(nftPresales)
+	return CreateAndUpdateNftPresales(newNftPresales, nftPresales)
+}

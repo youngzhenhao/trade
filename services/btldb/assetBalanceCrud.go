@@ -93,6 +93,12 @@ func ReadAssetBalanceByAssetIdAndUserId(assetId string, userId int) (*models.Ass
 	return &assetBalance, err
 }
 
+func ReadAssetBalanceByUsername(username string) (*[]models.AssetBalance, error) {
+	var assetBalances []models.AssetBalance
+	err := middleware.DB.Where("username = ?", username).Find(&assetBalances).Error
+	return &assetBalances, err
+}
+
 func UpdateAssetBalance(assetBalance *models.AssetBalance) error {
 	return middleware.DB.Save(assetBalance).Error
 }

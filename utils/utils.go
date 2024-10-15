@@ -609,3 +609,7 @@ func WriteToLogFile(filename string, prefix string, content string) error {
 	logger.Println("\n", content)
 	return nil
 }
+
+func TimestampToTime(timestamp int) time.Time {
+	return time.Unix(int64(timestamp), 0)
+}

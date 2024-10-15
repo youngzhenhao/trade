@@ -100,6 +100,9 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.NftPresale {
 		SetupNftPresaleRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.UserData {
+		SetupUserDataRouter(r)
+	}
 	SetupWsRouter(r)
 	return r
 }

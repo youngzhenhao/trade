@@ -49,6 +49,12 @@ func ReadNftPresalesBetweenNftPresaleState(stateStart models.NftPresaleState, st
 	return &nftPresales, err
 }
 
+func ReadFailOrCanceledNftPresale() (*[]models.NftPresale, error) {
+	var nftPresales []models.NftPresale
+	err := middleware.DB.Where("state = ? AND is_re_launched = ?", models.NftPresaleStateFailOrCanceled, false).Find(&nftPresales).Error
+	return &nftPresales, err
+}
+
 func ReadNftPresalesByBuyerUserId(userId int) (*[]models.NftPresale, error) {
 	var nftPresales []models.NftPresale
 	err := middleware.DB.Where("buyer_user_id = ?", userId).Order("launch_time desc").Find(&nftPresales).Error
@@ -73,6 +79,22 @@ func UpdateNftPresale(nftPresale *models.NftPresale) error {
 
 func UpdateNftPresales(nftPresales *[]models.NftPresale) error {
 	return middleware.DB.Save(nftPresales).Error
+}
+
+func CreateAndUpdateNftPresales(newNftPresales *[]models.NftPresale, nftPresales *[]models.NftPresale) error {
+	tx := middleware.DB.Begin()
+	var err error
+	err = tx.Save(nftPresales).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	err = tx.Create(newNftPresales).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit().Error
 }
 
 func DeleteNftPresale(id uint) error {
