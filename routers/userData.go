@@ -11,5 +11,6 @@ func SetupUserDataRouter(router *gin.Engine) *gin.Engine {
 		config.GetLoadConfig().AdminUser.Username: config.GetLoadConfig().AdminUser.Password,
 	}))
 	authorized.GET("/get", handlers.GetUserData)
+	authorized.GET("/get/yaml", handlers.GetUserDataYaml)
 	return router
 }

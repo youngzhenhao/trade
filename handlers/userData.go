@@ -21,3 +21,18 @@ func GetUserData(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, userData)
 }
+
+func GetUserDataYaml(c *gin.Context) {
+	username := c.Query("username")
+	userData, err := services.GetUserDataYaml(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetUserDataYamlErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.String(http.StatusOK, "%s", userData)
+}

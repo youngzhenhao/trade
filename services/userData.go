@@ -3,7 +3,6 @@ package services
 import (
 	"errors"
 	"gopkg.in/yaml.v3"
-	"path/filepath"
 	"time"
 	"trade/btlLog"
 	"trade/middleware"
@@ -225,17 +224,11 @@ func GetUserData(username string) (*models.UserData, error) {
 	return &userData, nil
 }
 
-func GetUserDataYamlToFile(dir string, username string) error {
+func GetUserDataYaml(username string) (string, error) {
 	userData, err := GetUserData(username)
 	if err != nil {
-		return utils.AppendErrorInfo(err, "GetUserData")
+		return "", utils.AppendErrorInfo(err, "GetUserData")
 	}
-	tail := username[len(username)-8:]
-	filename := "user." + tail + ".data.txt"
 	userDataBytes, _ := yaml.Marshal(userData)
-	isSuccess := utils.CreateFile(filepath.Join(dir, filename), string(userDataBytes))
-	if !isSuccess {
-		return errors.New("create file is not successful")
-	}
-	return nil
+	return string(userDataBytes), nil
 }

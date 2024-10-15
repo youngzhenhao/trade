@@ -203,6 +203,7 @@ const (
 	GetNftPresaleByGroupKeyErr
 	FetchAssetMetaErr
 	GetUserDataErr
+	GetUserDataYamlErr
 )
 
 // Err type:CustodyAccount
