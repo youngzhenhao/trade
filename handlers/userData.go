@@ -19,10 +19,5 @@ func GetUserData(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(http.StatusOK, models.JsonResult{
-		Success: true,
-		Error:   "",
-		Code:    models.SUCCESS,
-		Data:    userData,
-	})
+	c.JSON(http.StatusOK, userData)
 }
