@@ -27,6 +27,14 @@ func NewMeta(description string) *Meta {
 	return &meta
 }
 
+func NewMetaWithImageStr(description string, imageData string) *Meta {
+	meta := Meta{
+		Description: description,
+		ImageData:   imageData,
+	}
+	return &meta
+}
+
 func (m *Meta) LoadImageByByte(image []byte) (bool, error) {
 	if len(image) == 0 {
 		fmt.Println("image data is nil")
