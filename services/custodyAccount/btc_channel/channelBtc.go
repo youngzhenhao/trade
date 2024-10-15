@@ -298,6 +298,10 @@ func (e *BtcChannelEvent) GetTransactionHistory() (cBase.TxHistory, error) {
 			r.BillType = v.BillType
 			r.Away = v.Away
 			r.Invoice = v.Invoice
+			r.PaymentHash = v.PaymentHash
+			if *v.Invoice == "award" && v.PaymentHash != nil {
+				r.Invoice = v.PaymentHash
+			}
 			r.Amount = v.Amount
 			btcAssetId := "00"
 			r.AssetId = &btcAssetId

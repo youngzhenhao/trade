@@ -3,54 +3,71 @@ package btc_channel
 import (
 	"errors"
 	"trade/btlLog"
+	"trade/middleware"
 	"trade/models"
-	"trade/services/btldb"
 	rpc "trade/services/servicesrpc"
 )
 
 func PutInAward(account *models.Account, _ string, amount int, memo *string) (*models.AccountAward, error) {
 	var err error
-	acc, err := rpc.AccountInfo(account.UserAccountCode)
-	if err != nil {
-		return nil, err
-	}
-	if amount < 0 {
-		return nil, errors.New("award amount is error")
-	}
-	newBalance := acc.CurrentBalance + int64(amount)
-	// Change the escrow account balance
-	_, err = rpc.AccountUpdate(account.UserAccountCode, newBalance, -1)
-	// Build a database storage object
+	tx, back := middleware.GetTx()
+	defer back()
+	// Build a database Balance
 	ba := models.Balance{}
 	ba.AccountId = account.ID
 	ba.Amount = float64(amount)
 	ba.Unit = models.UNIT_SATOSHIS
 	ba.BillType = models.BillTypeAwardSat
 	ba.Away = models.AWAY_IN
-	if err != nil {
-		ba.State = models.STATE_FAILED
-	} else {
-		ba.State = models.STATE_SUCCESS
-	}
+	ba.State = models.STATE_SUCCESS
 	invoiceType := "award"
 	ba.Invoice = nil
-	ba.PaymentHash = nil
+	ba.PaymentHash = memo
 	ba.ServerFee = 0
 	ba.Invoice = &invoiceType
-	// Update the database
-	dbErr := btldb.CreateBalance(&ba)
-	if dbErr != nil {
-		btlLog.CUST.Error(dbErr.Error())
+	if err = tx.Create(&ba).Error; err != nil {
+		btlLog.CUST.Error(err.Error())
+		return nil, err
 	}
+	// Build a database AccountAward
 	award := models.AccountAward{
 		AccountID: account.ID,
 		AssetId:   "00",
 		Amount:    float64(amount),
 		Memo:      memo,
 	}
-	err = btldb.CreateAward(&award)
+	if err = tx.Create(&award).Error; err != nil {
+		btlLog.CUST.Error(err.Error())
+		return nil, err
+	}
+	// Build a database  AccountAwardExt
+	awardExt := models.AccountAwardExt{
+		BalanceId: ba.ID,
+		AwardId:   award.ID,
+	}
+	if err = tx.Create(&awardExt).Error; err != nil {
+		btlLog.CUST.Error(err.Error())
+		return nil, err
+	}
+	// Update the escrow account balance
+	acc, err := rpc.AccountInfo(account.UserAccountCode)
+	if err != nil {
+		return nil, err
+	}
+	if amount < 0 || amount > 1000000 {
+		return nil, errors.New("award amount is error")
+	}
+	newBalance := acc.CurrentBalance + int64(amount)
+	if newBalance < 0 || newBalance > 100000000 {
+		return nil, errors.New("amount is error(<0 or >100000000)")
+	}
+
+	// Change the escrow account balance
+	_, err = rpc.AccountUpdate(account.UserAccountCode, newBalance, -1)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
+		return nil, err
 	}
+	tx.Commit()
 	return &award, nil
 }

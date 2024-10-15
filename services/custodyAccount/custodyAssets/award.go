@@ -21,12 +21,12 @@ var (
 )
 
 func PutInAward(account *models.Account, AssetId string, amount int, memo *string) (*models.AccountAward, error) {
-	tx := middleware.DB.Begin()
-	defer tx.Rollback()
-	if tx.Error != nil {
-		btlLog.CUST.Error("PutInAward err:%v", tx.Error)
+	tx, back := middleware.GetTx()
+	if tx == nil {
 		return nil, ServerBusy
 	}
+	defer back()
+	// Check if the asset is award type
 	var in models.AwardInventory
 	err := tx.Where("asset_Id =? ", AssetId).First(&in).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -46,6 +46,15 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 	AwardLock.Lock()
 	defer AwardLock.Unlock()
 
+	// Update the award inventory
+	in.Amount -= float64(amount)
+	err = tx.Save(&in).Error
+	if err != nil {
+		btlLog.CUST.Error("err:%v", err)
+		return nil, ServerBusy
+	}
+
+	// Update the account balance
 	var receiveBalance models.AccountBalance
 	err = tx.Where("account_Id =? and asset_Id =?", account.ID, AssetId).First(&receiveBalance).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -71,7 +80,8 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 			return nil, ServerBusy
 		}
 	}
-	// Build a database storage object
+
+	// Build a database balance
 	ba := models.Balance{}
 	ba.AccountId = account.ID
 	ba.Amount = float64(amount)
@@ -82,7 +92,7 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 	ba.State = models.STATE_SUCCESS
 	invoiceType := "award"
 	ba.Invoice = nil
-	ba.PaymentHash = nil
+	ba.PaymentHash = memo
 	ba.ServerFee = 0
 	ba.Invoice = &invoiceType
 	// Update the database
@@ -91,6 +101,7 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 		btlLog.CUST.Error(dbErr.Error())
 		return nil, ServerBusy
 	}
+	// Build a database AccountAward
 	award := models.AccountAward{
 		AccountID: account.ID,
 		AssetId:   AssetId,
@@ -102,14 +113,17 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 		btlLog.CUST.Error(err.Error())
 		return nil, ServerBusy
 	}
-
-	in.Amount -= float64(amount)
-	err = tx.Save(&in).Error
+	// Build a database AccountAwardExt
+	awardExt := models.AccountAwardExt{
+		BalanceId: ba.ID,
+		AwardId:   award.ID,
+	}
+	err = tx.Create(&awardExt).Error
 	if err != nil {
-		btlLog.CUST.Error("err:%v", err)
+		btlLog.CUST.Error(err.Error())
 		return nil, ServerBusy
 	}
-
+	// Commit the transaction
 	if err := tx.Commit().Error; err != nil {
 		btlLog.CUST.Error("award failed,not commit:%v", err)
 		return nil, ServerBusy

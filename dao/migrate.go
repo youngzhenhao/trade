@@ -9,6 +9,7 @@ import (
 func Migrate() error {
 	var err error
 	err = custodyMigrate(err)
+	err = custodyAwardMigrate(err)
 	if err = middleware.DB.AutoMigrate(&models.Account{}); err != nil {
 		return err
 	}
@@ -117,16 +118,10 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.AccountBalance{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&models.AccountAward{}); err != nil {
-		return err
-	}
 	if err = middleware.DB.AutoMigrate(&models.PayOutside{}); err != nil {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&models.PayOutsideTx{}); err != nil {
-		return err
-	}
-	if err = middleware.DB.AutoMigrate(&models.AwardInventory{}); err != nil {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&models.LogFileUpload{}); err != nil {
@@ -164,6 +159,19 @@ func custodyMigrate(err error) error {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&custodyModels.LockBillExt{}); err != nil {
+		return err
+	}
+	return err
+}
+
+func custodyAwardMigrate(err error) error {
+	if err = middleware.DB.AutoMigrate(&models.AccountAwardExt{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&models.AwardInventory{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&models.AccountAward{}); err != nil {
 		return err
 	}
 	return err
