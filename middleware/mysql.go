@@ -72,3 +72,11 @@ func MonitorDatabaseConnections() {
 		}
 	}
 }
+
+func GetTx() (*gorm.DB, func() *gorm.DB) {
+	tx := DB.Begin()
+	if tx.Error != nil {
+		return nil, nil
+	}
+	return tx, tx.Rollback
+}
