@@ -104,6 +104,12 @@ func ReadAssetTransferProcessedByAnchorTxHash(anchorTxHash string) (*models.Asse
 	return &assetTransferProcessed, err
 }
 
+func ReadAssetTransferProcessedSliceByUsername(username string) (*[]models.AssetTransferProcessedDb, error) {
+	var assetTransferProcessedDbSlice []models.AssetTransferProcessedDb
+	err := middleware.DB.Where("username = ?", username).Find(&assetTransferProcessedDbSlice).Error
+	return &assetTransferProcessedDbSlice, err
+}
+
 func UpdateAssetTransferProcessed(assetTransferProcessed *models.AssetTransferProcessedDb) error {
 	return middleware.DB.Save(assetTransferProcessed).Error
 }

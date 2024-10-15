@@ -83,6 +83,7 @@ var (
 	defaultLogFile      *os.File
 	defaultErrorLogFile *os.File
 	presaleLogFile      *os.File
+	userDataLogFile     *os.File
 )
 
 func openLogFile() error {
@@ -112,6 +113,10 @@ func openLogFile() error {
 	if err != nil {
 		return err
 	}
+	userDataLogFile, err = utils.GetLogFile("./trade.userdata.log")
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -135,6 +140,7 @@ var (
 	FEE                   *ServicesLogger
 	ScheduledTask         *ServicesLogger
 	PreSale               *ServicesLogger
+	UserData              *ServicesLogger
 )
 
 func loadDefaultLog() {
@@ -144,4 +150,5 @@ func loadDefaultLog() {
 	FEE = NewLogger("FEE", Level, defaultLogFile)
 	ScheduledTask = NewLogger("CRON", Level, defaultLogFile)
 	PreSale = NewLogger("PRSL", Level, defaultLogFile, presaleLogFile)
+	UserData = NewLogger("URDT", Level, defaultLogFile, userDataLogFile)
 }
