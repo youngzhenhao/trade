@@ -42,6 +42,24 @@ func MakeJsonResult(success bool, error string, data any) string {
 	return string(jsonStr)
 }
 
+func MakeJsonErrorResult(code models.ErrCode, errorString string, data any) string {
+	jsr := models.JsonResult{
+		Error: errorString,
+		Code:  code,
+		Data:  data,
+	}
+	if errors.Is(code, models.SUCCESS) {
+		jsr.Success = true
+	} else {
+		jsr.Success = false
+	}
+	jstr, err := json.Marshal(jsr)
+	if err != nil {
+		return MakeJsonErrorResult(models.DefaultErr, err.Error(), nil)
+	}
+	return string(jstr)
+}
+
 func LnMarshalRespString(resp proto.Message) string {
 	jsonBytes, err := lnrpc.ProtoJSONMarshalOpts.Marshal(resp)
 	if err != nil {

@@ -103,5 +103,5 @@ type NftPresaleSimplified struct {
 	State           NftPresaleState  `json:"state" gorm:"index"`
 	ProcessNumber   int              `json:"process_number"`
 	IsReLaunched    bool             `json:"is_re_launched"`
-	ImageData       string           `json:"image_data"`
+	MetaStr         string           `json:"meta_str"`
 }

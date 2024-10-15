@@ -339,14 +339,18 @@ func BuyNftPresale(userId int, username string, buyNftPresaleRequest models.BuyN
 	return nil
 }
 
-func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale) *models.NftPresaleSimplified {
+func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale, noMeta bool) *models.NftPresaleSimplified {
 	if nftPresale == nil {
 		return nil
 	}
 	assetId := nftPresale.AssetId
-	imageData, err := GetAssetMetaImageDataByAssetId(assetId)
-	if err != nil {
-		btlLog.PreSale.Error("GetAssetMetaImageDataByAssetId err:%v", err)
+	var metaStr string
+	var err error
+	if !noMeta {
+		metaStr, err = GetAssetMetaImageDataByAssetId(assetId)
+		if err != nil {
+			btlLog.PreSale.Error("GetAssetMetaImageDataByAssetId err:%v", err)
+		}
 	}
 	return &models.NftPresaleSimplified{
 		ID:              nftPresale.ID,
@@ -377,18 +381,18 @@ func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale) *models.Nft
 		State:           nftPresale.State,
 		ProcessNumber:   nftPresale.ProcessNumber,
 		IsReLaunched:    nftPresale.IsReLaunched,
-		ImageData:       imageData,
+		MetaStr:         metaStr,
 	}
 }
 
-func NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales *[]models.NftPresale) *[]models.NftPresaleSimplified {
+func NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales *[]models.NftPresale, noMeta bool) *[]models.NftPresaleSimplified {
 	if nftPresales == nil {
 		return nil
 	}
 	var nftPresaleSimplifiedSlice []models.NftPresaleSimplified
 	nftPresaleSimplifiedSlice = make([]models.NftPresaleSimplified, 0)
 	for _, nftPresale := range *nftPresales {
-		nftPresaleSimplifiedSlice = append(nftPresaleSimplifiedSlice, *(NftPresaleToNftPresaleSimplified(&nftPresale)))
+		nftPresaleSimplifiedSlice = append(nftPresaleSimplifiedSlice, *(NftPresaleToNftPresaleSimplified(&nftPresale, noMeta)))
 	}
 	return &nftPresaleSimplifiedSlice
 }

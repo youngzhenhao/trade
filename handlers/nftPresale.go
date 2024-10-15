@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 	"trade/btlLog"
 	"trade/models"
 	"trade/services"
@@ -33,7 +34,12 @@ func GetNftPresaleByAssetId(c *gin.Context) {
 		})
 		return
 	}
-	result := services.NftPresaleToNftPresaleSimplified(nftPresale)
+	noMetaStr := c.Query("no_meta")
+	noMeta, err := strconv.ParseBool(noMetaStr)
+	if err != nil {
+		btlLog.PreSale.Error("ParseBool err:%v", err)
+	}
+	result := services.NftPresaleToNftPresaleSimplified(nftPresale, noMeta)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
@@ -64,7 +70,12 @@ func GetLaunchedNftPresale(c *gin.Context) {
 		})
 		return
 	}
-	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales)
+	noMetaStr := c.Query("no_meta")
+	noMeta, err := strconv.ParseBool(noMetaStr)
+	if err != nil {
+		btlLog.PreSale.Error("ParseBool err:%v", err)
+	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales, noMeta)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
@@ -95,7 +106,12 @@ func GetUserBoughtNftPresale(c *gin.Context) {
 		})
 		return
 	}
-	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales)
+	noMetaStr := c.Query("no_meta")
+	noMeta, err := strconv.ParseBool(noMetaStr)
+	if err != nil {
+		btlLog.PreSale.Error("ParseBool err:%v", err)
+	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales, noMeta)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
@@ -127,7 +143,12 @@ func GetNftPresaleByGroupKeyPurchasable(c *gin.Context) {
 		})
 		return
 	}
-	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales)
+	noMetaStr := c.Query("no_meta")
+	noMeta, err := strconv.ParseBool(noMetaStr)
+	if err != nil {
+		btlLog.PreSale.Error("ParseBool err:%v", err)
+	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales, noMeta)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
@@ -158,7 +179,12 @@ func GetNftPresaleNoGroupKeyPurchasable(c *gin.Context) {
 		})
 		return
 	}
-	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales)
+	noMetaStr := c.Query("no_meta")
+	noMeta, err := strconv.ParseBool(noMetaStr)
+	if err != nil {
+		btlLog.PreSale.Error("ParseBool err:%v", err)
+	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales, noMeta)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
