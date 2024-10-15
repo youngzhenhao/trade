@@ -328,7 +328,8 @@ func (e *AssetEvent) GetTransactionHistory() (cBase.TxHistory, error) {
 			r.Invoice = v.Invoice
 			r.PaymentHash = v.PaymentHash
 			if *v.Invoice == "award" && v.PaymentHash != nil {
-				r.Invoice = v.PaymentHash
+				awardType := cBase.GetAwardType(*v.PaymentHash)
+				r.Invoice = &awardType
 			}
 			r.Amount = v.Amount
 			r.AssetId = a[i].AssetId
@@ -361,7 +362,8 @@ func (e *AssetEvent) GetTransactionHistoryByAsset() (cBase.TxHistory, error) {
 			r.Invoice = v.Invoice
 			r.PaymentHash = v.PaymentHash
 			if *v.Invoice == "award" && v.PaymentHash != nil {
-				r.Invoice = v.PaymentHash
+				awardType := cBase.GetAwardType(*v.PaymentHash)
+				r.Invoice = &awardType
 			}
 			r.Amount = v.Amount
 			r.AssetId = a[i].AssetId
