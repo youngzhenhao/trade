@@ -23,7 +23,7 @@ func GetNftPresaleByAssetId(c *gin.Context) {
 		})
 		return
 	}
-	assetId := c.Param("asset_id")
+	assetId := c.Query("asset_id")
 	nftPresale, err := services.GetNftPresaleByAssetId(assetId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
@@ -132,7 +132,7 @@ func GetNftPresaleByGroupKeyPurchasable(c *gin.Context) {
 		})
 		return
 	}
-	groupKey := c.Param("group_key")
+	groupKey := c.Query("group_key")
 	nftPresales, err := services.GetNftPresaleByGroupKeyPurchasable(groupKey)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
