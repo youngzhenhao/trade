@@ -350,3 +350,22 @@ func QueryNftPresaleGroupKeyPurchasable(c *gin.Context) {
 		Data:    groupKeys,
 	})
 }
+
+func ReSetFailOrCanceledNftPresale(c *gin.Context) {
+	err := services.ReSetFailOrCanceledNftPresale()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ReSetFailOrCanceledNftPresaleErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    nil,
+	})
+}

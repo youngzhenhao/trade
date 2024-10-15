@@ -204,6 +204,7 @@ const (
 	FetchAssetMetaErr
 	GetUserDataErr
 	GetUserDataYamlErr
+	ReSetFailOrCanceledNftPresaleErr
 )
 
 // Err type:CustodyAccount
