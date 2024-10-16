@@ -205,6 +205,7 @@ const (
 	GetUserDataErr
 	GetUserDataYamlErr
 	ReSetFailOrCanceledNftPresaleErr
+	GetAccountAssetBalanceUserHoldTotalAmountErr
 )
 
 // Err type:CustodyAccount
