@@ -238,7 +238,7 @@ func GetAllAccountAssetBalanceSimplified(c *gin.Context) {
 }
 
 func GetAccountAssetBalanceUserHoldTotalAmount(c *gin.Context) {
-	assetId := c.Param("assetId")
+	assetId := c.Param("asset_id")
 	totalAmount, err := services.GetAccountAssetBalanceUserHoldTotalAmount(assetId)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
