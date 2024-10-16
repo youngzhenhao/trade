@@ -27,6 +27,14 @@ func NewMeta(description string) *Meta {
 	return &meta
 }
 
+func NewMetaWithGroupName(description string, groupName string) *Meta {
+	meta := Meta{
+		Description: description,
+		GroupName:   groupName,
+	}
+	return &meta
+}
+
 func NewMetaWithImageStr(description string, imageData string) *Meta {
 	meta := Meta{
 		Description: description,

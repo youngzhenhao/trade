@@ -18,30 +18,8 @@ func GetAssetInfo(id string) (*models.AssetIssuanceLeaf, error) {
 	return assetLeafIssuanceInfo(id)
 }
 
-func MintAsset(name string, assetTypeIsCollectible bool, assetMetaData *Meta, amount int, newGroupedAsset bool) string {
-	Metastr := assetMetaData.ToJsonStr()
-	response, err := mintAsset(false, assetTypeIsCollectible, name, Metastr, false, amount, newGroupedAsset, false, "", "", false)
-	if err != nil {
-		return utils.MakeJsonResult(false, "mintAsset error. "+err.Error(), "")
-	}
-	return utils.MakeJsonResult(true, "", response)
-}
-
-func FinalizeBatch(feeRate int) string {
-	response, err := finalizeBatch(false, feeRate)
-	if err != nil {
-		return utils.MakeJsonResult(false, err.Error(), nil)
-	}
-	return utils.MakeJsonResult(true, "", response)
-}
-
-func AddGroupAsset(name string, assetTypeIsCollectible bool, assetMetaData *Meta, amount int, groupKey string) string {
-	Metastr := assetMetaData.ToJsonStr()
-	response, err := mintAsset(false, assetTypeIsCollectible, name, Metastr, false, amount, false, true, groupKey, "", false)
-	if err != nil {
-		return utils.MakeJsonResult(false, "mintAsset error. "+err.Error(), "")
-	}
-	return utils.MakeJsonResult(true, "", response)
+func AddGroupAssetAndGetResponse(name string, assetTypeIsCollectible bool, meta *Meta, amount int, groupKey string) (*mintrpc.MintAssetResponse, error) {
+	return mintAsset(false, assetTypeIsCollectible, name, meta.ToJsonStr(), false, amount, false, true, groupKey, "", false)
 }
 
 func NewAddrAndGetResponse(assetId string, amt int) (*taprpc.Addr, error) {
@@ -62,36 +40,12 @@ func NewAddrAndGetStringResponse(assetId string, amt int) (string, error) {
 	return response.Encoded, nil
 }
 
-func SendAsset(addr string, feeRate int) string {
-	response, err := sendAsset(addr, feeRate)
-	if err != nil {
-		return utils.MakeJsonResult(false, err.Error(), "")
-	}
-	return utils.MakeJsonResult(true, "", response)
-}
-
-func SendAssetBool(addr string, feeRate int) (bool, error) {
-	_, err := sendAsset(addr, feeRate)
-	if err != nil {
-		return false, utils.AppendErrorInfo(err, "sendAsset")
-	}
-	return true, nil
-}
-
 func SendAssetAndGetResponse(addr string, feeRate int) (*taprpc.SendAssetResponse, error) {
 	return sendAsset(addr, feeRate)
 }
 
 func SendAssetAddrSliceAndGetResponse(addrSlice []string, feeRate int) (*taprpc.SendAssetResponse, error) {
 	return sendAssetAddrSlice(addrSlice, feeRate)
-}
-
-func DecodeAddr(addr string) string {
-	response, err := decodeAddr(addr)
-	if err != nil {
-		return utils.MakeJsonResult(false, err.Error(), "")
-	}
-	return utils.MakeJsonResult(true, "", response)
 }
 
 func GetDecodedAddrInfo(addr string) (*taprpc.Addr, error) {
@@ -585,4 +539,40 @@ func QueryProofToGetAssetId(groupKey string, outpoint string, scriptKey string) 
 	}
 	assetId := hex.EncodeToString(response.AssetLeaf.Asset.AssetGenesis.AssetId)
 	return assetId, nil
+}
+
+// MintNftAsset
+// @Description: Mint nft asset
+func MintNftAsset(name string, meta *Meta, newGroupedAsset bool, groupedAsset bool, groupKey string) (*mintrpc.MintAssetResponse, error) {
+	if name == "" {
+		return nil, errors.New("null string name is not supported")
+	}
+	if meta == nil {
+		return nil, errors.New("meta is required")
+	}
+	amount := 1
+	if newGroupedAsset {
+		if groupedAsset || groupKey != "" {
+			return nil, errors.New("newGroupedAsset(" + strconv.FormatBool(newGroupedAsset) + ") is true, but groupedAsset(" + strconv.FormatBool(groupedAsset) + ") is true or groupKey(" + groupKey + ") is not empty")
+		}
+	} else {
+		if groupedAsset {
+			if groupKey == "" {
+				return nil, errors.New("newGroupedAsset(" + strconv.FormatBool(newGroupedAsset) + ") is true and groupedAsset(" + strconv.FormatBool(groupedAsset) + ") is true, but groupKey(" + groupKey + ") is empty")
+			}
+		}
+	}
+	response, err := mintAssetByParam(taprpc.AssetVersion_ASSET_VERSION_V0, taprpc.AssetType_COLLECTIBLE, name, []byte(meta.ToJsonStr()), taprpc.AssetMetaType_META_TYPE_OPAQUE, uint64(amount), newGroupedAsset, groupedAsset, []byte(groupKey), "", false)
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "mintAssetByParam")
+	}
+	return response, nil
+}
+
+func MintNftAssetFirst(name string, meta *Meta) (*mintrpc.MintAssetResponse, error) {
+	return MintNftAsset(name, meta, true, false, "")
+}
+
+func MintNftAssetAppend(name string, meta *Meta, groupKey string) (*mintrpc.MintAssetResponse, error) {
+	return MintNftAsset(name, meta, false, true, groupKey)
 }

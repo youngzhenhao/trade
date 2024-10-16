@@ -208,6 +208,37 @@ func mintAsset(assetVersionIsV1 bool, assetTypeIsCollectible bool, name string, 
 	return response, nil
 }
 
+func mintAssetByParam(assetVersion taprpc.AssetVersion, assetType taprpc.AssetType, name string, assetMetaData []byte, assetMetaType taprpc.AssetMetaType, amount uint64, newGroupedAsset bool, groupedAsset bool, groupKey []byte, groupAnchor string, shortResponse bool) (*mintrpc.MintAssetResponse, error) {
+	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
+	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
+	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	client := mintrpc.NewMintClient(conn)
+	request := &mintrpc.MintAssetRequest{
+		Asset: &mintrpc.MintAsset{
+			AssetVersion: assetVersion,
+			AssetType:    assetType,
+			Name:         name,
+			AssetMeta: &taprpc.AssetMeta{
+				Data: assetMetaData,
+				Type: assetMetaType,
+			},
+			Amount:          amount,
+			NewGroupedAsset: newGroupedAsset,
+			GroupedAsset:    groupedAsset,
+			GroupKey:        groupKey,
+			GroupAnchor:     groupAnchor,
+		},
+		ShortResponse: shortResponse,
+	}
+	response, err := client.MintAsset(context.Background(), request)
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "MintAsset")
+	}
+	return response, nil
+}
+
 func finalizeBatch(shortResponse bool, feeRate int) (*mintrpc.FinalizeBatchResponse, error) {
 	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
 	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
