@@ -13,6 +13,12 @@ func ReadUserAccountBalancesByAssetId(assetId string) (*[]models.AccountBalance,
 	return &accountBalances, err
 }
 
+func ReadAccountBalancesByAssetId(assetId string) (*[]models.AccountBalance, error) {
+	var accountBalances []models.AccountBalance
+	err := middleware.DB.Where("asset_id = ?", assetId).Find(&accountBalances).Error
+	return &accountBalances, err
+}
+
 func ReadUserAccountBalancesByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*[]models.AccountBalance, error) {
 	var accountBalances []models.AccountBalance
 	err := middleware.DB.Where("amount <> ? AND asset_id = ?", 0, assetId).Order("amount desc").Limit(limit).Offset(offset).Find(&accountBalances).Error
@@ -144,9 +150,9 @@ func GetAccountAssetBalancePageNumberByPageSize(assetId string, pageSize int) (i
 }
 
 func GetAccountAssetBalanceUserHoldTotalAmount(assetId string) (int, error) {
-	response, err := GetAllAccountAssetBalancesByAssetId(assetId)
+	response, err := ReadAccountBalancesByAssetId(assetId)
 	if err != nil {
-		return 0, utils.AppendErrorInfo(err, "GetAllAccountAssetBalancesByAssetId")
+		return 0, utils.AppendErrorInfo(err, "ReadAccountBalancesByAssetId")
 	}
 	if response == nil || len(*(response)) == 0 {
 		return 0, nil
