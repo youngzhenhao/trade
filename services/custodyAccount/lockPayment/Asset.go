@@ -302,6 +302,7 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 		return ServiceError
 	}
 
+	tx.Commit()
 	return nil
 }
 
