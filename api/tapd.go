@@ -80,6 +80,32 @@ func BatchTxidAnchorToAssetId(batchTxidAnchor string) (string, error) {
 	return "", err
 }
 
+type AssetIdAndName struct {
+	AssetId string `json:"asset_id"`
+	Name    string `json:"name"`
+}
+
+func BatchTxidAnchorToAssetIdAndNames(batchTxidAnchor string) (*[]AssetIdAndName, error) {
+	var assetIdAndNames []AssetIdAndName
+	assets, _ := listAssets(true, true, false)
+	for _, asset := range assets.Assets {
+		txid, _ := utils.OutpointToTransactionAndIndex(asset.GetChainAnchor().GetAnchorOutpoint())
+		if batchTxidAnchor == txid {
+			assetId := hex.EncodeToString(asset.GetAssetGenesis().AssetId)
+			name := asset.AssetGenesis.Name
+			assetIdAndNames = append(assetIdAndNames, AssetIdAndName{
+				assetId,
+				name,
+			})
+		}
+	}
+	if len(assets.Assets) == 0 {
+		err := errors.New("no asset found for batch txid")
+		return nil, err
+	}
+	return &assetIdAndNames, nil
+}
+
 func BatchTxidAnchorToGroupKey(batchTxidAnchor string) (string, error) {
 	assets, _ := listAssets(true, true, false)
 	var groupKey string
