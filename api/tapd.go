@@ -80,6 +80,22 @@ func BatchTxidAnchorToAssetId(batchTxidAnchor string) (string, error) {
 	return "", err
 }
 
+func BatchTxidAnchorToGroupKey(batchTxidAnchor string) (string, error) {
+	assets, _ := listAssets(true, true, false)
+	var groupKey string
+	for _, asset := range assets.Assets {
+		txid, _ := utils.OutpointToTransactionAndIndex(asset.GetChainAnchor().GetAnchorOutpoint())
+		if batchTxidAnchor == txid {
+			if asset.AssetGroup != nil {
+				groupKey = hex.EncodeToString(asset.AssetGroup.TweakedGroupKey)
+			}
+			return groupKey, nil
+		}
+	}
+	err := errors.New("no asset found for batch txid")
+	return "", err
+}
+
 func QueryAssetType(assetType int) (string, error) {
 	if assetType == 0 {
 		return taprpc.AssetType_NORMAL.String(), nil
