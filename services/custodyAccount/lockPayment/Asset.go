@@ -21,6 +21,7 @@ func GetAssetBalance(usr *caccount.UserInfo, assetId string) (err error, unlock 
 			return ServiceError, 0, 0
 		}
 		locked = 0
+		err = nil
 	}
 	locked = lockedBalance.Amount
 
@@ -31,6 +32,7 @@ func GetAssetBalance(usr *caccount.UserInfo, assetId string) (err error, unlock 
 			return ServiceError, 0, 0
 		}
 		unlock = 0
+		err = nil
 	}
 	unlock = assetBalance.Amount
 
