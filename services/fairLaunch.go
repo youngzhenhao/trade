@@ -1736,6 +1736,9 @@ func UpdateFairLaunchMintedInfosBySendAssetResponse(fairLaunchMintedInfos *[]mod
 
 func FairLaunchMintedInfosIdToString(fairLaunchMintedInfos *[]models.FairLaunchMintedInfo) string {
 	var ids string
+	if fairLaunchMintedInfos == nil {
+		fairLaunchMintedInfos = &[]models.FairLaunchMintedInfo{}
+	}
 	for _, fairLaunchMintedInfo := range *fairLaunchMintedInfos {
 		ids += strconv.Itoa(int(fairLaunchMintedInfo.ID)) + ";"
 	}

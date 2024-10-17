@@ -4,11 +4,18 @@ import (
 	"math"
 	"trade/middleware"
 	"trade/models"
+	"trade/utils"
 )
 
 func ReadUserAccountBalancesByAssetId(assetId string) (*[]models.AccountBalance, error) {
 	var accountBalances []models.AccountBalance
 	err := middleware.DB.Where("amount <> ? AND asset_id = ?", 0, assetId).Order("amount desc").Find(&accountBalances).Error
+	return &accountBalances, err
+}
+
+func ReadAccountBalancesByAssetId(assetId string) (*[]models.AccountBalance, error) {
+	var accountBalances []models.AccountBalance
+	err := middleware.DB.Where("asset_id = ?", assetId).Find(&accountBalances).Error
 	return &accountBalances, err
 }
 
@@ -40,12 +47,12 @@ func ReadUserAccountAccountId(accountId uint) (*models.Account, error) {
 func GetUserIdAndUsernameByAccountId(accountId uint) (*UserIdAndUsername, error) {
 	account, err := ReadUserAccountAccountId(accountId)
 	if err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "ReadUserAccountAccountId")
 	}
 	return &UserIdAndUsername{
 		UserId:   int(account.UserId),
 		Username: account.UserName,
-	}, err
+	}, nil
 }
 
 type AccountAssetBalanceExtend struct {
@@ -60,7 +67,7 @@ func GetAccountAssetBalanceExtendsByAssetId(assetId string) (*[]AccountAssetBala
 	var accountAssetBalanceExtends []AccountAssetBalanceExtend
 	accountBalances, err := ReadUserAccountBalancesByAssetId(assetId)
 	if err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "ReadUserAccountBalancesByAssetId")
 	}
 	accountIdMapUserIdAndUsername := make(map[uint]*UserIdAndUsername)
 	for _, accountBalance := range *accountBalances {
@@ -99,7 +106,7 @@ func GetAccountAssetBalanceExtendsLimitAndOffset(assetId string, limit int, offs
 	var accountAssetBalanceExtends []AccountAssetBalanceExtend
 	accountBalances, err := ReadUserAccountBalancesByAssetIdLimitAndOffset(assetId, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, utils.AppendErrorInfo(err, "ReadUserAccountBalancesByAssetIdLimitAndOffset")
 	}
 	accountIdMapUserIdAndUsername := make(map[uint]*UserIdAndUsername)
 	for _, accountBalance := range *accountBalances {
@@ -126,7 +133,7 @@ func GetAccountAssetBalanceExtendsLimitAndOffset(assetId string, limit int, offs
 func GetAccountAssetBalanceLength(assetId string) (int, error) {
 	response, err := GetAllAccountAssetBalancesByAssetId(assetId)
 	if err != nil {
-		return 0, err
+		return 0, utils.AppendErrorInfo(err, "GetAllAccountAssetBalancesByAssetId")
 	}
 	if response == nil || len(*(response)) == 0 {
 		return 0, nil
@@ -137,7 +144,22 @@ func GetAccountAssetBalanceLength(assetId string) (int, error) {
 func GetAccountAssetBalancePageNumberByPageSize(assetId string, pageSize int) (int, error) {
 	recordsNum, err := GetAccountAssetBalanceLength(assetId)
 	if err != nil {
-		return 0, err
+		return 0, utils.AppendErrorInfo(err, "GetAccountAssetBalanceLength")
 	}
 	return int(math.Ceil(float64(recordsNum) / float64(pageSize))), nil
+}
+
+func GetAccountAssetBalanceUserHoldTotalAmount(assetId string) (int, error) {
+	response, err := ReadAccountBalancesByAssetId(assetId)
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "ReadAccountBalancesByAssetId")
+	}
+	if response == nil || len(*(response)) == 0 {
+		return 0, nil
+	}
+	var totalAmount int
+	for _, accountBalance := range *response {
+		totalAmount += int(math.Floor(accountBalance.Amount))
+	}
+	return totalAmount, nil
 }

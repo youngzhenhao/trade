@@ -236,3 +236,23 @@ func GetAccountAssetTransferPageNumberByPageSize(c *gin.Context) {
 func GetAllAccountAssetBalanceSimplified(c *gin.Context) {
 	//	 TODO
 }
+
+func GetAccountAssetBalanceUserHoldTotalAmount(c *gin.Context) {
+	assetId := c.Query("asset_id")
+	totalAmount, err := services.GetAccountAssetBalanceUserHoldTotalAmount(assetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetAccountAssetBalanceUserHoldTotalAmountErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
+		Data:    totalAmount,
+	})
+}

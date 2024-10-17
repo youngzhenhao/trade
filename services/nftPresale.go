@@ -348,13 +348,17 @@ func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale, noMeta bool
 		return nil
 	}
 	assetId := nftPresale.AssetId
-	var metaStr string
+	var assetMeta *models.AssetMeta
 	var err error
 	if !noMeta {
-		metaStr, err = GetAssetMetaImageDataByAssetId(assetId)
+		assetMeta, err = GetAssetMetaByAssetId(assetId)
 		if err != nil {
 			btlLog.PreSale.Error("GetAssetMetaImageDataByAssetId err:%v", err)
+			assetMeta = &models.AssetMeta{}
 		}
+	}
+	if assetMeta == nil {
+		assetMeta = &models.AssetMeta{}
 	}
 	return &models.NftPresaleSimplified{
 		ID:              nftPresale.ID,
@@ -385,7 +389,7 @@ func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale, noMeta bool
 		State:           nftPresale.State,
 		ProcessNumber:   nftPresale.ProcessNumber,
 		IsReLaunched:    nftPresale.IsReLaunched,
-		MetaStr:         metaStr,
+		MetaStr:         (*assetMeta).AssetMeta,
 	}
 }
 
