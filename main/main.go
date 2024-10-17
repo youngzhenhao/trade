@@ -84,6 +84,7 @@ func main() {
 	if mode != gin.ReleaseMode {
 		utils.PrintTitle(true, "Setup Router")
 	}
+	go middleware.MonitorDatabaseConnections()
 
 	r := routers.SetupRouter()
 	bind := loadConfig.GinConfig.Bind
@@ -95,26 +96,34 @@ func main() {
 		Addr:    bind + ":" + port,
 		Handler: r,
 	}
-
-	r2 := RouterSecond.SetupRouter()
-	localPort := loadConfig.GinConfig.LocalPort
-	if localPort == "" {
-		localPort = "10080"
-	}
-	go middleware.MonitorDatabaseConnections()
-
 	// Start HTTP server in a goroutine
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			fmt.Printf("listen: %s\n", err)
 		}
 	}()
+	// Setup HTTP server2
+	r2 := RouterSecond.SetupRouter()
+	r2bind := "127.0.0.1"
+	if config.GetConfig().NetWork == "regtest" {
+		r2bind = "0.0.0.0"
+	}
+	localPort := loadConfig.GinConfig.LocalPort
+	if localPort == "" {
+		localPort = "10080"
+	}
+	srv2 := &http.Server{
+		Addr:    r2bind + ":" + localPort,
+		Handler: r2,
+	}
+
+	// Start HTTP server in a goroutine
 	go func() {
-		if err = r2.Run(fmt.Sprintf("%s:%s", "127.0.0.1", localPort)); err != nil {
-			log.Println(err)
-			return
+		if err := srv2.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			fmt.Printf("listen: %s\n", err)
 		}
 	}()
+
 	// Create a channel to listen to interrupt signals
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
