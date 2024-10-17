@@ -32,9 +32,11 @@ func SetupNftPresaleRouter(router *gin.Engine) *gin.Engine {
 		username: password,
 	}))
 	{
-		authorized.POST("/set", handlers.SetNftPresale)
-		authorized.POST("/set/batch", handlers.SetNftPresales)
-		authorized.POST("/reset", handlers.ReSetFailOrCanceledNftPresale)
+		// TODO
+		authorized.POST("/launch", handlers.LaunchNftPresaleBatchGroup)
+		//authorized.POST("/set", handlers.SetNftPresale)
+		//authorized.POST("/set/batch", handlers.SetNftPresales)
+		//authorized.POST("/reset", handlers.ReSetFailOrCanceledNftPresale)
 	}
 	return router
 }

@@ -236,6 +236,38 @@ func BuyNftPresale(c *gin.Context) {
 	})
 }
 
+// @dev: Query
+
+func QueryNftPresaleGroupKeyPurchasable(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	_, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	groupKeys, err := services.GetAllNftPresaleGroupKeyPurchasable()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetLaunchedNftPresalesErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
+		Data:    groupKeys,
+	})
+}
+
 // @dev: Set
 
 func SetNftPresale(c *gin.Context) {
@@ -319,38 +351,6 @@ func SetNftPresales(c *gin.Context) {
 	})
 }
 
-// @dev: Query
-
-func QueryNftPresaleGroupKeyPurchasable(c *gin.Context) {
-	username := c.MustGet("username").(string)
-	_, err := services.NameToId(username)
-	if err != nil {
-		c.JSON(http.StatusOK, models.JsonResult{
-			Success: false,
-			Error:   err.Error(),
-			Code:    models.NameToIdErr,
-			Data:    nil,
-		})
-		return
-	}
-	groupKeys, err := services.GetAllNftPresaleGroupKeyPurchasable()
-	if err != nil {
-		c.JSON(http.StatusOK, models.JsonResult{
-			Success: false,
-			Error:   err.Error(),
-			Code:    models.GetLaunchedNftPresalesErr,
-			Data:    nil,
-		})
-		return
-	}
-	c.JSON(http.StatusOK, models.JsonResult{
-		Success: true,
-		Error:   models.SUCCESS.Error(),
-		Code:    models.SUCCESS,
-		Data:    groupKeys,
-	})
-}
-
 func ReSetFailOrCanceledNftPresale(c *gin.Context) {
 	err := services.ReSetFailOrCanceledNftPresale()
 	if err != nil {
@@ -368,4 +368,57 @@ func ReSetFailOrCanceledNftPresale(c *gin.Context) {
 		Code:    models.SUCCESS,
 		Data:    nil,
 	})
+}
+
+// @dev: launch batch group
+
+func LaunchNftPresaleBatchGroup(c *gin.Context) {
+	var nNftPresaleBatchGroupLaunchRequest models.NftPresaleBatchGroupLaunchRequest
+	err := c.ShouldBindJSON(&nNftPresaleBatchGroupLaunchRequest)
+
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ShouldBindJsonErr,
+			Data:    nil,
+		})
+		return
+	}
+
+	_ = services.ProcessNftPresaleBatchGroupLaunchRequest(&nNftPresaleBatchGroupLaunchRequest)
+
+	// TODO: @dev: Store AssetMetas
+
+	//{
+	//	var assetIds []string
+	//	for _, nftPresaleSetRequest := range nftPresaleSetRequests {
+	//		assetIds = append(assetIds, nftPresaleSetRequest.AssetId)
+	//	}
+	//	err = services.StoreAssetMetasIfNotExist(assetIds)
+	//	if err != nil {
+	//		btlLog.PreSale.Error("api StoreAssetMetasIfNotExist err:%v", err)
+	//	}
+	//}
+
+	// TODO: Create db records
+
+	//err = services.CreateNftPresale(nftPresale)
+	//if err != nil {
+	//	c.JSON(http.StatusOK, models.JsonResult{
+	//		Success: false,
+	//		Error:   err.Error(),
+	//		Code:    models.CreateNftPresaleErr,
+	//		Data:    nil,
+	//	})
+	//	return
+	//}
+
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    nil,
+	})
+
 }

@@ -121,7 +121,6 @@ func ProcessNftPresale(nftPresaleSetRequest *models.NftPresaleSetRequest) *model
 		GroupKey:   groupKey,
 		Amount:     amount,
 		Price:      nftPresaleSetRequest.Price,
-		Info:       nftPresaleSetRequest.Info,
 		LaunchTime: utils.GetTimestamp(),
 		State:      models.NftPresaleStateLaunched,
 	}
