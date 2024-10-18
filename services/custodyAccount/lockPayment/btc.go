@@ -91,6 +91,7 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	}
 
 	BtcId := btcId
+	Invoice := InvoiceLocked
 	// update user account record
 	balanceBill := models.Balance{
 		AccountId:   usr.Account.ID,
@@ -100,8 +101,8 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 		Unit:        models.UNIT_SATOSHIS,
 		ServerFee:   0,
 		AssetId:     &BtcId,
-		Invoice:     &lockedId,
-		PaymentHash: nil,
+		Invoice:     &Invoice,
+		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
@@ -129,7 +130,7 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	// check locked balance
 	lockedBalance := cModels.LockBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, btcId).First(&lockedBalance).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
 			return ServiceError
 		}
@@ -167,6 +168,7 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	}
 
 	BtcId := btcId
+	Invoice := InvoiceUnlocked
 
 	// update user account record
 	balanceBill := models.Balance{
@@ -177,8 +179,8 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 		Unit:        models.UNIT_SATOSHIS,
 		ServerFee:   0,
 		AssetId:     &BtcId,
-		Invoice:     &lockedId,
-		PaymentHash: nil,
+		Invoice:     &Invoice,
+		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
@@ -274,6 +276,11 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 		return ServiceError
 	}
 
+	invoice := InvoicePendingOderReceive
+	if usr.User.Username == FeeNpubkey {
+		invoice = InvoicePendingOderAward
+	}
+
 	// update user account record
 	balanceBill := models.Balance{
 		AccountId:   toUser.Account.ID,
@@ -283,8 +290,8 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 		Unit:        models.UNIT_SATOSHIS,
 		ServerFee:   0,
 		AssetId:     &BtcId,
-		Invoice:     &lockedId,
-		PaymentHash: nil,
+		Invoice:     &invoice,
+		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
@@ -363,6 +370,11 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 		return ServiceError
 	}
 
+	payInvoice := InvoicePendingOderPay
+	if usr.User.Username == FeeNpubkey {
+		payInvoice = InvoicePendingOderAward
+	}
+
 	// transfer balance record
 	balanceBill := models.Balance{
 		AccountId:   usr.Account.ID,
@@ -372,8 +384,8 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 		Unit:        models.UNIT_SATOSHIS,
 		ServerFee:   0,
 		AssetId:     &BtcId,
-		Invoice:     &lockedId,
-		PaymentHash: nil,
+		Invoice:     &payInvoice,
+		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
@@ -392,6 +404,12 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 
 	//Second tx
 	txRev := middleware.DB.Begin()
+
+	recInvoice := InvoicePendingOderReceive
+	if usr.User.Username == FeeNpubkey {
+		recInvoice = InvoicePendingOderAward
+	}
+
 	// update user account record
 	balanceBillRev := models.Balance{
 		AccountId:   toUser.Account.ID,
@@ -401,8 +419,8 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 		Unit:        models.UNIT_SATOSHIS,
 		ServerFee:   0,
 		AssetId:     &BtcId,
-		Invoice:     &lockedId,
-		PaymentHash: nil,
+		Invoice:     &recInvoice,
+		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
 	}
 	if err = txRev.Create(&balanceBillRev).Error; err != nil {
