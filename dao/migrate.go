@@ -145,6 +145,12 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.AssetMeta{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.NftPresaleBatchGroup{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&models.NftPresaleWhitelist{}); err != nil {
+		return err
+	}
 
 	return err
 }
