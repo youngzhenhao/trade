@@ -373,9 +373,8 @@ func ReSetFailOrCanceledNftPresale(c *gin.Context) {
 // @dev: launch batch group
 
 func LaunchNftPresaleBatchGroup(c *gin.Context) {
-	var nNftPresaleBatchGroupLaunchRequest models.NftPresaleBatchGroupLaunchRequest
-	err := c.ShouldBindJSON(&nNftPresaleBatchGroupLaunchRequest)
-
+	var nftPresaleBatchGroupLaunchRequest models.NftPresaleBatchGroupLaunchRequest
+	err := c.ShouldBindJSON(&nftPresaleBatchGroupLaunchRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -385,40 +384,32 @@ func LaunchNftPresaleBatchGroup(c *gin.Context) {
 		})
 		return
 	}
-
-	_ = services.ProcessNftPresaleBatchGroupLaunchRequest(&nNftPresaleBatchGroupLaunchRequest)
-
-	// TODO: @dev: Store AssetMetas
-
-	//{
-	//	var assetIds []string
-	//	for _, nftPresaleSetRequest := range nftPresaleSetRequests {
-	//		assetIds = append(assetIds, nftPresaleSetRequest.AssetId)
-	//	}
-	//	err = services.StoreAssetMetasIfNotExist(assetIds)
-	//	if err != nil {
-	//		btlLog.PreSale.Error("api StoreAssetMetasIfNotExist err:%v", err)
-	//	}
-	//}
-
-	// TODO: Create db records
-
-	//err = services.CreateNftPresale(nftPresale)
-	//if err != nil {
-	//	c.JSON(http.StatusOK, models.JsonResult{
-	//		Success: false,
-	//		Error:   err.Error(),
-	//		Code:    models.CreateNftPresaleErr,
-	//		Data:    nil,
-	//	})
-	//	return
-	//}
-
+	// @dev: Store AssetMetas
+	{
+		var assetIds []string
+		for _, nftPresaleSetRequest := range *(nftPresaleBatchGroupLaunchRequest.NftPresaleSetRequests) {
+			assetIds = append(assetIds, nftPresaleSetRequest.AssetId)
+		}
+		err = services.StoreAssetMetasIfNotExist(assetIds)
+		if err != nil {
+			btlLog.PreSale.Error("api StoreAssetMetasIfNotExist err:%v", err)
+		}
+	}
+	// @dev: Process and create db records
+	err = services.ProcessNftPresaleBatchGroupLaunchRequestAndCreate(&nftPresaleBatchGroupLaunchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.ProcessNftPresaleBatchGroupLaunchRequestAndCreateErr,
+			Data:    nil,
+		})
+		return
+	}
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   "",
 		Code:    models.SUCCESS,
 		Data:    nil,
 	})
-
 }

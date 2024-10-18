@@ -9,9 +9,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"trade/api"
 	"trade/btlLog"
 	"trade/config"
+	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
 	"trade/services/custodyAccount"
@@ -294,6 +296,25 @@ func UpdateNftPresaleByPurchaseInfo(userId int, username string, deviceId string
 	return nil
 }
 
+func IsDuringPurchasableTime(start int, end int) bool {
+	now := int(time.Now().Unix())
+	if end == 0 {
+		return now >= start
+	}
+	return now >= start && now < end
+}
+
+func IsPurchasableTimeValid(nftPresale *models.NftPresale) (bool, error) {
+	if nftPresale == nil {
+		return false, errors.New("nftPresale is nil")
+	}
+	isValid := IsDuringPurchasableTime(nftPresale.StartTime, nftPresale.EndTime)
+	if !isValid {
+		return false, errors.New("nftPresale StartTime(" + strconv.Itoa(nftPresale.StartTime) + ") and EndTime(" + strconv.Itoa(nftPresale.EndTime) + ") is not valid")
+	}
+	return isValid, nil
+}
+
 // BuyNftPresale
 // @Description: Buy presale nft
 func BuyNftPresale(userId int, username string, buyNftPresaleRequest models.BuyNftPresaleRequest) error {
@@ -306,6 +327,11 @@ func BuyNftPresale(userId int, username string, buyNftPresaleRequest models.BuyN
 	if !IsNftPresalePurchasable(nftPresale) {
 		err = errors.New("nft(" + nftPresale.AssetId + ") is not purchasable, its state is " + nftPresale.State.String() + ", ")
 		return utils.AppendErrorInfo(err, "IsNftPresalePurchasable")
+	}
+	// @dev: Check time
+	_, err = IsPurchasableTimeValid(nftPresale)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "IsPurchasableTimeValid")
 	}
 	// @dev: 2. Check if account balance is enough
 	price := nftPresale.Price
@@ -362,6 +388,7 @@ func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale, noMeta bool
 	return &models.NftPresaleSimplified{
 		ID:              nftPresale.ID,
 		UpdatedAt:       nftPresale.UpdatedAt,
+		BatchGroupId:    nftPresale.BatchGroupId,
 		AssetId:         nftPresale.AssetId,
 		Name:            nftPresale.Name,
 		AssetType:       nftPresale.AssetType,
@@ -378,6 +405,8 @@ func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale, noMeta bool
 		AddrInternalKey: nftPresale.AddrInternalKey,
 		PayMethod:       nftPresale.PayMethod,
 		LaunchTime:      nftPresale.LaunchTime,
+		StartTime:       nftPresale.StartTime,
+		EndTime:         nftPresale.EndTime,
 		BoughtTime:      nftPresale.BoughtTime,
 		PaidId:          nftPresale.PaidId,
 		PaidSuccessTime: nftPresale.PaidSuccessTime,
@@ -456,9 +485,9 @@ func ChangeNftPresaleStateAndUpdatePaidSuccessTimeThenClearProcessNumber(nftPres
 	nftPresale.State = models.NftPresaleStatePaidNotSend
 	nftPresale.PaidSuccessTime = utils.GetTimestamp()
 	nftPresale.ProcessNumber = 0
-	err := UpdateNftPresale(nftPresale)
+	err := UpdateNftPresaleAndSelfAddBatchGroupSoldNumber(nftPresale)
 	if err != nil {
-		return utils.AppendErrorInfo(err, "UpdateNftPresale")
+		return utils.AppendErrorInfo(err, "UpdateNftPresaleAndSelfAddBatchGroupSoldNumber")
 	}
 	return nil
 }
@@ -521,6 +550,39 @@ func UpdateNftPresaleAfterConfirmed(nftPresale *models.NftPresale) error {
 	return nil
 }
 
+func UpdateNftPresaleAndSelfAddBatchGroupSoldNumber(nftPresale *models.NftPresale) error {
+	var err error
+	if nftPresale == nil {
+		return errors.New("nftPresale is nil")
+	}
+	if nftPresale.BatchGroupId == 0 {
+		return errors.New("nftPresale batch group id is 0")
+	}
+	tx := middleware.DB.Begin()
+	// @dev: 1. Read batchGroup
+	var batchGroup models.NftPresaleBatchGroup
+	err = tx.First(&batchGroup, nftPresale.BatchGroupId).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	// @dev: sold number self-add
+	batchGroup.SoldNumber += 1
+	// @dev: 2. Update batchGroup
+	err = tx.Save(&batchGroup).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	// @dev: 3. Update nftPresale
+	err = tx.Save(nftPresale).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit().Error
+}
+
 // @dev: Process
 
 func ProcessNftPresaleStateBoughtNotPayService(nftPresale *models.NftPresale) error {
@@ -551,7 +613,7 @@ func ProcessNftPresaleStatePaidPendingService(nftPresale *models.NftPresale) err
 	}
 	// @dev: Fee has not been paid
 	if isFeePaid {
-		// @dev: Change state; clear Process Number
+		// @dev: Change state; clear Process Number; sold number self-add
 		err = ChangeNftPresaleStateAndUpdatePaidSuccessTimeThenClearProcessNumber(nftPresale)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "ChangeNftPresaleStateAndUpdatePaidSuccessTimeThenClearProcessNumber")

@@ -24,22 +24,18 @@ type NftPresale struct {
 	AddrInternalKey string           `json:"addr_internal_key" gorm:"type:varchar(255)"`
 	PayMethod       FeePaymentMethod `json:"pay_method" gorm:"index"`
 	LaunchTime      int              `json:"launch_time"`
-
-	// TODO
-	StartTime int `json:"start_time"`
-	// TODO
-	EndTime int `json:"end_time"`
-
-	BoughtTime      int             `json:"bought_time"`
-	PaidId          int             `json:"paid_id" gorm:"index"`
-	PaidSuccessTime int             `json:"paid_success_time"`
-	SentTime        int             `json:"sent_time"`
-	SentTxid        string          `json:"sent_txid" gorm:"type:varchar(255)"`
-	SentOutpoint    string          `json:"sent_outpoint" gorm:"type:varchar(255)"`
-	SentAddress     string          `json:"sent_address" gorm:"type:varchar(255)"`
-	State           NftPresaleState `json:"state" gorm:"index"`
-	ProcessNumber   int             `json:"process_number"`
-	IsReLaunched    bool            `json:"is_re_launched"`
+	StartTime       int              `json:"start_time"`
+	EndTime         int              `json:"end_time"`
+	BoughtTime      int              `json:"bought_time"`
+	PaidId          int              `json:"paid_id" gorm:"index"`
+	PaidSuccessTime int              `json:"paid_success_time"`
+	SentTime        int              `json:"sent_time"`
+	SentTxid        string           `json:"sent_txid" gorm:"type:varchar(255)"`
+	SentOutpoint    string           `json:"sent_outpoint" gorm:"type:varchar(255)"`
+	SentAddress     string           `json:"sent_address" gorm:"type:varchar(255)"`
+	State           NftPresaleState  `json:"state" gorm:"index"`
+	ProcessNumber   int              `json:"process_number"`
+	IsReLaunched    bool             `json:"is_re_launched"`
 }
 
 type (
@@ -82,14 +78,13 @@ type BuyNftPresaleRequest struct {
 }
 
 type NftPresaleSimplified struct {
-	ID        uint `gorm:"primarykey"`
-	UpdatedAt time.Time
-	AssetId   string `json:"asset_id" gorm:"type:varchar(255);index"`
-	Name      string `json:"name"`
-	AssetType string `json:"asset_type" gorm:"type:varchar(255);index"`
-	Meta      string `json:"meta"`
-	// TODO: Use start time, end time and group info
+	ID              uint `gorm:"primarykey"`
+	UpdatedAt       time.Time
 	BatchGroupId    int              `json:"batch_group_id" gorm:"index"`
+	AssetId         string           `json:"asset_id" gorm:"type:varchar(255);index"`
+	Name            string           `json:"name"`
+	AssetType       string           `json:"asset_type" gorm:"type:varchar(255);index"`
+	Meta            string           `json:"meta"`
 	GroupKey        string           `json:"group_key" gorm:"type:varchar(255);index"`
 	Amount          int              `json:"amount" gorm:"index"`
 	Price           int              `json:"price"`
@@ -102,19 +97,17 @@ type NftPresaleSimplified struct {
 	AddrInternalKey string           `json:"addr_internal_key" gorm:"type:varchar(255)"`
 	PayMethod       FeePaymentMethod `json:"pay_method" gorm:"index"`
 	LaunchTime      int              `json:"launch_time"`
-	// TODO
-	StartTime int `json:"start_time"`
-	// TODO
-	EndTime         int             `json:"end_time"`
-	BoughtTime      int             `json:"bought_time"`
-	PaidId          int             `json:"paid_id" gorm:"index"`
-	PaidSuccessTime int             `json:"paid_success_time"`
-	SentTime        int             `json:"sent_time"`
-	SentTxid        string          `json:"sent_txid" gorm:"type:varchar(255)"`
-	SentOutpoint    string          `json:"sent_outpoint" gorm:"type:varchar(255)"`
-	SentAddress     string          `json:"sent_address" gorm:"type:varchar(255)"`
-	State           NftPresaleState `json:"state" gorm:"index"`
-	ProcessNumber   int             `json:"process_number"`
-	IsReLaunched    bool            `json:"is_re_launched"`
-	MetaStr         string          `json:"meta_str"`
+	StartTime       int              `json:"start_time"`
+	EndTime         int              `json:"end_time"`
+	BoughtTime      int              `json:"bought_time"`
+	PaidId          int              `json:"paid_id" gorm:"index"`
+	PaidSuccessTime int              `json:"paid_success_time"`
+	SentTime        int              `json:"sent_time"`
+	SentTxid        string           `json:"sent_txid" gorm:"type:varchar(255)"`
+	SentOutpoint    string           `json:"sent_outpoint" gorm:"type:varchar(255)"`
+	SentAddress     string           `json:"sent_address" gorm:"type:varchar(255)"`
+	State           NftPresaleState  `json:"state" gorm:"index"`
+	ProcessNumber   int              `json:"process_number"`
+	IsReLaunched    bool             `json:"is_re_launched"`
+	MetaStr         string           `json:"meta_str"`
 }
