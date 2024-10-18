@@ -19,16 +19,22 @@ func ReadNftPresaleWhitelist(id uint) (*models.NftPresaleWhitelist, error) {
 	return &nftPresaleWhitelist, err
 }
 
-func ReadNftPresaleWhitelistByAssetId(assetId string) (*models.NftPresaleWhitelist, error) {
-	var nftPresaleWhitelist models.NftPresaleWhitelist
-	err := middleware.DB.Where("asset_id = ?", assetId).First(&nftPresaleWhitelist).Error
-	return &nftPresaleWhitelist, err
+func ReadNftPresaleWhitelistsByAssetId(assetId string) (*[]models.NftPresaleWhitelist, error) {
+	var nftPresaleWhitelists []models.NftPresaleWhitelist
+	err := middleware.DB.Where("asset_id = ?", assetId).Find(&nftPresaleWhitelists).Error
+	return &nftPresaleWhitelists, err
 }
 
-func ReadNftPresaleWhitelistByBatchGroupId(batchGroupId int) (*models.NftPresaleWhitelist, error) {
-	var nftPresaleWhitelist models.NftPresaleWhitelist
-	err := middleware.DB.Where("batch_group_id = ?", batchGroupId).First(&nftPresaleWhitelist).Error
-	return &nftPresaleWhitelist, err
+func ReadNftPresaleWhitelistsByBatchGroupId(batchGroupId int) (*[]models.NftPresaleWhitelist, error) {
+	var nftPresaleWhitelists []models.NftPresaleWhitelist
+	err := middleware.DB.Where("batch_group_id = ?", batchGroupId).Find(&nftPresaleWhitelists).Error
+	return &nftPresaleWhitelists, err
+}
+
+func ReadNftPresaleWhitelistsByAssetIdOrBatchGroupId(assetId string, batchGroupId int) (*[]models.NftPresaleWhitelist, error) {
+	var nftPresaleWhitelists []models.NftPresaleWhitelist
+	err := middleware.DB.Where("asset_id = ?", assetId).Or("batch_group_id = ?", batchGroupId).Find(&nftPresaleWhitelists).Error
+	return &nftPresaleWhitelists, err
 }
 
 func ReadAllNftPresaleWhitelists() (*[]models.NftPresaleWhitelist, error) {

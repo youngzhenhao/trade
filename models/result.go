@@ -207,6 +207,7 @@ const (
 	ReSetFailOrCanceledNftPresaleErr
 	GetAccountAssetBalanceUserHoldTotalAmountErr
 	ProcessNftPresaleBatchGroupLaunchRequestAndCreateErr
+	AddWhitelistsByRequestsErr
 )
 
 // Err type:CustodyAccount

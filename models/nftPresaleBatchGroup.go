@@ -19,7 +19,8 @@ type NftPresaleBatchGroup struct {
 }
 
 type NftPresaleBatchGroupSetRequest struct {
-	GroupKey  string `json:"group_key" gorm:"type:varchar(255);index"`
+	GroupKey string `json:"group_key" gorm:"type:varchar(255);index"`
+	// not been used
 	Supply    uint   `json:"supply"`
 	StartTime string `json:"start_time"`
 	EndTime   string `json:"end_time"`

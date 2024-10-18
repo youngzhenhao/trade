@@ -66,6 +66,7 @@ func (n NftPresaleState) String() string {
 }
 
 type NftPresaleSetRequest struct {
+	// not been used
 	BatchGroupId int    `json:"batch_group_id" gorm:"index"`
 	AssetId      string `json:"asset_id"`
 	Price        int    `json:"price"`
@@ -110,4 +111,5 @@ type NftPresaleSimplified struct {
 	ProcessNumber   int              `json:"process_number"`
 	IsReLaunched    bool             `json:"is_re_launched"`
 	MetaStr         string           `json:"meta_str"`
+	Whitelist       *[]string        `json:"whitelist" `
 }
