@@ -96,18 +96,18 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 		}
 		return ServiceError
 	}
-
+	Invoice := InvoiceLocked
 	// update user account record
 	balanceBill := models.Balance{
 		AccountId:   usr.Account.ID,
 		BillType:    models.BiLLTypeLock,
 		Away:        models.AWAY_OUT,
 		Amount:      amount,
-		Unit:        models.UNIT_SATOSHIS,
+		Unit:        models.UNIT_ASSET_NORMAL,
 		ServerFee:   0,
 		AssetId:     &assetId,
-		Invoice:     &lockedId,
-		PaymentHash: nil,
+		Invoice:     &Invoice,
+		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
@@ -169,17 +169,18 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 		return ServiceError
 	}
 
+	Invoice := InvoiceUnlocked
 	// update user account record
 	balanceBill := models.Balance{
 		AccountId:   usr.Account.ID,
 		BillType:    models.BiLLTypeLock,
 		Away:        models.AWAY_IN,
 		Amount:      amount,
-		Unit:        models.UNIT_SATOSHIS,
+		Unit:        models.UNIT_ASSET_NORMAL,
 		ServerFee:   0,
 		AssetId:     &assetId,
-		Invoice:     &lockedId,
-		PaymentHash: nil,
+		Invoice:     &Invoice,
+		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
@@ -267,17 +268,22 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 		return ServiceError
 	}
 
+	invoice := InvoicePendingOderReceive
+	if usr.User.Username == FeeNpubkey {
+		invoice = InvoicePendingOderAward
+	}
+
 	// update user account record
 	balanceBill := models.Balance{
 		AccountId:   toUser.Account.ID,
 		BillType:    models.BillTypePendingOder,
 		Away:        models.AWAY_IN,
 		Amount:      amount,
-		Unit:        models.UNIT_SATOSHIS,
+		Unit:        models.UNIT_ASSET_NORMAL,
 		ServerFee:   0,
 		AssetId:     &assetId,
-		Invoice:     &lockedId,
-		PaymentHash: nil,
+		Invoice:     &invoice,
+		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
@@ -364,6 +370,10 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 		return ServiceError
 	}
 
+	payInvoice := InvoicePendingOderPay
+	if usr.User.Username == FeeNpubkey {
+		payInvoice = InvoicePendingOderAward
+	}
 	// transfer balance record
 	balanceBill := models.Balance{
 		AccountId:   usr.Account.ID,
@@ -373,8 +383,8 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 		Unit:        models.UNIT_ASSET_NORMAL,
 		ServerFee:   0,
 		AssetId:     &assetId,
-		Invoice:     &lockedId,
-		PaymentHash: nil,
+		Invoice:     &payInvoice,
+		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
@@ -391,6 +401,12 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 
 	//Second tx
 	txRev := middleware.DB.Begin()
+
+	recInvoice := InvoicePendingOderReceive
+	if usr.User.Username == FeeNpubkey {
+		recInvoice = InvoicePendingOderAward
+	}
+
 	// update user account record
 	balanceBillRev := models.Balance{
 		AccountId:   toUser.Account.ID,
@@ -400,8 +416,8 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 		Unit:        models.UNIT_ASSET_NORMAL,
 		ServerFee:   0,
 		AssetId:     &assetId,
-		Invoice:     &lockedId,
-		PaymentHash: nil,
+		Invoice:     &recInvoice,
+		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
 	}
 	if err = txRev.Create(&balanceBillRev).Error; err != nil {

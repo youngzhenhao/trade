@@ -24,6 +24,15 @@ var (
 	RepeatedLockId     = errors.New("RepeatedLockId")
 )
 
+const (
+	InvoiceLocked         = "locked"
+	InvoiceUnlocked       = "unlocked"
+	InvoicePendingOderPay = "pendingOderPay"
+	//InvoicePendingOderPayByLock   = "pendingOderPayByLock"
+	InvoicePendingOderReceive = "pendingOderPayReceive"
+	InvoicePendingOderAward   = "PENDING_ORDER_AWARD"
+)
+
 func GetErrorCode(err error) int {
 	switch {
 	case errors.Is(err, NoEnoughBalance):
@@ -106,6 +115,9 @@ func Unlock(npubkey, lockedId, assetId string, amount float64) error {
 }
 
 func TransferByUnlock(lockedId, npubkey, toNpubkey, assetId string, amount float64) error {
+	if npubkey == FeeNpubkey {
+		npubkey = "admin"
+	}
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
 		return GetAccountError
@@ -133,6 +145,9 @@ func TransferByUnlock(lockedId, npubkey, toNpubkey, assetId string, amount float
 }
 
 func TransferByLock(lockedId, npubkey, toNpubkey, assetId string, amount float64) error {
+	if npubkey == FeeNpubkey {
+		npubkey = "admin"
+	}
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
 		return GetAccountError
