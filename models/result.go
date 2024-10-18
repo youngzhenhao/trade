@@ -208,6 +208,8 @@ const (
 	GetAccountAssetBalanceUserHoldTotalAmountErr
 	ProcessNftPresaleBatchGroupLaunchRequestAndCreateErr
 	AddWhitelistsByRequestsErr
+	GetBatchGroupsErr
+	GetNftPresaleByBatchGroupIdErr
 )
 
 // Err type:CustodyAccount

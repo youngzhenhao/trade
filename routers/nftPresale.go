@@ -15,12 +15,7 @@ func SetupNftPresaleRouter(router *gin.Engine) *gin.Engine {
 		get := nftPresale.Group("/get")
 		{
 			get.GET("/asset_id", handlers.GetNftPresaleByAssetId)
-			// TODO: Get all batch group
-			// TODO: Get selling batch group
-			// TODO: Get not start batch group
-			// TODO: Get end batch group
-
-			// TODO: Get Nft Presales by batchKeyId
+			get.GET("/batch_group_id", handlers.GetNftPresaleByBatchGroupId)
 
 			// @dev: Deprecated
 			{
@@ -30,9 +25,11 @@ func SetupNftPresaleRouter(router *gin.Engine) *gin.Engine {
 				//get.GET("/no_group_key", handlers.GetNftPresaleNoGroupKeyPurchasable)
 			}
 		}
-		// @dev: Deprecated
 		{
-			//query := nftPresale.Group("/query")
+			query := nftPresale.Group("/query")
+			query.GET("/batch_group", handlers.QueryNftPresaleBatchGroup)
+
+			// @dev: Deprecated
 			//{
 			//	query.GET("/group_key", handlers.QueryNftPresaleGroupKeyPurchasable)
 			//}

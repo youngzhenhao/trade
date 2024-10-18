@@ -38,6 +38,10 @@ func ReadNftPresaleByAssetId(assetId string) (*models.NftPresale, error) {
 	return btldb.ReadNftPresaleByAssetId(assetId)
 }
 
+func ReadNftPresaleByBatchGroupId(batchGroupId int) (*[]models.NftPresale, error) {
+	return btldb.ReadNftPresaleByBatchGroupId(batchGroupId)
+}
+
 func ReadNftPresaleByGroupKeyPurchasable(groupKey string) (*[]models.NftPresale, error) {
 	return btldb.ReadNftPresaleByGroupKeyPurchasable(groupKey)
 }
@@ -145,6 +149,10 @@ func ProcessNftPresales(nftPresaleSetRequests *[]models.NftPresaleSetRequest) *[
 // @Description:  This can return purchased nft
 func GetNftPresaleByAssetId(assetId string) (*models.NftPresale, error) {
 	return ReadNftPresaleByAssetId(assetId)
+}
+
+func GetNftPresaleByBatchGroupId(batchGroupId int) (*[]models.NftPresale, error) {
+	return ReadNftPresaleByBatchGroupId(batchGroupId)
 }
 
 func GetNftPresaleByGroupKeyPurchasable(groupKey string) (*[]models.NftPresale, error) {

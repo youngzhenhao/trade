@@ -4,7 +4,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// TODO: Only check white list when processing purchase request
 type NftPresaleWhitelist struct {
 	gorm.Model
 	WhitelistType WhitelistType `json:"whitelist_type" gorm:"index"`
