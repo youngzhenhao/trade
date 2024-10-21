@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"sync"
 	"trade/middleware"
 	cModels "trade/models/custodyModels"
 	caccount "trade/services/custodyAccount/account"
+	"trade/services/custodyAccount/custodyBase/custodyMutex"
 )
 
 const (
@@ -32,6 +34,8 @@ const (
 	InvoicePendingOderReceive = "pendingOderPayReceive"
 	InvoicePendingOderAward   = "PENDING_ORDER_AWARD"
 )
+
+const LockMutexKey = "lockPayment"
 
 func GetErrorCode(err error) int {
 	switch {
@@ -81,6 +85,10 @@ func Lock(npubkey, lockedId, assetId string, amount float64) error {
 	if err != nil {
 		return fmt.Errorf("%w: %s", GetAccountError, err.Error())
 	}
+	mutex := GetLockPaymentMutex(usr.User.ID)
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if assetId != btcId {
 		err := LockAsset(usr, lockedId, assetId, amount)
 		if err != nil {
@@ -100,6 +108,11 @@ func Unlock(npubkey, lockedId, assetId string, amount float64) error {
 	if err != nil {
 		return GetAccountError
 	}
+
+	mutex := GetLockPaymentMutex(usr.User.ID)
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if assetId != btcId {
 		err := UnlockAsset(usr, lockedId, assetId, amount)
 		if err != nil {
@@ -122,6 +135,10 @@ func TransferByUnlock(lockedId, npubkey, toNpubkey, assetId string, amount float
 	if err != nil {
 		return GetAccountError
 	}
+	mutex := GetLockPaymentMutex(usr.User.ID)
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if toNpubkey == FeeNpubkey {
 		toNpubkey = "admin"
 	}
@@ -129,6 +146,9 @@ func TransferByUnlock(lockedId, npubkey, toNpubkey, assetId string, amount float
 	if err != nil {
 		return RevNpubKeyNotFound
 	}
+	mutexTo := GetLockPaymentMutex(toUsr.User.ID)
+	mutexTo.Lock()
+	defer mutexTo.Unlock()
 
 	if assetId != btcId {
 		err := transferAsset(usr, lockedId, assetId, amount, toUsr)
@@ -152,6 +172,10 @@ func TransferByLock(lockedId, npubkey, toNpubkey, assetId string, amount float64
 	if err != nil {
 		return GetAccountError
 	}
+	mutex := GetLockPaymentMutex(usr.User.ID)
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if toNpubkey == FeeNpubkey {
 		toNpubkey = "admin"
 	}
@@ -159,6 +183,10 @@ func TransferByLock(lockedId, npubkey, toNpubkey, assetId string, amount float64
 	if err != nil {
 		return RevNpubKeyNotFound
 	}
+	mutexTo := GetLockPaymentMutex(toUsr.User.ID)
+	mutexTo.Lock()
+	defer mutexTo.Unlock()
+
 	if assetId != btcId {
 		err := transferLockedAsset(usr, lockedId, assetId, amount, toUsr)
 		if err != nil {
@@ -179,4 +207,9 @@ func CheckLockId(lockedId string) error {
 		return nil
 	}
 	return RepeatedLockId
+}
+
+func GetLockPaymentMutex(userId uint) *sync.Mutex {
+	mutexKey := fmt.Sprintf("%s_%d", LockMutexKey, userId)
+	return custodyMutex.GetCustodyMutex(mutexKey)
 }
