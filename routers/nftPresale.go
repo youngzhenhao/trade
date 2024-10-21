@@ -16,11 +16,11 @@ func SetupNftPresaleRouter(router *gin.Engine) *gin.Engine {
 		{
 			get.GET("/asset_id", handlers.GetNftPresaleByAssetId)
 			get.GET("/batch_group_id", handlers.GetNftPresaleByBatchGroupId)
+			get.GET("/user_bought", handlers.GetUserBoughtNftPresale)
 
 			// @dev: Deprecated
 			{
 				//get.GET("/launched", handlers.GetLaunchedNftPresale)
-				//get.GET("/user_bought", handlers.GetUserBoughtNftPresale)
 				//get.GET("/group_key", handlers.GetNftPresaleByGroupKeyPurchasable)
 				//get.GET("/no_group_key", handlers.GetNftPresaleNoGroupKeyPurchasable)
 			}
