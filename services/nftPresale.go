@@ -38,6 +38,10 @@ func ReadNftPresaleByAssetId(assetId string) (*models.NftPresale, error) {
 	return btldb.ReadNftPresaleByAssetId(assetId)
 }
 
+func ReadNftPresaleByBatchGroupId(batchGroupId int) (*[]models.NftPresale, error) {
+	return btldb.ReadNftPresaleByBatchGroupId(batchGroupId)
+}
+
 func ReadNftPresaleByGroupKeyPurchasable(groupKey string) (*[]models.NftPresale, error) {
 	return btldb.ReadNftPresaleByGroupKeyPurchasable(groupKey)
 }
@@ -145,6 +149,10 @@ func ProcessNftPresales(nftPresaleSetRequests *[]models.NftPresaleSetRequest) *[
 // @Description:  This can return purchased nft
 func GetNftPresaleByAssetId(assetId string) (*models.NftPresale, error) {
 	return ReadNftPresaleByAssetId(assetId)
+}
+
+func GetNftPresaleByBatchGroupId(batchGroupId int) (*[]models.NftPresale, error) {
+	return ReadNftPresaleByBatchGroupId(batchGroupId)
 }
 
 func GetNftPresaleByGroupKeyPurchasable(groupKey string) (*[]models.NftPresale, error) {
@@ -315,6 +323,22 @@ func IsPurchasableTimeValid(nftPresale *models.NftPresale) (bool, error) {
 	return isValid, nil
 }
 
+func IsWhitelistPass(nftPresale *models.NftPresale, username string) (bool, error) {
+	whitelists, err := GetNftPresaleWhitelistsByNftPresale(nftPresale)
+	if err != nil {
+		return false, utils.AppendErrorInfo(err, "GetNftPresaleWhitelistsByNftPresale")
+	}
+	if len(*whitelists) == 0 {
+		return false, nil
+	}
+	for _, user := range *whitelists {
+		if user == username {
+			return true, nil
+		}
+	}
+	return false, errors.New("username(" + username + ") not found in Whitelists")
+}
+
 // BuyNftPresale
 // @Description: Buy presale nft
 func BuyNftPresale(userId int, username string, buyNftPresaleRequest models.BuyNftPresaleRequest) error {
@@ -332,6 +356,11 @@ func BuyNftPresale(userId int, username string, buyNftPresaleRequest models.BuyN
 	_, err = IsPurchasableTimeValid(nftPresale)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "IsPurchasableTimeValid")
+	}
+	// @dev: Check whitelist
+	_, err = IsWhitelistPass(nftPresale, username)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "IsWhitelistPass")
 	}
 	// @dev: 2. Check if account balance is enough
 	price := nftPresale.Price
@@ -368,7 +397,7 @@ func BuyNftPresale(userId int, username string, buyNftPresaleRequest models.BuyN
 	return nil
 }
 
-func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale, noMeta bool) *models.NftPresaleSimplified {
+func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale, noMeta bool, noWhitelist bool) *models.NftPresaleSimplified {
 	if nftPresale == nil {
 		return nil
 	}
@@ -384,6 +413,17 @@ func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale, noMeta bool
 	}
 	if assetMeta == nil {
 		assetMeta = &models.AssetMeta{}
+	}
+	var whitelists *[]string
+	if !noWhitelist {
+		whitelists, err = GetNftPresaleWhitelistsByNftPresale(nftPresale)
+		if err != nil {
+			btlLog.PreSale.Error("GetNftPresaleWhitelistsByNftPresale err:%v", err)
+			whitelists = &[]string{}
+		}
+	}
+	if whitelists == nil {
+		whitelists = &[]string{}
 	}
 	return &models.NftPresaleSimplified{
 		ID:              nftPresale.ID,
@@ -418,17 +458,18 @@ func NftPresaleToNftPresaleSimplified(nftPresale *models.NftPresale, noMeta bool
 		ProcessNumber:   nftPresale.ProcessNumber,
 		IsReLaunched:    nftPresale.IsReLaunched,
 		MetaStr:         (*assetMeta).AssetMeta,
+		Whitelist:       whitelists,
 	}
 }
 
-func NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales *[]models.NftPresale, noMeta bool) *[]models.NftPresaleSimplified {
+func NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales *[]models.NftPresale, noMeta bool, noWhitelist bool) *[]models.NftPresaleSimplified {
 	if nftPresales == nil {
 		return nil
 	}
 	var nftPresaleSimplifiedSlice []models.NftPresaleSimplified
 	nftPresaleSimplifiedSlice = make([]models.NftPresaleSimplified, 0)
 	for _, nftPresale := range *nftPresales {
-		nftPresaleSimplifiedSlice = append(nftPresaleSimplifiedSlice, *(NftPresaleToNftPresaleSimplified(&nftPresale, noMeta)))
+		nftPresaleSimplifiedSlice = append(nftPresaleSimplifiedSlice, *(NftPresaleToNftPresaleSimplified(&nftPresale, noMeta, noWhitelist)))
 	}
 	return &nftPresaleSimplifiedSlice
 }

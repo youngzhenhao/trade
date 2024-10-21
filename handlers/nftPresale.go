@@ -39,7 +39,58 @@ func GetNftPresaleByAssetId(c *gin.Context) {
 	if err != nil {
 		btlLog.PreSale.Error("ParseBool err:%v", err)
 	}
-	result := services.NftPresaleToNftPresaleSimplified(nftPresale, noMeta)
+	noWhitelistStr := c.Query("no_whitelist")
+	noWhitelist, err := strconv.ParseBool(noWhitelistStr)
+	if err != nil {
+		btlLog.PreSale.Error("ParseBool err:%v", err)
+	}
+	result := services.NftPresaleToNftPresaleSimplified(nftPresale, noMeta, noWhitelist)
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
+		Data:    result,
+	})
+}
+
+func GetNftPresaleByBatchGroupId(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	_, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	batchGroupIdStr := c.Query("batch_group_id")
+	batchGroupId, err := strconv.Atoi(batchGroupIdStr)
+	if err != nil {
+		btlLog.PreSale.Error("Atoi err:%v", err)
+	}
+	nftPresale, err := services.GetNftPresaleByBatchGroupId(batchGroupId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetNftPresaleByBatchGroupIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	noMetaStr := c.Query("no_meta")
+	noMeta, err := strconv.ParseBool(noMetaStr)
+	if err != nil {
+		btlLog.PreSale.Error("ParseBool err:%v", err)
+	}
+	noWhitelistStr := c.Query("no_whitelist")
+	noWhitelist, err := strconv.ParseBool(noWhitelistStr)
+	if err != nil {
+		btlLog.PreSale.Error("ParseBool err:%v", err)
+	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresale, noMeta, noWhitelist)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
@@ -75,7 +126,12 @@ func GetLaunchedNftPresale(c *gin.Context) {
 	if err != nil {
 		btlLog.PreSale.Error("ParseBool err:%v", err)
 	}
-	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales, noMeta)
+	noWhitelistStr := c.Query("no_whitelist")
+	noWhitelist, err := strconv.ParseBool(noWhitelistStr)
+	if err != nil {
+		btlLog.PreSale.Error("ParseBool err:%v", err)
+	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales, noMeta, noWhitelist)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
@@ -111,7 +167,12 @@ func GetUserBoughtNftPresale(c *gin.Context) {
 	if err != nil {
 		btlLog.PreSale.Error("ParseBool err:%v", err)
 	}
-	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales, noMeta)
+	noWhitelistStr := c.Query("no_whitelist")
+	noWhitelist, err := strconv.ParseBool(noWhitelistStr)
+	if err != nil {
+		btlLog.PreSale.Error("ParseBool err:%v", err)
+	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales, noMeta, noWhitelist)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
@@ -148,7 +209,12 @@ func GetNftPresaleByGroupKeyPurchasable(c *gin.Context) {
 	if err != nil {
 		btlLog.PreSale.Error("ParseBool err:%v", err)
 	}
-	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales, noMeta)
+	noWhitelistStr := c.Query("no_whitelist")
+	noWhitelist, err := strconv.ParseBool(noWhitelistStr)
+	if err != nil {
+		btlLog.PreSale.Error("ParseBool err:%v", err)
+	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales, noMeta, noWhitelist)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
@@ -184,7 +250,12 @@ func GetNftPresaleNoGroupKeyPurchasable(c *gin.Context) {
 	if err != nil {
 		btlLog.PreSale.Error("ParseBool err:%v", err)
 	}
-	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales, noMeta)
+	noWhitelistStr := c.Query("no_whitelist")
+	noWhitelist, err := strconv.ParseBool(noWhitelistStr)
+	if err != nil {
+		btlLog.PreSale.Error("ParseBool err:%v", err)
+	}
+	result := services.NftPresaleSliceToNftPresaleSimplifiedSlice(nftPresales, noMeta, noWhitelist)
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SUCCESS.Error(),
@@ -411,5 +482,41 @@ func LaunchNftPresaleBatchGroup(c *gin.Context) {
 		Error:   "",
 		Code:    models.SUCCESS,
 		Data:    nil,
+	})
+}
+
+func QueryNftPresaleBatchGroup(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	_, err := services.NameToId(username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.NameToIdErr,
+			Data:    nil,
+		})
+		return
+	}
+	stateStr := c.Query("state")
+	state, err := strconv.Atoi(stateStr)
+	if err != nil {
+		btlLog.PreSale.Error("Atoi err:%v", err)
+	}
+	batchGroups, err := services.GetBatchGroups(models.NftPresaleBatchGroupState(state))
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetBatchGroupsErr,
+			Data:    nil,
+		})
+		return
+	}
+	result := services.NftPresaleBatchGroupSliceToNftPresaleBatchGroupSimplifiedSlice(batchGroups)
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
+		Data:    result,
 	})
 }

@@ -3,6 +3,7 @@ package btldb
 import (
 	"trade/middleware"
 	"trade/models"
+	"trade/utils"
 )
 
 func CreateNftPresaleBatchGroup(nftPresaleBatchGroup *models.NftPresaleBatchGroup) error {
@@ -28,6 +29,27 @@ func ReadNftPresaleBatchGroupByGroupKey(groupKey string) (*models.NftPresaleBatc
 func ReadAllNftPresaleBatchGroups() (*[]models.NftPresaleBatchGroup, error) {
 	var nftPresaleBatchGroups []models.NftPresaleBatchGroup
 	err := middleware.DB.Order("start_time desc").Find(&nftPresaleBatchGroups).Error
+	return &nftPresaleBatchGroups, err
+}
+
+func ReadSellingNftPresaleBatchGroups() (*[]models.NftPresaleBatchGroup, error) {
+	var nftPresaleBatchGroups []models.NftPresaleBatchGroup
+	now := utils.GetTimestamp()
+	err := middleware.DB.Where("start_time <= ? AND end_time = ?", now, 0).Or("start_time <= ? AND end_time >= ?", now, now).Order("start_time desc").Find(&nftPresaleBatchGroups).Error
+	return &nftPresaleBatchGroups, err
+}
+
+func ReadNotStartNftPresaleBatchGroups() (*[]models.NftPresaleBatchGroup, error) {
+	var nftPresaleBatchGroups []models.NftPresaleBatchGroup
+	now := utils.GetTimestamp()
+	err := middleware.DB.Where("start_time > ?", now).Order("start_time desc").Find(&nftPresaleBatchGroups).Error
+	return &nftPresaleBatchGroups, err
+}
+
+func ReadEndNftPresaleBatchGroups() (*[]models.NftPresaleBatchGroup, error) {
+	var nftPresaleBatchGroups []models.NftPresaleBatchGroup
+	now := utils.GetTimestamp()
+	err := middleware.DB.Where("end_time BETWEEN ? AND ?", 1, now).Order("start_time desc").Find(&nftPresaleBatchGroups).Error
 	return &nftPresaleBatchGroups, err
 }
 

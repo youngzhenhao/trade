@@ -32,6 +32,34 @@ func ReadAllNftPresaleBatchGroups() (*[]models.NftPresaleBatchGroup, error) {
 	return btldb.ReadAllNftPresaleBatchGroups()
 }
 
+func ReadSellingNftPresaleBatchGroups() (*[]models.NftPresaleBatchGroup, error) {
+	return btldb.ReadSellingNftPresaleBatchGroups()
+}
+
+func ReadNotStartNftPresaleBatchGroups() (*[]models.NftPresaleBatchGroup, error) {
+	return btldb.ReadNotStartNftPresaleBatchGroups()
+}
+
+func ReadEndNftPresaleBatchGroups() (*[]models.NftPresaleBatchGroup, error) {
+	return btldb.ReadEndNftPresaleBatchGroups()
+}
+
+func GetAllNftPresaleBatchGroup() (*[]models.NftPresaleBatchGroup, error) {
+	return ReadAllNftPresaleBatchGroups()
+}
+
+func GetSellingNftPresaleBatchGroups() (*[]models.NftPresaleBatchGroup, error) {
+	return ReadSellingNftPresaleBatchGroups()
+}
+
+func GetNotStartNftPresaleBatchGroups() (*[]models.NftPresaleBatchGroup, error) {
+	return ReadNotStartNftPresaleBatchGroups()
+}
+
+func GetEndNftPresaleBatchGroups() (*[]models.NftPresaleBatchGroup, error) {
+	return ReadEndNftPresaleBatchGroups()
+}
+
 func UpdateNftPresaleBatchGroup(nftPresaleBatchGroup *models.NftPresaleBatchGroup) error {
 	return btldb.UpdateNftPresaleBatchGroup(nftPresaleBatchGroup)
 }
@@ -218,23 +246,27 @@ func ProcessNftPresaleBatchGroupLaunchRequestAndCreate(nftPresaleBatchGroupLaunc
 		}
 	}
 	// @dev: startTime and endTime
-	if batchGroupSetRequest.StartTime == "" {
-		return errors.New("StartTime is empty")
+	{
+		//if batchGroupSetRequest.StartTime == "" {
+		//	return errors.New("StartTime is empty")
+		//}
+		//var startTime int
+		//start, err := utils.DateTimeStringToTime(batchGroupSetRequest.StartTime)
+		//if err != nil {
+		//	return utils.AppendErrorInfo(err, "DateTimeStringToTime")
+		//}
+		//startTime = int(uint(start.Unix()))
+		//var endTime int
+		//if batchGroupSetRequest.EndTime != "" {
+		//	end, err := utils.DateTimeStringToTime(batchGroupSetRequest.EndTime)
+		//	if err != nil {
+		//		return utils.AppendErrorInfo(err, "DateTimeStringToTime")
+		//	}
+		//	endTime = int(end.Unix())
+		//}
 	}
-	var startTime int
-	start, err := utils.DateTimeStringToTime(batchGroupSetRequest.StartTime)
-	if err != nil {
-		return utils.AppendErrorInfo(err, "DateTimeStringToTime")
-	}
-	startTime = int(uint(start.Unix()))
-	var endTime int
-	if batchGroupSetRequest.EndTime != "" {
-		end, err := utils.DateTimeStringToTime(batchGroupSetRequest.EndTime)
-		if err != nil {
-			return utils.AppendErrorInfo(err, "DateTimeStringToTime")
-		}
-		endTime = int(end.Unix())
-	}
+	startTime := batchGroupSetRequest.StartTime
+	endTime := batchGroupSetRequest.EndTime
 	if startTime == 0 {
 		return errors.New("start time is invalid(" + strconv.Itoa(startTime) + ")")
 	}
@@ -288,4 +320,74 @@ func ProcessNftPresaleBatchGroupLaunchRequestAndCreate(nftPresaleBatchGroupLaunc
 		return utils.AppendErrorInfo(err, "CreateBatchGroupAndNftPresales")
 	}
 	return nil
+}
+
+// GetBatchGroups
+// @Description: Get batch groups
+func GetBatchGroups(state models.NftPresaleBatchGroupState) (*[]models.NftPresaleBatchGroup, error) {
+	var nftPresaleBatchGroups *[]models.NftPresaleBatchGroup
+	var err error
+	switch state {
+	case models.NftPresaleBatchGroupStateAll:
+		nftPresaleBatchGroups, err = GetAllNftPresaleBatchGroup()
+		if err != nil {
+			return nil, utils.AppendErrorInfo(err, "GetAllNftPresaleBatchGroup")
+		}
+	case models.NftPresaleBatchGroupStateSelling:
+		nftPresaleBatchGroups, err = GetSellingNftPresaleBatchGroups()
+		if err != nil {
+			return nil, utils.AppendErrorInfo(err, "GetSellingNftPresaleBatchGroups")
+		}
+	case models.NftPresaleBatchGroupStateNotStart:
+		nftPresaleBatchGroups, err = GetNotStartNftPresaleBatchGroups()
+		if err != nil {
+			return nil, utils.AppendErrorInfo(err, "GetNotStartNftPresaleBatchGroups")
+		}
+	case models.NftPresaleBatchGroupStateEnd:
+		nftPresaleBatchGroups, err = GetEndNftPresaleBatchGroups()
+		if err != nil {
+			return nil, utils.AppendErrorInfo(err, "GetEndNftPresaleBatchGroups")
+		}
+	default:
+		nftPresaleBatchGroups, err = GetAllNftPresaleBatchGroup()
+		if err != nil {
+			return nil, utils.AppendErrorInfo(err, "GetAllNftPresaleBatchGroup")
+		}
+	}
+	if nftPresaleBatchGroups == nil {
+		nftPresaleBatchGroups = &[]models.NftPresaleBatchGroup{}
+	}
+	return nftPresaleBatchGroups, nil
+}
+
+// @dev: Simplify
+
+func NftPresaleBatchGroupToNftPresaleBatchGroupSimplified(nftPresaleBatchGroup *models.NftPresaleBatchGroup) *models.NftPresaleBatchGroupSimplified {
+	if nftPresaleBatchGroup == nil {
+		return nil
+	}
+	return &models.NftPresaleBatchGroupSimplified{
+		ID:           nftPresaleBatchGroup.ID,
+		UpdatedAt:    nftPresaleBatchGroup.UpdatedAt,
+		GroupKey:     nftPresaleBatchGroup.GroupKey,
+		GroupName:    nftPresaleBatchGroup.GroupName,
+		SoldNumber:   nftPresaleBatchGroup.SoldNumber,
+		Supply:       nftPresaleBatchGroup.Supply,
+		LowestPrice:  nftPresaleBatchGroup.LowestPrice,
+		HighestPrice: nftPresaleBatchGroup.HighestPrice,
+		StartTime:    nftPresaleBatchGroup.StartTime,
+		EndTime:      nftPresaleBatchGroup.EndTime,
+		Info:         nftPresaleBatchGroup.Info,
+	}
+}
+
+func NftPresaleBatchGroupSliceToNftPresaleBatchGroupSimplifiedSlice(nftPresaleBatchGroups *[]models.NftPresaleBatchGroup) *[]models.NftPresaleBatchGroupSimplified {
+	if nftPresaleBatchGroups == nil {
+		return nil
+	}
+	var nftPresaleBatchGroupSimplifiedSlice []models.NftPresaleBatchGroupSimplified
+	for _, nftPresaleBatchGroup := range *nftPresaleBatchGroups {
+		nftPresaleBatchGroupSimplifiedSlice = append(nftPresaleBatchGroupSimplifiedSlice, *(NftPresaleBatchGroupToNftPresaleBatchGroupSimplified(&nftPresaleBatchGroup)))
+	}
+	return &nftPresaleBatchGroupSimplifiedSlice
 }

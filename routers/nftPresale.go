@@ -15,14 +15,24 @@ func SetupNftPresaleRouter(router *gin.Engine) *gin.Engine {
 		get := nftPresale.Group("/get")
 		{
 			get.GET("/asset_id", handlers.GetNftPresaleByAssetId)
-			get.GET("/launched", handlers.GetLaunchedNftPresale)
+			get.GET("/batch_group_id", handlers.GetNftPresaleByBatchGroupId)
 			get.GET("/user_bought", handlers.GetUserBoughtNftPresale)
-			get.GET("/group_key", handlers.GetNftPresaleByGroupKeyPurchasable)
-			get.GET("/no_group_key", handlers.GetNftPresaleNoGroupKeyPurchasable)
+
+			// @dev: Deprecated
+			{
+				//get.GET("/launched", handlers.GetLaunchedNftPresale)
+				//get.GET("/group_key", handlers.GetNftPresaleByGroupKeyPurchasable)
+				//get.GET("/no_group_key", handlers.GetNftPresaleNoGroupKeyPurchasable)
+			}
 		}
-		query := nftPresale.Group("/query")
 		{
-			query.GET("/group_key", handlers.QueryNftPresaleGroupKeyPurchasable)
+			query := nftPresale.Group("/query")
+			query.GET("/batch_group", handlers.QueryNftPresaleBatchGroup)
+
+			// @dev: Deprecated
+			//{
+			//	query.GET("/group_key", handlers.QueryNftPresaleGroupKeyPurchasable)
+			//}
 		}
 		nftPresale.POST("/buy", handlers.BuyNftPresale)
 	}
@@ -33,7 +43,9 @@ func SetupNftPresaleRouter(router *gin.Engine) *gin.Engine {
 	}))
 	{
 		authorized.POST("/launch", handlers.LaunchNftPresaleBatchGroup)
-		// @dev: Deprecate temporarily
+		authorized.POST("/add_whitelists", handlers.AddNftPresaleWhitelists)
+
+		// @dev: Deprecated temporarily
 		{
 			//authorized.POST("/set", handlers.SetNftPresale)
 			//authorized.POST("/set/batch", handlers.SetNftPresales)
