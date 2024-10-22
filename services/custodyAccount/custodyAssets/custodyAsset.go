@@ -32,6 +32,9 @@ func NewAssetEvent(UserName string, AssetId string) (*AssetEvent, error) {
 	e.UserInfo, err = caccount.GetUserInfo(UserName)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("%w: %s", caccount.CustodyAccountGetErr, "userName不存在")
+		}
 		return nil, caccount.CustodyAccountGetErr
 	}
 	e.AssetId = &AssetId

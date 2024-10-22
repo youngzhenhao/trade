@@ -17,6 +17,7 @@ import (
 	"trade/services/custodyAccount/custodyAssets"
 	"trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
+	"trade/services/custodyAccount/custodyBase/custodyMutex"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -70,6 +71,9 @@ func SendAsset(c *gin.Context) {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
+	locker := custodyMutex.GetCustodyMutex(userName)
+	locker.Lock()
+	defer locker.Unlock()
 	err = e.SendPayment(&custodyAssets.AssetPacket{
 		PayReq: apply.Address,
 	})

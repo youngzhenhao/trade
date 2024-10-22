@@ -7,6 +7,7 @@ import (
 	"trade/models"
 	"trade/services/custodyAccount"
 	"trade/services/custodyAccount/btc_channel"
+	"trade/services/custodyAccount/custodyBase/custodyMutex"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -70,6 +71,10 @@ func PayInvoice(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
 		return
 	}
+	locker := custodyMutex.GetCustodyMutex(userName)
+	locker.Lock()
+	defer locker.Unlock()
+
 	//获取支付发票请求
 	pay := custodyAccount.PayInvoiceRequest{}
 	if err := c.ShouldBindJSON(&pay); err != nil {

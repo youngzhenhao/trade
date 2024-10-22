@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lightningnetwork/lnd/lnrpc"
+	"gorm.io/gorm"
 	"path/filepath"
 	"time"
 	"trade/btlLog"
@@ -31,6 +32,9 @@ func NewBtcChannelEvent(UserName string) (*BtcChannelEvent, error) {
 	e.UserInfo, err = caccount.GetUserInfo(UserName)
 	if err != nil {
 		btlLog.CUST.Warning("%s,UserName:%s", err.Error(), UserName)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("%w: %s", caccount.CustodyAccountGetErr, "userName不存在")
+		}
 		return nil, caccount.CustodyAccountGetErr
 	}
 	btlLog.CUST.Info("UserName:%s", UserName)
@@ -44,6 +48,9 @@ func NewBtcChannelEventByUserId(UserId uint) (*BtcChannelEvent, error) {
 	e.UserInfo, err = caccount.GetUserInfoById(UserId)
 	if err != nil {
 		btlLog.CUST.Error("%s,UserName:%s", err.Error(), UserId)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("%w: %s", caccount.CustodyAccountGetErr, "userName不存在")
+		}
 		return nil, caccount.CustodyAccountGetErr
 	}
 	btlLog.CUST.Info("UserName:%s", UserId)
