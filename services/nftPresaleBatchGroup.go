@@ -268,7 +268,10 @@ func ProcessNftPresaleBatchGroupLaunchRequestAndCreate(nftPresaleBatchGroupLaunc
 	startTime := batchGroupSetRequest.StartTime
 	endTime := batchGroupSetRequest.EndTime
 	if startTime == 0 {
-		return errors.New("start time is invalid(" + strconv.Itoa(startTime) + ")")
+		// @dev: Do not return error, but set to now timestamp
+		startTime = utils.GetTimestamp()
+		err = errors.New("start time is invalid(" + strconv.Itoa(startTime) + ")")
+		btlLog.PreSale.Info("%v, it has been set to now", err)
 	}
 	// @dev: Validate startTime and endTime
 	err = ValidateStartAndEndTimeForNftPresale(startTime, endTime)

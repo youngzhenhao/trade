@@ -328,8 +328,9 @@ func IsWhitelistPass(nftPresale *models.NftPresale, username string) (bool, erro
 	if err != nil {
 		return false, utils.AppendErrorInfo(err, "GetNftPresaleWhitelistsByNftPresale")
 	}
-	if len(*whitelists) == 0 {
-		return false, nil
+	if whitelists == nil || len(*whitelists) == 0 {
+		// @dev: no white list, everyone can buy
+		return true, nil
 	}
 	for _, user := range *whitelists {
 		if user == username {
