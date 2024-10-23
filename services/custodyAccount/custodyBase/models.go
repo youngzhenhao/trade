@@ -48,6 +48,7 @@ type PaymentResponse struct {
 	Fee         uint64              `json:"fee"`
 	//deprecated
 	Invoice *string `json:"invoice"`
+	//deprecated
 	Address *string `json:"addr"`
 }
 
