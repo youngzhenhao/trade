@@ -186,6 +186,8 @@ func LockPaymentToPaymentList(usr *account.UserInfo, assetId string) (*cBase.Pay
 		r.BillType = models.LockedTransfer
 		r.Away = models.AWAY_OUT
 		r.Invoice = &v.LockId
+		r.Address = &v.LockId
+		r.Target = &v.LockId
 		r.PaymentHash = &v.LockId
 		r.Amount = v.Amount
 		r.AssetId = &v.AssetId
