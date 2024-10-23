@@ -122,17 +122,27 @@ func QueryPayment(c *gin.Context) {
 	//获取交易查询请求
 	query := custodyAccount.PaymentRequest{}
 	if err := c.ShouldBindJSON(&query); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	if query.AssetId != "00" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "asset_id类型错误"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "asset_id类型错误"})
 		return
 	}
-	p, _ := e.GetTransactionHistory()
-	if s, ok := p.(*btc_channel.BtcPaymentList); ok {
-		c.JSON(http.StatusOK, gin.H{"payments": s.PaymentList})
+	p, err := e.GetTransactionHistory()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
+
+	p2, err := custodyAccount.LockPaymentToPaymentList(e.UserInfo, "00")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	result := custodyAccount.MergePaymentList(p, p2)
+
+	c.JSON(http.StatusOK, gin.H{"payments": result.PaymentList})
 }
 
 // DecodeInvoice  解析发票

@@ -18,23 +18,26 @@ func SetupCustodyAccountRouter(router *gin.Engine) *gin.Engine {
 		{
 			Invoice.POST("/apply", handlers.ApplyInvoice)
 			Invoice.POST("/pay", handlers.PayInvoice)
-			Invoice.POST("/querybalance", handlers.QueryBalance)
-			Invoice.POST("/queryinvoice", handlers.QueryInvoice)
 			Invoice.POST("/querypayment", handlers.QueryPayment)
+			Invoice.POST("/queryinvoice", handlers.QueryInvoice)
 			Invoice.POST("/decodeinvoice", handlers.DecodeInvoice)
-
+			//deprecated
+			Invoice.POST("/querybalance", handlers.QueryBalance)
 		}
 		Asset := custody.Group("/Asset")
 		{
 			Asset.POST("/apply", handlers.ApplyAddress)
 			Asset.POST("/send", handlers.SendAsset)
-			Asset.POST("/queryasset", handlers.QueryAsset)
 			Asset.POST("/queryassets", handlers.QueryAssets)
-			Asset.POST("/queryaddress", handlers.QueryAddress)
-			Asset.POST("/queryaddresses", handlers.QueryAddresses)
 			Asset.POST("/querypayment", handlers.QueryAssetPayment)
-			Asset.POST("/querypayments", handlers.QueryAssetPayments)
+			Asset.POST("/queryaddress", handlers.QueryAddress)
 			Asset.POST("/decodeaddr", handlers.DecodeAddress)
+			//back
+			Asset.POST("/querypayments", handlers.QueryAssetPayments)
+			Asset.POST("/queryaddresses", handlers.QueryAddresses)
+			//deprecated
+			Asset.POST("/queryasset", handlers.QueryAsset)
+
 		}
 	}
 	return router

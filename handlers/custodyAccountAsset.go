@@ -14,6 +14,7 @@ import (
 	"trade/btlLog"
 	"trade/models"
 	"trade/services/btldb"
+	"trade/services/custodyAccount"
 	"trade/services/custodyAccount/custodyAssets"
 	"trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
@@ -213,14 +214,21 @@ func QueryAssetPayment(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, models.MakeJsonErrorResultForHttp(models.DefaultErr, "用户不存在", nil))
 		return
 	}
-	// 查询账户发票
-	payment, err := e.GetTransactionHistoryByAsset()
+	// 查询账户交易记录
+	p, err := e.GetTransactionHistoryByAsset()
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
-	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", payment))
+	p2, err := custodyAccount.LockPaymentToPaymentList(e.UserInfo, *e.AssetId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	result := custodyAccount.MergePaymentList(p, p2)
+
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", result))
 }
 
 func QueryAssetPayments(c *gin.Context) {

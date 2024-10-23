@@ -3,6 +3,7 @@ package custodyBase
 import (
 	"errors"
 	"time"
+	"trade/models"
 )
 
 const (
@@ -33,4 +34,24 @@ var (
 type Balance struct {
 	AssetId string `json:"assetId"`
 	Amount  int64  `json:"amount"`
+}
+
+type PaymentResponse struct {
+	Timestamp   int64               `json:"timestamp"`
+	BillType    models.BalanceType  `json:"bill_type"`
+	Away        models.BalanceAway  `json:"away"`
+	Invoice     *string             `json:"addr"`
+	PaymentHash *string             `json:"payment_hash"`
+	Amount      float64             `json:"amount"`
+	AssetId     *string             `json:"asset_id"`
+	State       models.BalanceState `json:"state"`
+	Fee         uint64              `json:"fee"`
+}
+
+type PaymentList struct {
+	PaymentList []PaymentResponse `json:"payments"`
+}
+
+func (r *PaymentList) GetTxString() string {
+	return ""
 }

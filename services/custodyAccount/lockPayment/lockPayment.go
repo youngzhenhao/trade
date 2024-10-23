@@ -213,3 +213,19 @@ func GetLockPaymentMutex(userId uint) *sync.Mutex {
 	mutexKey := fmt.Sprintf("%s_%d", LockMutexKey, userId)
 	return custodyMutex.GetCustodyMutex(mutexKey)
 }
+
+// ListTransferBTC 列出转账记录
+func ListTransferBTC(usr *caccount.UserInfo, assetId string, page, pageSize int) ([]cModels.LockBillExt, error) {
+	var err error
+	var billExts []cModels.LockBillExt
+	offset := (page - 1) * pageSize
+	limit := pageSize
+	tx := middleware.DB
+	if err = tx.Where("pay_acc_id =? AND asset_id = ? AND pay_acc_type =? AND status =?", usr.LockAccount.ID, assetId, cModels.LockBillExtPayAccTypeLock, cModels.LockBillExtStatusSuccess).Order("id desc").Offset(offset).Limit(limit).Find(&billExts).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, ServiceError
+	}
+	return billExts, nil
+}

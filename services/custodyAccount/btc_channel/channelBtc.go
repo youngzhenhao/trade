@@ -286,7 +286,7 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	}
 }
 
-func (e *BtcChannelEvent) GetTransactionHistory() (cBase.TxHistory, error) {
+func (e *BtcChannelEvent) GetTransactionHistory() (*cBase.PaymentList, error) {
 	params := btldb.QueryParams{
 		"AccountId": e.UserInfo.Account.ID,
 		"AssetId":   "00",
@@ -296,11 +296,11 @@ func (e *BtcChannelEvent) GetTransactionHistory() (cBase.TxHistory, error) {
 		btlLog.CUST.Error(err.Error())
 		return nil, fmt.Errorf("query payment error")
 	}
-	var results BtcPaymentList
+	var results cBase.PaymentList
 	if len(a) > 0 {
 		for i := len(a) - 1; i >= 0; i-- {
 			v := a[i]
-			r := PaymentResponse{}
+			r := cBase.PaymentResponse{}
 			r.Timestamp = v.CreatedAt.Unix()
 			r.BillType = v.BillType
 			r.Away = v.Away

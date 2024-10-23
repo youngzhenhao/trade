@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"log"
+	"sort"
 	"trade/btlLog"
 	"trade/config"
 	"trade/models"
@@ -13,6 +14,8 @@ import (
 	"trade/services/custodyAccount/account"
 	"trade/services/custodyAccount/btc_channel"
 	"trade/services/custodyAccount/custodyAssets"
+	cBase "trade/services/custodyAccount/custodyBase"
+	"trade/services/custodyAccount/lockPayment"
 )
 
 var (
@@ -168,4 +171,36 @@ func GetAccountBalance(userId uint) (int64, error) {
 		return 0, err
 	}
 	return balance[0].Amount, nil
+}
+
+func LockPaymentToPaymentList(usr *account.UserInfo, assetId string) (*cBase.PaymentList, error) {
+	btc, err := lockPayment.ListTransferBTC(usr, assetId, 1, 500)
+	if err != nil {
+		return nil, err
+	}
+	var list cBase.PaymentList
+	for i := range btc {
+		v := btc[i]
+		r := cBase.PaymentResponse{}
+		r.Timestamp = v.CreatedAt.Unix()
+		r.BillType = models.LockedTransfer
+		r.Away = models.AWAY_OUT
+		r.Invoice = &v.LockId
+		r.PaymentHash = &v.LockId
+		r.Amount = v.Amount
+		r.AssetId = &v.AssetId
+		r.State = models.STATE_SUCCESS
+		r.Fee = 0
+		list.PaymentList = append(list.PaymentList, r)
+	}
+	return &list, nil
+}
+
+// MergePaymentList 合并两个paymentlist，并更具时间排序
+func MergePaymentList(list1 *cBase.PaymentList, list2 *cBase.PaymentList) *cBase.PaymentList {
+	list1.PaymentList = append(list1.PaymentList, list2.PaymentList...)
+	sort.Slice(list1.PaymentList, func(i, j int) bool {
+		return list1.PaymentList[i].Timestamp > list1.PaymentList[j].Timestamp
+	})
+	return list1
 }

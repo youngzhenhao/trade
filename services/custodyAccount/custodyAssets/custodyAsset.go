@@ -310,21 +310,21 @@ func (e *AssetEvent) QueryPayReqs() ([]*models.Invoice, error) {
 	return a, nil
 }
 
-func (e *AssetEvent) GetTransactionHistory() (cBase.TxHistory, error) {
+func (e *AssetEvent) GetTransactionHistory() (*cBase.PaymentList, error) {
 	var a []models.Balance
 	err := middleware.DB.Where("account_id = ?", e.UserInfo.Account.ID).Where("asset_id != ?", "00").Find(&a).Error
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return nil, err
 	}
-	var results BtcPaymentList
+	var results cBase.PaymentList
 	if len(a) > 0 {
 		for i := len(a) - 1; i >= 0; i-- {
 			if a[i].State == models.STATE_FAILED {
 				continue
 			}
 			v := a[i]
-			r := PaymentResponse{}
+			r := cBase.PaymentResponse{}
 			r.Timestamp = v.CreatedAt.Unix()
 			r.BillType = v.BillType
 			r.Away = v.Away
@@ -344,21 +344,21 @@ func (e *AssetEvent) GetTransactionHistory() (cBase.TxHistory, error) {
 	return &results, nil
 }
 
-func (e *AssetEvent) GetTransactionHistoryByAsset() (cBase.TxHistory, error) {
+func (e *AssetEvent) GetTransactionHistoryByAsset() (*cBase.PaymentList, error) {
 	var a []models.Balance
 	err := middleware.DB.Where("account_id = ?", e.UserInfo.Account.ID).Where("asset_id = ?", *e.AssetId).Find(&a).Error
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return nil, err
 	}
-	var results BtcPaymentList
+	var results cBase.PaymentList
 	if len(a) > 0 {
 		for i := len(a) - 1; i >= 0; i-- {
 			if a[i].State == models.STATE_FAILED {
 				continue
 			}
 			v := a[i]
-			r := PaymentResponse{}
+			r := cBase.PaymentResponse{}
 			r.Timestamp = v.CreatedAt.Unix()
 			r.BillType = v.BillType
 			r.Away = v.Away
