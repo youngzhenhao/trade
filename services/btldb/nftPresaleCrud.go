@@ -27,7 +27,7 @@ func ReadNftPresaleByAssetId(assetId string) (*models.NftPresale, error) {
 
 func ReadNftPresaleByBatchGroupId(batchGroupId int) (*[]models.NftPresale, error) {
 	var nftPresales []models.NftPresale
-	err := middleware.DB.Where("batch_group_id = ? AND state = ?", batchGroupId, models.NftPresaleStateLaunched).Order("launch_time desc").Find(&nftPresales).Error
+	err := middleware.DB.Where("batch_group_id = ?", batchGroupId).Order("launch_time desc").Find(&nftPresales).Error
 	return &nftPresales, err
 }
 
