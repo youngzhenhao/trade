@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	FeeNpubkey = "btlong"
+	FeeNpubkey = "bitlong"
 	btcId      = "00"
 )
 
