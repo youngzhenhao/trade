@@ -22,6 +22,9 @@ func GetUserInfo(username string) (*UserInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
 	}
+	if user.Status == 1 {
+		return nil, errors.New("用户已被冻结")
+	}
 	// 获取Lit账户信息
 	account := &models.Account{}
 	account, err = GetAccountByUserName(username)
