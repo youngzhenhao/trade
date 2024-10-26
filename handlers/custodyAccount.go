@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 	"trade/models"
 	"trade/services/custodyAccount"
 	"trade/services/custodyAccount/btc_channel"
@@ -66,6 +67,10 @@ func QueryInvoice(c *gin.Context) {
 func PayInvoice(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
+	if len(userName) != 92 || !strings.HasPrefix(userName, "npub") {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "当前服务调用失败，请稍后再试", nil))
+		return
+	}
 	e, err := btc_channel.NewBtcChannelEvent(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
