@@ -75,6 +75,12 @@ func SendAsset(c *gin.Context) {
 	locker := custodyMutex.GetCustodyMutex(userName)
 	locker.Lock()
 	defer locker.Unlock()
+	var disable bool
+	disable = true
+	if disable {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "当前服务暂时不可用，请稍后再试", nil))
+		return
+	}
 	err = e.SendPayment(&custodyAssets.AssetPacket{
 		PayReq: apply.Address,
 	})
