@@ -68,7 +68,7 @@ func PayInvoice(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
 	if len(userName) != 92 || !strings.HasPrefix(userName, "npub") {
-		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "当前服务调用失败，请稍后再试", nil))
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "当前服务调用失败，请稍后再试"})
 		return
 	}
 	e, err := btc_channel.NewBtcChannelEvent(userName)
