@@ -219,8 +219,27 @@ func pkcs7Unpad(data []byte) ([]byte, error) {
 }
 
 func ValidateUserAndGenerateToken(creds models.User) (string, error) {
+	var (
+		username = creds.Username
+		err      error
+	)
+
+	// 检查是否是加密数据
+	if isEncrypted(creds.Username) {
+		// 解密用户名
+		username, err = DecryptAndRestore(creds.Username)
+		if err != nil {
+			return "", fmt.Errorf("username decryption failed: %v", err)
+		}
+
+	}
+	//todo 如果手机端都更新到最新代码以下代码需要放开
+	//else{
+	//	return "", fmt.Errorf("user login failed")
+	//}
+
 	var user models.User
-	result := middleware.DB.Where("user_name = ?", creds.Username).First(&user)
+	result := middleware.DB.Where("user_name = ?", username).First(&user)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return "", errors.New("invalid credentials")
 	}
@@ -238,7 +257,7 @@ func ValidateUserAndGenerateToken(creds models.User) (string, error) {
 			}
 		}
 	}
-	token, err := middleware.GenerateToken(creds.Username)
+	token, err := middleware.GenerateToken(username)
 	if err != nil {
 		return "", err
 	}
