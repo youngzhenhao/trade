@@ -148,7 +148,10 @@ func DecryptAndRestore(encryptedData string) (string, error) {
 		return "", err
 	}
 
-	restored := removeRandomValues(decrypted)
+	restored, err := restorePublicKey(decrypted)
+	if err != nil {
+		return "", err
+	}
 	return restored, nil
 }
 
@@ -197,19 +200,24 @@ func aesDecrypt(encryptedHex string) (string, error) {
 }
 
 // removeRandomValues 移除随机值
-func removeRandomValues(input string) string {
-	parts := strings.Split(input, "_")
-	var cleaned strings.Builder
+func restorePublicKey(modifiedKey string) (string, error) {
+	// 按照 "_" 分割字符串
+	parts := strings.Split(modifiedKey, "_")
 
-	for _, part := range parts {
-		if len(part) >= 12 {
-			cleaned.WriteString(part[:12])
-		} else {
-			cleaned.WriteString(part)
+	// 创建一个 strings.Builder 来存储结果
+	var result strings.Builder
+
+	// 遍历所有部分，删除随机值部分
+	for i := 0; i < len(parts); i++ {
+		part := parts[i]
+		// 移除可能附加的随机值
+		if i > 0 && len(part) > 8 {
+			part = part[8:] // 跳过8位随机值
 		}
+		result.WriteString(part)
 	}
 
-	return cleaned.String()
+	return result.String(), nil
 }
 
 // pkcs7Unpad 移除PKCS7填充
