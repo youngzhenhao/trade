@@ -52,7 +52,7 @@ func verifyChecksumWithSalt(originalString, checksum string) bool {
 	return checksum == expectedChecksum
 }
 
-func Login(creds models.User) (string, error) {
+func Login(creds *models.User) (string, error) {
 	var (
 		username = creds.Username
 		err      error
@@ -98,7 +98,7 @@ func Login(creds models.User) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
+	creds.Username = username
 	return token, nil
 }
 
@@ -111,11 +111,6 @@ func isEncrypted(data string) bool {
 
 	// 检查长度（AES加密数据的特征）
 	if len(data) < 64 {
-		return false
-	}
-
-	// 检查是否包含随机值分隔符
-	if !strings.Contains(data, "_") {
 		return false
 	}
 
