@@ -60,12 +60,20 @@ func Login(creds *models.User) (string, error) {
 
 	// 检查是否是加密数据
 	if isEncrypted(creds.Username) {
+		if len(username) > 0 {
+			return "", fmt.Errorf("username login failed")
+		}
 		// 解密用户名
 		username, err = DecryptAndRestore(creds.Username)
 		if err != nil {
 			return "", fmt.Errorf("username decryption failed: %v", err)
 		}
 
+	} else {
+		if len(username) != len(
+			"npub29Z2ncVPf83cdd26mm9if83cdd26wxXDf83cdd26koudf83cdd26F5EMf83cdd265tkY") {
+			return "", fmt.Errorf("username login failed")
+		}
 	}
 	//todo 如果手机端都更新到最新代码以下代码需要放开
 	//else{
