@@ -60,7 +60,7 @@ func Login(creds *models.User) (string, error) {
 
 	// 检查是否是加密数据
 	if isEncrypted(creds.Username) {
-		if len(username) > 0 {
+		if len(username) <= 0 {
 			return "", fmt.Errorf("username login failed")
 		}
 		// 解密用户名
