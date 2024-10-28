@@ -70,10 +70,13 @@ func Login(creds *models.User) (string, error) {
 		}
 
 	} else {
-		if len(username) != len(
-			"npub29Z2ncVPf83cdd26mm9if83cdd26wxXDf83cdd26koudf83cdd26F5EMf83cdd265tkY") {
-			return "", fmt.Errorf("username login failed")
+		if !isAllNumbers(username) {
+			if len(username) != len(
+				"npub29Z2ncVPf83cdd26mm9if83cdd26wxXDf83cdd26koudf83cdd26F5EMf83cdd265tkY") {
+				return "", fmt.Errorf("username login failed")
+			}
 		}
+
 	}
 	//todo 如果手机端都更新到最新代码以下代码需要放开
 	//else{
@@ -108,6 +111,15 @@ func Login(creds *models.User) (string, error) {
 	}
 	creds.Username = username
 	return token, nil
+}
+
+func isAllNumbers(s string) bool {
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // isEncrypted 检查数据是否是加密的
