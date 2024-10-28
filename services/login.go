@@ -18,7 +18,7 @@ import (
 const fixedSalt = "bitlongwallet7238baee9c2638664"
 
 // AES密钥（实际应用中应从安全配置获取）
-var aesKey = []byte("YourAESKey32BytesLongForSecurity!")
+var aesKey = []byte("YourAESKey32BytesLongForSecurity")
 
 func SplitStringAndVerifyChecksum(extstring string) bool {
 	originalString, checksum := spilt(extstring)
