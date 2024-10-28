@@ -74,6 +74,7 @@ func (m *BTCPayInsideSever) NewMission(mission *isInsideMission) bool {
 	return m.Queue.addNewPkg(mission)
 }
 func (m *BTCPayInsideSever) payToInside(mission *isInsideMission) error {
+	//todo 内部转账逻辑需要重写
 	if mission.insideInvoice.Status != models.InvoiceStatusPending {
 		return nil
 	}

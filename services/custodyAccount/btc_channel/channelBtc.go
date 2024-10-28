@@ -40,6 +40,7 @@ func NewBtcChannelEvent(UserName string) (*BtcChannelEvent, error) {
 	btlLog.CUST.Info("UserName:%s", UserName)
 	return &e, nil
 }
+
 func NewBtcChannelEventByUserId(UserId uint) (*BtcChannelEvent, error) {
 	var (
 		e   BtcChannelEvent

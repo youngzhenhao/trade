@@ -5,10 +5,12 @@ import (
 	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
+	caccount "trade/services/custodyAccount/account"
 	rpc "trade/services/servicesrpc"
 )
 
-func PutInAward(account *models.Account, _ string, amount int, memo *string) (*models.AccountAward, error) {
+func PutInAward(user *caccount.UserInfo, _ string, amount int, memo *string) (*models.AccountAward, error) {
+	account := user.Account
 	var err error
 	tx, back := middleware.GetTx()
 	defer back()
@@ -49,6 +51,11 @@ func PutInAward(account *models.Account, _ string, amount int, memo *string) (*m
 		btlLog.CUST.Error(err.Error())
 		return nil, err
 	}
+
+	// rpcMux lock
+	user.RpcMux.Lock()
+	defer user.RpcMux.Unlock()
+
 	// Update the escrow account balance
 	acc, err := rpc.AccountInfo(account.UserAccountCode)
 	if err != nil {

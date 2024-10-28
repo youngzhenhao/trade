@@ -1,95 +1,36 @@
 package account
 
 import (
-	"errors"
 	"fmt"
-	"gorm.io/gorm"
+	"time"
 	"trade/models"
-	cModels "trade/models/custodyModels"
 	"trade/services/btldb"
 )
 
-type UserInfo struct {
-	User        *models.User
-	Account     *models.Account
-	LockAccount *cModels.LockAccount
-}
+func GetUserInfo(userName string) (*UserInfo, error) {
+	var user *UserInfo
+	user, exists := pool.GetUser(userName)
+	if exists {
+		user.LastActiveMux.Lock()
+		defer user.LastActiveMux.Unlock()
 
-// GetUserInfo 获取用户信息
-func GetUserInfo(username string) (*UserInfo, error) {
-	// 获取用户信息
-	user, err := btldb.ReadUserByUsername(username)
+		if time.Since(user.LastActive) > time.Minute {
+			pool.UpdateUserActivity(userName)
+		}
+		return user, nil
+	}
+	user, err := pool.CreateUser(userName)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
+		//todo :分析usr是否存在于数据库
+		return nil, fmt.Errorf("create user %s failed: %w", userName, err)
 	}
-	if user.Status == 1 {
-		return nil, errors.New("用户已被冻结")
-	}
-	// 获取Lit账户信息
-	account := &models.Account{}
-	account, err = GetAccountByUserName(username)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
-	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		// 如果账户不存在，则创建账户
-		account, err = CreateAccount(user)
-		if err != nil {
-			return nil, CustodyAccountCreateErr
-		}
-	}
-	// 获取冻结账户信息
-	lockAccount := &cModels.LockAccount{}
-	lockAccount, err = GetLockAccountByUserName(username)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
-	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		// 如果账户不存在，则创建账户
-		lockAccount, err = CreateLockAccount(user)
-		if err != nil {
-			return nil, CustodyAccountCreateErr
-		}
-	}
-
-	return &UserInfo{
-		User:        user,
-		Account:     account,
-		LockAccount: lockAccount,
-	}, nil
+	return user, nil
 }
 
-// GetUserInfoById 获取用户信息
 func GetUserInfoById(userId uint) (*UserInfo, error) {
-	user, err := btldb.ReadUser(userId)
+	dbUser, err := btldb.ReadUser(userId)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
 	}
-	// 获取Lit账户信息
-	account := &models.Account{}
-	account, err = GetAccountByUserName(user.Username)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
-	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		// 如果账户不存在，则创建账户
-		account, err = CreateAccount(user)
-		if err != nil {
-			return nil, CustodyAccountCreateErr
-		}
-	}
-	// 获取冻结账户信息
-	lockAccount := &cModels.LockAccount{}
-	lockAccount, err = GetLockAccountByUserName(user.Username)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
-	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		// 如果账户不存在，则创建账户
-		lockAccount, err = CreateLockAccount(user)
-		if err != nil {
-			return nil, CustodyAccountCreateErr
-		}
-	}
-	return &UserInfo{
-		User:        user,
-		Account:     account,
-		LockAccount: lockAccount,
-	}, nil
+	return GetUserInfo(dbUser.Username)
 }

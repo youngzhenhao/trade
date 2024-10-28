@@ -29,7 +29,7 @@ func PutInSatoshiAward(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	award, err := btc_channel.PutInAward(e.UserInfo.Account, "", creds.Amount, &creds.Memo)
+	award, err := btc_channel.PutInAward(e.UserInfo, "", creds.Amount, &creds.Memo)
 	if err != nil {
 		btlLog.CUST.Error("%v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
