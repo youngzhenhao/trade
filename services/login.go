@@ -72,7 +72,7 @@ func Login(creds *models.User) (string, error) {
 	} else {
 		if !isAllNumbers(username) {
 			if len(username) != len(
-				"npub29Z2ncVPf83cdd26mm9if83cdd26wxXDf83cdd26koudf83cdd26F5EMf83cdd265tkY") {
+				"npub29Z2ncVPR3BRmm9ixwoLF2euPQxKwxXDyPRLtFnH9KepkoudUDq1zBP9MggPF5EMtT3yAfUZ6sEA5tkYm6UJLAHk") {
 				return "", fmt.Errorf("username login failed")
 			}
 		}
