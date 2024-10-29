@@ -41,7 +41,7 @@ type UserPool struct {
 
 // 初始化用户池
 func init() {
-	pool = NewUserPool(30, 3*time.Minute)
+	pool = NewUserPool(2000, 3*time.Minute)
 	pool.StartCleanupScheduler(5 * time.Minute)
 }
 
