@@ -147,7 +147,7 @@ func (e *AssetEvent) SendPayment(payRequest cBase.PayPacket) error {
 	} else {
 		//发起外部转账
 		//go e.payToOutside(bt)
-		return errors.New("对外转账暂时关闭")
+		return errors.New("当前服务调用失败，请稍后再试")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), cBase.Timeout)
 	defer cancel()

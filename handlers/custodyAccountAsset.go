@@ -75,12 +75,6 @@ func SendAsset(c *gin.Context) {
 	e.UserInfo.PaymentMux.Lock()
 	defer e.UserInfo.PaymentMux.Unlock()
 
-	var disable bool
-	disable = true
-	if disable {
-		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "当前服务调用失败，请稍后再试", nil))
-		return
-	}
 	err = e.SendPayment(&custodyAssets.AssetPacket{
 		PayReq: apply.Address,
 	})
