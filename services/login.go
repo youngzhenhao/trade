@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"strings"
+	"trade/config"
 	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
@@ -70,13 +71,14 @@ func Login(creds *models.User) (string, error) {
 		}
 
 	} else {
-		if !isAllNumbers(username) {
-			if len(username) != len(
-				"npub29Z2ncVPR3BRmm9ixwoLF2euPQxKwxXDyPRLtFnH9KepkoudUDq1zBP9MggPF5EMtT3yAfUZ6sEA5tkYm6UJLAHk") {
-				return "", fmt.Errorf("username login failed")
+		if config.GetConfig().NetWork != "regtest" {
+			if !isAllNumbers(username) {
+				if len(username) != len(
+					"npub29Z2ncVPR3BRmm9ixwoLF2euPQxKwxXDyPRLtFnH9KepkoudUDq1zBP9MggPF5EMtT3yAfUZ6sEA5tkYm6UJLAHk") {
+					return "", fmt.Errorf("username login failed")
+				}
 			}
 		}
-
 	}
 	//todo 如果手机端都更新到最新代码以下代码需要放开
 	//else{
