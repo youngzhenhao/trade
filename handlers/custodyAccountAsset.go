@@ -76,7 +76,7 @@ func SendAsset(c *gin.Context) {
 	defer e.UserInfo.PaymentMux.Unlock()
 
 	var disable bool
-	disable = false
+	disable = true
 	if disable {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "当前服务调用失败，请稍后再试", nil))
 		return

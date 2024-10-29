@@ -184,7 +184,7 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	}
 
 	// update user account
-	_, err = custodyRpc.UpdateBalance(usr, custodyRpc.UpdateBalanceMinus, int64(amount))
+	_, err = custodyRpc.UpdateBalance(usr, custodyRpc.UpdateBalancePlus, int64(amount))
 	if err != nil {
 		btlLog.CUST.Error("UnlockBTC rpc.AccountUpdate error", err)
 		return ServiceError
