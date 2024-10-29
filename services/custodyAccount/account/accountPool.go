@@ -48,7 +48,7 @@ func init() {
 // NewUserPool 创建新的用户池
 func NewUserPool(maxCapacity int, inactiveDuration time.Duration) *UserPool {
 	if maxCapacity <= 0 {
-		maxCapacity = 100 // 默认容量
+		maxCapacity = 2000 // 默认容量
 	}
 	return &UserPool{
 		users:            make(map[string]*UserInfo),
