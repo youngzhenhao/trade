@@ -54,6 +54,34 @@ func AccountInfo(id string) (*litrpc.Account, error) {
 	return response, err
 }
 
+func AccountUpdate(id string, balance int64, expirationDate int64) (*litrpc.Account, error) {
+	litdconf := config.GetConfig().ApiConfig.Litd
+
+	grpcHost := litdconf.Host + ":" + strconv.Itoa(litdconf.Port)
+	tlsCertPath := litdconf.TlsCertPath
+	macaroonPath := litdconf.MacaroonPath
+
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+
+	if balance < 0 || balance > 500000000 {
+		btlLog.CUST.Error("balance must be between 0 and 5000000 sat")
+		return nil, errors.New("balance must be between 0 and 5000000 sat")
+	}
+
+	request := &litrpc.UpdateAccountRequest{
+		Id:             id,
+		AccountBalance: balance,
+		ExpirationDate: expirationDate,
+	}
+	client := litrpc.NewAccountsClient(conn)
+	response, err := client.UpdateAccount(context.Background(), request)
+	if err != nil {
+		return nil, err
+	}
+	return response, err
+}
+
 func acountList() ([]*litrpc.Account, error) {
 	litdconf := config.GetConfig().ApiConfig.Litd
 
@@ -112,40 +140,6 @@ func AccountRemove(id string) error {
 	return err
 }
 
-func AccountUpdate(id string, balance int64, expirationDate int64) (*litrpc.Account, error) {
-	litdconf := config.GetConfig().ApiConfig.Litd
-
-	grpcHost := litdconf.Host + ":" + strconv.Itoa(litdconf.Port)
-	tlsCertPath := litdconf.TlsCertPath
-	macaroonPath := litdconf.MacaroonPath
-
-	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
-	defer connClose()
-
-	if balance < 0 || balance > 500000000 {
-		btlLog.CUST.Error("balance must be between 0 and 5000000 sat")
-		return nil, errors.New("balance must be between 0 and 5000000 sat")
-	}
-
-	request := &litrpc.UpdateAccountRequest{
-		Id:             id,
-		AccountBalance: balance,
-		ExpirationDate: expirationDate,
-	}
-	client := litrpc.NewAccountsClient(conn)
-	response, err := client.UpdateAccount(context.Background(), request)
-	if err != nil {
-		return nil, err
-	}
-	return response, err
-}
-
-// TODO: 开通通道
-func channelOpen() {}
-
-// TODO: 关闭通道
-func channelClose() {}
-
 func LitdInfo() string {
 	litdconf := config.GetConfig().ApiConfig.Litd
 
@@ -184,3 +178,5 @@ func LitdStatus() string {
 	}
 	return response.String()
 }
+
+//TODO:rpc锁下方到rpc请求层次，

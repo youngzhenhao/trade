@@ -18,7 +18,6 @@ import (
 	"trade/services/custodyAccount/custodyAssets"
 	"trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
-	"trade/services/custodyAccount/custodyBase/custodyMutex"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -72,11 +71,12 @@ func SendAsset(c *gin.Context) {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
-	locker := custodyMutex.GetCustodyMutex(userName)
-	locker.Lock()
-	defer locker.Unlock()
+
+	e.UserInfo.PaymentMux.Lock()
+	defer e.UserInfo.PaymentMux.Unlock()
+
 	var disable bool
-	disable = true
+	disable = false
 	if disable {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, "当前服务调用失败，请稍后再试", nil))
 		return

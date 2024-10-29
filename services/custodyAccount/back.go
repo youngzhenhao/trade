@@ -6,7 +6,8 @@ import (
 	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
-	rpc "trade/services/servicesrpc"
+	caccount "trade/services/custodyAccount/account"
+	"trade/services/custodyAccount/custodyBase/custodyRpc"
 )
 
 // CreateBackFeeMission 创建退费任务
@@ -39,12 +40,12 @@ func PollBackFeeMission() {
 	var results []BackFeeSqlResult
 	middleware.DB.Raw(getBackFeeSql, 0).Scan(&results)
 	for _, r := range results {
-		account, err := btldb.ReadAccountByUserId(r.PayUserId)
+		usr, err := caccount.GetUserInfoById(r.PayUserId)
 		if err != nil {
 			btlLog.CUST.Error("PollBackFeeMission find pay account error:%v", err.Error())
 			continue
 		}
-		balanceId, err := updateAccount(account, r.GasFee+r.ServeFee)
+		balanceId, err := updateAccount(usr, r.GasFee+r.ServeFee)
 		if err != nil {
 			btlLog.CUST.Error("PollBackFeeMission update custody account error:%v", err.Error())
 			continue
@@ -57,19 +58,18 @@ func PollBackFeeMission() {
 		btlLog.CUST.Info("PollBackFeeMission back fee mission success:%v paid", r.BackFeeId)
 	}
 }
-func updateAccount(account *models.Account, balance uint64) (uint, error) {
+func updateAccount(usr *caccount.UserInfo, balance uint64) (uint, error) {
 	var err error
-	acc, err := rpc.AccountInfo(account.UserAccountCode)
-	if err != nil {
-		return 0, err
-	}
-	var amount int64
-	amount = acc.CurrentBalance + int64(balance)
-	// Change the escrow account balance
-	_, err = rpc.AccountUpdate(account.UserAccountCode, amount, -1)
+	//var amount int64
+	//amount = acc.CurrentBalance + int64(balance)
+	//// Change the escrow account balance
+	//_, err = rpc.AccountUpdate(account.UserAccountCode, amount, -1)
+
+	//ues rpcMuX UpdateBalance
+	_, err = custodyRpc.UpdateBalance(usr, custodyRpc.UpdateBalancePlus, int64(balance))
 	// Build a database storage object
 	ba := models.Balance{}
-	ba.AccountId = account.ID
+	ba.AccountId = usr.Account.ID
 	ba.Amount = float64(balance)
 	ba.Unit = models.UNIT_SATOSHIS
 	ba.BillType = models.BillTypePayment

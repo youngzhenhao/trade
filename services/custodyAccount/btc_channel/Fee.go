@@ -9,12 +9,13 @@ import (
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
+	"trade/services/custodyAccount/custodyBase/custodyRpc"
 	rpc "trade/services/servicesrpc"
 )
 
 func PayFirLunchFee(e *BtcChannelEvent, gasFee uint64) (uint, error) {
 	//获取账户信息
-	acc, err := rpc.AccountInfo(e.UserInfo.Account.UserAccountCode)
+	acc, err := custodyRpc.GetAccountInfo(e.UserInfo)
 	if err != nil {
 		btlLog.CUST.Error("AccountInfo error(UserId=%v):%v", e.UserInfo.User.ID, err)
 		return 0, fmt.Errorf("AccountInfo error")

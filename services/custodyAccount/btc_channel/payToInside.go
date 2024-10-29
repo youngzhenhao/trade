@@ -3,7 +3,6 @@ package btc_channel
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"time"
 	"trade/btlLog"
@@ -12,6 +11,7 @@ import (
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
+	"trade/services/custodyAccount/custodyBase/custodyRpc"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -154,24 +154,21 @@ func (m *BTCPayInsideSever) LoadMission() {
 }
 func updateCustodyAccount(usr *caccount.UserInfo, away models.BalanceAway, balance uint64, invoice string, ServerFee uint64) (uint, error) {
 	var err error
-	acc, err := rpc.AccountInfo(usr.Account.UserAccountCode)
-	if err != nil {
-		return 0, err
-	}
-	var amount int64
+	var updateAway string
 	switch away {
 	case models.AWAY_IN:
-		amount = acc.CurrentBalance + int64(balance)
+		updateAway = custodyRpc.UpdateBalancePlus
 	case models.AWAY_OUT:
-		amount = acc.CurrentBalance - int64(balance)
+		updateAway = custodyRpc.UpdateBalanceMinus
 	default:
 		return 0, fmt.Errorf("away error")
 	}
-	if amount < 0 {
-		return 0, errors.New("balance not enough")
+	if balance <= 0 {
+		return 0, fmt.Errorf("balance error")
 	}
 	// Change the escrow usr balance
-	_, err = rpc.AccountUpdate(usr.Account.UserAccountCode, amount, -1)
+	_, err = custodyRpc.UpdateBalance(usr, updateAway, int64(balance))
+
 	// Build a database storage object
 	ba := models.Balance{}
 	ba.AccountId = usr.Account.ID

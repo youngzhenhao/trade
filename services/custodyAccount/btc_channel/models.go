@@ -11,6 +11,7 @@ import (
 	caccount "trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
+	"trade/services/custodyAccount/custodyBase/custodyRpc"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -85,7 +86,7 @@ func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 		return fmt.Errorf("amount>500000,超过当前转账限制")
 	}
 	//验证金额
-	useableBalance, err := rpc.AccountInfo(userinfo.Account.UserAccountCode)
+	useableBalance, err := custodyRpc.GetAccountInfo(userinfo)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return cBase.GetbalanceErr

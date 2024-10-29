@@ -15,6 +15,7 @@ import (
 	caccount "trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
+	"trade/services/custodyAccount/custodyBase/custodyRpc"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -61,7 +62,7 @@ func NewBtcChannelEventByUserId(UserId uint) (*BtcChannelEvent, error) {
 //获取余额
 
 func (e *BtcChannelEvent) GetBalance() ([]cBase.Balance, error) {
-	acc, err := rpc.AccountInfo(e.UserInfo.Account.UserAccountCode)
+	acc, err := custodyRpc.GetAccountInfo(e.UserInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +249,7 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 		btlLog.CUST.Error(err.Error())
 	}
 
-	payment, err := rpc.InvoicePay(macaroonFile, bt.PayReq, bt.DecodePayReq.NumSatoshis, bt.FeeLimit)
+	payment, err := custodyRpc.PayBtcInvoice(e.UserInfo, macaroonFile, bt.PayReq, bt.DecodePayReq.NumSatoshis, bt.FeeLimit)
 	if err != nil {
 		btlLog.CUST.Error("pay invoice fail %s", err.Error())
 		bt.err <- err

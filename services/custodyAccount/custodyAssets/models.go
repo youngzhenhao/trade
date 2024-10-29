@@ -12,6 +12,7 @@ import (
 	caccount "trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
+	"trade/services/custodyAccount/custodyBase/custodyRpc"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -87,7 +88,7 @@ func (p *AssetPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 		return cBase.NotEnoughAssetFunds
 	}
 	//验证托管账户余额
-	useAbleBalance, err := rpc.AccountInfo(userinfo.Account.UserAccountCode)
+	useAbleBalance, err := custodyRpc.GetAccountInfo(userinfo)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return cBase.GetBalanceErr

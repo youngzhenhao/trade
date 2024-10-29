@@ -5,10 +5,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+	"trade/config"
 	"trade/models"
 	"trade/services/custodyAccount"
 	"trade/services/custodyAccount/btc_channel"
-	"trade/services/custodyAccount/custodyBase/custodyMutex"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -67,18 +67,19 @@ func QueryInvoice(c *gin.Context) {
 func PayInvoice(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
-	if len(userName) != 92 || !strings.HasPrefix(userName, "npub") {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "当前服务调用失败，请稍后再试"})
-		return
+	if config.GetConfig().NetWork != "regtest" {
+		if len(userName) != 92 || !strings.HasPrefix(userName, "npub") {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "当前服务调用失败，请稍后再试"})
+			return
+		}
 	}
 	e, err := btc_channel.NewBtcChannelEvent(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
 		return
 	}
-	locker := custodyMutex.GetCustodyMutex(userName)
-	locker.Lock()
-	defer locker.Unlock()
+	e.UserInfo.PaymentMux.Lock()
+	defer e.UserInfo.PaymentMux.Unlock()
 
 	//获取支付发票请求
 	pay := custodyAccount.PayInvoiceRequest{}

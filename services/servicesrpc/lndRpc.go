@@ -226,6 +226,7 @@ func ListUnspent() (*lnrpc.ListUnspentResponse, error) {
 	}
 	return response, nil
 }
+
 func GetBalance() (*lnrpc.WalletBalanceResponse, error) {
 	lndconf := config.GetConfig().ApiConfig.Lnd
 

@@ -6,17 +6,16 @@ import (
 	"trade/middleware"
 	"trade/models"
 	caccount "trade/services/custodyAccount/account"
-	rpc "trade/services/servicesrpc"
+	"trade/services/custodyAccount/custodyBase/custodyRpc"
 )
 
 func PutInAward(user *caccount.UserInfo, _ string, amount int, memo *string) (*models.AccountAward, error) {
-	account := user.Account
 	var err error
 	tx, back := middleware.GetTx()
 	defer back()
 	// Build a database Balance
 	ba := models.Balance{}
-	ba.AccountId = account.ID
+	ba.AccountId = user.Account.ID
 	ba.Amount = float64(amount)
 	ba.Unit = models.UNIT_SATOSHIS
 	ba.BillType = models.BillTypeAwardSat
@@ -33,7 +32,7 @@ func PutInAward(user *caccount.UserInfo, _ string, amount int, memo *string) (*m
 	}
 	// Build a database AccountAward
 	award := models.AccountAward{
-		AccountID: account.ID,
+		AccountID: user.Account.ID,
 		AssetId:   "00",
 		Amount:    float64(amount),
 		Memo:      memo,
@@ -52,29 +51,16 @@ func PutInAward(user *caccount.UserInfo, _ string, amount int, memo *string) (*m
 		return nil, err
 	}
 
-	// rpcMux lock
-	user.RpcMux.Lock()
-	defer user.RpcMux.Unlock()
-
-	// Update the escrow account balance
-	acc, err := rpc.AccountInfo(account.UserAccountCode)
-	if err != nil {
-		return nil, err
-	}
 	if amount < 0 || amount > 1000000 {
 		return nil, errors.New("award amount is error")
 	}
-	newBalance := acc.CurrentBalance + int64(amount)
-	if newBalance < 0 || newBalance > 100000000 {
-		return nil, errors.New("amount is error(<0 or >100000000)")
-	}
-
 	// Change the escrow account balance
-	_, err = rpc.AccountUpdate(account.UserAccountCode, newBalance, -1)
+	_, err = custodyRpc.UpdateBalance(user, custodyRpc.UpdateBalancePlus, int64(amount))
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return nil, err
 	}
+
 	tx.Commit()
 	return &award, nil
 }

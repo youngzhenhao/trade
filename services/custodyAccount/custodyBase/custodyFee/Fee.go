@@ -5,7 +5,7 @@ import (
 	"trade/models"
 	"trade/services/btldb"
 	"trade/services/custodyAccount/account"
-	"trade/services/servicesrpc"
+	"trade/services/custodyAccount/custodyBase/custodyRpc"
 )
 
 var (
@@ -16,16 +16,8 @@ var (
 )
 
 func PayServerFee(u *account.UserInfo, fee uint64) error {
-	acc, err := servicesrpc.AccountInfo(u.Account.UserAccountCode)
-	if err != nil {
-		return err
-	}
-	// Change the escrow account balance
-	_, err = servicesrpc.AccountUpdate(u.Account.UserAccountCode, acc.CurrentBalance-int64(fee), -1)
-	if err != nil {
-		return err
-	}
-	return nil
+	_, err := custodyRpc.UpdateBalance(u, custodyRpc.UpdateBalanceMinus, int64(fee))
+	return err
 }
 
 func PayServiceFeeSync(u *account.UserInfo, fee uint64, balanceId uint, PayType models.PayInsideType, memo string) error {
