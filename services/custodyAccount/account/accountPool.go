@@ -106,7 +106,7 @@ func (pool *UserPool) CreateUser(userName string) (*UserInfo, error) {
 	}
 
 	pool.users[userName] = newUser
-	btlLog.CUST.Info("用户 %s 已被添加到用户池\n", userName)
+	btlLog.CUST.Info("用户 %s 已被添加到用户池\n,%d/2000", userName, len(pool.users))
 	return newUser, nil
 }
 
