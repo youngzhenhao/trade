@@ -661,7 +661,7 @@ func postGetBlockchainInfo(network models.Network) (*PostGetBlockchainInfoRespon
 	if err != nil {
 		return nil, err
 	}
-	request := fmt.Sprintf("{\"jsonrpc\":\"1.0\",\"id\":\"%s\",\"method\":\"getblockchaininfo\",\"params\":[\"%s\"]}", network.String(), "")
+	request := fmt.Sprintf("{\"jsonrpc\":\"1.0\",\"id\":\"%s\",\"method\":\"getblockchaininfo\",\"params\":[]}", network.String())
 	payload := strings.NewReader(request)
 	req, err := http.NewRequest("POST", uri, payload)
 	if err != nil {
