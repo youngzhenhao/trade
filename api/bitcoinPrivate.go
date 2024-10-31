@@ -642,7 +642,7 @@ type PostGetBlockchainInfoResult struct {
 	Difficulty           float64 `json:"difficulty"`
 	Time                 int     `json:"time"`
 	Mediantime           int     `json:"mediantime"`
-	Verificationprogress int     `json:"verificationprogress"`
+	Verificationprogress float64 `json:"verificationprogress"`
 	Initialblockdownload bool    `json:"initialblockdownload"`
 	Chainwork            string  `json:"chainwork"`
 	SizeOnDisk           int     `json:"size_on_disk"`
