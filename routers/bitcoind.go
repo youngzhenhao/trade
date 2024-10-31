@@ -39,6 +39,10 @@ func SetupBitcoindMainnetRouter(router *gin.Engine) *gin.Engine {
 			time.GET("/outpoint/:op", handlers.GetTimeByOutpointInMainnet)
 			time.POST("/outpoints", handlers.GetTimesByOutpointSliceInMainnet)
 		}
+		blockchain := mainnet.Group("/blockchain")
+		{
+			blockchain.POST("/get_blockchain_info", handlers.GetBlockchainInfoInMainnet)
+		}
 	}
 	return router
 }
@@ -69,6 +73,10 @@ func SetupBitcoindTestnetRouter(router *gin.Engine) *gin.Engine {
 			time.GET("/outpoint/:op", handlers.GetTimeByOutpointInTestnet)
 			time.POST("/outpoints", handlers.GetTimesByOutpointSliceInTestnet)
 		}
+		blockchain := testnet.Group("/blockchain")
+		{
+			blockchain.POST("/get_blockchain_info", handlers.GetBlockchainInfoInTestnet)
+		}
 	}
 	return router
 }
@@ -98,6 +106,10 @@ func SetupBitcoindRegtestRouter(router *gin.Engine) *gin.Engine {
 		{
 			time.GET("/outpoint/:op", handlers.GetTimeByOutpointInRegtest)
 			time.POST("/outpoints", handlers.GetTimesByOutpointSliceInRegtest)
+		}
+		blockchain := regtest.Group("/blockchain")
+		{
+			blockchain.POST("/get_blockchain_info", handlers.GetBlockchainInfoInRegtest)
 		}
 	}
 	return router

@@ -1,0 +1,111 @@
+network: ""
+gin_config:
+    bind: ""
+    port: ""
+    mode: ""
+    local_port: ""
+gorm_config:
+    mysql:
+        host: ""
+        port: ""
+        username: ""
+        password: ""
+        dbname: ""
+redis:
+    host: ""
+    port: ""
+    username: ""
+    password: ""
+    db: 0
+    expiration_time_minute: 0
+    redis_set_time_minute: 0
+router_disable:
+    login: false
+    fair_launch: false
+    fee: false
+    custody_account: false
+    ping: false
+    proof: false
+    ido: false
+    snapshot: false
+    btc_balance: false
+    asset_transfer: false
+    bitcoind: false
+    shell: false
+    addr_receive: false
+    batch_transfer: false
+    asset_addr: false
+    asset_lock: false
+    validate_token: false
+    asset_balance: false
+    asset_burn: false
+    asset_local_mint: false
+    user: false
+    asset_recommend: false
+    fair_launch_follow: false
+    asset_local_mint_history: false
+    asset_managed_utxo: false
+    log_file_upload: false
+    account_asset: false
+    asset_group: false
+    nft_transfer: false
+    nft_info: false
+    nft_presale: false
+    user_data: false
+api_config:
+    lnd:
+        host: ""
+        port: 0
+        dir: ""
+        tls_cert_path: ""
+        macaroon_path: ""
+    tapd:
+        host: ""
+        port: 0
+        dir: ""
+        tls_cert_path: ""
+        macaroon_path: ""
+        universe_host: ""
+    litd:
+        host: ""
+        port: 0
+        dir: ""
+        tls_cert_path: ""
+        macaroon_path: ""
+    bitcoind:
+        mainnet:
+            ip: ""
+            port: 0
+            wallet: ""
+            rpc_user: ""
+            rpc_passwd: ""
+            http_post_mode: false
+            disable_tls: false
+        testnet:
+            ip: ""
+            port: 0
+            wallet: ""
+            rpc_user: ""
+            rpc_passwd: ""
+            http_post_mode: false
+            disable_tls: false
+        regtest:
+            ip: ""
+            port: 0
+            wallet: ""
+            rpc_user: ""
+            rpc_passwd: ""
+            http_post_mode: false
+            disable_tls: false
+    custody_account:
+        macaroon_dir: ""
+fair_launch_config:
+    estimate_smart_fee_rate_blocks: 0
+    is_auto_update_fee_rate: false
+    max_number_of_mint: 0
+admin_user:
+    username: ""
+    password: ""
+frps_server: ""
+is_auto_migrate: false
+is_auto_update_scheduled_task: false

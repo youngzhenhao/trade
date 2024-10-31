@@ -339,3 +339,15 @@ func NetworkStringToNetwork(network string) (models.Network, error) {
 	}
 	return models.Mainnet, errors.New("invalid network")
 }
+
+func PostGetBlockchainInfo(network models.Network) (*PostGetBlockchainInfoResponse, error) {
+	return postGetBlockchainInfo(network)
+}
+
+func GetBlockchainInfo(network models.Network) (*PostGetBlockchainInfoResult, error) {
+	response, err := PostGetBlockchainInfo(network)
+	if err != nil {
+		return nil, err
+	}
+	return response.Result, nil
+}

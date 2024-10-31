@@ -210,6 +210,7 @@ const (
 	AddWhitelistsByRequestsErr
 	GetBatchGroupsErr
 	GetNftPresaleByBatchGroupIdErr
+	GetBlockchainInfoErr
 )
 
 // Err type:CustodyAccount

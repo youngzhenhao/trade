@@ -633,3 +633,60 @@ func txidsToRequestBodyRawString(txids []string, verbosity Verbosity) (request s
 	request += "]"
 	return request
 }
+
+type PostGetBlockchainInfoResult struct {
+	Chain                string  `json:"chain"`
+	Blocks               int     `json:"blocks"`
+	Headers              int     `json:"headers"`
+	Bestblockhash        string  `json:"bestblockhash"`
+	Difficulty           float64 `json:"difficulty"`
+	Time                 int     `json:"time"`
+	Mediantime           int     `json:"mediantime"`
+	Verificationprogress int     `json:"verificationprogress"`
+	Initialblockdownload bool    `json:"initialblockdownload"`
+	Chainwork            string  `json:"chainwork"`
+	SizeOnDisk           int     `json:"size_on_disk"`
+	Pruned               bool    `json:"pruned"`
+	Warnings             string  `json:"warnings"`
+}
+
+type PostGetBlockchainInfoResponse struct {
+	Result *PostGetBlockchainInfoResult `json:"result"`
+	Error  *BitcoindRpcResponseError    `json:"error"`
+	ID     string                       `json:"id"`
+}
+
+func postGetBlockchainInfo(network models.Network) (*PostGetBlockchainInfoResponse, error) {
+	uri, err := getUri(network)
+	if err != nil {
+		return nil, err
+	}
+	request := fmt.Sprintf("{\"jsonrpc\":\"1.0\",\"id\":\"%s\",\"method\":\"getblockchaininfo\",\"params\":[\"%s\"]}", network.String(), "")
+	payload := strings.NewReader(request)
+	req, err := http.NewRequest("POST", uri, payload)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("content-type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	var response PostGetBlockchainInfoResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}

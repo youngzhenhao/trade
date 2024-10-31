@@ -759,3 +759,60 @@ func GetTimesByOutpointSliceInRegtest(c *gin.Context) {
 		Data:    times,
 	})
 }
+
+func GetBlockchainInfoInMainnet(c *gin.Context) {
+	blockchainInfo, err := api.GetBlockchainInfo(models.Mainnet)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetBlockchainInfoErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    blockchainInfo,
+	})
+}
+
+func GetBlockchainInfoInTestnet(c *gin.Context) {
+	blockchainInfo, err := api.GetBlockchainInfo(models.Testnet)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetBlockchainInfoErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    blockchainInfo,
+	})
+}
+
+func GetBlockchainInfoInRegtest(c *gin.Context) {
+	blockchainInfo, err := api.GetBlockchainInfo(models.Regtest)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetBlockchainInfoErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   "",
+		Code:    models.SUCCESS,
+		Data:    blockchainInfo,
+	})
+}
