@@ -10,6 +10,7 @@ func SetupAssetListRouter(router *gin.Engine) *gin.Engine {
 	assetBalance := router.Group("/asset_list")
 	assetBalance.Use(middleware.AuthMiddleware())
 	{
+		assetBalance.GET("/get", handlers.GetAssetList)
 		assetBalance.POST("/set_slice", handlers.SetAssetLists)
 	}
 	return router
