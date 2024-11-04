@@ -1,6 +1,9 @@
 package models
 
+import "gorm.io/gorm"
+
 type AssetList struct {
+	gorm.Model
 	Version string `json:"version"`
 	//@dev: AssetGenesis
 	GenesisPoint string `json:"genesis_point"`

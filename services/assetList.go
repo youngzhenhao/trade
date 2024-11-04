@@ -119,9 +119,9 @@ func CheckAssetListIfUpdate(assetList *models.AssetList, userId int) (*models.As
 	return assetListByAssetId, nil
 }
 
-func CreateOrUpdateAssetList(balance *models.AssetList, userId int) (err error) {
+func CreateOrUpdateAssetList(list *models.AssetList, userId int) (err error) {
 	var assetList *models.AssetList
-	assetList, err = CheckAssetListIfUpdate(balance, userId)
+	assetList, err = CheckAssetListIfUpdate(list, userId)
 	return btldb.UpdateAssetList(assetList)
 }
 
@@ -133,10 +133,10 @@ func ProcessAssetListSetRequestSlice(userId int, username string, assetListSetRe
 	return &assetLists
 }
 
-func CreateOrUpdateAssetLists(balances *[]models.AssetList, userId int) (err error) {
+func CreateOrUpdateAssetLists(lists *[]models.AssetList, userId int) (err error) {
 	var assetLists []models.AssetList
 	var assetList *models.AssetList
-	for _, balance := range *balances {
+	for _, balance := range *lists {
 		assetList, err = CheckAssetListIfUpdate(&balance, userId)
 		if err != nil {
 			return err
