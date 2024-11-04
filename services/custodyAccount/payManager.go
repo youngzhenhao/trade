@@ -73,7 +73,6 @@ func checkAdminAccount() bool {
 		// 创建管理员USER
 		adminUser.Username = "admin"
 		adminUser.Password = "admin"
-		adminUser.Status = 1
 		err = btldb.CreateUser(adminUser)
 		if err != nil {
 			btlLog.CUST.Error("create AdminUser failed:%s", err)

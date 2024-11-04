@@ -10,11 +10,14 @@ import (
 	"time"
 	"trade/btlLog"
 	"trade/config"
+	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
+	"trade/services/custodyAccount/custodyBase/custodyLimit"
 	"trade/services/custodyAccount/custodyBase/custodyRpc"
 	rpc "trade/services/servicesrpc"
 )
@@ -285,6 +288,16 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	err = btldb.UpdateBalance(&balanceModel)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
+	}
+	limitType := custodyModels.LimitType{
+		AssetId:      "00",
+		TransferType: custodyModels.LimitTransferTypeOutside,
+	}
+	err = custodyLimit.MinusLimit(middleware.DB, e.UserInfo, &limitType, balanceModel.Amount+float64(balanceModel.ServerFee))
+	if err != nil {
+		btlLog.CUST.Error("额度限制未正常更新:%s", err.Error())
+		btlLog.CUST.Error("error balanceId:%v", balanceModel.ID)
+		return
 	}
 }
 
