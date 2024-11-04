@@ -20,6 +20,12 @@ func ReadLockBalanceByAccountId(accountId int) (*[]custodyModels.LockBalance, er
 	return &lockBalances, err
 }
 
+func ReadAccountBalanceByAccountId(accountId int) (*[]models.AccountBalance, error) {
+	var accountBalances []models.AccountBalance
+	err := middleware.DB.Where("account_id = ?", accountId).Find(&accountBalances).Error
+	return &accountBalances, err
+}
+
 func GetUserInfoData(username string) (*models.UserInfoData, error) {
 	if username == "" {
 		return nil, errors.New("username is empty")
@@ -160,18 +166,18 @@ func GetUserAccountAssetBalanceData(accountId int) (*[]models.UserAccountAssetBa
 	if accountId == 0 {
 		return nil, errors.New("account id is zero")
 	}
-	lockBalances, err := ReadLockBalanceByAccountId(accountId)
+	accountBalances, err := ReadAccountBalanceByAccountId(accountId)
 	var userAccountAssetBalanceDatas []models.UserAccountAssetBalanceData
 	if err != nil {
 		btlLog.UserData.Error("ReadLockBalanceByAccountId err:%v", err)
-		lockBalances = &[]custodyModels.LockBalance{}
+		accountBalances = &[]models.AccountBalance{}
 	}
-	for _, lockBalance := range *lockBalances {
+	for _, accountBalance := range *accountBalances {
 		userAccountAssetBalanceDatas = append(userAccountAssetBalanceDatas, models.UserAccountAssetBalanceData{
-			CreatedAt: lockBalance.CreatedAt,
-			UpdatedAt: lockBalance.UpdatedAt,
-			AssetId:   lockBalance.AssetId,
-			Amount:    lockBalance.Amount,
+			CreatedAt: accountBalance.CreatedAt,
+			UpdatedAt: accountBalance.UpdatedAt,
+			AssetId:   accountBalance.AssetId,
+			Amount:    accountBalance.Amount,
 		})
 	}
 	return &userAccountAssetBalanceDatas, nil
