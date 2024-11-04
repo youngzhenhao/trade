@@ -8,8 +8,12 @@ import (
 
 func Migrate() error {
 	var err error
-	err = custodyMigrate(err)
-	err = custodyAwardMigrate(err)
+	{
+		err = custodyMigrate(err)
+		err = custodyAwardMigrate(err)
+		err = custodyLimitMigrate(err)
+	}
+
 	if err = middleware.DB.AutoMigrate(&models.Account{}); err != nil {
 		return err
 	}
@@ -156,6 +160,7 @@ func Migrate() error {
 	}
 	return err
 }
+
 func custodyMigrate(err error) error {
 	if err = middleware.DB.AutoMigrate(&custodyModels.LockBill{}); err != nil {
 		return err
@@ -171,7 +176,6 @@ func custodyMigrate(err error) error {
 	}
 	return err
 }
-
 func custodyAwardMigrate(err error) error {
 	if err = middleware.DB.AutoMigrate(&models.AccountAwardExt{}); err != nil {
 		return err
@@ -180,6 +184,21 @@ func custodyAwardMigrate(err error) error {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&models.AccountAward{}); err != nil {
+		return err
+	}
+	return err
+}
+func custodyLimitMigrate(err error) error {
+	if err = middleware.DB.AutoMigrate(&custodyModels.Limit{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&custodyModels.LimitBill{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&custodyModels.LimitLevel{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&custodyModels.LimitType{}); err != nil {
 		return err
 	}
 	return err

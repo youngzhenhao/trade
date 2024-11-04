@@ -8,9 +8,11 @@ import (
 	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
+	"trade/services/custodyAccount/custodyBase/custodyLimit"
 	"trade/services/custodyAccount/custodyBase/custodyRpc"
 	rpc "trade/services/servicesrpc"
 )
@@ -97,6 +99,16 @@ func (m *BTCPayInsideSever) payToInside(mission *isInsideMission) error {
 	if err != nil {
 		btlLog.CUST.Error("内部付款方账户更新失败, mission_id:%v，error:%v", mission.insideMission.ID, err)
 		return fmt.Errorf("付款失败")
+	}
+	//限制额度更新
+	limitType := custodyModels.LimitType{
+		AssetId:      "00",
+		TransferType: custodyModels.LimitTransferTypeLocal,
+	}
+	err = custodyLimit.MinusLimit(middleware.DB, payAcc, &limitType, float64(amount+fee))
+	if err != nil {
+		btlLog.CUST.Error("额度限制未正常更新:%s", err.Error())
+		btlLog.CUST.Error("error PayInsideId:%v", mission.insideMission.ID)
 	}
 
 	mission.insideMission.BalanceId = balanceId
