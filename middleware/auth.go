@@ -70,7 +70,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		parts := strings.Fields(authHeader)
 		if len(parts) != 2 || parts[0] != "Bearer" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error":         "value's format of Authorization in header length is not 2 or index 0 is not Bearer, must be 'Bearer {token}'",
+				"error":         "value's  format of Authorization in header length is not 2 or index 0 is not Bearer, must be 'Bearer {token}'",
 				"Authorization": authHeader,
 			})
 			return
