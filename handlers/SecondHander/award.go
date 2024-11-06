@@ -7,12 +7,15 @@ import (
 	"trade/models"
 	"trade/services/custodyAccount/btc_channel"
 	"trade/services/custodyAccount/custodyAssets"
+	"trade/services/custodyAccount/lockPayment"
 )
 
 type AwardRequest struct {
-	Username string `json:"username"`
-	Amount   int    `json:"amount"`
-	Memo     string `json:"memo"`
+	Username    string `json:"username"`
+	Amount      int    `json:"amount"`
+	Memo        string `json:"memo"`
+	LockedId    string `json:"lockedId"`
+	AccountType string `json:"accountType"`
 }
 
 func PutInSatoshiAward(c *gin.Context) {
@@ -29,26 +32,50 @@ func PutInSatoshiAward(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	award, err := btc_channel.PutInAward(e.UserInfo, "", creds.Amount, &creds.Memo)
-	if err != nil {
-		btlLog.CUST.Error("%v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	switch creds.AccountType {
+	case "default":
+		award, err := btc_channel.PutInAward(e.UserInfo, "", creds.Amount, &creds.Memo, creds.LockedId)
+		if err != nil {
+			btlLog.CUST.Error("%v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		btlLog.CUST.Info("Success PutInSatoshiAward %v,%v, %v", e.UserInfo.User.Username, creds.Amount, award.ID)
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: true,
+			Error:   "",
+			Code:    models.SUCCESS,
+			Data:    award.ID,
+		})
+		return
+	case "locked":
+		award, err := lockPayment.PutInAwardLockBTC(e.UserInfo, float64(creds.Amount), &creds.Memo, creds.LockedId)
+		if err != nil {
+			btlLog.CUST.Error("%v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		btlLog.CUST.Info("Success PutInSatoshiAward %v,%v, %v", e.UserInfo.User.Username, creds.Amount, award.ID)
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: true,
+			Error:   "",
+			Code:    models.SUCCESS,
+			Data:    award.ID,
+		})
+		return
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid account type"})
 		return
 	}
-	btlLog.CUST.Info("Success PutInSatoshiAward %v, , %v, %v", e.UserInfo.Account, creds.Amount, &creds.Memo)
-	c.JSON(http.StatusOK, models.JsonResult{
-		Success: true,
-		Error:   "",
-		Code:    models.SUCCESS,
-		Data:    award.ID,
-	})
 }
 
 type AwardAssetRequest struct {
-	Username string `json:"username"`
-	AssetId  string `json:"assetId"`
-	Amount   int    `json:"amount"`
-	Memo     string `json:"memo"`
+	Username    string `json:"username"`
+	AssetId     string `json:"assetId"`
+	Amount      int    `json:"amount"`
+	Memo        string `json:"memo"`
+	LockedId    string `json:"lockedId"`
+	AccountType string `json:"accountType"`
 }
 
 func PutAssetAward(c *gin.Context) {
@@ -65,17 +92,40 @@ func PutAssetAward(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	award, err := custodyAssets.PutInAward(e.UserInfo.Account, creds.AssetId, creds.Amount, &creds.Memo)
-	if err != nil {
-		btlLog.CUST.Error("%v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	switch creds.AccountType {
+	case "default":
+		award, err := custodyAssets.PutInAward(e.UserInfo.Account, creds.AssetId, creds.Amount, &creds.Memo, creds.LockedId)
+		if err != nil {
+			btlLog.CUST.Error("%v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		btlLog.CUST.Info("Success PutAssetAward %v, %v, %v, %v", e.UserInfo.Account, creds.AssetId, creds.Amount, award.ID)
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: true,
+			Error:   "",
+			Code:    models.SUCCESS,
+			Data:    award.ID,
+		})
+		return
+	case "locked":
+		award, err := lockPayment.PutInAwardLockAsset(e.UserInfo, creds.AssetId, float64(creds.Amount), &creds.Memo, creds.LockedId)
+		if err != nil {
+			btlLog.CUST.Error("%v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		btlLog.CUST.Info("Success PutAssetAward %v, %v, %v, %v", e.UserInfo.Account, creds.AssetId, creds.Amount, award.ID)
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: true,
+			Error:   "",
+			Code:    models.SUCCESS,
+			Data:    award.ID,
+		})
+		return
+
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid account type"})
 		return
 	}
-	btlLog.CUST.Info("Success PutAssetAward %v, %v, %v, %v", e.UserInfo.Account, creds.AssetId, creds.Amount, &creds.Memo)
-	c.JSON(http.StatusOK, models.JsonResult{
-		Success: true,
-		Error:   "",
-		Code:    models.SUCCESS,
-		Data:    award.ID,
-	})
 }

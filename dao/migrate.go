@@ -186,6 +186,9 @@ func custodyAwardMigrate(err error) error {
 	if err = middleware.DB.AutoMigrate(&models.AccountAward{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.AccountAwardIdempotent{}); err != nil {
+		return err
+	}
 	return err
 }
 func custodyLimitMigrate(err error) error {

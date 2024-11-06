@@ -22,4 +22,6 @@ const (
 	LockBillTypeTransferByLockAsset
 	LockBillTypeUnlock
 	LockBillTypeTransferByUnlockAsset
+
+	LockBillTypeAward LockBillType = 5
 )

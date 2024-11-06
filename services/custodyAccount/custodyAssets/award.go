@@ -3,6 +3,7 @@ package custodyAssets
 import (
 	"errors"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"sync"
 	"trade/btlLog"
@@ -20,7 +21,7 @@ var (
 	AwardLock = sync.Mutex{}
 )
 
-func PutInAward(account *models.Account, AssetId string, amount int, memo *string) (*models.AccountAward, error) {
+func PutInAward(account *models.Account, AssetId string, amount int, memo *string, lockedId string) (*models.AccountAward, error) {
 	tx, back := middleware.GetTx()
 	if tx == nil {
 		return nil, ServerBusy
@@ -112,6 +113,21 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return nil, ServerBusy
+	}
+
+	//Build a database AwardIdempotent
+	Idempotent := models.AccountAwardIdempotent{
+		AwardId:    award.ID,
+		Idempotent: lockedId,
+	}
+	if err = tx.Create(&Idempotent).Error; err != nil {
+		var mySQLErr *mysql.MySQLError
+		if errors.As(err, &mySQLErr) {
+			if mySQLErr.Number == 1062 {
+				return nil, errors.New("RepeatedLockId")
+			}
+		}
+		return nil, errors.New("ServiceError")
 	}
 	// Build a database AccountAwardExt
 	awardExt := models.AccountAwardExt{
