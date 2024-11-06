@@ -36,6 +36,13 @@ func SetupRouter() *gin.Engine {
 		//todo: add more api
 		locked.POST("/getLockedBalanceList", SecondHander.GetLockedBalanceList)
 	}
+	//Query
+	{
+		query := r.Group("/LocalQuery")
+		query.POST("/QueryBills", SecondHander.QueryBills)
+		query.POST("/QueryBalances", SecondHander.QueryBalance)
+		query.POST("/QueryBalanceList", SecondHander.GetBalanceList)
+	}
 
 	return r
 }
