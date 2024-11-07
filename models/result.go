@@ -213,6 +213,7 @@ const (
 	GetBlockchainInfoErr
 	CreateOrUpdateAssetListsErr
 	GetAssetListsByUserIdNonZeroErr
+	IsAssetListRecordExistErr
 )
 
 // Err type:CustodyAccount

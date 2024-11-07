@@ -7,11 +7,12 @@ import (
 )
 
 func SetupAssetListRouter(router *gin.Engine) *gin.Engine {
-	assetBalance := router.Group("/asset_list")
-	assetBalance.Use(middleware.AuthMiddleware())
+	assetList := router.Group("/asset_list")
+	assetList.Use(middleware.AuthMiddleware())
 	{
-		assetBalance.GET("/get", handlers.GetAssetList)
-		assetBalance.POST("/set_slice", handlers.SetAssetLists)
+		assetList.GET("/get", handlers.GetAssetList)
+		assetList.POST("/set_slice", handlers.SetAssetLists)
+		assetList.GET("/is_exist", handlers.IsAssetListRecordExist)
 	}
 	return router
 }

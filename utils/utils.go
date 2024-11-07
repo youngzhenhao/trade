@@ -246,7 +246,7 @@ func AppendErrorInfo(err error, info string) error {
 	if err == nil {
 		err = errors.New("[nil err]")
 	}
-	return errors.New(err.Error() + ";" + info)
+	return errors.New(err.Error() + "; " + info)
 }
 
 func AppendError(e error) func(error) error {

@@ -91,6 +91,12 @@ func ReadAssetListByAssetIdAndUserId(assetId string, userId int) (*models.AssetL
 	return &assetList, err
 }
 
+func ReadAssetListByAssetIdAndUsername(assetId string, username string) (*models.AssetList, error) {
+	var assetList models.AssetList
+	err := middleware.DB.Where("asset_id = ? AND username = ?", assetId, username).First(&assetList).Error
+	return &assetList, err
+}
+
 func ReadAssetListByUsername(username string) (*[]models.AssetList, error) {
 	var assetLists []models.AssetList
 	err := middleware.DB.Where("username = ?", username).Find(&assetLists).Error
