@@ -24,4 +24,6 @@ const (
 	LockBillTypeTransferByUnlockAsset
 
 	LockBillTypeAward LockBillType = 5
+
+	LockErr = 66
 )

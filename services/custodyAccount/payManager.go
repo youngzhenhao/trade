@@ -8,7 +8,9 @@ import (
 	"log"
 	"trade/btlLog"
 	"trade/config"
+	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 	"trade/services/btldb"
 	"trade/services/custodyAccount/account"
 	"trade/services/custodyAccount/btc_channel"
@@ -171,18 +173,33 @@ func GetAccountBalance(userId uint) (int64, error) {
 	return balance[0].Amount, nil
 }
 
-func LockPaymentToPaymentList(usr *account.UserInfo, assetId string) (*cBase.PaymentList, error) {
-	btc, err := lockPayment.ListTransferBTC(usr, assetId, 1, 500)
+func LockPaymentToPaymentList(usr *account.UserInfo, assetId string, pageNum, pageSize int) (*cBase.PaymentList, error) {
+	btc, err := lockPayment.ListTransferBTC(usr, assetId, pageNum, pageSize)
 	if err != nil {
 		return nil, err
 	}
+	db := middleware.DB
 	var list cBase.PaymentList
 	for i := range btc {
 		v := btc[i]
 		r := cBase.PaymentResponse{}
 		r.Timestamp = v.CreatedAt.Unix()
+
+		switch v.BillType {
+		case custodyModels.LockBillTypeLock:
+			r.Away = models.AWAY_IN
+		case custodyModels.LockBillTypeAward:
+			r.Away = models.AWAY_IN
+			var awardExt models.AccountAwardExt
+			db.Where("balance_id =? and account_type =1", v.ID).First(&awardExt)
+			var award models.AccountAward
+			db.Where("id =?", awardExt.AwardId).First(&award)
+			v.LockId = cBase.GetAwardType(*award.Memo)
+
+		default:
+			r.Away = models.AWAY_OUT
+		}
 		r.BillType = models.LockedTransfer
-		r.Away = models.AWAY_OUT
 		r.Invoice = &v.LockId
 		r.Address = &v.LockId
 		r.Target = &v.LockId

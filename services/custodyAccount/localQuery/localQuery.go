@@ -72,22 +72,22 @@ func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
 	default:
 	}
 	if quest.AssetId != "" {
-		q = q.Where("asset_id =?", quest.AssetId)
+		q = q.Where("bill_balance.asset_id =?", quest.AssetId)
 	}
 	if quest.AmountMin != 0 {
-		q = q.Where("amount >=?", quest.AmountMin)
+		q = q.Where("bill_balance.amount >=?", quest.AmountMin)
 	}
 	if quest.AmountMax != 0 {
-		q = q.Where("amount <=?", quest.AmountMax)
+		q = q.Where("bill_balance.amount <=?", quest.AmountMax)
 	}
 	if quest.TimeStart != "" {
-		q = q.Where("created_at >=?", quest.TimeStart)
+		q = q.Where("bill_balance.created_at >=?", quest.TimeStart)
 	}
 	if quest.TimeEnd != "" {
-		q = q.Where("created_at <=?", quest.TimeEnd)
+		q = q.Where("bill_balance.created_at <=?", quest.TimeEnd)
 	}
 	if quest.OnlyAward {
-		q = q.Where("bill_type =? or bill_type =?", 5, 6)
+		q = q.Where("bill_balance.bill_type =? or bill_balance.bill_type =?", 5, 6)
 	}
 	if quest.PageSize == 0 {
 		quest.PageSize = 500
