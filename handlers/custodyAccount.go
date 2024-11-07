@@ -140,15 +140,16 @@ func QueryPayment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	p.Sort()
 
-	p2, err := custodyAccount.LockPaymentToPaymentList(e.UserInfo, "00")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	result := custodyAccount.MergePaymentList(p, p2)
+	//p2, err := custodyAccount.LockPaymentToPaymentList(e.UserInfo, "00")
+	//if err != nil {
+	//	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	//	return
+	//}
+	//result := custodyAccount.MergePaymentList(p, p2)
 
-	c.JSON(http.StatusOK, gin.H{"payments": result.PaymentList})
+	c.JSON(http.StatusOK, gin.H{"payments": p.PaymentList})
 }
 
 // DecodeInvoice  解析发票

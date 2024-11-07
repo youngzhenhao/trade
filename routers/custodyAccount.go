@@ -39,6 +39,10 @@ func SetupCustodyAccountRouter(router *gin.Engine) *gin.Engine {
 			Asset.POST("/queryasset", handlers.QueryAsset)
 
 		}
+		locked := custody.Group("/locked")
+		{
+			locked.POST("/querypayments", handlers.QueryLockedPayments)
+		}
 	}
 	return router
 }

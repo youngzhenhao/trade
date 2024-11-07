@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"log"
-	"sort"
 	"trade/btlLog"
 	"trade/config"
 	"trade/models"
@@ -195,13 +194,4 @@ func LockPaymentToPaymentList(usr *account.UserInfo, assetId string) (*cBase.Pay
 		list.PaymentList = append(list.PaymentList, r)
 	}
 	return &list, nil
-}
-
-// MergePaymentList 合并两个paymentlist，并更具时间排序
-func MergePaymentList(list1 *cBase.PaymentList, list2 *cBase.PaymentList) *cBase.PaymentList {
-	list1.PaymentList = append(list1.PaymentList, list2.PaymentList...)
-	sort.Slice(list1.PaymentList, func(i, j int) bool {
-		return list1.PaymentList[i].Timestamp > list1.PaymentList[j].Timestamp
-	})
-	return list1
 }
