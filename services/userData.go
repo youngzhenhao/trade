@@ -150,7 +150,6 @@ func GetUserAccountBtcBalanceData(username string) (*models.UserAccountBtcBalanc
 	var balance int64
 	btcChannelEvent, err := btc_channel.NewBtcChannelEvent(username)
 	if err != nil {
-		// TODO: return error info
 		btlLog.UserData.Error("NewBtcChannelEvent err:%v", err)
 		btcChannelEvent = &btc_channel.BtcChannelEvent{}
 	} else {
@@ -164,6 +163,10 @@ func GetUserAccountBtcBalanceData(username string) (*models.UserAccountBtcBalanc
 	var userAccountBtcBalanceData models.UserAccountBtcBalanceData
 	userAccountBtcBalanceData = models.UserAccountBtcBalanceData{
 		Amount: int(balance),
+	}
+	if err != nil {
+		// @dev: return error info here
+		return &userAccountBtcBalanceData, err
 	}
 	return &userAccountBtcBalanceData, nil
 }
