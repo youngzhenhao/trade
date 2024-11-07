@@ -41,7 +41,7 @@ type BillListWithUser struct {
 	State       models.BalanceState `gorm:"column:State;type:smallint" json:"State"`
 }
 
-func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, error) {
+func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
 	billQuery := models.Balance{}
 	var err error
 
@@ -59,9 +59,9 @@ func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, error) {
 		err = db.Where(&account).First(&account).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New("account not found")
+				return nil, 0, errors.New("account not found")
 			}
-			return nil, err
+			return nil, 0, err
 		}
 		q = q.Where("account_id =?", account.ID)
 	}
@@ -93,6 +93,13 @@ func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, error) {
 		quest.PageSize = 500
 	}
 
+	// 查询总记录数
+	var total int64
+	err = q.Model(&models.Balance{}).Count(&total).Error
+	if err != nil || total == 0 {
+		return nil, 0, err
+	}
+
 	var billListWithUser []BillListWithUser
 	err = q.Table("bill_balance").
 		Joins("LEFT JOIN user_account ON user_account.id = bill_balance.account_id").
@@ -101,9 +108,9 @@ func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, error) {
 		Order("bill_balance.created_at DESC").
 		Scan(&billListWithUser).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return &billListWithUser, nil
+	return &billListWithUser, total, nil
 }
 
 type BalanceQueryQuest struct {
@@ -182,13 +189,21 @@ type GetAssetListResp struct {
 	Amount   float64 `json:"amount" gorm:"column:amount"`
 }
 
-func GetAssetList(quest GetAssetListQuest) *[]GetAssetListResp {
+func GetAssetList(quest GetAssetListQuest) (*[]GetAssetListResp, int64) {
 	db := middleware.DB
 	var assetList []GetAssetListResp
 	if quest.AssetId == "" {
-		return &assetList
+		return &assetList, 0
 	}
 	q := db.Where("asset_id =?", quest.AssetId)
+
+	// 查询总记录数
+	var total int64
+	err := q.Model(&models.Balance{}).Count(&total).Error
+	if err != nil || total == 0 {
+		return nil, 0
+	}
+
 	q.Table("user_account_balance").
 		Joins("LEFT JOIN user_account ON user_account.id = user_account_balance.account_id").
 		Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize).
@@ -196,6 +211,5 @@ func GetAssetList(quest GetAssetListQuest) *[]GetAssetListResp {
 		Order("user_account_balance.amount DESC").
 		Scan(&assetList)
 
-	return &assetList
-
+	return &assetList, total
 }
