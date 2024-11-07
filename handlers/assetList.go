@@ -78,3 +78,24 @@ func SetAssetLists(c *gin.Context) {
 		Data:    nil,
 	})
 }
+
+func IsAssetListRecordExist(c *gin.Context) {
+	assetId := c.Query("asset_id")
+	username := c.Query("username")
+	isAssetListRecordExist, err := services.IsAssetListRecordExist(assetId, username)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.IsAssetListRecordExistErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SuccessErr,
+		Code:    models.SUCCESS,
+		Data:    isAssetListRecordExist,
+	})
+}
