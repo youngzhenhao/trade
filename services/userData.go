@@ -143,18 +143,19 @@ func GetUserAccountBtcBalanceData(username string) (*models.UserAccountBtcBalanc
 	if username == "" {
 		return nil, errors.New("username is empty")
 	}
-
+	var balance int64
 	btcChannelEvent, err := btc_channel.NewBtcChannelEvent(username)
 	if err != nil {
 		btlLog.UserData.Error("NewBtcChannelEvent err:%v", err)
 		btcChannelEvent = &btc_channel.BtcChannelEvent{}
+	} else {
+		getBalance, err := btcChannelEvent.GetBalance()
+		if err != nil {
+			btlLog.UserData.Error("NewBtcChannelEvent err:%v", err)
+			getBalance = []custodyBase.Balance{}
+		}
+		balance = getBalance[0].Amount
 	}
-	getBalance, err := btcChannelEvent.GetBalance()
-	if err != nil {
-		btlLog.UserData.Error("NewBtcChannelEvent err:%v", err)
-		getBalance = []custodyBase.Balance{}
-	}
-	balance := getBalance[0].Amount
 	var userAccountBtcBalanceData models.UserAccountBtcBalanceData
 	userAccountBtcBalanceData = models.UserAccountBtcBalanceData{
 		Amount: int(balance),
