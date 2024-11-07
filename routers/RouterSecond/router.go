@@ -43,6 +43,8 @@ func SetupRouter() *gin.Engine {
 		query.POST("/QueryBalances", SecondHander.QueryBalance)
 		query.POST("/QueryBalanceList", SecondHander.GetBalanceList)
 	}
-
+	//AssetList
+	assetList := r.Group("/asset_list")
+	assetList.GET("/is_exist", handlers.IsAssetListRecordExist)
 	return r
 }

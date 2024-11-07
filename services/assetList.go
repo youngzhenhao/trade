@@ -4,6 +4,7 @@ import (
 	"errors"
 	"trade/models"
 	"trade/services/btldb"
+	"trade/utils"
 )
 
 func GetAssetListsByUserId(userId int) (*[]models.AssetList, error) {
@@ -144,6 +145,19 @@ func CreateOrUpdateAssetLists(lists *[]models.AssetList, userId int) (err error)
 		assetLists = append(assetLists, *assetList)
 	}
 	return btldb.UpdateAssetLists(&assetLists)
+}
+
+func GetAssetListByAssetIdAndUsername(assetId string, username string) (*models.AssetList, error) {
+	return btldb.ReadAssetListByAssetIdAndUsername(assetId, username)
+}
+
+func IsAssetListRecordExist(assetId string, username string) (bool, error) {
+	assetList, err := GetAssetListByAssetIdAndUsername(assetId, username)
+	if err != nil {
+		return false, utils.AppendErrorInfo(err, "GetAssetListByAssetIdAndUsername")
+	} else {
+		return assetList.Amount != 0, nil
+	}
 }
 
 type UserAssetList struct {
