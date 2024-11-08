@@ -623,6 +623,15 @@ func DateTimeStringToTime(dateTime string) (time.Time, error) {
 	return time.ParseInLocation(time.DateTime, dateTime, loc)
 }
 
+func DateTimeStringToTimeWithFormat(dateTime string, format string) (time.Time, error) {
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		err = AppendErrorInfo(err, "LoadLocation")
+		return time.Time{}, err
+	}
+	return time.ParseInLocation(format, dateTime, loc)
+}
+
 func GetTimePeriodString(_time time.Time) string {
 	hour := _time.Hour()
 	var period string

@@ -11,5 +11,7 @@ func SetupUserStatsRouter(router *gin.Engine) *gin.Engine {
 		config.GetLoadConfig().AdminUser.Username: config.GetLoadConfig().AdminUser.Password,
 	}))
 	authorized.GET("/get", handlers.GetUserStats)
+	authorized.GET("/specified", handlers.GetSpecifiedDateUserStats)
+	authorized.GET("/csv", handlers.DownloadCsv)
 	return router
 }

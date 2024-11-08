@@ -1,12 +1,17 @@
 package handlers
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"trade/btlLog"
 	"trade/models"
 	"trade/services"
+	"trade/utils"
 )
 
 func GetUserStats(c *gin.Context) {
@@ -57,5 +62,200 @@ func GetUserStats(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusOK, userStats)
+	}
+}
+
+func GetSpecifiedDateUserStats(c *gin.Context) {
+	yaml := c.Query("yaml")
+	_new := c.Query("new")
+	_day := c.Query("day")
+	_month := c.Query("month")
+	date := c.Query("date")
+	if len(date) != len("20060102") {
+		err := errors.New("date format err, length wrong")
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.DateFormatErr,
+			Data:    nil,
+		})
+		return
+	}
+	specifiedDate, err := utils.DateTimeStringToTimeWithFormat(date, "20060102")
+	isYaml, err := strconv.ParseBool(yaml)
+	if err != nil {
+		btlLog.UserStats.Error("ParseBool err:%v", err)
+	}
+	_newInt, err := strconv.Atoi(_new)
+	if err != nil {
+		btlLog.UserStats.Error("Atoi("+_new+") err:%v", err)
+	}
+	_newBool := _newInt == 1
+	_dayInt, err := strconv.Atoi(_day)
+	if err != nil {
+		btlLog.UserStats.Error("Atoi("+_day+") err:%v", err)
+	}
+	_dayBool := _dayInt == 1
+	_monthInt, err := strconv.Atoi(_month)
+	if err != nil {
+		btlLog.UserStats.Error("Atoi("+_month+") err:%v", err)
+	}
+	_monthBool := _monthInt == 1
+	if isYaml {
+		userStats, err := services.GetSpecifiedDateUserStatsYaml(specifiedDate, _newBool, _dayBool, _monthBool)
+		if err != nil {
+			c.JSON(http.StatusOK, models.JsonResult{
+				Success: false,
+				Error:   err.Error(),
+				Code:    models.GetUserStatsYamlErr,
+				Data:    nil,
+			})
+			return
+		}
+		c.String(http.StatusOK, "%s", userStats)
+	} else {
+		userStats, err := services.GetSpecifiedDateUserStats(specifiedDate, _newBool, _dayBool, _monthBool)
+		if err != nil {
+			c.JSON(http.StatusOK, models.JsonResult{
+				Success: false,
+				Error:   err.Error(),
+				Code:    models.GetUserStatsErr,
+				Data:    nil,
+			})
+			return
+		}
+		c.JSON(http.StatusOK, userStats)
+	}
+}
+
+func DownloadCsv(c *gin.Context) {
+	_new := c.Query("new")
+	_day := c.Query("day")
+	_month := c.Query("month")
+
+	_newInt, err := strconv.Atoi(_new)
+	if err != nil {
+		btlLog.UserStats.Error("Atoi("+_new+") err:%v", err)
+	}
+	_newBool := _newInt == 1
+	_dayInt, err := strconv.Atoi(_day)
+	if err != nil {
+		btlLog.UserStats.Error("Atoi("+_day+") err:%v", err)
+	}
+	_dayBool := _dayInt == 1
+	_monthInt, err := strconv.Atoi(_month)
+	if err != nil {
+		btlLog.UserStats.Error("Atoi("+_month+") err:%v", err)
+	}
+	_monthBool := _monthInt == 1
+	allUserStats, err := services.GetUserStats(true, true, true)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetUserStatsErr,
+			Data:    nil,
+		})
+		return
+	}
+	if _newBool {
+		newUserToday := allUserStats.NewUserToday
+		if newUserToday == nil || len(*newUserToday) == 0 {
+			c.String(http.StatusOK, "%s", "no data here")
+			return
+		}
+		if _dayBool || _monthBool {
+			err = errors.New("too many query params")
+			c.JSON(http.StatusOK, models.JsonResult{
+				Success: false,
+				Error:   err.Error(),
+				Code:    models.TooManyQueryParamsErr,
+				Data:    nil,
+			})
+			return
+		}
+		newCsv, err := services.StatsUserInfoToCsv("new", allUserStats.NewUserToday)
+		if err != nil {
+			c.JSON(http.StatusOK, models.JsonResult{
+				Success: false,
+				Error:   err.Error(),
+				Code:    models.StatsUserInfoToCsvErr,
+				Data:    nil,
+			})
+			return
+		}
+		Download(c, newCsv)
+		return
+	}
+	if _dayBool {
+		dailyActiveUser := allUserStats.DailyActiveUser
+		if dailyActiveUser == nil || len(*dailyActiveUser) == 0 {
+			c.String(http.StatusOK, "%s", "no data here")
+			return
+		}
+		if _monthBool {
+			err = errors.New("too many query params")
+			c.JSON(http.StatusOK, models.JsonResult{
+				Success: false,
+				Error:   err.Error(),
+				Code:    models.TooManyQueryParamsErr,
+				Data:    nil,
+			})
+			return
+		}
+		newCsv, err := services.StatsUserInfoToCsv("day", allUserStats.DailyActiveUser)
+		if err != nil {
+			c.JSON(http.StatusOK, models.JsonResult{
+				Success: false,
+				Error:   err.Error(),
+				Code:    models.StatsUserInfoToCsvErr,
+				Data:    nil,
+			})
+			return
+		}
+		Download(c, newCsv)
+		return
+	}
+	if _monthBool {
+		monthlyActiveUser := allUserStats.MonthlyActiveUser
+		if monthlyActiveUser == nil || len(*monthlyActiveUser) == 0 {
+			c.String(http.StatusOK, "%s", "no data here")
+			return
+		}
+		newCsv, err := services.StatsUserInfoToCsv("month", monthlyActiveUser)
+		if err != nil {
+			c.JSON(http.StatusOK, models.JsonResult{
+				Success: false,
+				Error:   err.Error(),
+				Code:    models.StatsUserInfoToCsvErr,
+				Data:    nil,
+			})
+			return
+		}
+		Download(c, newCsv)
+		return
+	}
+	return
+}
+
+func Download(c *gin.Context, path string) {
+	file, err := os.Open(path)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "File not found"})
+		return
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			return
+		}
+	}(file)
+	filename := filepath.Base(path)
+	c.Writer.Header().Set("Content-Disposition", "attachment; filename="+filename)
+	c.Writer.Header().Set("Content-Type", "application/octet-stream")
+	c.Writer.WriteHeader(http.StatusOK)
+	_, err = io.Copy(c.Writer, file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 }
