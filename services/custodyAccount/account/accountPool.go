@@ -94,7 +94,6 @@ func (pool *UserPool) CreateUser(userName string) (*UserInfo, error) {
 
 	u, a, l, err := GetUserInfoFromDb(userName)
 	if err != nil {
-		btlLog.CUST.Error("错误: 获取用户 %s 信息时发生错误: %v\n", userName, err)
 		return nil, err
 	}
 
@@ -172,7 +171,7 @@ func GetUserInfoFromDb(username string) (*models.User, *models.Account, *cModels
 		}
 		return nil, nil, nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
 	}
-	if user.Status == 1 {
+	if user.Status != 0 {
 		return nil, nil, nil, errors.New("用户已被冻结")
 	}
 	// 获取Lit账户信息

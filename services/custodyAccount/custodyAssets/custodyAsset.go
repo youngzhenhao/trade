@@ -37,7 +37,7 @@ func NewAssetEvent(UserName string, AssetId string) (*AssetEvent, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("%w: %s", caccount.CustodyAccountGetErr, "userName不存在")
 		}
-		return nil, caccount.CustodyAccountGetErr
+		return nil, fmt.Errorf("%w: %w", caccount.CustodyAccountGetErr, err)
 	}
 	e.AssetId = &AssetId
 	return &e, nil

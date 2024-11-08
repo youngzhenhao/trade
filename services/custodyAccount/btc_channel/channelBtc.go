@@ -39,7 +39,7 @@ func NewBtcChannelEvent(UserName string) (*BtcChannelEvent, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("%w: %s", caccount.CustodyAccountGetErr, "userName不存在")
 		}
-		return nil, caccount.CustodyAccountGetErr
+		return nil, fmt.Errorf("%w: %w", caccount.CustodyAccountGetErr, err)
 	}
 	btlLog.CUST.Info("UserName:%s", UserName)
 	return &e, nil
@@ -56,7 +56,7 @@ func NewBtcChannelEventByUserId(UserId uint) (*BtcChannelEvent, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("%w: %s", caccount.CustodyAccountGetErr, "userName不存在")
 		}
-		return nil, caccount.CustodyAccountGetErr
+		return nil, fmt.Errorf("%w: %w", caccount.CustodyAccountGetErr, err)
 	}
 	btlLog.CUST.Info("UserName:%s", UserId)
 	return &e, nil
