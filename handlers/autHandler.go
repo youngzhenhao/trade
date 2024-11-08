@@ -38,7 +38,12 @@ func GetDeviceIdHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	encryptDeviceID, encodedSalt, err := services.ProcessDeviceRequest(getNonce.Nonce, getNonce.Username)
+	decryptUserName, err := services.ValidAndDecrypt(getNonce.Username)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	encryptDeviceID, encodedSalt, err := services.ProcessDeviceRequest(getNonce.Nonce, decryptUserName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
