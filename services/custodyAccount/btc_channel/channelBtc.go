@@ -273,6 +273,17 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 		balanceModel.ServerFee = custodyFee.ChannelBtcServiceFee + uint64(track.FeeSat)
 		balanceModel.State = models.STATE_SUCCESS
 		bt.err <- nil
+
+		limitType := custodyModels.LimitType{
+			AssetId:      "00",
+			TransferType: custodyModels.LimitTransferTypeOutside,
+		}
+		err = custodyLimit.MinusLimit(middleware.DB, e.UserInfo, &limitType, balanceModel.Amount+float64(balanceModel.ServerFee))
+		if err != nil {
+			btlLog.CUST.Error("额度限制未正常更新:%s", err.Error())
+			btlLog.CUST.Error("error balanceId:%v", balanceModel.ID)
+			return
+		}
 		btlLog.CUST.Info("payment outside success balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
 	case lnrpc.Payment_FAILED:
 		btlLog.CUST.Error("payment outside failed balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
@@ -288,16 +299,6 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	err = btldb.UpdateBalance(&balanceModel)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
-	}
-	limitType := custodyModels.LimitType{
-		AssetId:      "00",
-		TransferType: custodyModels.LimitTransferTypeOutside,
-	}
-	err = custodyLimit.MinusLimit(middleware.DB, e.UserInfo, &limitType, balanceModel.Amount+float64(balanceModel.ServerFee))
-	if err != nil {
-		btlLog.CUST.Error("额度限制未正常更新:%s", err.Error())
-		btlLog.CUST.Error("error balanceId:%v", balanceModel.ID)
-		return
 	}
 }
 

@@ -3,6 +3,7 @@ package localQuery
 import (
 	"errors"
 	"gorm.io/gorm"
+	"time"
 	"trade/middleware"
 	"trade/models"
 	"trade/models/custodyModels"
@@ -39,6 +40,7 @@ type BillListWithUser struct {
 	Invoice     *string             `gorm:"column:invoice;type:varchar(512)" json:"invoice"`
 	PaymentHash *string             `gorm:"column:payment_hash;type:varchar(100)" json:"paymentHash"`
 	State       models.BalanceState `gorm:"column:State;type:smallint" json:"State"`
+	Time        time.Time           `gorm:"column:created_at" json:"time"`
 }
 
 func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
@@ -199,7 +201,7 @@ func GetAssetList(quest GetAssetListQuest) (*[]GetAssetListResp, int64) {
 
 	// 查询总记录数
 	var total int64
-	err := q.Model(&models.Balance{}).Count(&total).Error
+	err := q.Model(&models.AccountBalance{}).Count(&total).Error
 	if err != nil || total == 0 {
 		return nil, 0
 	}
