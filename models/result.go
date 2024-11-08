@@ -214,6 +214,8 @@ const (
 	CreateOrUpdateAssetListsErr
 	GetAssetListsByUserIdNonZeroErr
 	IsAssetListRecordExistErr
+	GetUserStatsYamlErr
+	GetUserStatsErr
 )
 
 // Err type:CustodyAccount
