@@ -214,6 +214,10 @@ const (
 	CreateOrUpdateAssetListsErr
 	GetAssetListsByUserIdNonZeroErr
 	IsAssetListRecordExistErr
+	GetUserStatsYamlErr
+	GetUserStatsErr
+	StatsUserInfoToCsvErr
+	TooManyQueryParamsErr
 )
 
 // Err type:CustodyAccount
