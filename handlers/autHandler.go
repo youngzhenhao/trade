@@ -8,6 +8,47 @@ import (
 	"trade/services"
 )
 
+func GetNonceHandler(c *gin.Context) {
+	var getNonce models.NonceRequest
+	if err := c.ShouldBindJSON(&getNonce); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	decryptUserName, err := services.ValidAndDecrypt(getNonce.Username)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	nonce, err := services.GenerateNonce()
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+
+	}
+	nonceStored, err := services.StoreNonceInRedis(decryptUserName, nonce)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"nonce": nonceStored})
+}
+func GetDeviceIdHandler(c *gin.Context) {
+	var getNonce models.NonceRequest
+	if err := c.ShouldBindJSON(&getNonce); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	encryptDeviceID, encodedSalt, err := services.ProcessDeviceRequest(getNonce.Nonce, getNonce.Username)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"encryptDeviceID": encryptDeviceID,
+		"encodedSalt":     encodedSalt,
+	})
+}
+
 func LoginHandler(c *gin.Context) {
 	var creds models.User
 	if err := c.ShouldBindJSON(&creds); err != nil {

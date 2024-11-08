@@ -53,6 +53,18 @@ func verifyChecksumWithSalt(originalString, checksum string) bool {
 	return checksum == expectedChecksum
 }
 
+func ValidAndDecrypt(userName string) (string, error) {
+	if !isEncrypted(userName) {
+		return "", fmt.Errorf("Username is not encrypted data")
+	} else {
+		username, err := DecryptAndRestore(userName)
+		if err != nil {
+			return "", fmt.Errorf("username decryption failed: %v", err)
+		}
+		return username, nil
+	}
+}
+
 func Login(creds *models.User) (string, error) {
 	var (
 		username = creds.Username

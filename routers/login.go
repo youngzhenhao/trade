@@ -7,6 +7,8 @@ import (
 )
 
 func SetupLoginRouter(router *gin.Engine) *gin.Engine {
+	router.POST("/getNonce", handlers.GetNonceHandler)
+	router.POST("/getDeviceId", handlers.GetDeviceIdHandler)
 	// Login routing
 	router.POST("/login", handlers.LoginHandler)
 	// Refresh the route for the token
