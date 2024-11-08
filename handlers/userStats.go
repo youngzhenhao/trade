@@ -11,7 +11,6 @@ import (
 	"trade/btlLog"
 	"trade/models"
 	"trade/services"
-	"trade/utils"
 )
 
 func GetUserStats(c *gin.Context) {
@@ -66,13 +65,9 @@ func GetUserStats(c *gin.Context) {
 }
 
 func GetSpecifiedDateUserStats(c *gin.Context) {
-	yaml := c.Query("yaml")
-	_new := c.Query("new")
-	_day := c.Query("day")
-	_month := c.Query("month")
-	date := c.Query("date")
-	if len(date) != len("20060102") {
-		err := errors.New("date format err, length wrong")
+	day := c.Query("day")
+	if len(day) != 0 || len(day) != len("20060102") {
+		err := errors.New("date format err, day length wrong")
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
@@ -81,51 +76,17 @@ func GetSpecifiedDateUserStats(c *gin.Context) {
 		})
 		return
 	}
-	specifiedDate, err := utils.DateTimeStringToTimeWithFormat(date, "20060102")
-	isYaml, err := strconv.ParseBool(yaml)
+	userStats, err := services.GetSpecifiedDateUserStats(day)
 	if err != nil {
-		btlLog.UserStats.Error("ParseBool err:%v", err)
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetSpecifiedDateUserStatsErr,
+			Data:    nil,
+		})
+		return
 	}
-	_newInt, err := strconv.Atoi(_new)
-	if err != nil {
-		btlLog.UserStats.Error("Atoi("+_new+") err:%v", err)
-	}
-	_newBool := _newInt == 1
-	_dayInt, err := strconv.Atoi(_day)
-	if err != nil {
-		btlLog.UserStats.Error("Atoi("+_day+") err:%v", err)
-	}
-	_dayBool := _dayInt == 1
-	_monthInt, err := strconv.Atoi(_month)
-	if err != nil {
-		btlLog.UserStats.Error("Atoi("+_month+") err:%v", err)
-	}
-	_monthBool := _monthInt == 1
-	if isYaml {
-		userStats, err := services.GetSpecifiedDateUserStatsYaml(specifiedDate, _newBool, _dayBool, _monthBool)
-		if err != nil {
-			c.JSON(http.StatusOK, models.JsonResult{
-				Success: false,
-				Error:   err.Error(),
-				Code:    models.GetUserStatsYamlErr,
-				Data:    nil,
-			})
-			return
-		}
-		c.String(http.StatusOK, "%s", userStats)
-	} else {
-		userStats, err := services.GetSpecifiedDateUserStats(specifiedDate, _newBool, _dayBool, _monthBool)
-		if err != nil {
-			c.JSON(http.StatusOK, models.JsonResult{
-				Success: false,
-				Error:   err.Error(),
-				Code:    models.GetUserStatsErr,
-				Data:    nil,
-			})
-			return
-		}
-		c.JSON(http.StatusOK, userStats)
-	}
+	c.JSON(http.StatusOK, userStats)
 }
 
 func DownloadCsv(c *gin.Context) {
