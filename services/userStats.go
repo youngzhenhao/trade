@@ -20,31 +20,34 @@ func GetTotalUserNumber() (uint64, error) {
 	return uint64(len(ids)), nil
 }
 
-type userInfo struct {
-	ID                uint   `json:"用户ID" yaml:"用户ID"`
-	CreatedAt         string `json:"用户创建时间" yaml:"用户创建时间"`
-	UpdatedAt         string `json:"更新时间" yaml:"更新时间"`
-	Username          string `json:"用户名;NpubKey;Nostr地址" yaml:"用户名;NpubKey;Nostr地址"`
-	Status            int16  `json:"用户状态" yaml:"用户状态"`
-	RecentIpAddresses string `json:"最近IP地址" yaml:"最近IP地址"`
-	RecentLoginTime   string `json:"最近登录时间" yaml:"最近登录时间"`
-}
-
-func userToUserInfo(user *models.User) *userInfo {
-	if user == nil {
-		return nil
-	}
+func userToUserInfo(user models.User) models.StatsUserInfo {
 	loginTime := utils.TimestampToTime(user.RecentLoginTime)
-	return &userInfo{
+	var status string
+	if user.Status == 1 {
+		status = "正常"
+	} else if user.Status == 0 {
+		status = "已冻结"
+	}
+	return models.StatsUserInfo{
 		ID:                user.ID,
 		CreatedAt:         utils.TimeFormatCN(user.CreatedAt),
 		UpdatedAt:         utils.TimeFormatCN(user.UpdatedAt),
 		Username:          user.Username,
-		Status:            user.Status,
+		Status:            status,
 		RecentIpAddresses: user.RecentIpAddresses,
 		RecentLoginTime:   utils.TimeFormatCN(loginTime),
 	}
 }
+
+func usersToUserInfos(users *[]models.User) *[]models.StatsUserInfo {
+	var userInfos []models.StatsUserInfo
+	for _, user := range *users {
+		userInfos = append(userInfos, userToUserInfo(user))
+	}
+	return &userInfos
+}
+
+//TODO: Mysql data to csv
 
 func GetUserStats(_new bool, _day bool, _month bool) (*models.UserStats, error) {
 	var users []models.User
@@ -71,17 +74,17 @@ func GetUserStats(_new bool, _day bool, _month bool) (*models.UserStats, error) 
 			}
 		}
 	}
-	var _newUserToday *[]models.User = nil
-	var _dailyActiveUser *[]models.User = nil
-	var _monthlyActiveUser *[]models.User = nil
+	var _newUserToday *[]models.StatsUserInfo = nil
+	var _dailyActiveUser *[]models.StatsUserInfo = nil
+	var _monthlyActiveUser *[]models.StatsUserInfo = nil
 	if _new {
-		_newUserToday = &newUserToday
+		_newUserToday = usersToUserInfos(&newUserToday)
 	}
 	if _day {
-		_dailyActiveUser = &dailyActiveUser
+		_dailyActiveUser = usersToUserInfos(&dailyActiveUser)
 	}
 	if _month {
-		_monthlyActiveUser = &monthlyActiveUser
+		_monthlyActiveUser = usersToUserInfos(&monthlyActiveUser)
 	}
 	return &models.UserStats{
 		QueryTime:            utils.TimeFormatCN(now),

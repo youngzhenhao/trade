@@ -46,7 +46,7 @@ func GetUserStats(c *gin.Context) {
 		}
 		c.String(http.StatusOK, "%s", userStats)
 	} else {
-		userStats, err := services.GetUserStatsYaml(_newBool, _dayBool, _monthBool)
+		userStats, err := services.GetUserStats(_newBool, _dayBool, _monthBool)
 		if err != nil {
 			c.JSON(http.StatusOK, models.JsonResult{
 				Success: false,
