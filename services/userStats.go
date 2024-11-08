@@ -1,7 +1,12 @@
 package services
 
 import (
+	"encoding/csv"
+	"errors"
 	"gopkg.in/yaml.v3"
+	"os"
+	"path/filepath"
+	"strconv"
 	"time"
 	"trade/middleware"
 	"trade/models"
@@ -24,9 +29,9 @@ func userToUserInfo(user models.User) models.StatsUserInfo {
 	loginTime := utils.TimestampToTime(user.RecentLoginTime)
 	var status string
 	if user.Status == 1 {
-		status = "正常"
-	} else if user.Status == 0 {
 		status = "已冻结"
+	} else if user.Status == 0 {
+		status = "正常"
 	}
 	return models.StatsUserInfo{
 		ID:                user.ID,
@@ -46,8 +51,6 @@ func usersToUserInfos(users *[]models.User) *[]models.StatsUserInfo {
 	}
 	return &userInfos
 }
-
-//TODO: Mysql data to csv
 
 func GetUserStats(_new bool, _day bool, _month bool) (*models.UserStats, error) {
 	var users []models.User
@@ -106,4 +109,53 @@ func GetUserStatsYaml(_new bool, _day bool, _month bool) (string, error) {
 	}
 	userStatsBytes, _ := yaml.Marshal(userStats)
 	return string(userStatsBytes), nil
+}
+
+type StatsUserInfo struct {
+	ID                uint   `json:"用户ID" yaml:"用户ID"`
+	CreatedAt         string `json:"用户创建时间" yaml:"用户创建时间"`
+	UpdatedAt         string `json:"更新时间" yaml:"更新时间"`
+	Username          string `json:"用户名;NpubKey;Nostr地址" yaml:"用户名;NpubKey;Nostr地址"`
+	Status            string `json:"用户状态" yaml:"用户状态"`
+	RecentIpAddresses string `json:"最近IP地址" yaml:"最近IP地址"`
+	RecentLoginTime   string `json:"最近登录时间" yaml:"最近登录时间"`
+}
+
+func StatsUserInfoToCsv(filename string, statsUserInfos *[]models.StatsUserInfo) (string, error) {
+	if statsUserInfos == nil {
+		return "", errors.New("statsUserInfos is nil")
+	}
+	var path = filepath.Join(".", filepath.Join("csv", filename+"-user.csv"))
+	utils.CreateFile(path, "")
+	file, err := os.Create(path)
+	if err != nil {
+		return "", err
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			return
+		}
+	}(file)
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+	err = writer.Write([]string{"用户ID", "用户创建时间", "更新时间", "用户名;NpubKey;Nostr地址", "用户状态", "最近IP地址", "最近登录时间"})
+	if err != nil {
+		return "", err
+	}
+	for _, statsUserInfo := range *statsUserInfos {
+		err = writer.Write([]string{
+			strconv.Itoa(int(statsUserInfo.ID)),
+			statsUserInfo.CreatedAt,
+			statsUserInfo.UpdatedAt,
+			statsUserInfo.Username,
+			statsUserInfo.Status,
+			statsUserInfo.RecentIpAddresses,
+			statsUserInfo.RecentLoginTime,
+		})
+		if err != nil {
+			return "", err
+		}
+	}
+	return path, nil
 }

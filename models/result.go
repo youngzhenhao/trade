@@ -216,6 +216,8 @@ const (
 	IsAssetListRecordExistErr
 	GetUserStatsYamlErr
 	GetUserStatsErr
+	StatsUserInfoToCsvErr
+	TooManyQueryParamsErr
 )
 
 // Err type:CustodyAccount
