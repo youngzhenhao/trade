@@ -71,12 +71,12 @@ func GetSpecifiedDateUserStats(c *gin.Context) {
 	_day := c.Query("day")
 	_month := c.Query("month")
 	date := c.Query("date")
-	if len(date) == len("20060102") {
-		err := errors.New("date format err")
+	if len(date) != len("20060102") {
+		err := errors.New("date format err, length wrong")
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
 			Error:   err.Error(),
-			Code:    models.GetUserStatsErr,
+			Code:    models.DateFormatErr,
 			Data:    nil,
 		})
 		return
