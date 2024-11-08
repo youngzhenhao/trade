@@ -102,6 +102,65 @@ func GetUserStats(_new bool, _day bool, _month bool) (*models.UserStats, error) 
 	}, nil
 }
 
+func GetSpecifiedDateUserStats(_time time.Time, _new bool, _day bool, _month bool) (*models.UserStats, error) {
+	var users []models.User
+	var newUserToday []models.User
+	var dailyActiveUser []models.User
+	var monthlyActiveUser []models.User
+	errorInfos := new([]string)
+	err := middleware.DB.Find(&users).Error
+	if err != nil {
+		*errorInfos = append(*errorInfos, err.Error())
+	} else {
+		for _, user := range users {
+			if user.CreatedAt.Year() == _time.Year() && user.CreatedAt.Month() == _time.Month() && user.CreatedAt.Day() == _time.Day() {
+				newUserToday = append(newUserToday, user)
+			}
+			if user.UpdatedAt.Year() == _time.Year() {
+				if user.UpdatedAt.Month() == _time.Month() {
+					monthlyActiveUser = append(monthlyActiveUser, user)
+					if user.UpdatedAt.Day() == _time.Day() {
+						dailyActiveUser = append(dailyActiveUser, user)
+					}
+				}
+			}
+		}
+	}
+	var _newUserToday *[]models.StatsUserInfo = nil
+	var _dailyActiveUser *[]models.StatsUserInfo = nil
+	var _monthlyActiveUser *[]models.StatsUserInfo = nil
+	if _new {
+		_newUserToday = usersToUserInfos(&newUserToday)
+	}
+	if _day {
+		_dailyActiveUser = usersToUserInfos(&dailyActiveUser)
+	}
+	if _month {
+		_monthlyActiveUser = usersToUserInfos(&monthlyActiveUser)
+	}
+	return &models.UserStats{
+		QueryTime:            utils.TimeFormatCN(_time),
+		TotalUser:            uint64(len(users)),
+		NewUserTodayNum:      uint64(len(newUserToday)),
+		DailyActiveUserNum:   uint64(len(dailyActiveUser)),
+		MonthlyActiveUserNum: uint64(len(monthlyActiveUser)),
+		ErrorInfos:           errorInfos,
+		NewUserToday:         _newUserToday,
+		DailyActiveUser:      _dailyActiveUser,
+		MonthlyActiveUser:    _monthlyActiveUser,
+	}, nil
+}
+
+func GetSpecifiedDateUserStatsYaml(_time time.Time, _new bool, _day bool, _month bool) (string, error) {
+	userStats, err := GetSpecifiedDateUserStats(_time, _new, _day, _month)
+	if err != nil {
+		return "", utils.AppendErrorInfo(err, "GetUserStats")
+	}
+	userStatsBytes, _ := yaml.Marshal(userStats)
+	return string(userStatsBytes), nil
+
+}
+
 func GetUserStatsYaml(_new bool, _day bool, _month bool) (string, error) {
 	userStats, err := GetUserStats(_new, _day, _month)
 	if err != nil {
