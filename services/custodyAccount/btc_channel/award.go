@@ -2,6 +2,7 @@ package btc_channel
 
 import (
 	"errors"
+	"github.com/go-sql-driver/mysql"
 	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
@@ -9,7 +10,7 @@ import (
 	"trade/services/custodyAccount/custodyBase/custodyRpc"
 )
 
-func PutInAward(user *caccount.UserInfo, _ string, amount int, memo *string) (*models.AccountAward, error) {
+func PutInAward(user *caccount.UserInfo, _ string, amount int, memo *string, lockedId string) (*models.AccountAward, error) {
 	var err error
 	tx, back := middleware.GetTx()
 	defer back()
@@ -41,6 +42,20 @@ func PutInAward(user *caccount.UserInfo, _ string, amount int, memo *string) (*m
 		btlLog.CUST.Error(err.Error())
 		return nil, err
 	}
+	//Build a database AwardIdempotent
+	Idempotent := models.AccountAwardIdempotent{
+		AwardId:    award.ID,
+		Idempotent: lockedId,
+	}
+	if err = tx.Create(&Idempotent).Error; err != nil {
+		var mySQLErr *mysql.MySQLError
+		if errors.As(err, &mySQLErr) {
+			if mySQLErr.Number == 1062 {
+				return nil, errors.New("RepeatedLockId")
+			}
+		}
+		return nil, errors.New("ServiceError")
+	}
 	// Build a database  AccountAwardExt
 	awardExt := models.AccountAwardExt{
 		BalanceId: ba.ID,
@@ -60,7 +75,6 @@ func PutInAward(user *caccount.UserInfo, _ string, amount int, memo *string) (*m
 		btlLog.CUST.Error(err.Error())
 		return nil, err
 	}
-
 	tx.Commit()
 	return &award, nil
 }

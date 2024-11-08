@@ -13,6 +13,7 @@ type UserData struct {
 	UserAssetTransfer       *[]UserAssetTransferData       `json:"上传的资产转出记录" yaml:"上传的资产转出记录"`
 	UserAccountBtcBalance   *UserAccountBtcBalanceData     `json:"用户托管账户比特币余额" yaml:"用户托管账户比特币余额"`
 	UserAccountAssetBalance *[]UserAccountAssetBalanceData `json:"用户托管账户资产余额" yaml:"用户托管账户资产余额"`
+	ErrorInfos              *[]string                      `json:"错误信息" yaml:"错误信息"`
 }
 
 type UserInfoData struct {

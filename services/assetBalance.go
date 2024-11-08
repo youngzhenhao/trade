@@ -35,41 +35,41 @@ func ProcessAssetBalanceSetRequest(userId int, username string, assetBalanceSetR
 	return &assetBalance
 }
 
-func IsAssetBalanceChanged(assetBalanceByInvoice *models.AssetBalance, old *models.AssetBalance) bool {
-	if assetBalanceByInvoice == nil || old == nil {
+func IsAssetBalanceChanged(assetBalanceByAssetId *models.AssetBalance, old *models.AssetBalance) bool {
+	if assetBalanceByAssetId == nil || old == nil {
 		return true
 	}
-	if assetBalanceByInvoice.GenesisPoint != old.GenesisPoint {
+	if assetBalanceByAssetId.GenesisPoint != old.GenesisPoint {
 		return true
 	}
-	if assetBalanceByInvoice.Name != old.Name {
+	if assetBalanceByAssetId.Name != old.Name {
 		return true
 	}
-	if assetBalanceByInvoice.MetaHash != old.MetaHash {
+	if assetBalanceByAssetId.MetaHash != old.MetaHash {
 		return true
 	}
-	if assetBalanceByInvoice.AssetID != old.AssetID {
+	if assetBalanceByAssetId.AssetID != old.AssetID {
 		return true
 	}
-	if assetBalanceByInvoice.AssetType != old.AssetType {
+	if assetBalanceByAssetId.AssetType != old.AssetType {
 		return true
 	}
-	if assetBalanceByInvoice.OutputIndex != old.OutputIndex {
+	if assetBalanceByAssetId.OutputIndex != old.OutputIndex {
 		return true
 	}
-	if assetBalanceByInvoice.Version != old.Version {
+	if assetBalanceByAssetId.Version != old.Version {
 		return true
 	}
-	if assetBalanceByInvoice.Balance != old.Balance {
+	if assetBalanceByAssetId.Balance != old.Balance {
 		return true
 	}
-	if assetBalanceByInvoice.DeviceId != old.DeviceId {
+	if assetBalanceByAssetId.DeviceId != old.DeviceId {
 		return true
 	}
-	if assetBalanceByInvoice.UserId != old.UserId {
+	if assetBalanceByAssetId.UserId != old.UserId {
 		return true
 	}
-	if assetBalanceByInvoice.Username != old.Username {
+	if assetBalanceByAssetId.Username != old.Username {
 		return true
 	}
 	return false
@@ -97,6 +97,7 @@ func CheckAssetBalanceIfUpdate(assetBalance *models.AssetBalance, userId int) (*
 	assetBalanceByAssetId.DeviceId = assetBalance.DeviceId
 	assetBalanceByAssetId.UserId = assetBalance.UserId
 	assetBalanceByAssetId.Username = assetBalance.Username
+	assetBalanceByAssetId.FromListAsset = assetBalance.FromListAsset
 	return assetBalanceByAssetId, nil
 }
 
@@ -110,17 +111,18 @@ func ProcessAssetBalanceSetRequestSlice(userId int, username string, assetBalanc
 	var assetBalances []models.AssetBalance
 	for _, assetBalanceRequest := range *assetBalanceSetRequestSlice {
 		assetBalances = append(assetBalances, models.AssetBalance{
-			GenesisPoint: assetBalanceRequest.GenesisPoint,
-			Name:         assetBalanceRequest.Name,
-			MetaHash:     assetBalanceRequest.MetaHash,
-			AssetID:      assetBalanceRequest.AssetID,
-			AssetType:    assetBalanceRequest.AssetType,
-			OutputIndex:  assetBalanceRequest.OutputIndex,
-			Version:      assetBalanceRequest.Version,
-			Balance:      assetBalanceRequest.Balance,
-			DeviceId:     assetBalanceRequest.DeviceId,
-			UserId:       userId,
-			Username:     username,
+			GenesisPoint:  assetBalanceRequest.GenesisPoint,
+			Name:          assetBalanceRequest.Name,
+			MetaHash:      assetBalanceRequest.MetaHash,
+			AssetID:       assetBalanceRequest.AssetID,
+			AssetType:     assetBalanceRequest.AssetType,
+			OutputIndex:   assetBalanceRequest.OutputIndex,
+			Version:       assetBalanceRequest.Version,
+			Balance:       assetBalanceRequest.Balance,
+			DeviceId:      assetBalanceRequest.DeviceId,
+			UserId:        userId,
+			Username:      username,
+			FromListAsset: assetBalanceRequest.FromListAsset,
 		})
 	}
 	return &assetBalances

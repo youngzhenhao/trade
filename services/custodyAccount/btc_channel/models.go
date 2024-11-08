@@ -6,11 +6,14 @@ import (
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"gorm.io/gorm"
 	"trade/btlLog"
+	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
+	"trade/services/custodyAccount/custodyBase/custodyLimit"
 	"trade/services/custodyAccount/custodyBase/custodyRpc"
 	rpc "trade/services/servicesrpc"
 )
@@ -80,18 +83,28 @@ func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 		btlLog.CUST.Error("发票解析失败", err)
 		return fmt.Errorf("(pay_request=%s)", "发票解析失败：", p.PayReq)
 	}
-	//TODO:限额，暂时做单次限额，后续改为每日限额
-	if (p.DecodePayReq.NumSatoshis + p.FeeLimit + int64(ServerFee)) > 500000 {
-		btlLog.CUST.Error("amount>500000,超过当前转账限制")
-		return fmt.Errorf("amount>500000,超过当前转账限制")
+	endAmount := p.DecodePayReq.NumSatoshis + p.FeeLimit + int64(ServerFee)
+
+	//验证限额
+	limitType := custodyModels.LimitType{
+		AssetId:      "00",
+		TransferType: custodyModels.LimitTransferTypeLocal,
 	}
+	if p.isInsideMission == nil {
+		limitType.TransferType = custodyModels.LimitTransferTypeOutside
+	}
+	err = custodyLimit.CheckLimit(middleware.DB, userinfo, &limitType, float64(endAmount))
+	if err != nil {
+		return err
+	}
+
 	//验证金额
-	useableBalance, err := custodyRpc.GetAccountInfo(userinfo)
+	usableBalance, err := custodyRpc.GetAccountInfo(userinfo)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return cBase.GetbalanceErr
 	}
-	if useableBalance.CurrentBalance < (p.DecodePayReq.NumSatoshis + p.FeeLimit + int64(ServerFee)) {
+	if usableBalance.CurrentBalance < endAmount {
 		return NotSufficientFunds
 	}
 

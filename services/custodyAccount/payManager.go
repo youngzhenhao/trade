@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"log"
-	"sort"
 	"trade/btlLog"
 	"trade/config"
+	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 	"trade/services/btldb"
 	"trade/services/custodyAccount/account"
 	"trade/services/custodyAccount/btc_channel"
@@ -73,7 +74,6 @@ func checkAdminAccount() bool {
 		// 创建管理员USER
 		adminUser.Username = "admin"
 		adminUser.Password = "admin"
-		adminUser.Status = 1
 		err = btldb.CreateUser(adminUser)
 		if err != nil {
 			btlLog.CUST.Error("create AdminUser failed:%s", err)
@@ -173,18 +173,33 @@ func GetAccountBalance(userId uint) (int64, error) {
 	return balance[0].Amount, nil
 }
 
-func LockPaymentToPaymentList(usr *account.UserInfo, assetId string) (*cBase.PaymentList, error) {
-	btc, err := lockPayment.ListTransferBTC(usr, assetId, 1, 500)
+func LockPaymentToPaymentList(usr *account.UserInfo, assetId string, pageNum, pageSize int) (*cBase.PaymentList, error) {
+	btc, err := lockPayment.ListTransferBTC(usr, assetId, pageNum, pageSize)
 	if err != nil {
 		return nil, err
 	}
+	db := middleware.DB
 	var list cBase.PaymentList
 	for i := range btc {
 		v := btc[i]
 		r := cBase.PaymentResponse{}
 		r.Timestamp = v.CreatedAt.Unix()
+
+		switch v.BillType {
+		case custodyModels.LockBillTypeLock:
+			r.Away = models.AWAY_IN
+		case custodyModels.LockBillTypeAward:
+			r.Away = models.AWAY_IN
+			var awardExt models.AccountAwardExt
+			db.Where("balance_id =? and account_type =1", v.ID).First(&awardExt)
+			var award models.AccountAward
+			db.Where("id =?", awardExt.AwardId).First(&award)
+			v.LockId = cBase.GetAwardType(*award.Memo)
+
+		default:
+			r.Away = models.AWAY_OUT
+		}
 		r.BillType = models.LockedTransfer
-		r.Away = models.AWAY_OUT
 		r.Invoice = &v.LockId
 		r.Address = &v.LockId
 		r.Target = &v.LockId
@@ -196,13 +211,4 @@ func LockPaymentToPaymentList(usr *account.UserInfo, assetId string) (*cBase.Pay
 		list.PaymentList = append(list.PaymentList, r)
 	}
 	return &list, nil
-}
-
-// MergePaymentList 合并两个paymentlist，并更具时间排序
-func MergePaymentList(list1 *cBase.PaymentList, list2 *cBase.PaymentList) *cBase.PaymentList {
-	list1.PaymentList = append(list1.PaymentList, list2.PaymentList...)
-	sort.Slice(list1.PaymentList, func(i, j int) bool {
-		return list1.PaymentList[i].Timestamp > list1.PaymentList[j].Timestamp
-	})
-	return list1
 }

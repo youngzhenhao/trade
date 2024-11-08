@@ -2,6 +2,7 @@ package custodyBase
 
 import (
 	"errors"
+	"sort"
 	"time"
 	"trade/models"
 )
@@ -58,4 +59,10 @@ type PaymentList struct {
 
 func (r *PaymentList) GetTxString() string {
 	return ""
+}
+
+func (r *PaymentList) Sort() {
+	sort.Slice(r.PaymentList, func(i, j int) bool {
+		return r.PaymentList[i].Timestamp > r.PaymentList[j].Timestamp
+	})
 }

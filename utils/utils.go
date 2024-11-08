@@ -246,7 +246,7 @@ func AppendErrorInfo(err error, info string) error {
 	if err == nil {
 		err = errors.New("[nil err]")
 	}
-	return errors.New(err.Error() + ";" + info)
+	return errors.New(err.Error() + "; " + info)
 }
 
 func AppendError(e error) func(error) error {
@@ -615,5 +615,37 @@ func TimestampToTime(timestamp int) time.Time {
 }
 
 func DateTimeStringToTime(dateTime string) (time.Time, error) {
-	return time.Parse(time.DateTime, dateTime)
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		err = AppendErrorInfo(err, "LoadLocation")
+		return time.Time{}, err
+	}
+	return time.ParseInLocation(time.DateTime, dateTime, loc)
+}
+
+func GetTimePeriodString(_time time.Time) string {
+	hour := _time.Hour()
+	var period string
+	switch {
+	case hour >= 5 && hour < 8:
+		period = "清晨"
+	case hour >= 8 && hour < 12:
+		period = "上午"
+	case hour >= 12 && hour < 14:
+		period = "中午"
+	case hour >= 14 && hour < 17:
+		period = "下午"
+	case hour >= 17 && hour < 19:
+		period = "傍晚"
+	default:
+		period = "夜间"
+	}
+	return period
+}
+
+func TimeFormatCN(_time time.Time) string {
+	format := _time.Format("2006年01月02日 15:04:05")
+	split := strings.Split(format, " ")
+	format = split[0] + " " + GetTimePeriodString(_time) + " " + split[1]
+	return format
 }

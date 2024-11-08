@@ -211,6 +211,11 @@ const (
 	GetBatchGroupsErr
 	GetNftPresaleByBatchGroupIdErr
 	GetBlockchainInfoErr
+	CreateOrUpdateAssetListsErr
+	GetAssetListsByUserIdNonZeroErr
+	IsAssetListRecordExistErr
+	GetUserStatsYamlErr
+	GetUserStatsErr
 )
 
 // Err type:CustodyAccount

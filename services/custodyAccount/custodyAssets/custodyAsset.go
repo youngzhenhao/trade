@@ -11,11 +11,13 @@ import (
 	"trade/config"
 	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 	"trade/services/assetsyncinfo"
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
+	"trade/services/custodyAccount/custodyBase/custodyLimit"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -35,7 +37,7 @@ func NewAssetEvent(UserName string, AssetId string) (*AssetEvent, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("%w: %s", caccount.CustodyAccountGetErr, "userName不存在")
 		}
-		return nil, caccount.CustodyAccountGetErr
+		return nil, fmt.Errorf("%w: %w", caccount.CustodyAccountGetErr, err)
 	}
 	e.AssetId = &AssetId
 	return &e, nil
@@ -225,6 +227,18 @@ func (e *AssetEvent) payToInside(bt *AssetPacket) {
 	//递交给内部转账服务
 	bt.isInsideMission.insideMission = &payInside
 	InSideSever.Queue.addNewPkg(bt.isInsideMission)
+	//更新额度限制
+	limitType := custodyModels.LimitType{
+		AssetId:      AssetId,
+		TransferType: custodyModels.LimitTransferTypeLocal,
+	}
+	err = custodyLimit.MinusLimit(middleware.DB, e.UserInfo, &limitType, float64(bt.DecodePayReq.Amount))
+	if err != nil {
+		btlLog.CUST.Error("额度限制未正常更新:%s", err.Error())
+		btlLog.CUST.Error("error payInsideId:%v", payInside.ID)
+		return
+	}
+
 }
 
 func (e *AssetEvent) payToOutside(bt *AssetPacket) {
@@ -282,6 +296,17 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 	bt.err <- nil
 	OutsideSever.Queue.addNewPkg(&m)
 	btlLog.CUST.Info("Create payToOutside mission success: id=%v,amount=%v", assetId, float64(bt.DecodePayReq.Amount))
+	//更新额度限制
+	limitType := custodyModels.LimitType{
+		AssetId:      assetId,
+		TransferType: custodyModels.LimitTransferTypeOutside,
+	}
+	err = custodyLimit.MinusLimit(middleware.DB, e.UserInfo, &limitType, float64(bt.DecodePayReq.Amount))
+	if err != nil {
+		btlLog.CUST.Error("额度限制未正常更新:%s", err.Error())
+		btlLog.CUST.Error("error outsideId:%v", outside.ID)
+		return
+	}
 }
 
 func (e *AssetEvent) QueryPayReq() ([]*models.Invoice, error) {

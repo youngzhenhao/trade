@@ -7,11 +7,14 @@ import (
 	"github.com/lightninglabs/taproot-assets/taprpc"
 	"gorm.io/gorm"
 	"trade/btlLog"
+	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
+	"trade/services/custodyAccount/custodyBase/custodyLimit"
 	"trade/services/custodyAccount/custodyBase/custodyRpc"
 	rpc "trade/services/servicesrpc"
 )
@@ -73,8 +76,19 @@ func (p *AssetPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 		return fmt.Errorf("%w(pay_request=%s)", cBase.DecodeAddressFail, p.PayReq)
 	}
 	//TODO:验证地址版本
-
+	//限额检查
 	assetId := hex.EncodeToString(p.DecodePayReq.AssetId)
+	limitType := custodyModels.LimitType{
+		AssetId:      assetId,
+		TransferType: custodyModels.LimitTransferTypeLocal,
+	}
+	if p.isInsideMission == nil {
+		limitType.TransferType = custodyModels.LimitTransferTypeOutside
+	}
+	err = custodyLimit.CheckLimit(middleware.DB, userinfo, &limitType, float64(p.DecodePayReq.Amount))
+	if err != nil {
+		return err
+	}
 	//验证资产金额
 	balance, err := btldb.GetAccountBalanceByGroup(userinfo.Account.ID, assetId)
 	if err != nil {
