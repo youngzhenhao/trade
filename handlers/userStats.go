@@ -64,6 +64,31 @@ func GetUserStats(c *gin.Context) {
 	}
 }
 
+func GetSpecifiedDateUserStats(c *gin.Context) {
+	day := c.Query("day")
+	if !(len(day) == 0 || len(day) == len("20060102")) {
+		err := errors.New("date format err, day length wrong")
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.DateFormatErr,
+			Data:    nil,
+		})
+		return
+	}
+	userStats, err := services.GetSpecifiedDateUserStats(day)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetSpecifiedDateUserStatsErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, userStats)
+}
+
 func DownloadCsv(c *gin.Context) {
 	_new := c.Query("new")
 	_day := c.Query("day")
