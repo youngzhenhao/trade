@@ -70,7 +70,8 @@ func UploadLogFile(c *gin.Context) {
 		})
 		return
 	}
-	err = services.CreateLogFileUpload(&models.LogFileUpload{
+	var id uint
+	id, err = services.CreateLogFileUploadAndGetId(&models.LogFileUpload{
 		DeviceId:       deviceId,
 		OriginFileName: file.Filename,
 		FileSavePath:   dst,
@@ -89,7 +90,77 @@ func UploadLogFile(c *gin.Context) {
 		Success: true,
 		Error:   models.SUCCESS.Error(),
 		Code:    models.SUCCESS,
-		Data:    nil,
+		Data:    id,
+	})
+}
+
+func UploadBigFile(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.FormFileErr,
+			Data:    nil,
+		})
+		return
+	}
+	deviceId := c.PostForm("device_id")
+	if deviceId == "" {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   errors.New("device_id is null").Error(),
+			Code:    models.DeviceIdIsNullErr,
+			Data:    nil,
+		})
+		return
+	}
+	info := c.PostForm("info")
+	var pwd string
+	pwd, err = os.Getwd()
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.OsGetPwdErr,
+			Data:    nil,
+		})
+		return
+	}
+	network := config.GetLoadConfig().NetWork
+	timeStr := utils.GetNowTimeStringWithHyphens()
+	dst := path.Join(pwd, "upload_big_files", network, deviceId, timeStr+"-"+file.Filename)
+	err = c.SaveUploadedFile(file, dst)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.SaveUploadedFileErr,
+			Data:    nil,
+		})
+		return
+	}
+	var id uint
+	id, err = services.CreateLogFileUploadAndGetId(&models.LogFileUpload{
+		DeviceId:       deviceId,
+		OriginFileName: file.Filename,
+		FileSavePath:   dst,
+		Info:           info,
+	})
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.CreateLogFileUploadErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: true,
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
+		Data:    id,
 	})
 }
 
