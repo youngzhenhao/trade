@@ -70,7 +70,8 @@ func UploadLogFile(c *gin.Context) {
 		})
 		return
 	}
-	err = services.CreateLogFileUpload(&models.LogFileUpload{
+	var id uint
+	id, err = services.CreateLogFileUploadAndGetId(&models.LogFileUpload{
 		DeviceId:       deviceId,
 		OriginFileName: file.Filename,
 		FileSavePath:   dst,
@@ -89,7 +90,7 @@ func UploadLogFile(c *gin.Context) {
 		Success: true,
 		Error:   models.SUCCESS.Error(),
 		Code:    models.SUCCESS,
-		Data:    nil,
+		Data:    id,
 	})
 }
 
