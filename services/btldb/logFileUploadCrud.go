@@ -9,6 +9,14 @@ func CreateLogFileUpload(logFileUpload *models.LogFileUpload) error {
 	return middleware.DB.Create(logFileUpload).Error
 }
 
+func CreateLogFileUploadAndGetId(logFileUpload *models.LogFileUpload) (uint, error) {
+	err := middleware.DB.Create(logFileUpload).Error
+	if err != nil {
+		return 0, err
+	}
+	return logFileUpload.ID, nil
+}
+
 func CreateLogFileUploads(logFileUploads *[]models.LogFileUpload) error {
 	return middleware.DB.Create(logFileUploads).Error
 }
