@@ -302,12 +302,21 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	}
 }
 
-func (e *BtcChannelEvent) GetTransactionHistory() (*cBase.PaymentList, error) {
-	params := btldb.QueryParams{
-		"AccountId": e.UserInfo.Account.ID,
-		"AssetId":   "00",
+func (e *BtcChannelEvent) GetTransactionHistory(page int, pageSize int) (*cBase.PaymentList, error) {
+
+	if page <= 0 {
+		return nil, fmt.Errorf("page error")
 	}
-	a, err := btldb.GenericQuery(&models.Balance{}, params)
+
+	db := middleware.DB
+	var err error
+	var a []models.Balance
+	offset := (page - 1) * pageSize
+	err = db.Where("account_id = ? and asset_id = ?", e.UserInfo.Account.ID, "00").
+		Order("created_at desc").
+		Limit(pageSize).
+		Offset(offset).
+		Find(&a).Error
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return nil, fmt.Errorf("query payment error")

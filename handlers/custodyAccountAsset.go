@@ -240,14 +240,20 @@ func QueryAssetPayments(c *gin.Context) {
 		return
 	}
 	invoiceRequest := struct {
-		AssetId string `json:"asset_id"`
+		AssetId  string `json:"asset_id"`
+		Page     int    `json:"page"`
+		PageSize int    `json:"page_size"`
 	}{}
 	if err := c.ShouldBindJSON(&invoiceRequest); err != nil {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
+	if invoiceRequest.Page == 0 && invoiceRequest.PageSize == 0 {
+		invoiceRequest.Page = 1
+		invoiceRequest.PageSize = 1000
+	}
 	// 查询账户发票
-	payments, err := e.GetTransactionHistory()
+	payments, err := e.GetTransactionHistory(invoiceRequest.Page, invoiceRequest.PageSize)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))

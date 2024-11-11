@@ -34,7 +34,9 @@ type PayInvoiceRequest struct {
 }
 
 type PaymentRequest struct {
-	AssetId string `json:"asset_id"`
+	AssetId  string `json:"asset_id"`
+	Page     int    `json:"page"`
+	PageSize int    `json:"page_size"`
 }
 
 type DecodeInvoiceRequest struct {

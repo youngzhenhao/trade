@@ -135,7 +135,11 @@ func QueryPayment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "asset_id类型错误"})
 		return
 	}
-	p, err := e.GetTransactionHistory()
+	if query.Page == 0 && query.PageSize == 0 {
+		query.Page = 1
+		query.PageSize = 1000
+	}
+	p, err := e.GetTransactionHistory(query.Page, query.PageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

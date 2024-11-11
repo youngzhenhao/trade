@@ -20,6 +20,11 @@ func QueryBills(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: err.Error(), Data: nil})
 		return
 	}
+	if creds.Page == 0 {
+		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: "Page must be greater than 0", Data: nil})
+		return
+	}
+	creds.Page = creds.Page - 1
 	a, count, err := localQuery.BillQuery(creds)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
@@ -53,6 +58,12 @@ func GetBalanceList(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: err.Error(), Data: nil})
 		return
 	}
+	if creds.Page == 0 {
+		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: "Page must be greater than 0", Data: nil})
+		return
+	}
+	creds.Page = creds.Page - 1
+
 	a, count := localQuery.GetAssetList(creds)
 	list := struct {
 		Count int64                          `json:"count"`
@@ -71,6 +82,11 @@ func TotalBillList(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: err.Error(), Data: nil})
 		return
 	}
+	if creds.Page == 0 {
+		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: "Page must be greater than 0", Data: nil})
+		return
+	}
+	creds.Page = creds.Page - 1
 	a, count, err := localQuery.TotalBillList(&creds)
 	list := struct {
 		Count int64                           `json:"count"`
