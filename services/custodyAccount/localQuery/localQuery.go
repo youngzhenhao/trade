@@ -19,8 +19,12 @@ type BillQueryQuest struct {
 	UserName      string  `json:"username"`
 	Away          int     `json:"away"`
 	AssetId       string  `json:"assetId"`
+	Invoice       string  `json:"invoice"`
+	PaymentHash   string  `json:"hash"`
 	AmountMin     float64 `json:"amountMin"`
 	AmountMax     float64 `json:"amountMax"`
+	ServerFeeMin  uint64  `json:"feeMin"`
+	ServerFeeMax  uint64  `json:"feeMax"`
 	TimeStart     string  `json:"timeStart"`
 	TimeEnd       string  `json:"timeEnd"`
 	IncludeFailed bool    `json:"includeFailed"`
@@ -81,6 +85,18 @@ func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
 	}
 	if quest.AmountMax != 0 {
 		q = q.Where("bill_balance.amount <=?", quest.AmountMax)
+	}
+	if quest.ServerFeeMin != 0 {
+		q = q.Where("bill_balance.server_fee >=?", quest.ServerFeeMin)
+	}
+	if quest.ServerFeeMax != 0 {
+		q = q.Where("bill_balance.server_fee <=?", quest.ServerFeeMax)
+	}
+	if quest.Invoice != "" {
+		q = q.Where("bill_balance.invoice =?", quest.Invoice)
+	}
+	if quest.PaymentHash != "" {
+		q = q.Where("bill_balance.payment_hash =?", quest.PaymentHash)
 	}
 	if quest.TimeStart != "" {
 		q = q.Where("bill_balance.created_at >=?", quest.TimeStart)
@@ -214,4 +230,45 @@ func GetAssetList(quest GetAssetListQuest) (*[]GetAssetListResp, int64) {
 		Scan(&assetList)
 
 	return &assetList, total
+}
+
+type TotalBillListQuest struct {
+	AssetId   string `json:"assetId"`
+	TimeStart string `json:"timeStart"`
+	TimeEnd   string `json:"timeEnd"`
+	Page      int    `json:"page"`
+	PageSize  int    `json:"pageSize"`
+}
+
+func TotalBillList(quest TotalBillListQuest) ([]map[string]interface{}, error) {
+	db := middleware.DB
+	q := db.Select("user_account.user_name," +
+		"asset_id," +
+		"SUM(CASE WHEN away = 0 THEN amount ELSE 0 END) AS sum_away_0," +
+		"count(CASE WHEN away = 0 THEN amount ELSE 0 END) as count_away_0," +
+		"SUM(CASE WHEN away = 1 THEN amount ELSE 0 END) AS sum_away_1," +
+		"count(CASE WHEN away = 1 THEN amount ELSE 0 END) as count_away_1," +
+		"SUM(CASE WHEN away = 0 THEN amount ELSE 0 END) - SUM(CASE WHEN away = 1 THEN amount ELSE 0 END) AS income")
+	q = q.Table("bill_balance")
+	q = q.Joins("left JOIN  user_account on bill_balance.account_id = user_account.id")
+	q.Where("bill_balance.state = ?", 1)
+
+	if quest.TimeStart != "" {
+		q = q.Where("bill_balance.created_at >=?", quest.TimeStart)
+	}
+	if quest.TimeEnd != "" {
+		q = q.Where("bill_balance.created_at <=?", quest.TimeEnd)
+	}
+	if quest.AssetId != "" {
+		q.Where("bill_balance.asset_id = ?", quest.AssetId)
+	}
+	q.Group("account_id,asset_id")
+	q.Order("ABS(income) desc")
+	q.Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize)
+	var total []map[string]interface{}
+	err := q.Scan(&total).Error
+	if err != nil {
+		return total, err
+	}
+	return total, nil
 }
