@@ -63,3 +63,24 @@ func GetBalanceList(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: list})
 }
+
+func TotalBillList(c *gin.Context) {
+	var creds localQuery.TotalBillListQuest
+	if err := c.ShouldBindJSON(&creds); err != nil {
+		btlLog.CUST.Error("%v", err)
+		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+	a, count, err := localQuery.TotalBillList(&creds)
+	list := struct {
+		Count int64                           `json:"count"`
+		List  *[]localQuery.TotalBillListResp `json:"list"`
+	}{
+		Count: count,
+		List:  &a,
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+	}
+	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: list})
+}
