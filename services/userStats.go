@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/csv"
 	"errors"
+	"fmt"
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
@@ -102,57 +103,84 @@ func GetUserStats(_new bool, _day bool, _month bool) (*models.UserStats, error) 
 	}, nil
 }
 
-func GetSpecifiedDateUserStats(_time time.Time, _new bool, _day bool, _month bool) (*models.UserStats, error) {
+func GetDailyActiveUser(year int, month int, day int) (int64, error) {
+	var dailyActiveUserNum int64
+	now := time.Now()
+	if year > now.Year() {
+		return 0, errors.New("invalid year")
+	}
+	if month > 12 || month < 1 {
+		return 0, errors.New("invalid month")
+	}
+	if day > 31 || day < 1 {
+		return 0, errors.New("invalid day")
+	}
+	date := fmt.Sprintf("%4d-%02d-%02d", year, month, day)
+	err := middleware.DB.Model(&models.LoginRecord{}).
+		Where("DATE(created_at) = ?", date).
+		Distinct("user_id").
+		Count(&dailyActiveUserNum).Error
+	if err != nil {
+		return 0, err
+	}
+	return dailyActiveUserNum, nil
+}
+
+func GetMonthlyActiveUser(year int, month int) (int64, error) {
+	var monthlyActiveUser int64
+	err := middleware.DB.Model(&models.LoginRecord{}).
+		Where("YEAR(created_at) = ? AND MONTH(created_at) = ?", year, month).
+		Distinct("user_id").
+		Count(&monthlyActiveUser).Error
+	if err != nil {
+		return 0, err
+	}
+	return monthlyActiveUser, nil
+}
+
+func GetSpecifiedDateUserStats(day string) (*models.UserStats, error) {
+	specifiedDay, err := utils.DateTimeStringToTimeWithFormat(day, "20060102")
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "DateTimeStringToTimeWithFormat")
+	}
+	specifiedDate := specifiedDay.Format("2006年01月02日")
 	var users []models.User
 	var newUserToday []models.User
-	var dailyActiveUser []models.User
-	var monthlyActiveUser []models.User
 	errorInfos := new([]string)
-	err := middleware.DB.Find(&users).Error
+	now := time.Now()
+	err = middleware.DB.Find(&users).Error
 	if err != nil {
 		*errorInfos = append(*errorInfos, err.Error())
 	} else {
 		for _, user := range users {
-			if user.CreatedAt.Year() == _time.Year() && user.CreatedAt.Month() == _time.Month() && user.CreatedAt.Day() == _time.Day() {
+			if user.CreatedAt.Year() == specifiedDay.Year() && user.CreatedAt.Month() == specifiedDay.Month() && user.CreatedAt.Day() == specifiedDay.Day() {
 				newUserToday = append(newUserToday, user)
-			}
-			if user.UpdatedAt.Year() == _time.Year() {
-				if user.UpdatedAt.Month() == _time.Month() {
-					monthlyActiveUser = append(monthlyActiveUser, user)
-					if user.UpdatedAt.Day() == _time.Day() {
-						dailyActiveUser = append(dailyActiveUser, user)
-					}
-				}
 			}
 		}
 	}
-	var _newUserToday *[]models.StatsUserInfo = nil
-	var _dailyActiveUser *[]models.StatsUserInfo = nil
-	var _monthlyActiveUser *[]models.StatsUserInfo = nil
-	if _new {
-		_newUserToday = usersToUserInfos(&newUserToday)
+	var dailyActiveUserNum int64
+	var monthlyActiveUserNum int64
+	dailyActiveUserNum, err = GetDailyActiveUser(specifiedDay.Year(), int(specifiedDay.Month()), specifiedDay.Day())
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "GetDailyActiveUser")
 	}
-	if _day {
-		_dailyActiveUser = usersToUserInfos(&dailyActiveUser)
-	}
-	if _month {
-		_monthlyActiveUser = usersToUserInfos(&monthlyActiveUser)
+	monthlyActiveUserNum, err = GetMonthlyActiveUser(specifiedDay.Year(), int(specifiedDay.Month()))
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "GetMonthlyActiveUser")
 	}
 	return &models.UserStats{
-		QueryTime:            utils.TimeFormatCN(_time),
+		QueryTime:            utils.TimeFormatCN(now),
 		TotalUser:            uint64(len(users)),
+		SpecifiedDate:        specifiedDate,
 		NewUserTodayNum:      uint64(len(newUserToday)),
-		DailyActiveUserNum:   uint64(len(dailyActiveUser)),
-		MonthlyActiveUserNum: uint64(len(monthlyActiveUser)),
+		DailyActiveUserNum:   uint64(dailyActiveUserNum),
+		MonthlyActiveUserNum: uint64(monthlyActiveUserNum),
 		ErrorInfos:           errorInfos,
-		NewUserToday:         _newUserToday,
-		DailyActiveUser:      _dailyActiveUser,
-		MonthlyActiveUser:    _monthlyActiveUser,
 	}, nil
 }
 
-func GetSpecifiedDateUserStatsYaml(_time time.Time, _new bool, _day bool, _month bool) (string, error) {
-	userStats, err := GetSpecifiedDateUserStats(_time, _new, _day, _month)
+func GetSpecifiedDateUserStatsYaml(day string) (string, error) {
+	userStats, err := GetSpecifiedDateUserStats(day)
 	if err != nil {
 		return "", utils.AppendErrorInfo(err, "GetUserStats")
 	}

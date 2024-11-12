@@ -219,6 +219,7 @@ const (
 	StatsUserInfoToCsvErr
 	TooManyQueryParamsErr
 	DateFormatErr
+	GetSpecifiedDateUserStatsErr
 )
 
 // Err type:CustodyAccount

@@ -9,6 +9,10 @@ func CreateLogFileUpload(logFileUpload *models.LogFileUpload) error {
 	return btldb.CreateLogFileUpload(logFileUpload)
 }
 
+func CreateLogFileUploadAndGetId(logFileUpload *models.LogFileUpload) (uint, error) {
+	return btldb.CreateLogFileUploadAndGetId(logFileUpload)
+}
+
 func GetFileUpload(id uint) (*models.LogFileUpload, error) {
 	return btldb.ReadLogFileUpload(id)
 }

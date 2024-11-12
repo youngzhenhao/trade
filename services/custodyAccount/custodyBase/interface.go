@@ -8,7 +8,7 @@ type CustodyEvent interface {
 	GetBalance() ([]Balance, error)
 	ApplyPayReq(PayReqApplyRequest) (PayReqApplyResponse, error)
 	SendPayment(PayPacket) error
-	GetTransactionHistory() (*PaymentList, error)
+	GetTransactionHistory(*PaymentRequest) (*PaymentList, error)
 }
 type PayReqApplyRequest interface {
 	GetPayReqAmount() int64

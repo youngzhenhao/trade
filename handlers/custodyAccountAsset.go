@@ -239,15 +239,18 @@ func QueryAssetPayments(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, models.MakeJsonErrorResultForHttp(models.DefaultErr, "用户不存在", nil))
 		return
 	}
-	invoiceRequest := struct {
-		AssetId string `json:"asset_id"`
-	}{}
+	invoiceRequest := custodyBase.PaymentRequest{}
 	if err := c.ShouldBindJSON(&invoiceRequest); err != nil {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
 	}
+	if invoiceRequest.Page == 0 && invoiceRequest.PageSize == 0 {
+		invoiceRequest.Page = 1
+		invoiceRequest.PageSize = 1000
+		invoiceRequest.Away = 5
+	}
 	// 查询账户发票
-	payments, err := e.GetTransactionHistory()
+	payments, err := e.GetTransactionHistory(&invoiceRequest)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))

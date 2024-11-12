@@ -41,7 +41,9 @@ func SetupBitcoindMainnetRouter(router *gin.Engine) *gin.Engine {
 		}
 		blockchain := mainnet.Group("/blockchain")
 		{
-			blockchain.GET("/get_blockchain_info", handlers.GetBlockchainInfoInMainnet)
+			_ = blockchain
+			// @dev: Temporarily disabled
+			//blockchain.GET("/get_blockchain_info", handlers.GetBlockchainInfoInMainnet)
 		}
 	}
 	return router

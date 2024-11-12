@@ -2,6 +2,7 @@ package localQuery
 
 import (
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"time"
 	"trade/middleware"
@@ -19,8 +20,12 @@ type BillQueryQuest struct {
 	UserName      string  `json:"username"`
 	Away          int     `json:"away"`
 	AssetId       string  `json:"assetId"`
+	Invoice       string  `json:"invoice"`
+	PaymentHash   string  `json:"hash"`
 	AmountMin     float64 `json:"amountMin"`
 	AmountMax     float64 `json:"amountMax"`
+	ServerFeeMin  uint64  `json:"feeMin"`
+	ServerFeeMax  uint64  `json:"feeMax"`
 	TimeStart     string  `json:"timeStart"`
 	TimeEnd       string  `json:"timeEnd"`
 	IncludeFailed bool    `json:"includeFailed"`
@@ -81,6 +86,18 @@ func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
 	}
 	if quest.AmountMax != 0 {
 		q = q.Where("bill_balance.amount <=?", quest.AmountMax)
+	}
+	if quest.ServerFeeMin != 0 {
+		q = q.Where("bill_balance.server_fee >=?", quest.ServerFeeMin)
+	}
+	if quest.ServerFeeMax != 0 {
+		q = q.Where("bill_balance.server_fee <=?", quest.ServerFeeMax)
+	}
+	if quest.Invoice != "" {
+		q = q.Where("bill_balance.invoice =?", quest.Invoice)
+	}
+	if quest.PaymentHash != "" {
+		q = q.Where("bill_balance.payment_hash =?", quest.PaymentHash)
 	}
 	if quest.TimeStart != "" {
 		q = q.Where("bill_balance.created_at >=?", quest.TimeStart)
@@ -214,4 +231,79 @@ func GetAssetList(quest GetAssetListQuest) (*[]GetAssetListResp, int64) {
 		Scan(&assetList)
 
 	return &assetList, total
+}
+
+type TotalBillListQuest struct {
+	AssetId   string `json:"assetId"`
+	TimeStart string `json:"timeStart"`
+	TimeEnd   string `json:"timeEnd"`
+	OderBy    uint   `json:"orderBy"`
+	Page      int    `json:"page"`
+	PageSize  int    `json:"pageSize"`
+}
+type TotalBillListResp struct {
+	UserName       string  `json:"userName" gorm:"column:user_name"`
+	AssetId        string  `json:"assetId" gorm:"column:asset_id"`
+	SumAwayEnter   float64 `json:"sumAwayEnter" gorm:"column:sum_away_enter"`
+	CountAwayEnter int     `json:"countAwayEnter" gorm:"column:count_away_enter"`
+	SumAwayOut     float64 `json:"sumAwayOut" gorm:"column:sum_away_out"`
+	CountAwayOut   int     `json:"countAwayOut" gorm:"column:count_away_out"`
+	NetIncome      float64 `json:"netIncome" gorm:"column:netIncome"`
+}
+
+func TotalBillList(quest *TotalBillListQuest) ([]TotalBillListResp, int64, error) {
+	db := middleware.DB
+	var err error
+	q := db.Select("user_account.user_name," +
+		"asset_id," +
+		"SUM(CASE WHEN away = 0 THEN amount ELSE 0 END) AS sum_away_enter," +
+		"count(CASE WHEN away = 0 THEN amount ELSE 0 END) as count_away_enter," +
+		"SUM(CASE WHEN away = 1 THEN amount ELSE 0 END) AS sum_away_out," +
+		"count(CASE WHEN away = 1 THEN amount ELSE 0 END) as count_away_out," +
+		"SUM(CASE WHEN away = 0 THEN amount ELSE 0 END) - SUM(CASE WHEN away = 1 THEN amount ELSE 0 END) AS netIncome")
+	q = q.Table("bill_balance")
+	q = q.Joins("left JOIN  user_account on bill_balance.account_id = user_account.id")
+	q.Where("bill_balance.state = ?", 1)
+
+	if quest.TimeStart != "" {
+		q = q.Where("bill_balance.created_at >=?", quest.TimeStart)
+	}
+	if quest.TimeEnd != "" {
+		q = q.Where("bill_balance.created_at <=?", quest.TimeEnd)
+	}
+	if quest.AssetId == "" {
+		return nil, 0, errors.New("must have assetId")
+	}
+	q.Where("bill_balance.asset_id = ?", quest.AssetId)
+	q.Group("account_id,asset_id")
+
+	var oder string
+	switch quest.OderBy {
+	case 0:
+		oder = "sum_away_enter"
+	case 1:
+		oder = "count_away_enter"
+	case 2:
+		oder = "sum_away_out"
+	case 3:
+		oder = "count_away_out"
+	case 4:
+		oder = "netIncome"
+	default:
+		oder = "sum_away_enter"
+	}
+	var count int64
+	err = q.Count(&count).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	q.Order(fmt.Sprintf("ABS(%s) desc", oder))
+	q.Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize)
+	var total []TotalBillListResp
+	err = q.Scan(&total).Error
+	if err != nil {
+		return total, 0, err
+	}
+	return total, count, nil
 }
