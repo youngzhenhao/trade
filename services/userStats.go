@@ -283,10 +283,16 @@ func StatsUserInfoToCsv(filename string, statsUserInfos *[]models.StatsUserInfo)
 	return path, nil
 }
 
-func GetActiveUserCountBetween(start int, end int) (int64, error) {
+func GetActiveUserCountBetween(start string, end string) (int64, error) {
+	if len(start) != len(time.DateOnly) {
+		return 0, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+	}
+	if len(end) != len(time.DateOnly) {
+		return 0, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+	}
 	var activeUser int64
 	err := middleware.DB.Model(&models.LoginRecord{}).
-		Where("login_time between ? and ?", start, end).
+		Where("created_at between ? and ?", start, end).
 		Distinct("user_id").
 		Count(&activeUser).Error
 	if err != nil {
@@ -300,12 +306,18 @@ type UserActiveResult struct {
 	RecentIpAddresses string
 }
 
-func GetUserActiveRecord(start int, end int, limit int, offset int) (*[]UserActiveResult, error) {
+func GetUserActiveRecord(start string, end string, limit int, offset int) (*[]UserActiveResult, error) {
+	if len(start) != len(time.DateOnly) {
+		return nil, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+	}
+	if len(end) != len(time.DateOnly) {
+		return nil, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+	}
 	var userActiveResults []UserActiveResult
 	err := middleware.DB.Table("login_record").
 		Select("user.user_name, login_record.recent_ip_addresses").
 		Joins("JOIN user ON user.id = login_record.user_id").
-		Where("login_record.login_time BETWEEN ? AND ?", start, end).
+		Where("login_record.created_at BETWEEN ? AND ?", start, end).
 		Group("user.user_name, login_record.recent_ip_addresses").
 		Limit(limit).
 		Offset(offset).
