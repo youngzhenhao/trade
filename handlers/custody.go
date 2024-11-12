@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"trade/btlLog"
+	"trade/services/custodyAccount"
 	"trade/services/custodyAccount/lockPayment"
 )
 
@@ -34,4 +35,10 @@ func GetBalance(c *gin.Context) {
 	res.LockedBalance = lockedBalance
 	res.TotalBalance = unlockedBalance + lockedBalance
 	c.JSON(http.StatusOK, res)
+}
+
+func GetAssetBalanceList(c *gin.Context) {
+	userName := c.MustGet("username").(string)
+	list := custodyAccount.GetAssetBalanceList(userName)
+	c.JSON(http.StatusOK, list)
 }

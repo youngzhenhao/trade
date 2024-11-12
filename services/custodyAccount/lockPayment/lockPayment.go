@@ -80,6 +80,26 @@ func GetBalance(npubkey, assetId string) (err error, unlockedBalance float64, lo
 	return
 }
 
+func GetBalances(npubkey string) (*[]cModels.LockBalance, error) {
+	if npubkey == FeeNpubkey {
+		npubkey = "admin"
+	}
+	usr, err := caccount.GetUserInfo(npubkey)
+	if err != nil {
+		return nil, GetAccountError
+	}
+	//获取所有资产余额
+	var balances []cModels.LockBalance
+	if err = middleware.DB.Where("account_id = ? and asset_id != '00'", usr.LockAccount.ID).
+		Find(&balances).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, ServiceError
+	}
+	return &balances, nil
+}
+
 func Lock(npubkey, lockedId, assetId string, amount float64) error {
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {

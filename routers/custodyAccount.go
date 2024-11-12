@@ -14,6 +14,7 @@ func SetupCustodyAccountRouter(router *gin.Engine) *gin.Engine {
 	custody.Use(middleware.AuthMiddleware())
 	{
 		custody.POST("/balance", handlers.GetBalance)
+		custody.POST("/getAssetBalanceList", handlers.GetAssetBalanceList)
 		Invoice := custody.Group("/invoice")
 		{
 			Invoice.POST("/apply", handlers.ApplyInvoice)
