@@ -336,17 +336,22 @@ func (e *AssetEvent) QueryPayReqs() ([]*models.Invoice, error) {
 	return a, nil
 }
 
-func (e *AssetEvent) GetTransactionHistory(page int, pageSize int) (*cBase.PaymentList, error) {
+func (e *AssetEvent) GetTransactionHistory(query *cBase.PaymentRequest) (*cBase.PaymentList, error) {
 
-	if page <= 0 {
+	if query.Page <= 0 {
 		return nil, fmt.Errorf("page error")
 	}
 
 	var a []models.Balance
-	offset := (page - 1) * pageSize
-	err := middleware.DB.Where("account_id = ? AND asset_id != ?", e.UserInfo.Account.ID, "00").
-		Order("created_at desc").
-		Limit(pageSize).
+	offset := (query.Page - 1) * query.PageSize
+	q := middleware.DB.Where("account_id = ? AND asset_id != ?", e.UserInfo.Account.ID, "00")
+	switch query.Away {
+	case 0, 1:
+		q = q.Where("away = ?", query.Away)
+	default:
+	}
+	err := q.Order("created_at desc").
+		Limit(query.PageSize).
 		Offset(offset).
 		Find(&a).Error
 	if err != nil {

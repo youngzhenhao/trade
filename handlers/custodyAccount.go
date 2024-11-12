@@ -9,6 +9,7 @@ import (
 	"trade/models"
 	"trade/services/custodyAccount"
 	"trade/services/custodyAccount/btc_channel"
+	"trade/services/custodyAccount/custodyBase"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -126,7 +127,7 @@ func QueryPayment(c *gin.Context) {
 		return
 	}
 	//获取交易查询请求
-	query := custodyAccount.PaymentRequest{}
+	query := custodyBase.PaymentRequest{}
 	if err := c.ShouldBindJSON(&query); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -138,8 +139,9 @@ func QueryPayment(c *gin.Context) {
 	if query.Page == 0 && query.PageSize == 0 {
 		query.Page = 1
 		query.PageSize = 1000
+		query.Away = 5
 	}
-	p, err := e.GetTransactionHistory(query.Page, query.PageSize)
+	p, err := e.GetTransactionHistory(&query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

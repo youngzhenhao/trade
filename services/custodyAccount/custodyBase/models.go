@@ -37,6 +37,13 @@ type Balance struct {
 	Amount  int64  `json:"amount"`
 }
 
+type PaymentRequest struct {
+	AssetId  string `json:"asset_id"`
+	Page     int    `json:"page"`
+	PageSize int    `json:"page_size"`
+	Away     int    `json:"away"`
+}
+
 type PaymentResponse struct {
 	Timestamp   int64               `json:"timestamp"`
 	BillType    models.BalanceType  `json:"bill_type"`

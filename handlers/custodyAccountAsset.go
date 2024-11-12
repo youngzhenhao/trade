@@ -239,11 +239,7 @@ func QueryAssetPayments(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, models.MakeJsonErrorResultForHttp(models.DefaultErr, "用户不存在", nil))
 		return
 	}
-	invoiceRequest := struct {
-		AssetId  string `json:"asset_id"`
-		Page     int    `json:"page"`
-		PageSize int    `json:"page_size"`
-	}{}
+	invoiceRequest := custodyBase.PaymentRequest{}
 	if err := c.ShouldBindJSON(&invoiceRequest); err != nil {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
 		return
@@ -251,9 +247,10 @@ func QueryAssetPayments(c *gin.Context) {
 	if invoiceRequest.Page == 0 && invoiceRequest.PageSize == 0 {
 		invoiceRequest.Page = 1
 		invoiceRequest.PageSize = 1000
+		invoiceRequest.Away = 5
 	}
 	// 查询账户发票
-	payments, err := e.GetTransactionHistory(invoiceRequest.Page, invoiceRequest.PageSize)
+	payments, err := e.GetTransactionHistory(&invoiceRequest)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
