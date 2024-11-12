@@ -220,6 +220,9 @@ const (
 	TooManyQueryParamsErr
 	DateFormatErr
 	GetSpecifiedDateUserStatsErr
+	InvalidQueryParamErr
+	GetUserActiveRecordErr
+	GetActiveUserCountBetweenErr
 )
 
 // Err type:CustodyAccount

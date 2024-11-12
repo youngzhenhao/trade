@@ -138,6 +138,42 @@ func GetMonthlyActiveUser(year int, month int) (int64, error) {
 	return monthlyActiveUser, nil
 }
 
+type LoginRecordInfo struct {
+	ID                uint   `json:"id"`
+	UserId            uint   `json:"user_id"`
+	RecentIpAddresses string `json:"recent_ip_addresses"`
+	Path              string `json:"path"`
+	LoginTime         int    `json:"login_time"`
+}
+
+func GetActiveUserBetween(start string, end string) (*[]LoginRecordInfo, error) {
+	if len(start) != len(time.DateOnly) {
+		return nil, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+	}
+	if len(end) != len(time.DateOnly) {
+		return nil, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+	}
+	_start, err := time.Parse(time.DateOnly, start)
+	if err != nil {
+		return nil, err
+	}
+	_end, err := time.Parse(time.DateOnly, end)
+	if err != nil {
+		return nil, err
+	}
+	var loginRecordInfos []LoginRecordInfo
+	// @dev: Do not select times
+	err = middleware.DB.Model(&models.LoginRecord{}).
+		Select("id, user_id, recent_ip_addresses, path, login_time").
+		Where("path = ? and login_time between ? and ?", "/login", _start.Unix(), _end.Unix()).
+		Order("login_time desc").
+		Scan(&loginRecordInfos).Error
+	if err != nil {
+		return nil, err
+	}
+	return &loginRecordInfos, nil
+}
+
 func GetSpecifiedDateUserStats(day string) (*models.UserStats, error) {
 	specifiedDay, err := utils.DateTimeStringToTimeWithFormat(day, "20060102")
 	if err != nil {
@@ -245,4 +281,37 @@ func StatsUserInfoToCsv(filename string, statsUserInfos *[]models.StatsUserInfo)
 		}
 	}
 	return path, nil
+}
+
+func GetActiveUserCountBetween(start int, end int) (int64, error) {
+	var activeUser int64
+	err := middleware.DB.Model(&models.LoginRecord{}).
+		Where("login_time between ? and ?", start, end).
+		Distinct("user_id").
+		Count(&activeUser).Error
+	if err != nil {
+		return 0, err
+	}
+	return activeUser, nil
+}
+
+type UserActiveResult struct {
+	UserName          string
+	RecentIpAddresses string
+}
+
+func GetUserActiveRecord(start int, end int, limit int, offset int) (*[]UserActiveResult, error) {
+	var userActiveResults []UserActiveResult
+	err := middleware.DB.Table("login_record").
+		Select("user.user_name, login_record.recent_ip_addresses").
+		Joins("JOIN user ON user.id = login_record.user_id").
+		Where("login_record.login_time BETWEEN ? AND ?", start, end).
+		Group("user.user_name, login_record.recent_ip_addresses").
+		Limit(limit).
+		Offset(offset).
+		Scan(&userActiveResults).Error
+	if err != nil {
+		return nil, err
+	}
+	return &userActiveResults, nil
 }

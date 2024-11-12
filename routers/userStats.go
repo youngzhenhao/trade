@@ -13,5 +13,8 @@ func SetupUserStatsRouter(router *gin.Engine) *gin.Engine {
 	authorized.GET("/get", handlers.GetUserStats)
 	authorized.GET("/specified", handlers.GetSpecifiedDateUserStats)
 	authorized.GET("/csv", handlers.DownloadCsv)
+	// TODO: Test
+	authorized.GET("/count", handlers.GetActiveUserCount)
+	authorized.GET("/record", handlers.GetActiveUserRecord)
 	return router
 }

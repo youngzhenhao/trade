@@ -85,6 +85,7 @@ var (
 	presaleLogFile      *os.File
 	userDataLogFile     *os.File
 	userStatsLogFile    *os.File
+	cpAmmLogFile        *os.File
 )
 
 func openLogFile() error {
@@ -122,6 +123,10 @@ func openLogFile() error {
 	if err != nil {
 		return err
 	}
+	cpAmmLogFile, err = utils.GetLogFile("./trade.cp_amm.log")
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -147,6 +152,7 @@ var (
 	PreSale               *ServicesLogger
 	UserData              *ServicesLogger
 	UserStats             *ServicesLogger
+	CPAmm                 *ServicesLogger
 )
 
 func loadDefaultLog() {
@@ -158,4 +164,5 @@ func loadDefaultLog() {
 	PreSale = NewLogger("PRSL", Level, defaultLogFile, presaleLogFile)
 	UserData = NewLogger("URDT", Level, defaultLogFile, userDataLogFile)
 	UserStats = NewLogger("USTS", Level, defaultLogFile, userStatsLogFile)
+	CPAmm = NewLogger("CPAM", Level, defaultLogFile, cpAmmLogFile)
 }

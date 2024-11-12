@@ -220,3 +220,107 @@ func Download(c *gin.Context, path string) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 }
+
+func GetActiveUserCount(c *gin.Context) {
+	start := c.Query("start")
+	end := c.Query("end")
+	_start, err := strconv.Atoi(start)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error() + "(" + start + ")",
+			Code:    models.InvalidQueryParamErr,
+			Data:    nil,
+		})
+		return
+	}
+	_end, err := strconv.Atoi(end)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error() + "(" + end + ")",
+			Code:    models.InvalidQueryParamErr,
+			Data:    nil,
+		})
+		return
+	}
+	count, err := services.GetActiveUserCountBetween(_start, _end)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetActiveUserCountBetweenErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: false,
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
+		Data:    count,
+	})
+}
+
+func GetActiveUserRecord(c *gin.Context) {
+	start := c.Query("start")
+	end := c.Query("end")
+	limit := c.Query("limit")
+	offset := c.Query("offset")
+	_start, err := strconv.Atoi(start)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error() + "(" + start + ")",
+			Code:    models.InvalidQueryParamErr,
+			Data:    nil,
+		})
+		return
+	}
+	_end, err := strconv.Atoi(end)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error() + "(" + end + ")",
+			Code:    models.InvalidQueryParamErr,
+			Data:    nil,
+		})
+		return
+	}
+	_limit, err := strconv.Atoi(limit)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error() + "(" + limit + ")",
+			Code:    models.InvalidQueryParamErr,
+			Data:    nil,
+		})
+		return
+	}
+	_offset, err := strconv.Atoi(offset)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error() + "(" + offset + ")",
+			Code:    models.InvalidQueryParamErr,
+			Data:    nil,
+		})
+		return
+	}
+	records, err := services.GetUserActiveRecord(_start, _end, _limit, _offset)
+	if err != nil {
+		c.JSON(http.StatusOK, models.JsonResult{
+			Success: false,
+			Error:   err.Error(),
+			Code:    models.GetUserActiveRecordErr,
+			Data:    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, models.JsonResult{
+		Success: false,
+		Error:   models.SUCCESS.Error(),
+		Code:    models.SUCCESS,
+		Data:    records,
+	})
+}
