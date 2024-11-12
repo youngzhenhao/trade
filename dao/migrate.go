@@ -4,7 +4,6 @@ import (
 	"trade/middleware"
 	"trade/models"
 	"trade/models/custodyModels"
-	"trade/services/cpamm"
 )
 
 func Migrate() error {
@@ -159,19 +158,7 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.AssetList{}); err != nil {
 		return err
 	}
-	// @dev: cpamm
-	{
-		if err = middleware.DB.AutoMigrate(&cpamm.Share{}); err != nil {
-			return err
-		}
-		if err = middleware.DB.AutoMigrate(&cpamm.ShareBalance{}); err != nil {
-			return err
-		}
-		if err = middleware.DB.AutoMigrate(&cpamm.ShareRecord{}); err != nil {
-			return err
-		}
-	}
-
+	
 	return err
 }
 
