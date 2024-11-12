@@ -283,7 +283,7 @@ func ProcessDeviceRequest(nonce, nPubKey string) (string, string, error) {
 		if err != nil {
 			return "", "", err
 		}
-		device.EncryptDeviceID = encryptDeviceID
+		device.EncryptDeviceID = encodedSalt
 		err = btldb.CreateDeviceManager(&device)
 		if err != nil {
 			return "", "", err
