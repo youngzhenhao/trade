@@ -55,7 +55,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			path := c.Request.URL.Path
 			go InsertLoginInfo(username, ip, path)
 			{
-				go RecodeDateIpLogin(username, ip, time.Now().Format(time.DateOnly))
+				go RecodeDateIpLogin(username, time.Now().Format(time.DateOnly), ip)
 			}
 			// Store the username in the context of the request
 			c.Set("username", username)
@@ -95,7 +95,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		path := c.Request.URL.Path
 		go InsertLoginInfo(claims.Username, ip, path)
 		{
-			go RecodeDateIpLogin(claims.Username, ip, time.Now().Format(time.DateOnly))
+			go RecodeDateIpLogin(claims.Username, time.Now().Format(time.DateOnly), ip)
 		}
 		// Store the username in the context of the request
 		c.Set("username", claims.Username)
