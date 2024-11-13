@@ -19,8 +19,5 @@ frpc.ini
 frpc.yaml
 config.yaml
 # logs
-logs/*.log
-trade.*.log
-services/logs/*.log
-services/trade.*.log
+*.log
 *.csv
