@@ -235,14 +235,27 @@ func GetLockPaymentMutex(userId uint) *sync.Mutex {
 }
 
 // ListTransferBTC 列出转账记录
-func ListTransferBTC(usr *caccount.UserInfo, assetId string, page, pageSize int) ([]cModels.LockBill, error) {
+func ListTransferBTC(usr *caccount.UserInfo, assetId string, page, pageSize, away int) ([]cModels.LockBill, error) {
 	var err error
 	var bills []cModels.LockBill
 	offset := (page - 1) * pageSize
 	limit := pageSize
 	tx := middleware.DB
-	if err = tx.Where("account_id =? AND asset_id = ? AND bill_type !=? ", usr.LockAccount.ID, assetId, cModels.LockErr).
-		Order("id desc").Offset(offset).
+	q := tx.Where("account_id =? AND asset_id = ?  ", usr.LockAccount.ID, assetId)
+	switch away {
+	case 0:
+		q.Where("bill_type = ? OR bill_type = ? ",
+			cModels.LockBillTypeLock,
+			cModels.LockBillTypeAward)
+	case 1:
+		q.Where("bill_type = ? OR bill_type = ? OR bill_type = ?",
+			cModels.LockBillTypeTransferByLockAsset,
+			cModels.LockBillTypeUnlock,
+			cModels.LockBillTypeTransferByUnlockAsset)
+	default:
+		q.Where("bill_type != ? ", cModels.LockErr)
+	}
+	if err = q.Order("id desc").Offset(offset).
 		Limit(limit).Find(&bills).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

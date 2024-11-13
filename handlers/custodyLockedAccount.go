@@ -16,6 +16,7 @@ func QueryLockedPayments(c *gin.Context) {
 		AssetId string `json:"asset_id"`
 		Page    int    `json:"page"`
 		Size    int    `json:"size"`
+		Away    int    `json:"away"`
 	}{}
 	if err := c.ShouldBindJSON(&invoiceRequest); err != nil {
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
@@ -27,7 +28,7 @@ func QueryLockedPayments(c *gin.Context) {
 		return
 	}
 	// 查询账户交易记录
-	p, err := custodyAccount.LockPaymentToPaymentList(e.UserInfo, invoiceRequest.AssetId, invoiceRequest.Page, invoiceRequest.Size)
+	p, err := custodyAccount.LockPaymentToPaymentList(e.UserInfo, invoiceRequest.AssetId, invoiceRequest.Page, invoiceRequest.Size, invoiceRequest.Away)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))

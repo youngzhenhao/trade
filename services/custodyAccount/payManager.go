@@ -175,8 +175,8 @@ func GetAccountBalance(userId uint) (int64, error) {
 	return balance[0].Amount, nil
 }
 
-func LockPaymentToPaymentList(usr *account.UserInfo, assetId string, pageNum, pageSize int) (*cBase.PaymentList, error) {
-	btc, err := lockPayment.ListTransferBTC(usr, assetId, pageNum, pageSize)
+func LockPaymentToPaymentList(usr *account.UserInfo, assetId string, pageNum, pageSize, away int) (*cBase.PaymentList, error) {
+	btc, err := lockPayment.ListTransferBTC(usr, assetId, pageNum, pageSize, away)
 	if err != nil {
 		return nil, err
 	}
