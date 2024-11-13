@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"time"
 	"trade/middleware"
 	"trade/models"
 	"trade/services"
@@ -69,7 +70,9 @@ func LoginHandler(c *gin.Context) {
 	ip := c.ClientIP()
 	path := c.Request.URL.Path
 	go middleware.InsertLoginInfo(creds.Username, ip, path)
-
+	{
+		go middleware.RecodeDateIpLogin(creds.Username, ip, time.Now().Format(time.DateOnly))
+	}
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
@@ -93,7 +96,9 @@ func RefreshTokenHandler(c *gin.Context) {
 	ip := c.ClientIP()
 	path := c.Request.URL.Path
 	go middleware.InsertLoginInfo(creds.Username, ip, path)
-
+	{
+		go middleware.RecodeDateIpLogin(creds.Username, ip, time.Now().Format(time.DateOnly))
+	}
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 

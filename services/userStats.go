@@ -327,3 +327,23 @@ func GetUserActiveRecord(start string, end string, limit int, offset int) (*[]Us
 	}
 	return &userActiveResults, nil
 }
+
+func GetUserActiveRecordNum(start string, end string) (int64, error) {
+	if len(start) != len(time.DateOnly) {
+		return 0, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+	}
+	if len(end) != len(time.DateOnly) {
+		return 0, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+	}
+	var recordNum int64
+	err := middleware.DB.Table("login_record").
+		Select("user.user_name, login_record.recent_ip_addresses").
+		Joins("JOIN user ON user.id = login_record.user_id").
+		Where("login_record.created_at BETWEEN ? AND ?", start, end).
+		Group("user.user_name, login_record.recent_ip_addresses").
+		Count(&recordNum).Error
+	if err != nil {
+		return 0, err
+	}
+	return recordNum, nil
+}

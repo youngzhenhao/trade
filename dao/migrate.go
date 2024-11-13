@@ -9,9 +9,15 @@ import (
 func Migrate() error {
 	var err error
 	{
-		err = custodyMigrate(err)
-		err = custodyAwardMigrate(err)
-		err = custodyLimitMigrate(err)
+		if err = custodyMigrate(err); err != nil {
+			return err
+		}
+		if err = custodyAwardMigrate(err); err != nil {
+			return err
+		}
+		if err = custodyLimitMigrate(err); err != nil {
+			return err
+		}
 	}
 
 	if err = middleware.DB.AutoMigrate(&models.Account{}); err != nil {
@@ -158,7 +164,16 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.AssetList{}); err != nil {
 		return err
 	}
-	
+	if err = middleware.DB.AutoMigrate(&models.DateIpLogin{}); err != nil {
+		return err
+	}
+
+	{
+		//if err = cpAmmAutoMigrate(); err != nil {
+		//	return err
+		//}
+	}
+
 	return err
 }
 

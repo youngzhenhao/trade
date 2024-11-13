@@ -86,6 +86,7 @@ var (
 	userDataLogFile     *os.File
 	userStatsLogFile    *os.File
 	cpAmmLogFile        *os.File
+	dateIpLoginLogFile  *os.File
 )
 
 func openLogFile() error {
@@ -111,19 +112,23 @@ func openLogFile() error {
 	if err != nil {
 		return err
 	}
-	presaleLogFile, err = utils.GetLogFile("./trade.presale.log")
+	presaleLogFile, err = utils.GetLogFile("./logs/trade.presale.log")
 	if err != nil {
 		return err
 	}
-	userDataLogFile, err = utils.GetLogFile("./trade.userdata.log")
+	userDataLogFile, err = utils.GetLogFile("./logs/trade.userdata.log")
 	if err != nil {
 		return err
 	}
-	userStatsLogFile, err = utils.GetLogFile("./trade.user_stats.log")
+	userStatsLogFile, err = utils.GetLogFile("./logs/trade.user_stats.log")
 	if err != nil {
 		return err
 	}
-	cpAmmLogFile, err = utils.GetLogFile("./trade.cp_amm.log")
+	cpAmmLogFile, err = utils.GetLogFile("./logs/trade.cp_amm.log")
+	if err != nil {
+		return err
+	}
+	dateIpLoginLogFile, err = utils.GetLogFile("./logs/trade.date_ip_login.log")
 	if err != nil {
 		return err
 	}
@@ -153,6 +158,7 @@ var (
 	UserData              *ServicesLogger
 	UserStats             *ServicesLogger
 	CPAmm                 *ServicesLogger
+	DateIpLogin           *ServicesLogger
 )
 
 func loadDefaultLog() {
@@ -165,4 +171,5 @@ func loadDefaultLog() {
 	UserData = NewLogger("URDT", Level, defaultLogFile, userDataLogFile)
 	UserStats = NewLogger("USTS", Level, defaultLogFile, userStatsLogFile)
 	CPAmm = NewLogger("CPAM", Level, defaultLogFile, cpAmmLogFile)
+	DateIpLogin = NewLogger("DILR", Level, defaultLogFile, dateIpLoginLogFile)
 }

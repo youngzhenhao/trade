@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
+	"trade/btlLog"
 	"trade/models"
 	"trade/utils"
 )
@@ -52,6 +54,9 @@ func AuthMiddleware() gin.HandlerFunc {
 			ip := c.ClientIP()
 			path := c.Request.URL.Path
 			go InsertLoginInfo(username, ip, path)
+			{
+				go RecodeDateIpLogin(username, ip, time.Now().Format(time.DateOnly))
+			}
 			// Store the username in the context of the request
 			c.Set("username", username)
 			c.Next()
@@ -89,6 +94,9 @@ func AuthMiddleware() gin.HandlerFunc {
 		ip := c.ClientIP()
 		path := c.Request.URL.Path
 		go InsertLoginInfo(claims.Username, ip, path)
+		{
+			go RecodeDateIpLogin(claims.Username, ip, time.Now().Format(time.DateOnly))
+		}
 		// Store the username in the context of the request
 		c.Set("username", claims.Username)
 		c.Next()
@@ -164,5 +172,22 @@ func InsertLoginInfo(userName, ip, path string) {
 	err = DB.Create(&record).Error
 	if err != nil {
 		fmt.Println(err, "insertLoginInfo", user.ID, ",", ip, ",", path)
+	}
+}
+
+// RecodeDateIpLogin
+func RecodeDateIpLogin(username string, date string, ip string) {
+	dateIpLogin := models.DateIpLogin{
+		Username: username,
+		Date:     date,
+		Ip:       ip,
+	}
+	if err := func(d *models.DateIpLogin) error {
+		if d.Username == "" || d.Date == "" || d.Ip == "" {
+			return errors.New("username, date or ip is null")
+		}
+		return DB.Create(d).Error
+	}(&dateIpLogin); err != nil {
+		btlLog.DateIpLogin.Error("%v", err)
 	}
 }
