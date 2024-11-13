@@ -7,17 +7,15 @@ import (
 	"trade/services/custodyAccount/lockPayment"
 )
 
-func GetAssetBalanceList(userName string) *[]cBase.Balance {
+func GetAssetBalanceList(userName string) (*[]cBase.Balance, error) {
 	list := make(map[string]*cBase.Balance)
-
 	e, err := btc_channel.NewBtcChannelEvent(userName)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-
 	err, unlockedBalance, lockedBalance := lockPayment.GetBalance(e.UserInfo.User.Username, "00")
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	list["00"] = &cBase.Balance{
 		AssetId: "00",
@@ -25,7 +23,7 @@ func GetAssetBalanceList(userName string) *[]cBase.Balance {
 	}
 	temp, err := btldb.GetAccountBalanceByAccountId(e.UserInfo.Account.ID)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	for _, v := range *temp {
 		_, exists := list[v.AssetId]
@@ -40,7 +38,7 @@ func GetAssetBalanceList(userName string) *[]cBase.Balance {
 	}
 	getBalances, err := lockPayment.GetBalances(e.UserInfo.User.Username)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	if getBalances != nil {
 		for _, v := range *getBalances {
@@ -59,5 +57,5 @@ func GetAssetBalanceList(userName string) *[]cBase.Balance {
 	for _, v := range list {
 		result = append(result, *v)
 	}
-	return &result
+	return &result, nil
 }

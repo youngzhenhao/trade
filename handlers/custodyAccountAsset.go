@@ -270,11 +270,16 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 	queryParams := url.Values{}
 	t := make(map[string]int64)
 	for _, v := range b {
-		queryParams.Add("ids", v.AssetId)
+		if v.AssetId == "00" {
+			queryParams.Add("ids", "btc")
+		} else {
+			queryParams.Add("ids", v.AssetId)
+		}
 		queryParams.Add("numbers", strconv.FormatInt(v.Amount, 10))
 		t[v.AssetId] = v.Amount
 	}
 	reqURL := baseURL + "?" + queryParams.Encode()
+
 	resp, err := http.Get(reqURL)
 	if err != nil {
 		btlLog.CUST.Error("Error making request:", err)
@@ -312,6 +317,9 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 	}
 	var list []AssetBalance
 	for _, v := range r.Data.List {
+		if v.AssetsId == "btc" {
+			v.AssetsId = "00"
+		}
 		list = append(list, AssetBalance{
 			AssetId: v.AssetsId,
 			Amount:  t[v.AssetsId],

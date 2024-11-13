@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"trade/btlLog"
+	"trade/models"
 	"trade/services/custodyAccount"
 	"trade/services/custodyAccount/lockPayment"
 )
@@ -39,6 +41,19 @@ func GetBalance(c *gin.Context) {
 
 func GetAssetBalanceList(c *gin.Context) {
 	userName := c.MustGet("username").(string)
-	list := custodyAccount.GetAssetBalanceList(userName)
-	c.JSON(http.StatusOK, list)
+	list, err := custodyAccount.GetAssetBalanceList(userName)
+	if err != nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, fmt.Sprintf("GetAssetBalanceList failed: %v", err.Error()), nil))
+		return
+	}
+	if list == nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, fmt.Sprintf("GetAssetBalanceList failed"), nil))
+		return
+	}
+	request := DealBalance(*list)
+	if request == nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", list))
+	} else {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", request))
+	}
 }
