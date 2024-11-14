@@ -17,21 +17,21 @@ const (
 )
 
 type BillQueryQuest struct {
-	UserName      string  `json:"username"`
-	Away          int     `json:"away"`
-	AssetId       string  `json:"assetId"`
-	Invoice       string  `json:"invoice"`
-	PaymentHash   string  `json:"hash"`
-	AmountMin     float64 `json:"amountMin"`
-	AmountMax     float64 `json:"amountMax"`
-	ServerFeeMin  uint64  `json:"feeMin"`
-	ServerFeeMax  uint64  `json:"feeMax"`
-	TimeStart     string  `json:"timeStart"`
-	TimeEnd       string  `json:"timeEnd"`
-	IncludeFailed bool    `json:"includeFailed"`
-	OnlyAward     bool    `json:"onlyAward"`
-	Page          int     `json:"page"`
-	PageSize      int     `json:"pageSize"`
+	UserName      string   `json:"username"`
+	Away          int      `json:"away"`
+	AssetId       string   `json:"assetId"`
+	Invoice       string   `json:"invoice"`
+	PaymentHash   string   `json:"hash"`
+	AmountMin     float64  `json:"amountMin"`
+	AmountMax     float64  `json:"amountMax"`
+	ServerFeeMin  uint64   `json:"feeMin"`
+	ServerFeeMax  uint64   `json:"feeMax"`
+	TimeStart     string   `json:"timeStart"`
+	TimeEnd       string   `json:"timeEnd"`
+	IncludeFailed bool     `json:"includeFailed"`
+	Tags          []string `json:"tags"`
+	Page          int      `json:"page"`
+	PageSize      int      `json:"pageSize"`
 }
 
 type BillListWithUser struct {
@@ -46,15 +46,15 @@ type BillListWithUser struct {
 	PaymentHash *string             `gorm:"column:payment_hash;type:varchar(100)" json:"paymentHash"`
 	State       models.BalanceState `gorm:"column:State;type:smallint" json:"State"`
 	Time        time.Time           `gorm:"column:created_at" json:"time"`
+	Type        uint                `gorm:"column:type" json:"type"`
 }
 
 func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
 	billQuery := models.Balance{}
 	var err error
 
-	db := middleware.DB
-
-	q := db.Where(&billQuery)
+	q := middleware.DB
+	q = q.Where(&billQuery)
 	if !quest.IncludeFailed {
 		q = q.Where("state =?", 1)
 	}
@@ -63,7 +63,7 @@ func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
 		account := models.Account{
 			UserName: quest.UserName,
 		}
-		err = db.Where(&account).First(&account).Error
+		err = middleware.DB.Where(&account).First(&account).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, 0, errors.New("account not found")
@@ -105,12 +105,17 @@ func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
 	if quest.TimeEnd != "" {
 		q = q.Where("bill_balance.created_at <=?", quest.TimeEnd)
 	}
-	if quest.OnlyAward {
-		q = q.Where("bill_balance.bill_type =? or bill_balance.bill_type =?", 5, 6)
-	}
 	if quest.PageSize == 0 {
 		quest.PageSize = 500
 	}
+	if quest.Tags != nil && len(quest.Tags) != 0 {
+		for _, tag := range quest.Tags {
+			q = q.Where("bill_balance_type_ext.type =?", models.ToBalanceTypeExtList(tag))
+		}
+	}
+	q = q.Table("bill_balance").
+		Joins("LEFT JOIN user_account ON user_account.id = bill_balance.account_id").
+		Joins("LEFT JOIN bill_balance_type_ext ON bill_balance.id = bill_balance_type_ext.balance_id")
 
 	// 查询总记录数
 	var total int64
@@ -118,11 +123,8 @@ func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
 	if err != nil || total == 0 {
 		return nil, 0, err
 	}
-
 	var billListWithUser []BillListWithUser
-	err = q.Table("bill_balance").
-		Joins("LEFT JOIN user_account ON user_account.id = bill_balance.account_id").
-		Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize).
+	err = q.Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize).
 		Select("bill_balance.*, user_account.user_name").
 		Order("bill_balance.created_at DESC").
 		Scan(&billListWithUser).Error

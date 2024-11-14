@@ -21,3 +21,30 @@ const (
 	BTExtLocked         BalanceTypeExtList = 400
 	BTExtLockedTransfer BalanceTypeExtList = 500
 )
+
+func (b BalanceTypeExtList) ToString() string {
+	balanceTypeExtString := map[BalanceTypeExtList]string{
+		BTExtUnknown:        "Unknown",
+		BTExtFirLaunch:      "FirLaunch",
+		BTExtLocal:          "Local",
+		BTExtBackFee:        "BackFee",
+		BTExtOnChannel:      "OnChannel",
+		BTExtAward:          "Award",
+		BTExtLocked:         "Locked",
+		BTExtLockedTransfer: "LockedTransfer",
+	}
+	return balanceTypeExtString[b]
+}
+func ToBalanceTypeExtList(s string) BalanceTypeExtList {
+	balanceTypeExtList := map[string]BalanceTypeExtList{
+		"Unknown":        BTExtUnknown,
+		"FirLaunch":      BTExtFirLaunch,
+		"Local":          BTExtLocal,
+		"BackFee":        BTExtBackFee,
+		"OnChannel":      BTExtOnChannel,
+		"Award":          BTExtAward,
+		"Locked":         BTExtLocked,
+		"LockedTransfer": BTExtLockedTransfer,
+	}
+	return balanceTypeExtList[s]
+}
