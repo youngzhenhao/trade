@@ -301,6 +301,23 @@ func GetActiveUserCountBetween(start string, end string) (int64, error) {
 	return activeUser, nil
 }
 
+func GetDateLoginCount(start string, end string) (int64, error) {
+	if len(start) != len(time.DateOnly) {
+		return 0, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+	}
+	if len(end) != len(time.DateOnly) {
+		return 0, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+	}
+	var count int64
+	err := middleware.DB.Model(&models.DateLogin{}).
+		Where("date between ? and ?", start, end).
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 type UserActiveResult struct {
 	UserName          string
 	RecentIpAddresses string
@@ -346,4 +363,63 @@ func GetUserActiveRecordNum(start string, end string) (int64, error) {
 		return 0, err
 	}
 	return recordNum, nil
+}
+
+type DateIpLoginRecord struct {
+	Username string `json:"username"`
+	Date     string `json:"date"`
+	Ip       string `json:"ip"`
+}
+
+func GetDateIpLoginRecord(start string, end string, limit int, offset int) (*[]DateIpLoginRecord, error) {
+	if len(start) != len(time.DateOnly) {
+		return nil, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+	}
+	if len(end) != len(time.DateOnly) {
+		return nil, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+	}
+	var dateIpLoginRecords []DateIpLoginRecord
+	err := middleware.DB.Model(models.DateIpLogin{}).
+		Where("date between ? and ?", start, end).
+		Limit(limit).
+		Offset(offset).
+		Scan(&dateIpLoginRecords).Error
+	if err != nil {
+		return nil, err
+	}
+	return &dateIpLoginRecords, nil
+}
+
+func GetDateIpLoginCount(start string, end string) (int, error) {
+	if len(start) != len(time.DateOnly) {
+		return 0, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+	}
+	if len(end) != len(time.DateOnly) {
+		return 0, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+	}
+	var count int
+	err := middleware.DB.Model(models.DateIpLogin{}).
+		Where("date between ? and ?", start, end).
+		Scan(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func GetDateIpLoginPageNumber(start string, end string, size int) (int, error) {
+	count, err := GetDateIpLoginCount(start, end)
+	if err != nil {
+		return 0, err
+	}
+	var pageNumber int
+	pageNumber = count / size
+	if count%size != 0 {
+		pageNumber++
+	}
+	return pageNumber, nil
+}
+
+func PageAndSizeToLimitAndOffset(page uint, size uint) (limit uint, offset uint) {
+	return size, (page - 1) * size
 }
