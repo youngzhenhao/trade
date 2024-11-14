@@ -167,6 +167,9 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.DateIpLogin{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.DateLogin{}); err != nil {
+		return err
+	}
 
 	{
 		//if err = cpAmmAutoMigrate(); err != nil {

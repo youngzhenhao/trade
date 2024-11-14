@@ -72,6 +72,7 @@ func LoginHandler(c *gin.Context) {
 	go middleware.InsertLoginInfo(creds.Username, ip, path)
 	{
 		go middleware.RecodeDateIpLogin(creds.Username, time.Now().Format(time.DateOnly), ip)
+		go middleware.RecodeDateLogin(creds.Username, time.Now().Format(time.DateOnly))
 	}
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
@@ -98,6 +99,7 @@ func RefreshTokenHandler(c *gin.Context) {
 	go middleware.InsertLoginInfo(creds.Username, ip, path)
 	{
 		go middleware.RecodeDateIpLogin(creds.Username, time.Now().Format(time.DateOnly), ip)
+		go middleware.RecodeDateLogin(creds.Username, time.Now().Format(time.DateOnly))
 	}
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }

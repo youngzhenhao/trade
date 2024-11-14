@@ -56,6 +56,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			go InsertLoginInfo(username, ip, path)
 			{
 				go RecodeDateIpLogin(username, time.Now().Format(time.DateOnly), ip)
+				go RecodeDateLogin(username, time.Now().Format(time.DateOnly))
 			}
 			// Store the username in the context of the request
 			c.Set("username", username)
@@ -96,6 +97,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		go InsertLoginInfo(claims.Username, ip, path)
 		{
 			go RecodeDateIpLogin(claims.Username, time.Now().Format(time.DateOnly), ip)
+			go RecodeDateLogin(claims.Username, time.Now().Format(time.DateOnly))
 		}
 		// Store the username in the context of the request
 		c.Set("username", claims.Username)
@@ -189,5 +191,20 @@ func RecodeDateIpLogin(username string, date string, ip string) {
 		return DB.Create(d).Error
 	}(&dateIpLogin); err != nil {
 		btlLog.DateIpLogin.Error("%v", err)
+	}
+}
+
+func RecodeDateLogin(username string, date string) {
+	dateIpLogin := models.DateLogin{
+		Username: username,
+		Date:     date,
+	}
+	if err := func(d *models.DateLogin) error {
+		if d.Username == "" || d.Date == "" {
+			return errors.New("username or date is null")
+		}
+		return DB.Create(d).Error
+	}(&dateIpLogin); err != nil {
+		btlLog.DateIpLogin.Error("[DateLogin]%v", err)
 	}
 }
