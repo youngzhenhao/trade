@@ -111,7 +111,7 @@ func dealEvent(tx *gorm.DB, event *taprpc.ReceiveEvent) error {
 			PaymentHash: &event.Outpoint,
 			State:       models.STATE_SUCCESS,
 			TypeExt: &models.BalanceTypeExt{
-				Type: models.BTExtOnChain,
+				Type: models.BTExtOnChannel,
 			},
 		}
 		if err = tx.Create(&b).Error; err != nil {

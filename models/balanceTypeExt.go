@@ -1,7 +1,7 @@
 package models
 
 type BalanceTypeExt struct {
-	BalanceID uint               `json:"balance" gorm:"not null;unique"`
+	BalanceID uint               `json:"balance" gorm:"not null;"`
 	Type      BalanceTypeExtList `json:"type" gorm:"not null"`
 }
 
@@ -16,7 +16,7 @@ const (
 	BTExtFirLaunch      BalanceTypeExtList = 6
 	BTExtLocal          BalanceTypeExtList = 100
 	BTExtBackFee        BalanceTypeExtList = 104
-	BTExtOnChain        BalanceTypeExtList = 200
+	BTExtOnChannel      BalanceTypeExtList = 200
 	BTExtAward          BalanceTypeExtList = 300
 	BTExtLocked         BalanceTypeExtList = 400
 	BTExtLockedTransfer BalanceTypeExtList = 500

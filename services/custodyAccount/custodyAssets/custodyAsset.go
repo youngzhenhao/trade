@@ -257,7 +257,7 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		Invoice:   &bt.PayReq,
 		State:     models.STATE_UNKNOW,
 		TypeExt: &models.BalanceTypeExt{
-			Type: models.BTExtOnChain,
+			Type: models.BTExtOnChannel,
 		},
 	}
 	err := btldb.CreateBalance(&outsideBalance)
