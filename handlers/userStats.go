@@ -345,7 +345,7 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		err = errors.New("page is out of range(" + strconv.Itoa(pageNumber) + ")")
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.PageNumberOutOfRangeErr.Code(),
-			ErrMsg: err.Error() + "(" + size + ")",
+			ErrMsg: err.Error(),
 			Data: gin.H{
 				"total_page": _page,
 				"records":    records,
@@ -385,5 +385,24 @@ func GetDateIpLoginRecord(c *gin.Context) {
 			"total_page": _page,
 			"records":    records,
 		},
+	})
+}
+
+func GetDateIpLoginRecordCount(c *gin.Context) {
+	start := c.Query("start")
+	end := c.Query("end")
+	count, err := services.GetDateIpLoginCount(start, end)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.GetDateIpLoginCountErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  models.SUCCESS.Code(),
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   count,
 	})
 }

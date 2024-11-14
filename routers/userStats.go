@@ -17,6 +17,7 @@ func SetupUserStatsRouter(router *gin.Engine) *gin.Engine {
 	// TODO: ONLY FOR TEST
 	authorized.GET("/count", handlers.GetDateLoginCount)
 	authorized.GET("/record", handlers.GetDateIpLoginRecord)
+	authorized.GET("/record_count", handlers.GetDateIpLoginRecordCount)
 
 	return router
 }

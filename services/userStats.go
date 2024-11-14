@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"gopkg.in/yaml.v3"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -390,17 +391,17 @@ func GetDateIpLoginRecord(start string, end string, limit int, offset int) (*[]D
 	return &dateIpLoginRecords, nil
 }
 
-func GetDateIpLoginCount(start string, end string) (int, error) {
+func GetDateIpLoginCount(start string, end string) (int64, error) {
 	if len(start) != len(time.DateOnly) {
 		return 0, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
 	}
 	if len(end) != len(time.DateOnly) {
 		return 0, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
 	}
-	var count int
-	err := middleware.DB.Model(models.DateIpLogin{}).
+	var count int64
+	err := middleware.DB.Model(&models.DateIpLogin{}).
 		Where("date between ? and ?", start, end).
-		Scan(&count).Error
+		Count(&count).Error
 	if err != nil {
 		return 0, err
 	}
@@ -408,11 +409,15 @@ func GetDateIpLoginCount(start string, end string) (int, error) {
 }
 
 func GetDateIpLoginPageNumber(start string, end string, size int) (int, error) {
-	count, err := GetDateIpLoginCount(start, end)
+	_count, err := GetDateIpLoginCount(start, end)
 	if err != nil {
 		return 0, err
 	}
+	if _count > math.MaxInt {
+		return 0, errors.New("count overflows")
+	}
 	var pageNumber int
+	count := int(_count)
 	pageNumber = count / size
 	if count%size != 0 {
 		pageNumber++

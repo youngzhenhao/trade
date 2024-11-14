@@ -231,6 +231,8 @@ const (
 	PageNumberOutOfRangeErr
 	NegativeValueErr
 	GetDateIpLoginRecordErr
+	GetDateIpLoginRecordCountErr
+	GetDateIpLoginCountErr
 )
 
 // Err type:CustodyAccount
