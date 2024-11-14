@@ -428,3 +428,20 @@ func GetDateIpLoginPageNumber(start string, end string, size int) (int, error) {
 func PageAndSizeToLimitAndOffset(page uint, size uint) (limit uint, offset uint) {
 	return size, (page - 1) * size
 }
+
+func GetNewUserCount(start string, end string) (int64, error) {
+	if len(start) != len(time.DateOnly) {
+		return 0, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+	}
+	if len(end) != len(time.DateOnly) {
+		return 0, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+	}
+	var count int64
+	err := middleware.DB.Model(&models.User{}).
+		Where("created_at between ? and ?", start, end).
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

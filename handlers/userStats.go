@@ -304,7 +304,7 @@ func GetDateLoginCount(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, Result2{
-		Errno:  models.SUCCESS.Code(),
+		Errno:  0,
 		ErrMsg: models.SUCCESS.Error(),
 		Data:   count,
 	})
@@ -380,7 +380,7 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, Result2{
-		Errno:  models.SUCCESS.Code(),
+		Errno:  0,
 		ErrMsg: models.SUCCESS.Error(),
 		Data: gin.H{
 			"total_page": pageNumber,
@@ -402,7 +402,26 @@ func GetDateIpLoginRecordCount(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, Result2{
-		Errno:  models.SUCCESS.Code(),
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   count,
+	})
+}
+
+func GetNewUserCount(c *gin.Context) {
+	start := c.Query("start")
+	end := c.Query("end")
+	count, err := services.GetNewUserCount(start, end)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.GetNewUserCountErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
 		ErrMsg: models.SUCCESS.Error(),
 		Data:   count,
 	})
