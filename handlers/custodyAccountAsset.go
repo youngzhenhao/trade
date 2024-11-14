@@ -260,9 +260,9 @@ func QueryAssetPayments(c *gin.Context) {
 }
 
 type AssetBalance struct {
-	AssetId string  `json:"assetId"`
-	Amount  int64   `json:"amount"`
-	Price   float64 `json:"prices"`
+	AssetId string `json:"assetId"`
+	Amount  int64  `json:"amount"`
+	Price   int64  `json:"prices"`
 }
 
 func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
@@ -323,8 +323,8 @@ func DealBalance(b []custodyBase.Balance) *[]AssetBalance {
 		list = append(list, AssetBalance{
 			AssetId: v.AssetsId,
 			Amount:  t[v.AssetsId],
-			//Price:   v.Price,
-			Price: 0,
+			Price:   int64(v.Price),
+			//Price: 0,
 		})
 	}
 	return &list
