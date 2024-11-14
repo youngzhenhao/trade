@@ -53,5 +53,11 @@ func SetupRouter() *gin.Engine {
 	//AssetList
 	assetList := r.Group("/asset_list")
 	assetList.GET("/is_exist", handlers.IsAssetListRecordExist)
+
+	// userStats
+	userStats := r.Group("/user_stats")
+	userStats.GET("/count", handlers.GetDateLoginCount)
+	userStats.GET("/record", handlers.GetDateIpLoginRecord)
+
 	return r
 }

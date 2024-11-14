@@ -25,6 +25,10 @@ const (
 	ReadDbErr  ErrCode = 4001
 )
 
+func (e ErrCode) Code() int {
+	return int(e)
+}
+
 // Err type:Unknown
 const (
 	NameToIdErr ErrCode = iota + 500
@@ -223,6 +227,10 @@ const (
 	InvalidQueryParamErr
 	GetUserActiveRecordErr
 	GetActiveUserCountBetweenErr
+	GetDateLoginCountErr
+	PageNumberOutOfRangeErr
+	NegativeValueErr
+	GetDateIpLoginRecordErr
 )
 
 // Err type:CustodyAccount

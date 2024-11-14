@@ -284,3 +284,87 @@ func GetActiveUserRecord(c *gin.Context) {
 		Data:    records,
 	})
 }
+
+type Result2 struct {
+	Errno  int         `json:"errno"`
+	ErrMsg string      `json:"errmsg"`
+	Data   interface{} `json:"data"`
+}
+
+func GetDateLoginCount(c *gin.Context) {
+	start := c.Query("start")
+	end := c.Query("end")
+	count, err := services.GetDateLoginCount(start, end)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.GetDateLoginCountErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  models.SUCCESS.Code(),
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   count,
+	})
+}
+
+func GetDateIpLoginRecord(c *gin.Context) {
+	start := c.Query("start")
+	end := c.Query("end")
+	page := c.Query("page")
+	size := c.Query("size")
+	_page, err := strconv.Atoi(page)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.InvalidQueryParamErr.Code(),
+			ErrMsg: err.Error() + "(" + page + ")",
+			Data:   0,
+		})
+		return
+	}
+	_size, err := strconv.Atoi(size)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.InvalidQueryParamErr.Code(),
+			ErrMsg: err.Error() + "(" + size + ")",
+			Data:   0,
+		})
+		return
+	}
+	pageNumber, err := services.GetDateIpLoginPageNumber(start, end, _size)
+	if _page > pageNumber {
+		err = errors.New("page is out of range(" + strconv.Itoa(pageNumber) + ")")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.PageNumberOutOfRangeErr.Code(),
+			ErrMsg: err.Error() + "(" + size + ")",
+			Data:   0,
+		})
+		return
+	}
+	if _page < 0 || _size < 0 {
+		err = errors.New("page or size is negative(" + strconv.Itoa(_page) + "," + strconv.Itoa(_size) + ")")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.NegativeValueErr.Code(),
+			ErrMsg: err.Error() + "(" + size + ")",
+			Data:   0,
+		})
+		return
+	}
+	limit, offset := services.PageAndSizeToLimitAndOffset(uint(_page), uint(_size))
+	records, err := services.GetDateIpLoginRecord(start, end, int(limit), int(offset))
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.GetDateIpLoginRecordErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  models.SUCCESS.Code(),
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   records,
+	})
+}
