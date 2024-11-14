@@ -407,3 +407,22 @@ func GetDateIpLoginRecordCount(c *gin.Context) {
 		Data:   count,
 	})
 }
+
+func GetNewUserCount(c *gin.Context) {
+	start := c.Query("start")
+	end := c.Query("end")
+	count, err := services.GetNewUserCount(start, end)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.GetNewUserCountErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  models.SUCCESS.Code(),
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   count,
+	})
+}

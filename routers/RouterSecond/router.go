@@ -58,6 +58,7 @@ func SetupRouter() *gin.Engine {
 	userStats := r.Group("/user_stats")
 	userStats.GET("/count", handlers.GetDateLoginCount)
 	userStats.GET("/record", handlers.GetDateIpLoginRecord)
+	userStats.GET("/new_count", handlers.GetNewUserCount)
 
 	return r
 }

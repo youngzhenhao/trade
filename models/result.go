@@ -233,6 +233,7 @@ const (
 	GetDateIpLoginRecordErr
 	GetDateIpLoginRecordCountErr
 	GetDateIpLoginCountErr
+	GetNewUserCountErr
 )
 
 // Err type:CustodyAccount
