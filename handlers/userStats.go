@@ -361,8 +361,8 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		})
 		return
 	}
-	if _page < 0 || _size < 0 {
-		err = errors.New("page or size is negative(" + strconv.Itoa(_page) + "," + strconv.Itoa(_size) + ")")
+	if _page < 1 || _size < 1 {
+		err = errors.New("page or size is invalid(" + strconv.Itoa(_page) + "," + strconv.Itoa(_size) + ")")
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.NegativeValueErr.Code(),
 			ErrMsg: err.Error() + "(" + size + ")",
