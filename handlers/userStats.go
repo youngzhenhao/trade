@@ -321,7 +321,10 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.InvalidQueryParamErr.Code(),
 			ErrMsg: err.Error() + "(" + page + ")",
-			Data:   records,
+			Data: gin.H{
+				"total_page": _page,
+				"records":    records,
+			},
 		})
 		return
 	}
@@ -330,7 +333,10 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.InvalidQueryParamErr.Code(),
 			ErrMsg: err.Error() + "(" + size + ")",
-			Data:   records,
+			Data: gin.H{
+				"total_page": _page,
+				"records":    records,
+			},
 		})
 		return
 	}
@@ -340,7 +346,10 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.PageNumberOutOfRangeErr.Code(),
 			ErrMsg: err.Error() + "(" + size + ")",
-			Data:   records,
+			Data: gin.H{
+				"total_page": _page,
+				"records":    records,
+			},
 		})
 		return
 	}
@@ -349,7 +358,10 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.NegativeValueErr.Code(),
 			ErrMsg: err.Error() + "(" + size + ")",
-			Data:   records,
+			Data: gin.H{
+				"total_page": _page,
+				"records":    records,
+			},
 		})
 		return
 	}
@@ -359,13 +371,19 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.GetDateIpLoginRecordErr.Code(),
 			ErrMsg: err.Error(),
-			Data:   records,
+			Data: gin.H{
+				"total_page": _page,
+				"records":    records,
+			},
 		})
 		return
 	}
 	c.JSON(http.StatusOK, Result2{
 		Errno:  models.SUCCESS.Code(),
 		ErrMsg: models.SUCCESS.Error(),
-		Data:   records,
+		Data: gin.H{
+			"total_page": _page,
+			"records":    records,
+		},
 	})
 }
