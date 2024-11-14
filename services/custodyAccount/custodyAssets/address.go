@@ -110,6 +110,9 @@ func dealEvent(tx *gorm.DB, event *taprpc.ReceiveEvent) error {
 			Invoice:     &i.Invoice,
 			PaymentHash: &event.Outpoint,
 			State:       models.STATE_SUCCESS,
+			TypeExt: &models.BalanceTypeExt{
+				Type: models.BTExtOnChain,
+			},
 		}
 		if err = tx.Create(&b).Error; err != nil {
 			btlLog.CUST.Error(err.Error())

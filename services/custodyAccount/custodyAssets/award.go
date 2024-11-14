@@ -83,7 +83,11 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 	}
 
 	// Build a database balance
-	ba := models.Balance{}
+	ba := models.Balance{
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtAward,
+		},
+	}
 	ba.AccountId = account.ID
 	ba.Amount = float64(amount)
 	ba.Unit = models.UNIT_ASSET_NORMAL

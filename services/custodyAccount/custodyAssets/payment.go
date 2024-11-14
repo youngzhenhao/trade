@@ -276,6 +276,9 @@ func (s *AssetInSideSever) payToInside(mission *isInsideMission) error {
 			Invoice:     mission.insideMission.PayReq,
 			PaymentHash: nil,
 			State:       models.STATE_SUCCESS,
+			TypeExt: &models.BalanceTypeExt{
+				Type: models.BTExtLocal,
+			},
 		}
 		err = btldb.CreateBalance(&bill)
 		if err != nil {

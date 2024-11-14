@@ -192,6 +192,9 @@ func (e *AssetEvent) payToInside(bt *AssetPacket) {
 		Invoice:     &bt.PayReq,
 		PaymentHash: nil,
 		State:       models.STATE_SUCCESS,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtLocal,
+		},
 	}
 	err = btldb.CreateBalance(&bill)
 	if err != nil {
@@ -253,6 +256,9 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		AssetId:   &assetId,
 		Invoice:   &bt.PayReq,
 		State:     models.STATE_UNKNOW,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtOnChain,
+		},
 	}
 	err := btldb.CreateBalance(&outsideBalance)
 	if err != nil {

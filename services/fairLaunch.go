@@ -2050,6 +2050,9 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 			Invoice:     &(fairLaunchMintedInfo.EncodedAddr),
 			PaymentHash: &(fairLaunchMintedInfo.OutpointTxHash),
 			State:       models.STATE_SUCCESS,
+			TypeExt: &models.BalanceTypeExt{
+				Type: models.BTExtFirLaunch,
+			},
 		})
 		if err != nil {
 			return utils.AppendErrorInfo(err, "CreateBalance")

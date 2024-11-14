@@ -1,8 +1,8 @@
 package models
 
 type BalanceTypeExt struct {
-	BalanceID uint `json:"balance" gorm:"not null;unique"`
-	Type      uint `json:"type" gorm:"not null"`
+	BalanceID uint               `json:"balance" gorm:"not null;unique"`
+	Type      BalanceTypeExtList `json:"type" gorm:"not null"`
 }
 
 func (BalanceTypeExt) TableName() string {
@@ -12,10 +12,12 @@ func (BalanceTypeExt) TableName() string {
 type BalanceTypeExtList uint
 
 const (
-	BTExtUnknown   BalanceTypeExtList = 0
-	BTExtLocal     BalanceTypeExtList = 100
-	BTExtOutSide   BalanceTypeExtList = 200
-	BTExtAward     BalanceTypeExtList = 300
-	BTExtLocked    BalanceTypeExtList = 400
-	BTExtLockedPay BalanceTypeExtList = 500
+	BTExtUnknown        BalanceTypeExtList = 0
+	BTExtFirLaunch      BalanceTypeExtList = 6
+	BTExtLocal          BalanceTypeExtList = 100
+	BTExtBackFee        BalanceTypeExtList = 104
+	BTExtOnChain        BalanceTypeExtList = 200
+	BTExtAward          BalanceTypeExtList = 300
+	BTExtLocked         BalanceTypeExtList = 400
+	BTExtLockedTransfer BalanceTypeExtList = 500
 )

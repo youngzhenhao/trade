@@ -101,6 +101,9 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 		Invoice:     &Invoice,
 		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtLocked,
+		},
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
@@ -177,6 +180,9 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 		Invoice:     &Invoice,
 		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtLocked,
+		},
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
@@ -280,6 +286,9 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 		Invoice:     &invoice,
 		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtLockedTransfer,
+		},
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
@@ -366,6 +375,9 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 		Invoice:     &payInvoice,
 		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtLockedTransfer,
+		},
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
@@ -399,6 +411,9 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 		Invoice:     &recInvoice,
 		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtLockedTransfer,
+		},
 	}
 	if err = txRev.Create(&balanceBillRev).Error; err != nil {
 		txRev.Rollback()

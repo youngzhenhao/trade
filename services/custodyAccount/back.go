@@ -84,6 +84,9 @@ func updateAccount(usr *caccount.UserInfo, balance uint64) (uint, error) {
 	ba.ServerFee = 0
 	ba.Invoice = &invoice
 	ba.PaymentHash = nil
+	ba.TypeExt = &models.BalanceTypeExt{
+		Type: models.BTExtBackFee,
+	}
 	// Update the database
 	dbErr := btldb.CreateBalance(&ba)
 	if dbErr != nil {

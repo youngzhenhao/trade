@@ -15,7 +15,11 @@ func PutInAward(user *caccount.UserInfo, _ string, amount int, memo *string, loc
 	tx, back := middleware.GetTx()
 	defer back()
 	// Build a database Balance
-	ba := models.Balance{}
+	ba := models.Balance{
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtAward,
+		},
+	}
 	ba.AccountId = user.Account.ID
 	ba.Amount = float64(amount)
 	ba.Unit = models.UNIT_SATOSHIS

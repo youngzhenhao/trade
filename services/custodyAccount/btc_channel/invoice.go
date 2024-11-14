@@ -80,6 +80,7 @@ func (s *SubscribeInvoiceServer) runServer(ctx context.Context) {
 				ba.Invoice = &i.Invoice
 				hash := hex.EncodeToString(invoice.RHash)
 				ba.PaymentHash = &hash
+				ba.TypeExt = &models.BalanceTypeExt{Type: models.BTExtOnChain}
 				if e = tx.Create(&ba).Error; e != nil {
 					tx.Rollback()
 					continue

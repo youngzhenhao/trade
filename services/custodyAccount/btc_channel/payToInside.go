@@ -204,6 +204,7 @@ func updateCustodyAccount(usr *caccount.UserInfo, away models.BalanceAway, balan
 		}
 	}
 	ba.Invoice = &invoice
+	ba.TypeExt = &models.BalanceTypeExt{Type: models.BTExtLocal}
 	// Update the database
 	dbErr := btldb.CreateBalance(&ba)
 	if dbErr != nil {

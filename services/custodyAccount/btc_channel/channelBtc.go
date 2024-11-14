@@ -247,6 +247,7 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	balanceModel.Invoice = &bt.PayReq
 	balanceModel.PaymentHash = &bt.DecodePayReq.PaymentHash
 	balanceModel.State = models.STATE_UNKNOW
+	balanceModel.TypeExt = &models.BalanceTypeExt{Type: models.BTExtOnChain}
 	err := btldb.CreateBalance(&balanceModel)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())

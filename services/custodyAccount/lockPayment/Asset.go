@@ -109,6 +109,9 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 		Invoice:     &Invoice,
 		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtLocked,
+		},
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
@@ -182,6 +185,9 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 		Invoice:     &Invoice,
 		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtLocked,
+		},
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
@@ -285,6 +291,9 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 		Invoice:     &invoice,
 		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtLockedTransfer,
+		},
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
@@ -386,6 +395,9 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 		Invoice:     &payInvoice,
 		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtLockedTransfer,
+		},
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		tx.Rollback()
@@ -419,6 +431,9 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 		Invoice:     &recInvoice,
 		PaymentHash: &lockedId,
 		State:       models.STATE_SUCCESS,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtLockedTransfer,
+		},
 	}
 	if err = txRev.Create(&balanceBillRev).Error; err != nil {
 		txRev.Rollback()
