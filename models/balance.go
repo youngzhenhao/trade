@@ -16,6 +16,7 @@ type Balance struct {
 	Invoice     *string      `gorm:"column:invoice;type:varchar(512)" json:"invoice"`
 	PaymentHash *string      `gorm:"column:payment_hash;type:varchar(100)" json:"paymentHash"`
 	State       BalanceState `gorm:"column:State;type:smallint" json:"State"`
+	TypeExt     *BalanceTypeExt
 }
 
 func (Balance) TableName() string {
