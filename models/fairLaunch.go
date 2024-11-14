@@ -116,7 +116,7 @@ type FairLaunchMintedInfo struct {
 	MintedNumber          int                   `json:"minted_number"`
 	MintedFeeRateSatPerKw int                   `json:"minted_fee_rate_sat_per_kw"`
 	MintedGasFee          int                   `json:"minted_gas_fee"`
-	EncodedAddr           string                `json:"encoded_addr" gorm:"type:varchar(512)"`
+	EncodedAddr           string                `json:"encoded_addr" gorm:"type:varchar(512);uniqueIndex"`
 	MintFeePaidID         int                   `json:"mint_fee_paid_id"`
 	PayMethod             FeePaymentMethod      `json:"pay_method"`
 	PaidSuccessTime       int                   `json:"paid_success_time"`
