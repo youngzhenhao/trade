@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"strings"
 	"time"
 	"trade/middleware"
 	"trade/models"
@@ -33,6 +34,11 @@ type BillQueryQuest struct {
 	Page          int      `json:"page"`
 	PageSize      int      `json:"pageSize"`
 }
+type BillsResult struct {
+	UserName string `gorm:"column:user_name" json:"username"`
+	models.Balance
+	models.BalanceTypeExt
+}
 
 type BillListWithUser struct {
 	ID          uint                `gorm:"primarykey" json:"id"`
@@ -46,7 +52,7 @@ type BillListWithUser struct {
 	PaymentHash *string             `gorm:"column:payment_hash;type:varchar(100)" json:"paymentHash"`
 	State       models.BalanceState `gorm:"column:State;type:smallint" json:"State"`
 	Time        time.Time           `gorm:"column:created_at" json:"time"`
-	Type        uint                `gorm:"column:type" json:"type"`
+	Type        string              `gorm:"column:type" json:"type"`
 }
 
 func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
@@ -108,10 +114,12 @@ func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
 	if quest.PageSize == 0 {
 		quest.PageSize = 500
 	}
-	if quest.Tags != nil && len(quest.Tags) != 0 {
+	if quest.Tags != nil && len(quest.Tags) > 0 {
+		var tagConditions []string
 		for _, tag := range quest.Tags {
-			q = q.Where("bill_balance_type_ext.type =?", models.ToBalanceTypeExtList(tag))
+			tagConditions = append(tagConditions, fmt.Sprintf("bill_balance_type_ext.type = %d", models.ToBalanceTypeExtList(tag)))
 		}
+		q = q.Where("(" + strings.Join(tagConditions, " OR ") + ")")
 	}
 	q = q.Table("bill_balance").
 		Joins("LEFT JOIN user_account ON user_account.id = bill_balance.account_id").
@@ -123,13 +131,30 @@ func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
 	if err != nil || total == 0 {
 		return nil, 0, err
 	}
-	var billListWithUser []BillListWithUser
+	var billsResult []BillsResult
 	err = q.Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize).
-		Select("bill_balance.*, user_account.user_name").
+		Select("bill_balance.*,bill_balance_type_ext.*, user_account.*").
 		Order("bill_balance.created_at DESC").
-		Scan(&billListWithUser).Error
+		Scan(&billsResult).Error
 	if err != nil {
 		return nil, 0, err
+	}
+	var billListWithUser []BillListWithUser
+	for _, bill := range billsResult {
+		billListWithUser = append(billListWithUser, BillListWithUser{
+			ID:          bill.Balance.ID,
+			UserName:    bill.UserName,
+			BillType:    bill.BillType,
+			Away:        bill.Away,
+			Amount:      bill.Amount,
+			ServerFee:   bill.ServerFee,
+			AssetId:     bill.AssetId,
+			Invoice:     bill.Invoice,
+			PaymentHash: bill.PaymentHash,
+			State:       bill.State,
+			Time:        bill.Balance.CreatedAt,
+			Type:        bill.Type.ToString(),
+		})
 	}
 	return &billListWithUser, total, nil
 }
