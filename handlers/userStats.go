@@ -315,12 +315,13 @@ func GetDateIpLoginRecord(c *gin.Context) {
 	end := c.Query("end")
 	page := c.Query("page")
 	size := c.Query("size")
+	records := new([]services.DateIpLoginRecord)
 	_page, err := strconv.Atoi(page)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.InvalidQueryParamErr.Code(),
 			ErrMsg: err.Error() + "(" + page + ")",
-			Data:   0,
+			Data:   records,
 		})
 		return
 	}
@@ -329,7 +330,7 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.InvalidQueryParamErr.Code(),
 			ErrMsg: err.Error() + "(" + size + ")",
-			Data:   0,
+			Data:   records,
 		})
 		return
 	}
@@ -339,7 +340,7 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.PageNumberOutOfRangeErr.Code(),
 			ErrMsg: err.Error() + "(" + size + ")",
-			Data:   0,
+			Data:   records,
 		})
 		return
 	}
@@ -348,17 +349,17 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.NegativeValueErr.Code(),
 			ErrMsg: err.Error() + "(" + size + ")",
-			Data:   0,
+			Data:   records,
 		})
 		return
 	}
 	limit, offset := services.PageAndSizeToLimitAndOffset(uint(_page), uint(_size))
-	records, err := services.GetDateIpLoginRecord(start, end, int(limit), int(offset))
+	records, err = services.GetDateIpLoginRecord(start, end, int(limit), int(offset))
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.GetDateIpLoginRecordErr.Code(),
 			ErrMsg: err.Error(),
-			Data:   0,
+			Data:   records,
 		})
 		return
 	}

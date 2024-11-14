@@ -372,20 +372,20 @@ type DateIpLoginRecord struct {
 }
 
 func GetDateIpLoginRecord(start string, end string, limit int, offset int) (*[]DateIpLoginRecord, error) {
+	var dateIpLoginRecords []DateIpLoginRecord
 	if len(start) != len(time.DateOnly) {
-		return nil, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+		return &dateIpLoginRecords, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
 	}
 	if len(end) != len(time.DateOnly) {
-		return nil, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+		return &dateIpLoginRecords, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
 	}
-	var dateIpLoginRecords []DateIpLoginRecord
 	err := middleware.DB.Model(models.DateIpLogin{}).
 		Where("date between ? and ?", start, end).
 		Limit(limit).
 		Offset(offset).
 		Scan(&dateIpLoginRecords).Error
 	if err != nil {
-		return nil, err
+		return &dateIpLoginRecords, err
 	}
 	return &dateIpLoginRecords, nil
 }
