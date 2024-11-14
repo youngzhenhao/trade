@@ -188,7 +188,13 @@ func RecodeDateIpLogin(username string, date string, ip string) {
 		if d.Username == "" || d.Date == "" || d.Ip == "" {
 			return errors.New("username, date or ip is null")
 		}
-		return DB.Create(d).Error
+		return func(d *models.DateIpLogin) error {
+			if DB.Where("username = ? and date = ? and ip = ?", d.Username, d.Date, d.Ip).First(&models.DateIpLogin{}).Error == nil {
+				return nil
+			} else {
+				return DB.Create(d).Error
+			}
+		}(d)
 	}(&dateIpLogin); err != nil {
 		btlLog.DateIpLogin.Error("%v", err)
 	}
@@ -203,7 +209,13 @@ func RecodeDateLogin(username string, date string) {
 		if d.Username == "" || d.Date == "" {
 			return errors.New("username or date is null")
 		}
-		return DB.Create(d).Error
+		return func(d *models.DateLogin) error {
+			if DB.Where("username = ? and date = ?", d.Username, d.Date).First(&models.DateLogin{}).Error == nil {
+				return nil
+			} else {
+				return DB.Create(d).Error
+			}
+		}(d)
 	}(&dateIpLogin); err != nil {
 		btlLog.DateIpLogin.Error("[DateLogin]%v", err)
 	}
