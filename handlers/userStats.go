@@ -315,6 +315,7 @@ func GetDateIpLoginRecord(c *gin.Context) {
 	end := c.Query("end")
 	page := c.Query("page")
 	size := c.Query("size")
+	_new := c.Query("new")
 	records := new([]services.DateIpLoginRecord)
 	_page, err := strconv.Atoi(page)
 	var pageNumber int
@@ -341,7 +342,13 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		})
 		return
 	}
-	pageNumber, err = services.GetDateIpLoginPageNumber(start, end, _size)
+
+	if _new == "1" {
+		pageNumber, err = services.GetNewUserPageNumber(start, end, _size)
+	} else {
+		pageNumber, err = services.GetDateIpLoginPageNumber(start, end, _size)
+	}
+
 	if _page > pageNumber {
 		err = errors.New("page is out of range(" + strconv.Itoa(pageNumber) + ")")
 		c.JSON(http.StatusOK, Result2{
@@ -367,7 +374,13 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		return
 	}
 	limit, offset := services.PageAndSizeToLimitAndOffset(uint(_page), uint(_size))
-	records, err = services.GetDateIpLoginRecord(start, end, int(limit), int(offset))
+
+	if _new == "1" {
+		records, err = services.GetNewUserRecord(start, end, int(limit), int(offset))
+	} else {
+		records, err = services.GetDateIpLoginRecord(start, end, int(limit), int(offset))
+	}
+
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.GetDateIpLoginRecordErr.Code(),

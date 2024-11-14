@@ -445,3 +445,66 @@ func GetNewUserCount(start string, end string) (int64, error) {
 	}
 	return count, nil
 }
+
+func GetNewUserPageNumber(start string, end string, size int) (int, error) {
+	_count, err := GetNewUserCount(start, end)
+	if err != nil {
+		return 0, err
+	}
+	if _count > math.MaxInt {
+		return 0, errors.New("count overflows")
+	}
+	var pageNumber int
+	count := int(_count)
+	pageNumber = count / size
+	if count%size != 0 {
+		pageNumber++
+	}
+	return pageNumber, nil
+}
+
+type userInfo struct {
+	CreatedAt         time.Time
+	Username          string `gorm:"unique;column:user_name;type:varchar(255)" json:"userName"` // 正确地将unique和column选项放在同一个gorm标签内
+	RecentIpAddresses string `json:"recent_ip_addresses" gorm:"type:varchar(255)"`
+}
+
+func UserToDateIpLoginRecord(user userInfo) DateIpLoginRecord {
+	return DateIpLoginRecord{
+		Username: user.Username,
+		Date:     user.CreatedAt.Format(time.DateOnly),
+		Ip:       user.RecentIpAddresses,
+	}
+}
+
+func UsersToDateIpLoginRecords(users *[]userInfo) *[]DateIpLoginRecord {
+	if users == nil {
+		return new([]DateIpLoginRecord)
+	}
+	var dateIpLoginRecords []DateIpLoginRecord
+	for _, user := range *users {
+		dateIpLoginRecords = append(dateIpLoginRecords, UserToDateIpLoginRecord(user))
+	}
+	return &dateIpLoginRecords
+}
+
+func GetNewUserRecord(start string, end string, limit int, offset int) (*[]DateIpLoginRecord, error) {
+	var dateIpLoginRecords = new([]DateIpLoginRecord)
+	if len(start) != len(time.DateOnly) {
+		return dateIpLoginRecords, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+	}
+	if len(end) != len(time.DateOnly) {
+		return dateIpLoginRecords, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+	}
+	var users []userInfo
+	err := middleware.DB.Model(models.User{}).
+		Where("created_at between ? and ?", start, end).
+		Limit(limit).
+		Offset(offset).
+		Scan(&users).Error
+	dateIpLoginRecords = UsersToDateIpLoginRecords(&users)
+	if err != nil {
+		return dateIpLoginRecords, err
+	}
+	return dateIpLoginRecords, nil
+}
