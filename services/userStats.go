@@ -384,6 +384,7 @@ func GetDateIpLoginRecord(start string, end string, limit int, offset int) (*[]D
 		Where("date between ? and ?", start, end).
 		Limit(limit).
 		Offset(offset).
+		Order("id desc").
 		Scan(&dateIpLoginRecords).Error
 	if err != nil {
 		return &dateIpLoginRecords, err
@@ -501,6 +502,7 @@ func GetNewUserRecord(start string, end string, limit int, offset int) (*[]DateI
 		Where("created_at between ? and ?", start, end).
 		Limit(limit).
 		Offset(offset).
+		Order("id desc").
 		Scan(&users).Error
 	dateIpLoginRecords = UsersToDateIpLoginRecords(&users)
 	if err != nil {
