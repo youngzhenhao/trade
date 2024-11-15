@@ -16,7 +16,7 @@ func MintAppend(groupKey string, groupName string, description string, imgPathPr
 	if feeRate > 50 {
 		return fmt.Errorf("feeRate(%d) is too high!\n", feeRate)
 	}
-	if start < 1 || end < 1 || start < end {
+	if start < 1 || end < 1 || end < start {
 		return fmt.Errorf("in valid start or end (%d,%d)\n", start, end)
 	}
 	for ; start <= end; start++ {
