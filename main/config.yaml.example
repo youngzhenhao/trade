@@ -53,6 +53,8 @@ router_disable:
     nft_presale: false
     user_data: false
     asset_list: false
+    user_stats: false
+    asset_info: false
 api_config:
     lnd:
         host: ""

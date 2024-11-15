@@ -67,6 +67,7 @@ type Config struct {
 		UserData              bool `yaml:"user_data" json:"user_data"`
 		AssetList             bool `yaml:"asset_list" json:"asset_list"`
 		UserStats             bool `yaml:"user_stats" json:"user_stats"`
+		AssetInfo             bool `yaml:"asset_info" json:"asset_info"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {

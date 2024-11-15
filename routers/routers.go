@@ -109,6 +109,9 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.UserStats {
 		SetupUserStatsRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.AssetInfo {
+		SetupAssetInfoRouter(r)
+	}
 	SetupWsRouter(r)
 	return r
 }

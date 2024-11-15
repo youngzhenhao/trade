@@ -18,6 +18,32 @@ func GetAssetInfo(id string) (*models.AssetIssuanceLeaf, error) {
 	return assetLeafIssuanceInfo(id)
 }
 
+func GetAssetName(assetId string) (string, error) {
+	assetInfo, err := GetAssetInfo(assetId)
+	if err != nil {
+		return "", utils.AppendErrorInfo(err, "GetAssetInfo")
+	}
+	return assetInfo.Name, nil
+}
+
+func GetAssetsName(assetIds []string) (*[]AssetIdAndName, error) {
+	if len(assetIds) == 0 {
+		return new([]AssetIdAndName), errors.New("no asset ids provided")
+	}
+	var assetIdAndNames []AssetIdAndName
+	for _, assetId := range assetIds {
+		name, err := GetAssetName(assetId)
+		if err != nil {
+			return new([]AssetIdAndName), utils.AppendErrorInfo(err, "GetAssetName")
+		}
+		assetIdAndNames = append(assetIdAndNames, AssetIdAndName{
+			AssetId: assetId,
+			Name:    name,
+		})
+	}
+	return &assetIdAndNames, nil
+}
+
 func AddGroupAssetAndGetResponse(name string, assetTypeIsCollectible bool, meta *Meta, amount int, groupKey string) (*mintrpc.MintAssetResponse, error) {
 	return mintAsset(false, assetTypeIsCollectible, name, meta.ToJsonStr(), false, amount, false, true, groupKey, "", false)
 }
