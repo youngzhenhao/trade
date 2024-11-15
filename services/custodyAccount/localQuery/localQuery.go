@@ -404,7 +404,7 @@ func LockedBillsQuery(quest LockedBillsQueryQuest) (*[]LockedBillsQueryResp, int
 		custodyModels.LockBill
 		custodyModels.LockAccount
 	}
-	q = q.Limit(quest.PageSize).Offset((quest.Page - 1) * quest.PageSize).
+	q = q.Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize).
 		Select("user_lock_bill.*,user_lock_account.user_name").
 		Order("user_lock_bill.created_at DESC").
 		Scan(&result)
