@@ -138,4 +138,6 @@ func PayAsset(c *gin.Context) {
 	c.JSON(http.StatusOK, &res)
 }
 
-func test() {}
+func Atest() {
+	return
+}
