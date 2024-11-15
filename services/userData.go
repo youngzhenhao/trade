@@ -10,7 +10,7 @@ import (
 	"trade/models/custodyModels"
 	"trade/services/btldb"
 	"trade/services/custodyAccount/custodyBase"
-	"trade/services/custodyAccount/custodyBtc"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 	"trade/utils"
 )
 

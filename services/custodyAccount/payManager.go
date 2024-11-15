@@ -13,9 +13,9 @@ import (
 	"trade/models/custodyModels"
 	"trade/services/btldb"
 	"trade/services/custodyAccount/account"
-	"trade/services/custodyAccount/custodyAssets"
 	cBase "trade/services/custodyAccount/custodyBase"
-	"trade/services/custodyAccount/custodyBtc"
+	"trade/services/custodyAccount/defaultAccount/custodyAssets"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 	"trade/services/custodyAccount/lockPayment"
 )
 

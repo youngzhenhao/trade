@@ -3,7 +3,7 @@ package custodyAccount
 import (
 	"trade/services/btldb"
 	cBase "trade/services/custodyAccount/custodyBase"
-	"trade/services/custodyAccount/custodyBtc"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 	"trade/services/custodyAccount/lockPayment"
 )
 

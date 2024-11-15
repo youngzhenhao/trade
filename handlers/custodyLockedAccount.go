@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"trade/models"
 	"trade/services/custodyAccount"
-	"trade/services/custodyAccount/custodyAssets"
+	"trade/services/custodyAccount/defaultAccount/custodyAssets"
 )
 
 func QueryLockedPayments(c *gin.Context) {

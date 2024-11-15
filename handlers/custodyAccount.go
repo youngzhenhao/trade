@@ -9,7 +9,7 @@ import (
 	"trade/models"
 	"trade/services/custodyAccount"
 	"trade/services/custodyAccount/custodyBase"
-	"trade/services/custodyAccount/custodyBtc"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 	rpc "trade/services/servicesrpc"
 )
 
