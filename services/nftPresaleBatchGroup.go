@@ -173,15 +173,15 @@ func ProcessLaunchRequestNftPresales(nftPresaleSetRequests *[]models.NftPresaleS
 
 func ValidateStartAndEndTimeForNftPresale(startTime int, endTime int) error {
 	now := utils.GetTimestamp()
-	if !(startTime >= now-600) {
-		return errors.New("startTime(" + strconv.Itoa(startTime) + ") must be greater than the current time (max time delay 600 seconds.)")
+	if !(startTime >= now-3600*24) {
+		return errors.New("startTime(" + strconv.Itoa(startTime) + ") must be greater than the current time (max time delay a day i.e. 3600*24 seconds.)")
 	}
 	if endTime != 0 {
 		if !(endTime >= startTime+3600*2) {
 			return errors.New("end time should be at least two hour after the start time")
 		}
-		if !(endTime <= now+3600*24*365) {
-			return errors.New("end time cannot be more than one year from the current time")
+		if !(endTime <= now+3600*24*365*2) {
+			return errors.New("end time cannot be more than two year from the current time")
 		}
 	}
 	return nil
