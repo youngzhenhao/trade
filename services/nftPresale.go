@@ -983,6 +983,7 @@ func CheckIsNftPresaleProcessing() error {
 
 // GetGroupNameByGroupKey
 // @dev: Get group name by group key
+// TODO: this fun may has bug
 func GetGroupNameByGroupKey(network models.Network, groupKey string) (string, error) {
 	var groupName string
 	// @dev: 1. Get outpoints by group key
@@ -1013,9 +1014,9 @@ func GetGroupNameByGroupKey(network models.Network, groupKey string) (string, er
 		ScriptKeyBytes string `json:"script_key_bytes"`
 	}
 	var timeAndAssetKeys []timeAndAssetKey
-	for op, time := range outpointTime {
+	for op, _time := range outpointTime {
 		timeAndAssetKeys = append(timeAndAssetKeys, timeAndAssetKey{
-			Time:           time,
+			Time:           _time,
 			OpStr:          op,
 			ScriptKeyBytes: opMapScriptKey[op],
 		})
@@ -1024,9 +1025,12 @@ func GetGroupNameByGroupKey(network models.Network, groupKey string) (string, er
 		err = errors.New("length of timeAndAssetKey(" + strconv.Itoa(len(timeAndAssetKeys)) + ") is zero")
 		return "", utils.AppendErrorInfo(err, "")
 	}
-	if len(outpoints) != len(outpointTime) {
-		err = errors.New("length of outpoints(" + strconv.Itoa(len(outpoints)) + ") is not equal length of outpointTime(" + strconv.Itoa(len(outpointTime)) + ")")
-		return "", utils.AppendErrorInfo(err, "")
+	{
+		// @dev: Do not check length here
+		//if len(outpoints) != len(outpointTime) {
+		//	err = errors.New("length of outpoints(" + strconv.Itoa(len(outpoints)) + ") is not equal length of outpointTime(" + strconv.Itoa(len(outpointTime)) + ")")
+		//	return "", utils.AppendErrorInfo(err, "")
+		//}
 	}
 	// @dev: 3. Sort outpoints by time
 	func(tak []timeAndAssetKey) {
