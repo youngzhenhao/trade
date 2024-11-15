@@ -13,9 +13,9 @@ import (
 	"trade/models/custodyModels"
 	"trade/services/btldb"
 	"trade/services/custodyAccount/account"
-	"trade/services/custodyAccount/btc_channel"
 	"trade/services/custodyAccount/custodyAssets"
 	cBase "trade/services/custodyAccount/custodyBase"
+	"trade/services/custodyAccount/custodyBtc"
 	"trade/services/custodyAccount/lockPayment"
 )
 
@@ -56,8 +56,8 @@ func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 	}
 	fmt.Println("Custody account MacaroonDir is set:", cfg.ApiConfig.CustodyAccount.MacaroonDir)
 	// Start the custody account service
-	btc_channel.BtcSever.Start(ctx)
-	btc_channel.InvoiceServer.Start(ctx)
+	custodyBtc.BtcSever.Start(ctx)
+	custodyBtc.InvoiceServer.Start(ctx)
 	custodyAssets.OutsideSever.Start(ctx)
 	custodyAssets.InSideSever.Start(ctx)
 	custodyAssets.AddressServer.Start(ctx)
@@ -103,12 +103,12 @@ func checkAdminAccount() bool {
 // PayAmountToAdmin
 // 托管账户划扣费用
 func PayAmountToAdmin(payUserId uint, gasFee uint64) (uint, error) {
-	e, err := btc_channel.NewBtcChannelEventByUserId(payUserId)
+	e, err := custodyBtc.NewBtcChannelEventByUserId(payUserId)
 	if err != nil {
 		btlLog.CUST.Error("PayAmountToAdmin failed:%s", err)
 		return 0, err
 	}
-	id, err := btc_channel.PayFirLunchFee(e, gasFee)
+	id, err := custodyBtc.PayFirLunchFee(e, gasFee)
 	if err != nil {
 		btlLog.CUST.Error("PayAmountToAdmin failed:%s", err)
 		return 0, err
@@ -148,7 +148,7 @@ func CheckPayInsideStatus(id uint) (bool, error) {
 // IsAccountBalanceEnoughByUserId
 // 判断账户余额是否足够
 func IsAccountBalanceEnoughByUserId(userId uint, value uint64) bool {
-	e, err := btc_channel.NewBtcChannelEventByUserId(userId)
+	e, err := custodyBtc.NewBtcChannelEventByUserId(userId)
 	if err != nil {
 		btlLog.CUST.Error("PayAmountToAdmin failed:%s", err)
 		return false
@@ -164,7 +164,7 @@ func IsAccountBalanceEnoughByUserId(userId uint, value uint64) bool {
 // GetAccountBalance
 // @Description: Get account balance
 func GetAccountBalance(userId uint) (int64, error) {
-	e, err := btc_channel.NewBtcChannelEventByUserId(userId)
+	e, err := custodyBtc.NewBtcChannelEventByUserId(userId)
 	if err != nil {
 		return 0, err
 	}

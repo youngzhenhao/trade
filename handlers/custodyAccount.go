@@ -8,8 +8,8 @@ import (
 	"trade/config"
 	"trade/models"
 	"trade/services/custodyAccount"
-	"trade/services/custodyAccount/btc_channel"
 	"trade/services/custodyAccount/custodyBase"
+	"trade/services/custodyAccount/custodyBtc"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -17,7 +17,7 @@ import (
 func ApplyInvoice(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
-	e, err := btc_channel.NewBtcChannelEvent(userName)
+	e, err := custodyBtc.NewBtcChannelEvent(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
 		return
@@ -27,7 +27,7 @@ func ApplyInvoice(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
-	a := btc_channel.BtcApplyInvoiceRequest{
+	a := custodyBtc.BtcApplyInvoiceRequest{
 		Amount: apply.Amount,
 		Memo:   apply.Memo,
 	}
@@ -42,7 +42,7 @@ func ApplyInvoice(c *gin.Context) {
 func QueryInvoice(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
-	e, err := btc_channel.NewBtcChannelEvent(userName)
+	e, err := custodyBtc.NewBtcChannelEvent(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
 		return
@@ -74,7 +74,7 @@ func PayInvoice(c *gin.Context) {
 			return
 		}
 	}
-	e, err := btc_channel.NewBtcChannelEvent(userName)
+	e, err := custodyBtc.NewBtcChannelEvent(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
 		return
@@ -88,7 +88,7 @@ func PayInvoice(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "请求参数错误"})
 		return
 	}
-	a := btc_channel.BtcPacket{
+	a := custodyBtc.BtcPacket{
 		PayReq:   pay.Invoice,
 		FeeLimit: pay.FeeLimit,
 	}
@@ -104,7 +104,7 @@ func PayInvoice(c *gin.Context) {
 func QueryBalance(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
-	e, err := btc_channel.NewBtcChannelEvent(userName)
+	e, err := custodyBtc.NewBtcChannelEvent(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
 		return
@@ -121,7 +121,7 @@ func QueryBalance(c *gin.Context) {
 func QueryPayment(c *gin.Context) {
 	// 获取登录用户信息
 	userName := c.MustGet("username").(string)
-	e, err := btc_channel.NewBtcChannelEvent(userName)
+	e, err := custodyBtc.NewBtcChannelEvent(userName)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
 		return

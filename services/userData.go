@@ -9,8 +9,8 @@ import (
 	"trade/models"
 	"trade/models/custodyModels"
 	"trade/services/btldb"
-	"trade/services/custodyAccount/btc_channel"
 	"trade/services/custodyAccount/custodyBase"
+	"trade/services/custodyAccount/custodyBtc"
 	"trade/utils"
 )
 
@@ -148,10 +148,10 @@ func GetUserAccountBtcBalanceData(username string) (*models.UserAccountBtcBalanc
 		return nil, errors.New("username is empty")
 	}
 	var balance int64
-	btcChannelEvent, err := btc_channel.NewBtcChannelEvent(username)
+	btcChannelEvent, err := custodyBtc.NewBtcChannelEvent(username)
 	if err != nil {
 		btlLog.UserData.Error("NewBtcChannelEvent err:%v", err)
-		btcChannelEvent = &btc_channel.BtcChannelEvent{}
+		btcChannelEvent = &custodyBtc.BtcChannelEvent{}
 	} else {
 		getBalance, err := btcChannelEvent.GetBalance()
 		if err != nil {

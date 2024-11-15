@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"trade/btlLog"
 	"trade/models"
-	"trade/services/custodyAccount/btc_channel"
 	"trade/services/custodyAccount/custodyAssets"
+	"trade/services/custodyAccount/custodyBtc"
 	"trade/services/custodyAccount/lockPayment"
 )
 
@@ -26,7 +26,7 @@ func PutInSatoshiAward(c *gin.Context) {
 		return
 	}
 	btlLog.CUST.Info("%v", creds)
-	e, err := btc_channel.NewBtcChannelEvent(creds.Username)
+	e, err := custodyBtc.NewBtcChannelEvent(creds.Username)
 	if err != nil {
 		btlLog.CUST.Error("%v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -34,7 +34,7 @@ func PutInSatoshiAward(c *gin.Context) {
 	}
 	switch creds.AccountType {
 	case "default":
-		award, err := btc_channel.PutInAward(e.UserInfo, "", creds.Amount, &creds.Memo, creds.LockedId)
+		award, err := custodyBtc.PutInAward(e.UserInfo, "", creds.Amount, &creds.Memo, creds.LockedId)
 		if err != nil {
 			btlLog.CUST.Error("%v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

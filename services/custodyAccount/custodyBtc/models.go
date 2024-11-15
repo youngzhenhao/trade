@@ -1,4 +1,4 @@
-package btc_channel
+package custodyBtc
 
 import (
 	"errors"

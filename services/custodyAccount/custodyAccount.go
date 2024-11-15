@@ -2,14 +2,14 @@ package custodyAccount
 
 import (
 	"trade/services/btldb"
-	"trade/services/custodyAccount/btc_channel"
 	cBase "trade/services/custodyAccount/custodyBase"
+	"trade/services/custodyAccount/custodyBtc"
 	"trade/services/custodyAccount/lockPayment"
 )
 
 func GetAssetBalanceList(userName string) (*[]cBase.Balance, error) {
 	list := make(map[string]*cBase.Balance)
-	e, err := btc_channel.NewBtcChannelEvent(userName)
+	e, err := custodyBtc.NewBtcChannelEvent(userName)
 	if err != nil {
 		return nil, err
 	}
