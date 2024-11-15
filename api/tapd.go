@@ -604,7 +604,11 @@ func MintNftAsset(name string, meta *Meta, newGroupedAsset bool, groupedAsset bo
 			}
 		}
 	}
-	response, err := mintAssetByParam(taprpc.AssetVersion_ASSET_VERSION_V0, taprpc.AssetType_COLLECTIBLE, name, []byte(meta.ToJsonStr()), taprpc.AssetMetaType_META_TYPE_OPAQUE, uint64(amount), newGroupedAsset, groupedAsset, []byte(groupKey), "", false)
+	decodedGroupKey, err := hex.DecodeString(groupKey)
+	if err != nil {
+		return nil, errors.New("DecodeString(" + groupKey + ")")
+	}
+	response, err := mintAssetByParam(taprpc.AssetVersion_ASSET_VERSION_V0, taprpc.AssetType_COLLECTIBLE, name, []byte(meta.ToJsonStr()), taprpc.AssetMetaType_META_TYPE_OPAQUE, uint64(amount), newGroupedAsset, groupedAsset, decodedGroupKey, "", false)
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "mintAssetByParam")
 	}
