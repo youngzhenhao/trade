@@ -2,6 +2,7 @@ package mint_nft
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"trade/api"
 	"trade/btlLog"
@@ -47,6 +48,9 @@ func MintAppend(groupKey string, groupName string, description string, imgPathPr
 		return fmt.Errorf("\nMint %s BatchTxidAnchorToAssetIdAndNames\n%v", fmt.Sprintf("%d-%d", start, end), err)
 	}
 	btlLog.PreSale.Info("\nMint %s BatchTxidAnchorToAssetIdAndNames\n%v", fmt.Sprintf("%d-%d", start, end), utils.ValueJsonString(assetIdAndNames))
+	sort.Slice(*assetIdAndNames, func(i, j int) bool {
+		return (*assetIdAndNames)[i].Name < (*assetIdAndNames)[j].Name
+	})
 	btlLog.PreSale.Info("asset id:\n%s\n", utils.ValueJsonString(assetIdAndNames))
 	return nil
 }
