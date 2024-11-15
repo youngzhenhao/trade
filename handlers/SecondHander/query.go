@@ -100,3 +100,30 @@ func TotalBillList(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: list})
 }
+
+func QueryLockedBills(c *gin.Context) {
+	var creds localQuery.LockedBillsQueryQuest
+	if err := c.ShouldBindJSON(&creds); err != nil {
+		btlLog.CUST.Error("%v", err)
+		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+	if creds.Page == 0 {
+		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: "Page must be greater than 0", Data: nil})
+		return
+	}
+	creds.Page = creds.Page - 1
+	bills, count, err := localQuery.LockedBillsQuery(creds)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+	Bill := struct {
+		Count int64                              `json:"count"`
+		Bills *[]localQuery.LockedBillsQueryResp `json:"bills"`
+	}{
+		Count: count,
+		Bills: bills,
+	}
+	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: Bill})
+}

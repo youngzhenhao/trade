@@ -27,3 +27,24 @@ const (
 
 	LockErr = 66
 )
+
+func (lbt LockBillType) String() string {
+	lbtMap := map[LockBillType]string{
+		LockBillTypeLock:                  "Lock",
+		LockBillTypeTransferByLockAsset:   "TransferByLockAsset",
+		LockBillTypeUnlock:                "Unlock",
+		LockBillTypeTransferByUnlockAsset: "TransferByUnlockAsset",
+		LockBillTypeAward:                 "Award",
+	}
+	return lbtMap[lbt]
+}
+func GetLockBillType(billType string) LockBillType {
+	lbtMap := map[string]LockBillType{
+		"Lock":                  LockBillTypeLock,
+		"TransferByLockAsset":   LockBillTypeTransferByLockAsset,
+		"Unlock":                LockBillTypeUnlock,
+		"TransferByUnlockAsset": LockBillTypeTransferByUnlockAsset,
+		"Award":                 LockBillTypeAward,
+	}
+	return lbtMap[billType]
+}

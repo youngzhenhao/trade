@@ -137,6 +137,3 @@ func PayAsset(c *gin.Context) {
 	res.TxId = creds.LockedId
 	c.JSON(http.StatusOK, &res)
 }
-
-// TODO: add more api
-func GetLockedBalanceList(c *gin.Context) {}

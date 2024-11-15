@@ -32,9 +32,6 @@ func SetupRouter() *gin.Engine {
 		locked.POST("/lock", SecondHander.Lock)
 		locked.POST("/unlock", SecondHander.Unlock)
 		locked.POST("/payAsset", SecondHander.PayAsset)
-
-		//todo: add more api
-		locked.POST("/getLockedBalanceList", SecondHander.GetLockedBalanceList)
 	}
 	//Query
 	{
@@ -48,6 +45,10 @@ func SetupRouter() *gin.Engine {
 			user.POST("/userinfo", SecondHander.QueryUserInfo)
 			user.POST("/block", SecondHander.BlockUser)
 			user.POST("/unblock", SecondHander.UnBlockUser)
+		}
+		locked := query.Group("/locked")
+		{
+			locked.POST("/QueryLockedBills", SecondHander.QueryLockedBills)
 		}
 	}
 	//AssetList

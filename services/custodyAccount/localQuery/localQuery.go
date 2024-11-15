@@ -334,3 +334,93 @@ func TotalBillList(quest *TotalBillListQuest) ([]TotalBillListResp, int64, error
 	}
 	return total, count, nil
 }
+
+type LockedBillsQueryQuest struct {
+	UserName  string   `json:"username"`
+	AssetId   string   `json:"assetId"`
+	LockedId  string   `json:"lockedId"`
+	AmountMin float64  `json:"amountMin"`
+	AmountMax float64  `json:"amountMax"`
+	TimeStart string   `json:"timeStart"`
+	TimeEnd   string   `json:"timeEnd"`
+	Tags      []string `json:"tags"`
+	Page      int      `json:"page"`
+	PageSize  int      `json:"pageSize"`
+}
+
+type LockedBillsQueryResp struct {
+	ID       uint      `gorm:"primarykey" json:"id"`
+	UserName string    `gorm:"column:user_name" json:"username"`
+	Amount   float64   `gorm:"column:amount;type:decimal(10,2)" json:"amount"`
+	AssetId  *string   `gorm:"column:asset_id;type:varchar(512);default:'00'" json:"assetId"`
+	LockedId *string   `gorm:"column:lockId;type:varchar(512)" json:"LockedId"`
+	Time     time.Time `gorm:"column:created_at" json:"time"`
+	Type     string    `gorm:"column:type" json:"type"`
+}
+
+func LockedBillsQuery(quest LockedBillsQueryQuest) (*[]LockedBillsQueryResp, int64, error) {
+	billQuery := models.Balance{}
+	var err error
+
+	q := middleware.DB
+	q = q.Where(&billQuery)
+
+	if quest.UserName != "" {
+		q = q.Where("user_lock_account.user_name =?", quest.UserName)
+	}
+	if quest.AssetId != "" {
+		q = q.Where("user_lock_bill.asset_id =?", quest.AssetId)
+	}
+	if quest.AmountMin != 0 {
+		q = q.Where("user_lock_bill.amount >=?", quest.AmountMin)
+	}
+	if quest.AmountMax != 0 {
+		q = q.Where("user_lock_bill.amount <=?", quest.AmountMax)
+	}
+	if quest.LockedId != "" {
+		q = q.Where("user_lock_bill.lock_id like ? ", quest.LockedId+"%")
+	}
+	if quest.TimeStart != "" {
+		q = q.Where("user_lock_bill.created_at >=?", quest.TimeStart)
+	}
+	if quest.TimeEnd != "" {
+		q = q.Where("user_lock_bill.created_at <=?", quest.TimeEnd)
+	}
+	if quest.PageSize == 0 {
+		quest.PageSize = 500
+	}
+	if quest.Tags != nil && len(quest.Tags) > 0 {
+		var tagConditions []string
+		for _, tag := range quest.Tags {
+			tagConditions = append(tagConditions, fmt.Sprintf("user_lock_bill.bill_type = %d", custodyModels.GetLockBillType(tag)))
+		}
+		q = q.Where("(" + strings.Join(tagConditions, " OR ") + ")")
+	}
+	q = q.Table("user_lock_bill").
+		Joins("LEFT JOIN user_lock_account ON user_lock_account.id = user_lock_bill.account_id")
+	var total int64
+	q.Count(&total)
+	var result []struct {
+		custodyModels.LockBill
+		custodyModels.LockAccount
+	}
+	q = q.Limit(quest.PageSize).Offset((quest.Page - 1) * quest.PageSize).
+		Select("user_lock_bill.*,user_lock_account.*").
+		Order("user_lock_bill.created_at DESC").
+		Scan(&result)
+	var LockedBillsQueryRespList []LockedBillsQueryResp
+	if len(result) > 0 {
+		for _, bill := range result {
+			LockedBillsQueryRespList = append(LockedBillsQueryRespList, LockedBillsQueryResp{
+				ID:       bill.LockBill.ID,
+				UserName: bill.LockAccount.UserName,
+				Amount:   bill.LockBill.Amount,
+				AssetId:  &bill.LockBill.AssetId,
+				LockedId: &bill.LockBill.LockId,
+				Time:     bill.LockBill.CreatedAt,
+				Type:     bill.LockBill.BillType.String(),
+			})
+		}
+	}
+	return &LockedBillsQueryRespList, total, err
+}
