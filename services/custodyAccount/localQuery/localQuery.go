@@ -133,7 +133,7 @@ func BillQuery(quest BillQueryQuest) (*[]BillListWithUser, int64, error) {
 	}
 	var billsResult []BillsResult
 	err = q.Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize).
-		Select("bill_balance.*,bill_balance_type_ext.*, user_account.*").
+		Select("bill_balance.*,bill_balance_type_ext.type, user_account.user_name").
 		Order("bill_balance.created_at DESC").
 		Scan(&billsResult).Error
 	if err != nil {
@@ -405,7 +405,7 @@ func LockedBillsQuery(quest LockedBillsQueryQuest) (*[]LockedBillsQueryResp, int
 		custodyModels.LockAccount
 	}
 	q = q.Limit(quest.PageSize).Offset((quest.Page - 1) * quest.PageSize).
-		Select("user_lock_bill.*,user_lock_account.*").
+		Select("user_lock_bill.*,user_lock_account.user_name").
 		Order("user_lock_bill.created_at DESC").
 		Scan(&result)
 	var LockedBillsQueryRespList []LockedBillsQueryResp

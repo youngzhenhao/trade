@@ -7,6 +7,7 @@ func init() {
 	AwardTypes["tip2"] = "直推奖励"
 	AwardTypes["tip3"] = "收藏奖励"
 	AwardTypes["tip5"] = "腾会奖励"
+	AwardTypes["tip6"] = "补发奖励"
 	AwardTypes["activity"] = "进群奖励"
 }
 
