@@ -369,6 +369,10 @@ func NftPresaleBatchGroupToNftPresaleBatchGroupSimplified(nftPresaleBatchGroup *
 	if nftPresaleBatchGroup == nil {
 		return nil
 	}
+	assetId, err := GetFirstAssetIdByBatchGroupId(int(nftPresaleBatchGroup.ID))
+	if err != nil {
+		btlLog.PreSale.Error("%v", err)
+	}
 	return &models.NftPresaleBatchGroupSimplified{
 		ID:           nftPresaleBatchGroup.ID,
 		UpdatedAt:    nftPresaleBatchGroup.UpdatedAt,
@@ -381,6 +385,7 @@ func NftPresaleBatchGroupToNftPresaleBatchGroupSimplified(nftPresaleBatchGroup *
 		StartTime:    nftPresaleBatchGroup.StartTime,
 		EndTime:      nftPresaleBatchGroup.EndTime,
 		Info:         nftPresaleBatchGroup.Info,
+		FirstAssetId: assetId,
 	}
 }
 

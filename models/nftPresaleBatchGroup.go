@@ -39,6 +39,7 @@ type NftPresaleBatchGroupSimplified struct {
 	StartTime    int    `json:"start_time"`
 	EndTime      int    `json:"end_time"`
 	Info         string `json:"info"`
+	FirstAssetId string `json:"first_asset_id"`
 }
 
 type NftPresaleBatchGroupLaunchRequest struct {

@@ -1185,3 +1185,20 @@ func ReSetFailOrCanceledNftPresale() error {
 	newNftPresales := ProcessFailOrCanceledNftPresales(nftPresales)
 	return CreateAndUpdateNftPresales(newNftPresales, nftPresales)
 }
+
+// @dev
+
+func GetFirstAssetIdByBatchGroupId(batchGroupId int) (string, error) {
+	var assetId string
+	// @dev: Do not use scan
+	err := middleware.DB.Model(models.NftPresale{}).
+		Select("asset_id").
+		Where("batch_group_id = ?", batchGroupId).
+		Order("id ASC").
+		First(&assetId).
+		Error
+	if err != nil {
+		return "", err
+	}
+	return assetId, nil
+}
