@@ -137,7 +137,3 @@ func PayAsset(c *gin.Context) {
 	res.TxId = creds.LockedId
 	c.JSON(http.StatusOK, &res)
 }
-
-func Atest() {
-	return
-}
