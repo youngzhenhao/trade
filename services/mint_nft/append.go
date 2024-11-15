@@ -20,11 +20,11 @@ func MintAppend(groupKey string, groupName string, description string, imgPathPr
 	if start < 1 || end < 1 || end < start {
 		return fmt.Errorf("in valid start or end (%d,%d)\n", start, end)
 	}
-	for ; start <= end; start++ {
-		name := fmt.Sprintf("%s#%03d", groupName, start)
+	for i := start; i <= end; i++ {
+		name := fmt.Sprintf("%s#%03d", groupName, i)
 		meta := api.NewMetaWithGroupName(description, groupName)
 		// TODO: imgPath need to modify
-		imgPath := imgPathPrefix + strconv.Itoa(start) + imgSuffix
+		imgPath := imgPathPrefix + strconv.Itoa(i) + imgSuffix
 		_, err := meta.LoadImage(imgPath)
 		if err != nil {
 			return fmt.Errorf("\nMint %s LoadImage\n%v", name, err)
@@ -52,5 +52,6 @@ func MintAppend(groupKey string, groupName string, description string, imgPathPr
 		return (*assetIdAndNames)[i].Name < (*assetIdAndNames)[j].Name
 	})
 	btlLog.PreSale.Info("asset id:\n%s\n", utils.ValueJsonString(assetIdAndNames))
+	btlLog.PreSale.Info("batch txid: %s\n", batchTxidAnchor)
 	return nil
 }

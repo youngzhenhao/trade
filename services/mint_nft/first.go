@@ -44,5 +44,6 @@ func MintFirst(groupName string, description string, imgPath string, feeRate uin
 	btlLog.PreSale.Info("\nMint %s BatchTxidAnchorToGroupKey\n%v", name, groupKey)
 	btlLog.PreSale.Info("asset id: %s\n", assetId)
 	btlLog.PreSale.Info("group key: %s\n", groupKey)
+	btlLog.PreSale.Info("batch txid: %s\n", batchTxidAnchor)
 	return nil
 }
