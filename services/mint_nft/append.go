@@ -31,9 +31,9 @@ func MintAppend(groupKey string, groupName string, description string, imgPathPr
 		}
 		mintResponse, err := api.MintNftAssetAppend(name, meta, groupKey)
 		if err != nil {
-			return fmt.Errorf("\nMint %s MintNftAssetFirst\n%v", name, err)
+			return fmt.Errorf("\nMint %s MintNftAssetAppend\n%v", name, err)
 		}
-		btlLog.PreSale.Info("\nMint %s MintNftAssetFirst\n%v", name, utils.ValueJsonString(mintResponse))
+		btlLog.PreSale.Info("\nMint %s MintNftAssetAppend\n%v", name, utils.ValueJsonString(mintResponse))
 	}
 	// Auto fee rate
 	feeRateSatPerKw := services.FeeRateSatPerBToSatPerKw(int(feeRate))
