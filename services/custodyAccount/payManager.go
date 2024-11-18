@@ -14,6 +14,7 @@ import (
 	"trade/services/btldb"
 	"trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
+	"trade/services/custodyAccount/defaultAccount/back"
 	"trade/services/custodyAccount/defaultAccount/custodyAssets"
 	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 	"trade/services/custodyAccount/lockPayment"
@@ -56,7 +57,7 @@ func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 	}
 	fmt.Println("Custody account MacaroonDir is set:", cfg.ApiConfig.CustodyAccount.MacaroonDir)
 	// Start the custody account service
-	custodyBtc.BtcSever.Start(ctx)
+	//custodyBtc.BtcSever.Start(ctx)
 	custodyBtc.InvoiceServer.Start(ctx)
 	custodyAssets.OutsideSever.Start(ctx)
 	custodyAssets.InSideSever.Start(ctx)
@@ -116,8 +117,14 @@ func PayAmountToAdmin(payUserId uint, gasFee uint64) (uint, error) {
 	return id, nil
 }
 
+// CheckPayInsideStatus
+// 检查内部转账任务状态是否成功
+func CheckPayInsideStatus(id uint) (bool, error) {
+	return custodyBtc.CheckFirLunchFee(id)
+}
+
 func BackAmount(payInsideId uint) (uint, error) {
-	missionId, err := CreateBackFeeMission(payInsideId)
+	missionId, err := back.CreateBackFeeMission(payInsideId)
 	if err != nil {
 		return 0, err
 	}
@@ -125,24 +132,7 @@ func BackAmount(payInsideId uint) (uint, error) {
 }
 
 func CheckBackFeeMission(missionId uint) bool {
-	return checkBackFeeMissionById(missionId)
-}
-
-// CheckPayInsideStatus
-// 检查内部转账任务状态是否成功
-func CheckPayInsideStatus(id uint) (bool, error) {
-	p, err := btldb.ReadPayInside(id)
-	if err != nil {
-		return false, err
-	}
-	switch p.Status {
-	case models.PayInsideStatusSuccess:
-		return true, nil
-	case models.PayInsideStatusFailed:
-		return false, models.CustodyAccountPayInsideMissionFaild
-	default:
-		return false, models.CustodyAccountPayInsideMissionPending
-	}
+	return back.CheckBackFeeMissionById(missionId)
 }
 
 // IsAccountBalanceEnoughByUserId

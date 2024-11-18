@@ -18,6 +18,7 @@ import (
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
 	"trade/services/custodyAccount/custodyBase/custodyLimit"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc/mempool"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -196,7 +197,8 @@ func (e *AssetEvent) payToInside(bt *AssetPacket) {
 			Type: models.BTExtLocal,
 		},
 	}
-	err = btldb.CreateBalance(&bill)
+	db := middleware.DB
+	err = btldb.CreateBalance(db, &bill)
 	if err != nil {
 		btlLog.CUST.Error("err:%v", models.ReadDbErr)
 	}
@@ -252,7 +254,7 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		Away:      models.AWAY_OUT,
 		Amount:    float64(bt.DecodePayReq.Amount),
 		Unit:      models.UNIT_ASSET_NORMAL,
-		ServerFee: uint64(custodyFee.GetCustodyAssetFee()),
+		ServerFee: uint64(mempool.GetCustodyAssetFee()),
 		AssetId:   &assetId,
 		Invoice:   &bt.PayReq,
 		State:     models.STATE_UNKNOW,
@@ -260,7 +262,8 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 			Type: models.BTExtOnChannel,
 		},
 	}
-	err := btldb.CreateBalance(&outsideBalance)
+	db := middleware.DB
+	err := btldb.CreateBalance(db, &outsideBalance)
 	if err != nil {
 		btlLog.CUST.Error("payToOutside db error:balance %v", err)
 	}
@@ -293,7 +296,7 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		TotalAmount: int64(bt.DecodePayReq.Amount),
 	}
 	//收取手续费
-	err = custodyFee.PayServiceFeeSync(e.UserInfo, uint64(custodyFee.GetCustodyAssetFee()), outsideBalance.ID, models.AssetOutSideFee, "payToOutside Asset Fee")
+	err = custodyFee.PayServiceFeeSync(e.UserInfo, uint64(mempool.GetCustodyAssetFee()), outsideBalance.ID, models.AssetOutSideFee, "payToOutside Asset Fee")
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		bt.err <- err

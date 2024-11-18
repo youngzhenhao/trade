@@ -4,52 +4,38 @@ import (
 	"errors"
 	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
-	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
 	cModels "trade/models/custodyModels"
 	caccount "trade/services/custodyAccount/account"
-	"trade/services/custodyAccount/custodyBase/custodyRpc"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 )
 
 func GetBtcBalance(usr *caccount.UserInfo) (err error, unlock float64, locked float64) {
-	tx := middleware.DB.Begin()
-	defer tx.Rollback()
+	db := middleware.DB
 	lockedBalance := cModels.LockBalance{}
-	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, btcId).First(&lockedBalance).Error; err != nil {
+	if err = db.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, btcId).First(&lockedBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			tx.Rollback()
 			return ServiceError, 0, 0
 		}
 		locked = 0
 	}
 	locked = lockedBalance.Amount
-
-	acc, err := custodyRpc.GetAccountInfo(usr)
+	e, _ := custodyBtc.NewBtcChannelEvent(usr.User.Username)
+	balance, err := e.GetBalance()
 	if err != nil {
-		btlLog.CUST.Error("GetBtcBalance rpc.AccountInfo error", err)
-		return ServiceError, 0, 0
+		return err, 0, 0
 	}
-	unlock = float64(acc.CurrentBalance)
-	tx.Commit()
+	unlock = float64(balance[0].Amount)
 	return
 }
 
 // LockBTC 冻结BTC
 func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
-	tx := middleware.DB.Begin()
-	defer tx.Rollback()
+	tx, back := middleware.GetTx()
+	defer back()
+
 	var err error
-	// check balance
-	acc, err := custodyRpc.GetAccountInfo(usr)
-	if err != nil {
-		btlLog.CUST.Error("LockBTC rpc.AccountInfo error", err)
-		return ServiceError
-	}
-	if float64(acc.CurrentBalance) < amount {
-		tx.Rollback()
-		return NoEnoughBalance
-	}
 	// lock btc
 	lockedBalance := cModels.LockBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, btcId).First(&lockedBalance).Error; err != nil {
@@ -64,7 +50,6 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 	}
 	lockedBalance.Amount += amount
 	if err = tx.Save(&lockedBalance).Error; err != nil {
-		tx.Rollback()
 		return ServiceError
 	}
 
@@ -77,7 +62,6 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 		BillType:  cModels.LockBillTypeLock,
 	}
 	if err = tx.Create(&lockBill).Error; err != nil {
-		tx.Rollback()
 		var mySQLErr *mysql.MySQLError
 		if errors.As(err, &mySQLErr) {
 			if mySQLErr.Number == 1062 {
@@ -106,23 +90,22 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 		},
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
-		tx.Rollback()
 		return ServiceError
 	}
-	// update user account
-	_, err = custodyRpc.UpdateBalance(usr, custodyRpc.UpdateBalanceMinus, int64(amount))
+
+	_, err = custodyBtc.LessBtcBalance(tx, usr, amount, balanceBill.ID, cModels.ChangeTypeLock)
 	if err != nil {
-		btlLog.CUST.Error("LockBTC rpc.AccountUpdate error", err)
-		return ServiceError
+		return err
 	}
+
 	tx.Commit()
 	return nil
 }
 
 // UnlockBTC 解冻BTC
 func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
-	tx := middleware.DB.Begin()
-	defer tx.Rollback()
+	tx, back := middleware.GetTx()
+	defer back()
 	var err error
 
 	// check locked balance
@@ -135,14 +118,12 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 		lockedBalance.Amount = 0
 	}
 	if lockedBalance.Amount < amount {
-		tx.Rollback()
 		return NoEnoughBalance
 	}
 
 	// update locked balance
 	lockedBalance.Amount -= amount
 	if err = tx.Save(&lockedBalance).Error; err != nil {
-		tx.Rollback()
 		return ServiceError
 	}
 
@@ -155,7 +136,6 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 		BillType:  cModels.LockBillTypeUnlock,
 	}
 	if err = tx.Create(&unlockBill).Error; err != nil {
-		tx.Rollback()
 		var mySQLErr *mysql.MySQLError
 		if errors.As(err, &mySQLErr) {
 			if mySQLErr.Number == 1062 {
@@ -185,15 +165,12 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 		},
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
-		tx.Rollback()
 		return ServiceError
 	}
 
-	// update user account
-	_, err = custodyRpc.UpdateBalance(usr, custodyRpc.UpdateBalancePlus, int64(amount))
+	_, err = custodyBtc.AddBtcBalance(tx, usr, amount, balanceBill.ID, cModels.ChangeTypeUnlock)
 	if err != nil {
-		btlLog.CUST.Error("UnlockBTC rpc.AccountUpdate error", err)
-		return ServiceError
+		return err
 	}
 	tx.Commit()
 	return nil
@@ -201,8 +178,8 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 
 // transferLockedBTC 转账冻结的BTC
 func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser *caccount.UserInfo) error {
-	tx := middleware.DB.Begin()
-	defer tx.Commit()
+	tx, back := middleware.GetTx()
+	defer back()
 	BtcId := btcId
 
 	var err error
@@ -217,14 +194,12 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 		lockedBalance.Amount = 0
 	}
 	if lockedBalance.Amount < amount {
-		tx.Rollback()
 		return NoEnoughBalance
 	}
 
 	// update locked balance
 	lockedBalance.Amount -= amount
 	if err = tx.Save(&lockedBalance).Error; err != nil {
-		tx.Rollback()
 		return ServiceError
 	}
 
@@ -237,7 +212,6 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 		BillType:  cModels.LockBillTypeTransferByLockAsset,
 	}
 	if err = tx.Create(&transferBill).Error; err != nil {
-		tx.Rollback()
 		var mySQLErr *mysql.MySQLError
 		if errors.As(err, &mySQLErr) {
 			if mySQLErr.Number == 1062 {
@@ -259,7 +233,6 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 		Status:     cModels.LockBillExtStatusSuccess,
 	}
 	if err = tx.Create(&BillExt).Error; err != nil {
-		tx.Rollback()
 		var mySQLErr *mysql.MySQLError
 		if errors.As(err, &mySQLErr) {
 			if mySQLErr.Number == 1062 {
@@ -291,16 +264,14 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 		},
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
-		tx.Rollback()
 		return ServiceError
 	}
 
-	// update user account
-	_, err = custodyRpc.UpdateBalance(toUser, custodyRpc.UpdateBalancePlus, int64(amount))
+	_, err = custodyBtc.AddBtcBalance(tx, usr, amount, balanceBill.ID, cModels.ChangeTypeLockedTransfer)
 	if err != nil {
-		btlLog.CUST.Error("transferLockedBTC rpc.AccountUpdate error", err)
 		return ServiceError
 	}
+	tx.Commit()
 
 	return nil
 }
@@ -308,22 +279,10 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 // transferBTC 转账非冻结的BTC
 func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser *caccount.UserInfo) error {
 	BtcId := btcId
-	tx := middleware.DB.Begin()
+	tx, back := middleware.GetTx()
+	defer back()
 
 	var err error
-
-	// check balance
-	acc, err := custodyRpc.GetAccountInfo(usr)
-	if err != nil {
-		btlLog.CUST.Error("transferBTC rpc.AccountInfo error", err)
-		tx.Rollback()
-		return ServiceError
-	}
-	if float64(acc.CurrentBalance) < amount {
-		tx.Rollback()
-		return NoEnoughBalance
-	}
-
 	// Create transferBTC Bill
 	transferBill := cModels.LockBill{
 		AccountID: usr.LockAccount.ID,
@@ -333,7 +292,6 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 		BillType:  cModels.LockBillTypeTransferByUnlockAsset,
 	}
 	if err = tx.Create(&transferBill).Error; err != nil {
-		tx.Rollback()
 		var mySQLErr *mysql.MySQLError
 		if errors.As(err, &mySQLErr) {
 			if mySQLErr.Number == 1062 {
@@ -354,7 +312,6 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 		Status:     cModels.LockBillExtStatusInit,
 	}
 	if err = tx.Create(&BillExt).Error; err != nil {
-		tx.Rollback()
 		return ServiceError
 	}
 
@@ -380,19 +337,12 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 		},
 	}
 	if err = tx.Create(&balanceBill).Error; err != nil {
-		tx.Rollback()
 		return ServiceError
 	}
-	// update user account
-	_, err = custodyRpc.UpdateBalance(usr, custodyRpc.UpdateBalanceMinus, int64(amount))
+	_, err = custodyBtc.LessBtcBalance(tx, usr, amount, balanceBill.ID, cModels.ChangeTypeLock)
 	if err != nil {
-		btlLog.CUST.Error("transferBTC rpc.AccountUpdate error", err)
-		return ServiceError
+		return err
 	}
-	tx.Commit()
-
-	//Second tx
-	txRev := middleware.DB.Begin()
 
 	recInvoice := InvoicePendingOderReceive
 	if usr.User.Username == FeeNpubkey {
@@ -415,23 +365,20 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 			Type: models.BTExtLockedTransfer,
 		},
 	}
-	if err = txRev.Create(&balanceBillRev).Error; err != nil {
-		txRev.Rollback()
+	if err = tx.Create(&balanceBillRev).Error; err != nil {
 		return ServiceError
 	}
 	// update billExt record
 	BillExt.Status = cModels.LockBillExtStatusSuccess
-	if err = txRev.Save(&BillExt).Error; err != nil {
-		txRev.Rollback()
+	if err = tx.Save(&BillExt).Error; err != nil {
 		return ServiceError
 	}
 
-	// update user account
-	_, err = custodyRpc.UpdateBalance(toUser, custodyRpc.UpdateBalancePlus, int64(amount))
+	_, err = custodyBtc.AddBtcBalance(tx, usr, amount, balanceBillRev.ID, cModels.ChangeTypeLockedTransfer)
 	if err != nil {
-		btlLog.CUST.Error("transferBTC rpc.AccountUpdate error", err)
 		return ServiceError
 	}
-	txRev.Commit()
+
+	tx.Commit()
 	return nil
 }

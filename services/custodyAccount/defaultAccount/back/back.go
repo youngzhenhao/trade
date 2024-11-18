@@ -1,13 +1,14 @@
-package custodyAccount
+package back
 
 import (
 	"sync"
 	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
-	"trade/services/custodyAccount/custodyBase/custodyRpc"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 )
 
 // CreateBackFeeMission 创建退费任务
@@ -60,25 +61,14 @@ func PollBackFeeMission() {
 }
 func updateAccount(usr *caccount.UserInfo, balance uint64) (uint, error) {
 	var err error
-	//var amount int64
-	//amount = acc.CurrentBalance + int64(balance)
-	//// Change the escrow account balance
-	//_, err = rpc.AccountUpdate(account.UserAccountCode, amount, -1)
-
-	//ues rpcMuX UpdateBalance
-	_, err = custodyRpc.UpdateBalance(usr, custodyRpc.UpdateBalancePlus, int64(balance))
-	// Build a database storage object
+	//build balance
 	ba := models.Balance{}
 	ba.AccountId = usr.Account.ID
 	ba.Amount = float64(balance)
 	ba.Unit = models.UNIT_SATOSHIS
 	ba.BillType = models.BillTypePayment
 	ba.Away = models.AWAY_IN
-	if err != nil {
-		ba.State = models.STATE_FAILED
-	} else {
-		ba.State = models.STATE_SUCCESS
-	}
+	ba.State = models.STATE_SUCCESS
 	invoice := "backFee"
 	//paymentHash := ""
 	ba.ServerFee = 0
@@ -87,12 +77,21 @@ func updateAccount(usr *caccount.UserInfo, balance uint64) (uint, error) {
 	ba.TypeExt = &models.BalanceTypeExt{
 		Type: models.BTExtBackFee,
 	}
+	tx, back := middleware.GetTx()
+	defer back()
 	// Update the database
-	dbErr := btldb.CreateBalance(&ba)
-	if dbErr != nil {
-		btlLog.CUST.Error(dbErr.Error())
+	err = btldb.CreateBalance(tx, &ba)
+	if err != nil {
+		btlLog.CUST.Error(err.Error())
 		return 0, nil
 	}
+	// Update the account
+	_, err = custodyBtc.AddBtcBalance(tx, usr, float64(balance), ba.ID, custodyModels.ChangeTypeBackFee)
+	if err != nil {
+		return 0, err
+	}
+	tx.Commit()
+
 	return ba.ID, nil
 }
 
@@ -124,7 +123,7 @@ const getBackFeeSql = `
 `
 
 // checkBackFeeMissionById 检查退费任务状态是否成功
-func checkBackFeeMissionById(BackFeeId uint) bool {
+func CheckBackFeeMissionById(BackFeeId uint) bool {
 	var BackFee models.BackFee
 	err := middleware.DB.Where("id = ?", BackFeeId).First(&BackFee).Error
 	if err != nil {

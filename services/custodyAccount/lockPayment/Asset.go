@@ -25,7 +25,7 @@ func GetAssetBalance(usr *caccount.UserInfo, assetId string) (err error, unlock 
 	}
 	locked = lockedBalance.Amount
 
-	assetBalance := models.AccountBalance{}
+	assetBalance := cModels.AccountBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.Account.ID, assetId).First(&assetBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
@@ -47,7 +47,7 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 	defer tx.Rollback()
 	var err error
 	// check balance
-	assetBalance := models.AccountBalance{}
+	assetBalance := cModels.AccountBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.Account.ID, assetId).First(&assetBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
@@ -194,7 +194,7 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 		return ServiceError
 	}
 	// update user account
-	assetBalance := models.AccountBalance{}
+	assetBalance := cModels.AccountBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.Account.ID, assetId).First(&assetBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
@@ -301,7 +301,7 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 	}
 
 	// update user account
-	assetBalance := models.AccountBalance{}
+	assetBalance := cModels.AccountBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", toUser.Account.ID, assetId).First(&assetBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
@@ -326,7 +326,7 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 
 	var err error
 	// check balance
-	assetBalance := models.AccountBalance{}
+	assetBalance := cModels.AccountBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.Account.ID, assetId).First(&assetBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			tx.Rollback()
@@ -447,7 +447,7 @@ func transferAsset(usr *caccount.UserInfo, lockedId string, assetId string, amou
 	}
 
 	// update user account
-	assetBalanceRev := models.AccountBalance{}
+	assetBalanceRev := cModels.AccountBalance{}
 	if err = txRev.Where("account_id =? AND asset_id =?", toUser.Account.ID, assetId).First(&assetBalanceRev).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			txRev.Rollback()

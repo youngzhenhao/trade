@@ -4,12 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/lightningnetwork/lnd/lnrpc"
 	"gorm.io/gorm"
-	"path/filepath"
 	"time"
 	"trade/btlLog"
-	"trade/config"
 	"trade/middleware"
 	"trade/models"
 	"trade/models/custodyModels"
@@ -17,8 +14,6 @@ import (
 	caccount "trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
-	"trade/services/custodyAccount/custodyBase/custodyLimit"
-	"trade/services/custodyAccount/custodyBase/custodyRpc"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -65,14 +60,12 @@ func NewBtcChannelEventByUserId(UserId uint) (*BtcChannelEvent, error) {
 //获取余额
 
 func (e *BtcChannelEvent) GetBalance() ([]cBase.Balance, error) {
-	acc, err := custodyRpc.GetAccountInfo(e.UserInfo)
-	if err != nil {
-		return nil, err
-	}
+	DB := middleware.DB
+	balance := getBtcBalance(DB, e.UserInfo.Account.ID)
 	balances := []cBase.Balance{
 		{
 			AssetId: "00",
-			Amount:  acc.CurrentBalance,
+			Amount:  int64(balance),
 		},
 	}
 	return balances, nil
@@ -88,24 +81,13 @@ func (e *BtcChannelEvent) ApplyPayReq(Request cBase.PayReqApplyRequest) (cBase.P
 	if applyRequest, ok = Request.(*BtcApplyInvoiceRequest); !ok {
 		return nil, errors.New("invalid apply request")
 	}
-	//获取马卡龙路径
-	var macaroonFile string
-	macaroonDir := config.GetConfig().ApiConfig.CustodyAccount.MacaroonDir
-	if e.UserInfo.Account.UserAccountCode == "admin" {
-		macaroonFile = config.GetConfig().ApiConfig.Lnd.MacaroonPath
-	} else {
-		macaroonFile = filepath.Join(macaroonDir, e.UserInfo.Account.UserAccountCode+".macaroon")
-	}
-	if macaroonFile == "" {
-		btlLog.CUST.Error(caccount.MacaroonFindErr.Error())
-		return nil, caccount.MacaroonFindErr
-	}
 	//调用Lit节点发票申请接口
-	invoice, err := rpc.InvoiceCreate(applyRequest.Amount, applyRequest.Memo, macaroonFile)
+	invoice, err := rpc.InvoiceCreate(applyRequest.Amount, applyRequest.Memo)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return nil, fmt.Errorf("%w: %s", CreateInvoiceErr, err.Error())
 	}
+	//TODO:取消Find接口
 	//获取发票信息
 	info, _ := rpc.InvoiceFind(invoice.RHash)
 
@@ -199,46 +181,27 @@ func (e *BtcChannelEvent) SendPayment(payRequest cBase.PayPacket) error {
 }
 
 func (e *BtcChannelEvent) payToInside(bt *BtcPacket) {
-	//创建内部转账任务
-	payInside := models.PayInside{
-		PayUserId:     e.UserInfo.User.ID,
-		GasFee:        uint64(bt.DecodePayReq.NumSatoshis),
-		ServeFee:      0,
-		ReceiveUserId: bt.isInsideMission.insideInvoice.UserID,
-		PayType:       models.PayInsideByInvoice,
-		AssetType:     "00",
-		PayReq:        &bt.PayReq,
-		Status:        models.PayInsideStatusPending,
+	m := custodyModels.AccountInsideMission{
+		AccountId:  e.UserInfo.Account.ID,
+		AssetId:    BtcId,
+		Type:       custodyModels.AIMTypeBtc,
+		ReceiverId: *bt.isInsideMission.insideInvoice.AccountID,
+		InvoiceId:  bt.isInsideMission.insideInvoice.ID,
+		Amount:     float64(bt.DecodePayReq.NumSatoshis),
+		Fee:        float64(custodyFee.ChannelBtcInsideServiceFee),
+		FeeType:    BtcId,
+		State:      custodyModels.AIMStatePending,
 	}
-	//写入数据库
-	err := btldb.CreatePayInside(&payInside)
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
-		bt.err <- err
-		return
-	}
-	//递交给内部转账服务
-	bt.isInsideMission.insideMission = &payInside
-	bt.isInsideMission.err = bt.err
-	BtcSever.NewMission(bt.isInsideMission)
+	LogAIM(middleware.DB, &m)
+	err := RunInsideStep(e.UserInfo, &m)
+	bt.err <- err
 }
 
 func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
-	var macaroonFile string
-	macaroonDir := config.GetConfig().ApiConfig.CustodyAccount.MacaroonDir
+	tx, back := middleware.GetTx()
+	defer back()
 
-	if e.UserInfo.Account.UserAccountCode == "admin" {
-		macaroonFile = config.GetConfig().ApiConfig.Lnd.MacaroonPath
-	} else {
-		macaroonFile = filepath.Join(macaroonDir, e.UserInfo.Account.UserAccountCode+".macaroon")
-	}
-	if macaroonFile == "" {
-		btlLog.CUST.Error("macaroon file not found")
-		bt.err <- fmt.Errorf("account is abnormal")
-		return
-	}
 	var balanceModel models.Balance
-	balanceModel.State = models.STATE_UNKNOW
 	balanceModel.AccountId = e.UserInfo.Account.ID
 	balanceModel.BillType = models.BillTypePayment
 	balanceModel.Away = models.AWAY_OUT
@@ -248,59 +211,29 @@ func (e *BtcChannelEvent) payToOutside(bt *BtcPacket) {
 	balanceModel.PaymentHash = &bt.DecodePayReq.PaymentHash
 	balanceModel.State = models.STATE_UNKNOW
 	balanceModel.TypeExt = &models.BalanceTypeExt{Type: models.BTExtOnChannel}
-	err := btldb.CreateBalance(&balanceModel)
+	err := btldb.CreateBalance(tx, &balanceModel)
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 	}
 
-	payment, err := custodyRpc.PayBtcInvoice(e.UserInfo, macaroonFile, bt.PayReq, bt.DecodePayReq.NumSatoshis, bt.FeeLimit)
-	if err != nil {
-		btlLog.CUST.Error("pay invoice fail %s", err.Error())
+	outsideMission := custodyModels.AccountOutsideMission{
+		AccountId: e.UserInfo.Account.ID,
+		AssetId:   "00",
+		Type:      custodyModels.AOMTypeBtc,
+		Target:    bt.PayReq,
+		Hash:      bt.DecodePayReq.PaymentHash,
+		Amount:    float64(bt.DecodePayReq.NumSatoshis),
+		FeeLimit:  float64(bt.FeeLimit),
+		BalanceId: balanceModel.ID,
+		State:     custodyModels.AOMStatePending,
+	}
+	LogAOM(tx, &outsideMission)
+	if err = tx.Commit().Error; err != nil {
 		bt.err <- err
 		return
 	}
-	track, err := rpc.PaymentTrack(payment.PaymentHash)
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
-		bt.err <- fmt.Errorf("payment outside unknown,Please contact the administrator")
-		return
-	}
-	switch track.Status {
-	case lnrpc.Payment_SUCCEEDED:
-		err = custodyFee.PayServiceFeeSync(e.UserInfo, custodyFee.ChannelBtcServiceFee, balanceModel.ID, models.ChannelBTCOutSideFee, "payToOutside Fee")
-		if err != nil {
-			btlLog.CUST.Error(err.Error())
-		}
-		balanceModel.ServerFee = custodyFee.ChannelBtcServiceFee + uint64(track.FeeSat)
-		balanceModel.State = models.STATE_SUCCESS
-		bt.err <- nil
-
-		limitType := custodyModels.LimitType{
-			AssetId:      "00",
-			TransferType: custodyModels.LimitTransferTypeOutside,
-		}
-		err = custodyLimit.MinusLimit(middleware.DB, e.UserInfo, &limitType, balanceModel.Amount+float64(balanceModel.ServerFee))
-		if err != nil {
-			btlLog.CUST.Error("额度限制未正常更新:%s", err.Error())
-			btlLog.CUST.Error("error balanceId:%v", balanceModel.ID)
-			return
-		}
-		btlLog.CUST.Info("payment outside success balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
-	case lnrpc.Payment_FAILED:
-		btlLog.CUST.Error("payment outside failed balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
-		btlLog.CUST.Error(track.FailureReason.String())
-		bt.err <- fmt.Errorf(track.FailureReason.String())
-		balanceModel.State = models.STATE_FAILED
-	default:
-		btlLog.CUST.Error("payment outside unknown balanceId:%v,amount:%v,%v", balanceModel.ID, balanceModel.Amount)
-		balanceModel.State = models.STATE_UNKNOW
-		bt.err <- fmt.Errorf("payment outside unknown,Please contact the administrator")
-		return
-	}
-	err = btldb.UpdateBalance(&balanceModel)
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
-	}
+	err = RunOutsideSteps(e.UserInfo, &outsideMission)
+	bt.err <- err
 }
 
 func (e *BtcChannelEvent) GetTransactionHistory(query *cBase.PaymentRequest) (*cBase.PaymentList, error) {

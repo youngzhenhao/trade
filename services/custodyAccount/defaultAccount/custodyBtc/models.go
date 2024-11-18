@@ -11,10 +11,8 @@ import (
 	"trade/models/custodyModels"
 	"trade/services/btldb"
 	caccount "trade/services/custodyAccount/account"
-	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
 	"trade/services/custodyAccount/custodyBase/custodyLimit"
-	"trade/services/custodyAccount/custodyBase/custodyRpc"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -97,17 +95,9 @@ func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 	if err != nil {
 		return err
 	}
-
-	//验证金额
-	usableBalance, err := custodyRpc.GetAccountInfo(userinfo)
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
-		return cBase.GetbalanceErr
-	}
-	if usableBalance.CurrentBalance < endAmount {
+	if !CheckBtcBalance(middleware.DB, userinfo, float64(endAmount)) {
 		return NotSufficientFunds
 	}
-
 	return nil
 }
 
@@ -115,7 +105,6 @@ func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 type isInsideMission struct {
 	isInside      bool
 	insideInvoice *models.Invoice
-	insideMission *models.PayInside
 	err           chan error
 }
 type InvoiceResponce struct {

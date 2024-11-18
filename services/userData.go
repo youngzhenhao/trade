@@ -20,8 +20,8 @@ func ReadLockBalanceByAccountId(accountId int) (*[]custodyModels.LockBalance, er
 	return &lockBalances, err
 }
 
-func ReadAccountBalanceByAccountId(accountId int) (*[]models.AccountBalance, error) {
-	var accountBalances []models.AccountBalance
+func ReadAccountBalanceByAccountId(accountId int) (*[]custodyModels.AccountBalance, error) {
+	var accountBalances []custodyModels.AccountBalance
 	err := middleware.DB.Where("account_id = ?", accountId).Find(&accountBalances).Error
 	return &accountBalances, err
 }
@@ -179,7 +179,7 @@ func GetUserAccountAssetBalanceData(accountId int) (*[]models.UserAccountAssetBa
 	var userAccountAssetBalanceDatas []models.UserAccountAssetBalanceData
 	if err != nil {
 		btlLog.UserData.Error("ReadLockBalanceByAccountId err:%v", err)
-		accountBalances = &[]models.AccountBalance{}
+		accountBalances = &[]custodyModels.AccountBalance{}
 	}
 	for _, accountBalance := range *accountBalances {
 		userAccountAssetBalanceDatas = append(userAccountAssetBalanceDatas, models.UserAccountAssetBalanceData{

@@ -16,6 +16,7 @@ import (
 	"trade/services/custodyAccount/custodyBase/custodyFee"
 	"trade/services/custodyAccount/custodyBase/custodyLimit"
 	"trade/services/custodyAccount/custodyBase/custodyRpc"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc/mempool"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -50,7 +51,7 @@ type AssetPacket struct {
 }
 
 func (p *AssetPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
-	ServerFee := uint64(custodyFee.GetCustodyAssetFee())
+	ServerFee := uint64(mempool.GetCustodyAssetFee())
 	//验证是否为本地发票
 	i, err := btldb.GetInvoiceByReq(p.PayReq)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {

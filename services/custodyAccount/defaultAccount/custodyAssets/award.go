@@ -9,6 +9,7 @@ import (
 	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 )
 
 var (
@@ -56,14 +57,14 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 	}
 
 	// Update the account balance
-	var receiveBalance models.AccountBalance
+	var receiveBalance custodyModels.AccountBalance
 	err = tx.Where("account_Id =? and asset_Id =?", account.ID, AssetId).First(&receiveBalance).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		btlLog.CUST.Error("err:%v", err)
 		return nil, ServerBusy
 	}
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		r := models.AccountBalance{
+		r := custodyModels.AccountBalance{
 			AccountID: account.ID,
 			AssetId:   AssetId,
 			Amount:    float64(amount),

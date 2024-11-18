@@ -11,7 +11,7 @@ import (
 	"trade/config"
 	"trade/middleware"
 	"trade/models"
-	"trade/services/custodyAccount"
+	"trade/services/custodyAccount/defaultAccount/back"
 	"trade/utils"
 )
 
@@ -215,7 +215,7 @@ func CreateCustodyAccountProcessions() (err error) {
 }
 
 func (cs *CronService) PollBackFeeMission() {
-	custodyAccount.PollBackFeeMission()
+	back.PollBackFeeMission()
 }
 
 func CreateSnapshotProcessions() (err error) {

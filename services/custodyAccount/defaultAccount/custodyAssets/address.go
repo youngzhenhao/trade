@@ -11,6 +11,7 @@ import (
 	"trade/config"
 	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 	"trade/services/btldb"
 	"trade/utils"
 )
@@ -124,7 +125,7 @@ func dealEvent(tx *gorm.DB, event *taprpc.ReceiveEvent) error {
 			btlLog.CUST.Error("err:%v", models.ReadDbErr)
 		}
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			newBalance := models.AccountBalance{
+			newBalance := custodyModels.AccountBalance{
 				AccountID: *i.AccountID,
 				AssetId:   i.AssetId,
 				Amount:    r.Amount,

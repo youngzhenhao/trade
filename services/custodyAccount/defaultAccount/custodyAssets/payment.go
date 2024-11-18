@@ -8,7 +8,9 @@ import (
 	"gorm.io/gorm"
 	"time"
 	"trade/btlLog"
+	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 	"trade/services/btldb"
 	rpc "trade/services/servicesrpc"
 )
@@ -130,7 +132,8 @@ func (s *AssetOutsideSever) payToOutside(mission *OutsideMission) error {
 		}
 		balance.State = models.STATE_SUCCESS
 		balance.PaymentHash = &txId
-		err = btldb.UpdateBalance(balance)
+		db := middleware.DB
+		err = btldb.UpdateBalance(db, balance)
 		if err != nil {
 			btlLog.CUST.Error("payToOutside db error")
 		}
@@ -253,7 +256,7 @@ func (s *AssetInSideSever) payToInside(mission *isInsideMission) error {
 			return models.ReadDbErr
 		}
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			receiveBalance = &models.AccountBalance{
+			receiveBalance = &custodyModels.AccountBalance{
 				AccountID: receiveAcc.ID,
 				AssetId:   mission.insideMission.AssetType,
 				Amount:    float64(mission.insideMission.GasFee),
@@ -280,7 +283,8 @@ func (s *AssetInSideSever) payToInside(mission *isInsideMission) error {
 				Type: models.BTExtLocal,
 			},
 		}
-		err = btldb.CreateBalance(&bill)
+		db := middleware.DB
+		err = btldb.CreateBalance(db, &bill)
 		if err != nil {
 			return models.ReadDbErr
 		}
