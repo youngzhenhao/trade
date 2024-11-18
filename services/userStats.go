@@ -456,7 +456,13 @@ func GetNewUserCount(start string, end string) (int64, error) {
 		return 0, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
 	}
 	var count int64
-	err := middleware.DB.Model(&models.User{}).
+	_end, err := time.Parse(time.DateOnly, end)
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "time.Parse("+end+")")
+	}
+	_end = _end.Add(time.Hour * 24)
+	end = _end.Format(time.DateOnly)
+	err = middleware.DB.Model(&models.User{}).
 		Where("created_at between ? and ?", start, end).
 		Count(&count).Error
 	if err != nil {
