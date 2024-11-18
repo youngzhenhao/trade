@@ -651,7 +651,7 @@ func IsLimitAndOffsetValid(assetId string, limit int, offset int) (bool, error) 
 	if recordsNum == 0 && offset == 0 {
 		return true, nil
 	}
-	return recordsNum > offset, nil
+	return recordsNum > int64(offset), nil
 }
 
 type GetAssetHolderBalancePageNumberRequest struct {
