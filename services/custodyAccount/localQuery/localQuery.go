@@ -344,6 +344,7 @@ type LockedBillsQueryQuest struct {
 	TimeStart string   `json:"timeStart"`
 	TimeEnd   string   `json:"timeEnd"`
 	Tags      []string `json:"tags"`
+	AwardType string   `json:"awardType"`
 	Page      int      `json:"page"`
 	PageSize  int      `json:"pageSize"`
 }
@@ -396,21 +397,34 @@ func LockedBillsQuery(quest LockedBillsQueryQuest) (*[]LockedBillsQueryResp, int
 		}
 		q = q.Where("(" + strings.Join(tagConditions, " OR ") + ")")
 	}
+	if quest.AwardType != "" {
+		q = q.Where("user_account_award.memo = ?", quest.AwardType)
+	}
+
 	q = q.Table("user_lock_bill").
-		Joins("LEFT JOIN user_lock_account ON user_lock_account.id = user_lock_bill.account_id")
+		Joins("LEFT JOIN user_lock_account ON user_lock_account.id = user_lock_bill.account_id").
+		Joins("left join (    select *    from user_account_award_ext    where account_type = 1) t on user_lock_bill.id = t.balance_id").
+		Joins("left join user_account_award  on user_account_award.id = t.award_id")
 	var total int64
 	q.Count(&total)
 	var result []struct {
 		custodyModels.LockBill
 		custodyModels.LockAccount
+		models.AccountAward
 	}
 	q = q.Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize).
-		Select("user_lock_bill.*,user_lock_account.user_name").
+		Select("user_lock_bill.*,user_lock_account.user_name,user_account_award.memo").
 		Order("user_lock_bill.created_at DESC").
 		Scan(&result)
 	var LockedBillsQueryRespList []LockedBillsQueryResp
 	if len(result) > 0 {
 		for _, bill := range result {
+			var t string
+			if bill.LockBill.BillType == custodyModels.LockBillTypeAward {
+				t = *bill.Memo
+			} else {
+				t = bill.LockBill.BillType.String()
+			}
 			LockedBillsQueryRespList = append(LockedBillsQueryRespList, LockedBillsQueryResp{
 				ID:       bill.LockBill.ID,
 				UserName: bill.LockAccount.UserName,
@@ -418,7 +432,7 @@ func LockedBillsQuery(quest LockedBillsQueryQuest) (*[]LockedBillsQueryResp, int
 				AssetId:  &bill.LockBill.AssetId,
 				LockedId: &bill.LockBill.LockId,
 				Time:     bill.LockBill.CreatedAt,
-				Type:     bill.LockBill.BillType.String(),
+				Type:     t,
 			})
 		}
 	}

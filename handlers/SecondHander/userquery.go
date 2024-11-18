@@ -3,6 +3,7 @@ package SecondHander
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 	"trade/btlLog"
 	"trade/services/custodyAccount/localQuery"
 )
@@ -33,19 +34,24 @@ func BlockUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: err.Error(), Data: nil})
 		return
 	}
-
-	if len(creds.Username) <= 5 {
-		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: "username is error", Data: nil})
-		return
-	}
 	if creds.Memo == "" {
 		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: "memo is error", Data: nil})
 		return
 	}
-
-	err := localQuery.BlockUser(creds.Username, creds.Memo)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+	var failUser []string
+	for _, u := range creds.Username {
+		if len(u) <= 5 {
+			failUser = append(failUser, u)
+			continue
+		}
+		err := localQuery.BlockUser(u, creds.Memo)
+		if err != nil {
+			failUser = append(failUser, u)
+			continue
+		}
+	}
+	if len(failUser) > 0 {
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: "block user fail: " + strings.Join(failUser, ","), Data: nil})
 		return
 	}
 	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: nil})
@@ -58,13 +64,20 @@ func UnBlockUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: err.Error(), Data: nil})
 		return
 	}
-	if len(creds.Username) <= 5 {
-		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: "username is error", Data: nil})
-		return
+	var failUser []string
+	for _, u := range creds.Username {
+		if len(u) <= 5 {
+			failUser = append(failUser, u)
+			return
+		}
+		err := localQuery.UnblockUser(u, creds.Memo)
+		if err != nil {
+			failUser = append(failUser, u)
+			return
+		}
 	}
-	err := localQuery.UnblockUser(creds.Username, creds.Memo)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+	if len(failUser) > 0 {
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: "Unblock user fail: " + strings.Join(failUser, ","), Data: nil})
 		return
 	}
 	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: nil})

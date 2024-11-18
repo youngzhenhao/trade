@@ -16,16 +16,16 @@ var (
 )
 
 type BlockUserReq struct {
-	Username string `json:"username"`
-	Memo     string `json:"memo"`
+	Username []string `json:"username"`
+	Memo     string   `json:"memo"`
 }
 
 func BlockUser(username, memo string) error {
 	tx, back := middleware.GetTx()
 	defer back()
 	var err error
-	user := models.User{Username: username}
-	if err = tx.Where(&user).First(&user).Error; err != nil {
+	var user models.User
+	if err = tx.Where("user_name =?", username).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return NotFoundUser
 		}
@@ -33,7 +33,7 @@ func BlockUser(username, memo string) error {
 	}
 	if user.Status != 0 {
 		// user is already blocked
-		return fmt.Errorf("user is already blocked")
+		return nil
 	}
 	user.Status = 1
 	if err = tx.Save(&user).Error; err != nil {
@@ -53,8 +53,8 @@ func BlockUser(username, memo string) error {
 }
 
 type UnblockUserReq struct {
-	Username string `json:"username"`
-	Memo     string `json:"memo"`
+	Username []string `json:"username"`
+	Memo     string   `json:"memo"`
 }
 
 func UnblockUser(username, memo string) error {
@@ -62,7 +62,7 @@ func UnblockUser(username, memo string) error {
 	defer back()
 	var err error
 	user := models.User{Username: username}
-	if err = tx.Where(&user).First(&user).Error; err != nil {
+	if err = tx.Where("user_name =?", username).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return NotFoundUser
 		}
@@ -70,7 +70,7 @@ func UnblockUser(username, memo string) error {
 	}
 	if user.Status == 0 {
 		// user is already blocked
-		return fmt.Errorf("user is already blocked")
+		return nil
 	}
 	user.Status = 0
 	if err = tx.Save(&user).Error; err != nil {
