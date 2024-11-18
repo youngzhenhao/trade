@@ -6,7 +6,7 @@ type AssetManagedUtxo struct {
 	gorm.Model
 	Op                          string `json:"op" gorm:"type:varchar(255)"`
 	OutPoint                    string `json:"out_point" gorm:"type:varchar(255)"`
-	Time                        int    `json:"time"`
+	Time                        int    `json:"time" gorm:"index"`
 	AmtSat                      int    `json:"amt_sat"`
 	InternalKey                 string `json:"internal_key" gorm:"type:varchar(255)"`
 	TaprootAssetRoot            string `json:"taproot_asset_root" gorm:"type:varchar(255)"`

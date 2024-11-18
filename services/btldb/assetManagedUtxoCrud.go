@@ -51,7 +51,7 @@ func ReadAssetManagedUtxosByAssetId(assetId string) (*[]models.AssetManagedUtxo,
 
 func ReadAssetManagedUtxosByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*[]models.AssetManagedUtxo, error) {
 	var assetManagedUtxos []models.AssetManagedUtxo
-	err := middleware.DB.Where("asset_genesis_asset_id = ?", assetId).Order("id desc").Limit(limit).Offset(offset).Find(&assetManagedUtxos).Error
+	err := middleware.DB.Where("asset_genesis_asset_id = ?", assetId).Order("time desc").Limit(limit).Offset(offset).Find(&assetManagedUtxos).Error
 	return &assetManagedUtxos, err
 }
 
