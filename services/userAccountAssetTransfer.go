@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 	"strings"
+	"trade/middleware"
 	"trade/models"
 )
 
@@ -127,15 +128,17 @@ type GetAccountAssetTransferPageNumberByPageSizeRequest struct {
 	PageSize int    `json:"page_size"`
 }
 
-func GetAccountAssetTransferLength(assetId string) (int, error) {
-	response, err := GetAllAccountAssetTransfersByBillBalanceAssetTransferAndAwardAsset(assetId)
+func GetAccountAssetTransferLength(assetId string) (int64, error) {
+	var count int64
+	// Query bill balance
+	err := middleware.DB.
+		Model(&models.Balance{}).
+		Where("amount <> ? AND bill_type IN ? AND asset_id = ?", 0, []models.BalanceType{models.BillTypeAssetTransfer, models.BillTypeAwardAsset}, assetId).
+		Count(&count).Error
 	if err != nil {
 		return 0, err
 	}
-	if response == nil || len(*(response)) == 0 {
-		return 0, nil
-	}
-	return len(*response), nil
+	return count, nil
 }
 
 func GetAccountAssetTransferPageNumberByPageSize(assetId string, pageSize int) (int, error) {

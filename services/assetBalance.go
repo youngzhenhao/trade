@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 	"time"
+	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
 )
@@ -625,15 +626,16 @@ func GetAssetBalanceByAssetIdNonZero(assetId string) (*[]models.AssetBalance, er
 
 // GetAssetBalanceByAssetIdNonZeroLength
 // @Description: Get asset balance by asset id non-zero length
-func GetAssetBalanceByAssetIdNonZeroLength(assetId string) (int, error) {
-	response, err := GetAssetBalanceByAssetIdNonZero(assetId)
+func GetAssetBalanceByAssetIdNonZeroLength(assetId string) (int64, error) {
+	var count int64
+	err := middleware.DB.
+		Model(&models.AssetBalance{}).
+		Where("asset_id = ? AND balance <> ?", assetId, 0).
+		Count(&count).Error
 	if err != nil {
 		return 0, err
 	}
-	if response == nil || len(*(response)) == 0 {
-		return 0, nil
-	}
-	return len(*response), nil
+	return count, nil
 }
 
 // IsLimitAndOffsetValid

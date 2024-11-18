@@ -130,15 +130,16 @@ func GetAccountAssetBalanceExtendsLimitAndOffset(assetId string, limit int, offs
 	return &accountAssetBalanceExtends, nil
 }
 
-func GetAccountAssetBalanceLength(assetId string) (int, error) {
-	response, err := GetAllAccountAssetBalancesByAssetId(assetId)
+func GetAccountAssetBalanceLength(assetId string) (int64, error) {
+	var count int64
+	err := middleware.DB.
+		Model(&models.AccountBalance{}).
+		Where("amount <> ? AND asset_id = ?", 0, assetId).
+		Count(&count).Error
 	if err != nil {
-		return 0, utils.AppendErrorInfo(err, "GetAllAccountAssetBalancesByAssetId")
+		return 0, err
 	}
-	if response == nil || len(*(response)) == 0 {
-		return 0, nil
-	}
-	return len(*response), nil
+	return count, nil
 }
 
 func GetAccountAssetBalancePageNumberByPageSize(assetId string, pageSize int) (int, error) {

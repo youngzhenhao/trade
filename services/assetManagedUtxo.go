@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 	"time"
+	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
 )
@@ -423,13 +424,14 @@ func GetAllAssetManagedUtxosByAssetId(assetId string) (*[]models.AssetManagedUtx
 	return btldb.ReadAssetManagedUtxosByAssetId(assetId)
 }
 
-func GetAssetManagedUtxoLength(assetId string) (int, error) {
-	response, err := GetAllAssetManagedUtxosByAssetId(assetId)
+func GetAssetManagedUtxoLength(assetId string) (int64, error) {
+	var count int64
+	err := middleware.DB.
+		Model(&models.AssetManagedUtxo{}).
+		Where("asset_genesis_asset_id = ?", assetId).
+		Count(&count).Error
 	if err != nil {
 		return 0, err
 	}
-	if response == nil || len(*(response)) == 0 {
-		return 0, nil
-	}
-	return len(*response), nil
+	return count, nil
 }
