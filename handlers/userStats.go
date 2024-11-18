@@ -316,7 +316,57 @@ func GetDateIpLoginRecord(c *gin.Context) {
 	page := c.Query("page")
 	size := c.Query("size")
 	_new := c.Query("new")
+	download := c.Query("download")
 	records := new([]services.DateIpLoginRecord)
+
+	if download == "1" {
+		filename := "records"
+		var allRecords *[]services.DateIpLoginRecord
+		var err error
+		if _new == "1" {
+			filename += "-new"
+			allRecords, err = services.GetNewUserRecordAll(start, end)
+			if err != nil {
+				c.JSON(http.StatusOK, Result2{
+					Errno:  models.GetNewUserRecordAllErr.Code(),
+					ErrMsg: err.Error(),
+					Data: gin.H{
+						"total_page": -1,
+						"records":    records,
+					},
+				})
+				return
+			}
+		} else {
+			allRecords, err = services.GetDateIpLoginRecordAll(start, end)
+			if err != nil {
+				c.JSON(http.StatusOK, Result2{
+					Errno:  models.GetDateIpLoginRecordAllErr.Code(),
+					ErrMsg: err.Error(),
+					Data: gin.H{
+						"total_page": -1,
+						"records":    records,
+					},
+				})
+				return
+			}
+		}
+		newCsv, err := services.DateIpLoginRecordToCsv(filename, allRecords)
+		if err != nil {
+			c.JSON(http.StatusOK, Result2{
+				Errno:  models.DateIpLoginRecordToCsvErr.Code(),
+				ErrMsg: err.Error(),
+				Data: gin.H{
+					"total_page": -1,
+					"records":    records,
+				},
+			})
+			return
+		}
+		Download(c, newCsv)
+		return
+	}
+
 	_page, err := strconv.Atoi(page)
 	var pageNumber int
 	if err != nil {
@@ -349,7 +399,7 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		pageNumber, err = services.GetDateIpLoginPageNumber(start, end, _size)
 	}
 
-	if _page > pageNumber {
+	if pageNumber != 0 && _page > pageNumber {
 		err = errors.New("page is out of range(" + strconv.Itoa(pageNumber) + ")")
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.PageNumberOutOfRangeErr.Code(),
@@ -361,6 +411,7 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		})
 		return
 	}
+
 	if _page < 1 || _size < 1 {
 		err = errors.New("page or size is invalid(" + strconv.Itoa(_page) + "," + strconv.Itoa(_size) + ")")
 		c.JSON(http.StatusOK, Result2{
@@ -374,7 +425,6 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		return
 	}
 	limit, offset := services.PageAndSizeToLimitAndOffset(uint(_page), uint(_size))
-
 	if _new == "1" {
 		records, err = services.GetNewUserRecord(start, end, int(limit), int(offset))
 	} else {
@@ -392,6 +442,7 @@ func GetDateIpLoginRecord(c *gin.Context) {
 		})
 		return
 	}
+
 	c.JSON(http.StatusOK, Result2{
 		Errno:  0,
 		ErrMsg: models.SUCCESS.Error(),

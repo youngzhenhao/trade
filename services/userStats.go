@@ -392,6 +392,24 @@ func GetDateIpLoginRecord(start string, end string, limit int, offset int) (*[]D
 	return &dateIpLoginRecords, nil
 }
 
+func GetDateIpLoginRecordAll(start string, end string) (*[]DateIpLoginRecord, error) {
+	var dateIpLoginRecords []DateIpLoginRecord
+	if len(start) != len(time.DateOnly) {
+		return &dateIpLoginRecords, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+	}
+	if len(end) != len(time.DateOnly) {
+		return &dateIpLoginRecords, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+	}
+	err := middleware.DB.Model(models.DateIpLogin{}).
+		Where("date between ? and ?", start, end).
+		Order("id desc").
+		Scan(&dateIpLoginRecords).Error
+	if err != nil {
+		return &dateIpLoginRecords, err
+	}
+	return &dateIpLoginRecords, nil
+}
+
 func GetDateIpLoginCount(start string, end string) (int64, error) {
 	if len(start) != len(time.DateOnly) {
 		return 0, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
@@ -509,4 +527,59 @@ func GetNewUserRecord(start string, end string, limit int, offset int) (*[]DateI
 		return dateIpLoginRecords, err
 	}
 	return dateIpLoginRecords, nil
+}
+
+func GetNewUserRecordAll(start string, end string) (*[]DateIpLoginRecord, error) {
+	var dateIpLoginRecords = new([]DateIpLoginRecord)
+	if len(start) != len(time.DateOnly) {
+		return dateIpLoginRecords, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+	}
+	if len(end) != len(time.DateOnly) {
+		return dateIpLoginRecords, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+	}
+	var users []userInfo
+	err := middleware.DB.Model(models.User{}).
+		Where("created_at between ? and ?", start, end).
+		Order("id desc").
+		Scan(&users).Error
+	dateIpLoginRecords = UsersToDateIpLoginRecords(&users)
+	if err != nil {
+		return dateIpLoginRecords, err
+	}
+	return dateIpLoginRecords, nil
+}
+
+func DateIpLoginRecordToCsv(filename string, dateIpLoginRecords *[]DateIpLoginRecord) (string, error) {
+	if dateIpLoginRecords == nil {
+		return "", errors.New("dateIpLoginRecords is nil")
+	}
+	var path = filepath.Join(".", filepath.Join("csv", filename+"-user.csv"))
+	utils.CreateFile(path, "")
+	file, err := os.Create(path)
+	if err != nil {
+		return "", err
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			return
+		}
+	}(file)
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+	err = writer.Write([]string{"用户名", "日期", "IP"})
+	if err != nil {
+		return "", err
+	}
+	for _, statsUserInfo := range *dateIpLoginRecords {
+		err = writer.Write([]string{
+			statsUserInfo.Username,
+			statsUserInfo.Date,
+			statsUserInfo.Ip,
+		})
+		if err != nil {
+			return "", err
+		}
+	}
+	return path, nil
 }

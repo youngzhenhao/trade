@@ -235,6 +235,9 @@ const (
 	GetDateIpLoginCountErr
 	GetNewUserCountErr
 	GetAssetsNameErr
+	DateIpLoginRecordToCsvErr
+	GetNewUserRecordAllErr
+	GetDateIpLoginRecordAllErr
 )
 
 // Err type:CustodyAccount
