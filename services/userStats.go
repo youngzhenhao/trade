@@ -515,8 +515,14 @@ func GetNewUserRecord(start string, end string, limit int, offset int) (*[]DateI
 	if len(end) != len(time.DateOnly) {
 		return dateIpLoginRecords, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
 	}
+	_end, err := time.Parse(time.DateOnly, end)
+	if err != nil {
+		return dateIpLoginRecords, utils.AppendErrorInfo(err, "time.Parse("+end+")")
+	}
+	_end = _end.Add(time.Hour * 24)
+	end = _end.Format(time.DateOnly)
 	var users []userInfo
-	err := middleware.DB.Model(models.User{}).
+	err = middleware.DB.Model(models.User{}).
 		Where("created_at between ? and ?", start, end).
 		Limit(limit).
 		Offset(offset).
@@ -537,8 +543,14 @@ func GetNewUserRecordAll(start string, end string) (*[]DateIpLoginRecord, error)
 	if len(end) != len(time.DateOnly) {
 		return dateIpLoginRecords, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
 	}
+	_end, err := time.Parse(time.DateOnly, end)
+	if err != nil {
+		return dateIpLoginRecords, utils.AppendErrorInfo(err, "time.Parse("+end+")")
+	}
+	_end = _end.Add(time.Hour * 24)
+	end = _end.Format(time.DateOnly)
 	var users []userInfo
-	err := middleware.DB.Model(models.User{}).
+	err = middleware.DB.Model(models.User{}).
 		Where("created_at between ? and ?", start, end).
 		Order("id desc").
 		Scan(&users).Error
