@@ -115,13 +115,13 @@ type FairLaunchMintedInfo struct {
 	FairLaunchInfoID      int                   `json:"fair_launch_info_id" gorm:"not null;index"`
 	MintedNumber          int                   `json:"minted_number"`
 	MintedFeeRateSatPerKw int                   `json:"minted_fee_rate_sat_per_kw"`
-	MintedGasFee          int                   `json:"minted_gas_fee"`
+	MintedGasFee          int                   `json:"minted_gas_fee" gorm:"index"`
 	EncodedAddr           string                `json:"encoded_addr" gorm:"type:varchar(512);uniqueIndex"`
 	MintFeePaidID         int                   `json:"mint_fee_paid_id"`
 	PayMethod             FeePaymentMethod      `json:"pay_method"`
 	PaidSuccessTime       int                   `json:"paid_success_time"`
 	UserID                int                   `json:"user_id" gorm:"index"`
-	Username              string                `json:"username" gorm:"type:varchar(255)"`
+	Username              string                `json:"username" gorm:"type:varchar(255);index"`
 	AssetID               string                `json:"asset_id" gorm:"type:varchar(255)" gorm:"index"`
 	AssetName             string                `json:"asset_name" gorm:"type:varchar(255)"`
 	AssetType             int                   `json:"asset_type"`

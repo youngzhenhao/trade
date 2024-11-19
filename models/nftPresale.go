@@ -14,7 +14,7 @@ type NftPresale struct {
 	Meta            string           `json:"meta"`
 	GroupKey        string           `json:"group_key" gorm:"type:varchar(255);index"`
 	Amount          int              `json:"amount" gorm:"index"`
-	Price           int              `json:"price"`
+	Price           int              `json:"price" gorm:"index"`
 	Info            string           `json:"info"`
 	BuyerUserId     int              `json:"buyer_user_id" gorm:"index"`
 	BuyerUsername   string           `json:"buyer_username" gorm:"type:varchar(255);index"`

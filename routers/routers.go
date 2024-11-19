@@ -112,6 +112,9 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AssetInfo {
 		SetupAssetInfoRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.BackReward {
+		SetupBackRewardRouter(r)
+	}
 	SetupWsRouter(r)
 	return r
 }

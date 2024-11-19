@@ -238,6 +238,7 @@ const (
 	DateIpLoginRecordToCsvErr
 	GetNewUserRecordAllErr
 	GetDateIpLoginRecordAllErr
+	GetBackRewardsErr
 )
 
 // Err type:CustodyAccount
