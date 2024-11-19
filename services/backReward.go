@@ -81,6 +81,7 @@ func GetBackRewards(username string) (*[]backReward, error) {
 		Model(&models.FairLaunchMintedInfo{}).
 		Select("id, username, minted_gas_fee").
 		Where("username = ? and state > ?", username, models.FairLaunchMintedStatePaidPending).
+		Order("id desc").
 		Scan(&fairLaunchMintedInfoRecords).Error
 	if err != nil {
 		return backRewards, utils.AppendErrorInfo(err, "Scan FairLaunchMintedInfo")
@@ -90,6 +91,7 @@ func GetBackRewards(username string) (*[]backReward, error) {
 		Model(&models.NftPresale{}).
 		Select("id, buyer_username, price").
 		Where("buyer_username = ? and state > ?", username, models.NftPresaleStatePaidPending).
+		Order("id desc").
 		Scan(&nftPresaleRecords).Error
 	if err != nil {
 		return backRewards, utils.AppendErrorInfo(err, "Scan NftPresale")
