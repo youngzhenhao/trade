@@ -239,6 +239,8 @@ const (
 	GetNewUserRecordAllErr
 	GetDateIpLoginRecordAllErr
 	GetBackRewardsErr
+	RedisGetVerifyErr
+	RedisSetRandErr
 )
 
 // Err type:CustodyAccount

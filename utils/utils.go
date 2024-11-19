@@ -658,3 +658,12 @@ func TimeFormatCN(_time time.Time) string {
 	format = split[0] + " " + GetTimePeriodString(_time) + " " + split[1]
 	return format
 }
+
+func RandString(r *rand.Rand, length int) string {
+	var dic = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = dic[r.Intn(len(dic))]
+	}
+	return string(b)
+}

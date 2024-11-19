@@ -2,12 +2,15 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
+	"time"
 	"trade/btlLog"
 	"trade/models"
 	"trade/services"
@@ -331,8 +334,7 @@ func GetDateIpLoginRecord(c *gin.Context) {
 					Errno:  models.GetNewUserRecordAllErr.Code(),
 					ErrMsg: err.Error(),
 					Data: gin.H{
-						"total_page": -1,
-						"records":    records,
+						"link": "/404",
 					},
 				})
 				return
@@ -344,8 +346,7 @@ func GetDateIpLoginRecord(c *gin.Context) {
 					Errno:  models.GetDateIpLoginRecordAllErr.Code(),
 					ErrMsg: err.Error(),
 					Data: gin.H{
-						"total_page": -1,
-						"records":    records,
+						"link": "/404",
 					},
 				})
 				return
@@ -357,13 +358,31 @@ func GetDateIpLoginRecord(c *gin.Context) {
 				Errno:  models.DateIpLoginRecordToCsvErr.Code(),
 				ErrMsg: err.Error(),
 				Data: gin.H{
-					"total_page": -1,
-					"records":    records,
+					"link": "/404",
 				},
 			})
 			return
 		}
-		Download(c, newCsv)
+		name := path.Base(newCsv)
+		captcha, err := services.RedisSetRand("download", time.Minute*5)
+		if err != nil {
+			c.JSON(http.StatusOK, Result2{
+				Errno:  models.RedisSetRandErr.Code(),
+				ErrMsg: err.Error(),
+				Data: gin.H{
+					"link": "/404",
+				},
+			})
+			return
+		}
+		link := fmt.Sprintf("/download/csv?name=%s&captcha=%s", name, captcha)
+		c.JSON(http.StatusOK, Result2{
+			Errno:  0,
+			ErrMsg: models.SUCCESS.Error(),
+			Data: gin.H{
+				"link": link,
+			},
+		})
 		return
 	}
 
