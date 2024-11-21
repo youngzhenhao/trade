@@ -29,6 +29,7 @@ func UpdateAssetBalanceBackup(c *gin.Context) {
 			Code:    models.InvalidHashLengthErr,
 			Data:    hash,
 		})
+		return
 	}
 	err := services.UpdateAssetBalanceBackup(username, hash)
 	if err != nil {
@@ -38,6 +39,7 @@ func UpdateAssetBalanceBackup(c *gin.Context) {
 			Code:    models.UpdateAssetBalanceBackupErr,
 			Data:    hash,
 		})
+		return
 	}
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
