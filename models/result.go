@@ -241,6 +241,9 @@ const (
 	GetBackRewardsErr
 	RedisGetVerifyErr
 	RedisSetRandErr
+	AssetBalanceBackupErr
+	InvalidHashLengthErr
+	UpdateAssetBalanceBackupErr
 )
 
 // Err type:CustodyAccount

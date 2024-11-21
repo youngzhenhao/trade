@@ -55,6 +55,9 @@ router_disable:
     asset_list: false
     user_stats: false
     asset_info: false
+    back_reward: false
+    download: false
+    asset_balance_backup: false
 api_config:
     lnd:
         host: ""
