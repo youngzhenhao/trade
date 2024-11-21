@@ -173,6 +173,9 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.BalanceTypeExt{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.AssetBalanceBackup{}); err != nil {
+		return err
+	}
 
 	{
 		//if err = cpAmmAutoMigrate(); err != nil {
