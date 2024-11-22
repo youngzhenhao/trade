@@ -617,7 +617,7 @@ func DateIpLoginRecordToCsv(filename string, dateIpLoginRecords *[]DateIpLoginRe
 	}(file)
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
-	err = writer.Write([]string{"用户名", "日期", "IP", "状态"})
+	err = writer.Write([]string{"用户名", "时间", "IP", "状态"})
 	if err != nil {
 		return "", err
 	}
