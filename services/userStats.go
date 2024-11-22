@@ -419,7 +419,7 @@ func GetDateIpLoginRecordAll(start string, end string) (*[]DateIpLoginRecord, er
 		Select("date_ip_logins.created_at, date_ip_logins.username, date_ip_logins.ip, user.status").
 		Joins("JOIN user ON date_ip_logins.username = user.user_name").
 		Where("date between ? and ?", start, end).
-		Order("id desc").
+		Order("date_ip_logins.id desc").
 		Scan(&_dateIpLoginRecordTime).Error
 	if err != nil {
 		return new([]DateIpLoginRecord), err
@@ -617,7 +617,7 @@ func DateIpLoginRecordToCsv(filename string, dateIpLoginRecords *[]DateIpLoginRe
 	}(file)
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
-	err = writer.Write([]string{"用户名", "日期", "IP"})
+	err = writer.Write([]string{"用户名", "日期", "IP", "状态"})
 	if err != nil {
 		return "", err
 	}
@@ -626,6 +626,7 @@ func DateIpLoginRecordToCsv(filename string, dateIpLoginRecords *[]DateIpLoginRe
 			statsUserInfo.Username,
 			statsUserInfo.Date,
 			statsUserInfo.Ip,
+			statsUserInfo.Status,
 		})
 		if err != nil {
 			return "", err
