@@ -11,7 +11,6 @@ import (
 	"trade/config"
 	"trade/middleware"
 	"trade/models"
-	"trade/services/custodyAccount/defaultAccount/back"
 	"trade/utils"
 )
 
@@ -21,10 +20,6 @@ type CronService struct{}
 func CheckIfAutoUpdateScheduledTask() {
 	if config.GetLoadConfig().IsAutoUpdateScheduledTask {
 		err := CreateFairLaunchProcessions()
-		if err != nil {
-			btlLog.ScheduledTask.Info("%v", err)
-		}
-		err = CreateCustodyAccountProcessions()
 		if err != nil {
 			btlLog.ScheduledTask.Info("%v", err)
 		}
@@ -201,21 +196,6 @@ func (cs *CronService) RemoveMintedInventories() {
 	if err != nil {
 		return
 	}
-}
-
-func CreateCustodyAccountProcessions() (err error) {
-	return CreateOrUpdateScheduledTasks(&[]models.ScheduledTask{
-		{
-			Name:           "PollBackFeeMission",
-			CronExpression: "*/25 * * * * *",
-			FunctionName:   "PollBackFeeMission",
-			Package:        "services",
-		},
-	})
-}
-
-func (cs *CronService) PollBackFeeMission() {
-	back.PollBackFeeMission()
 }
 
 func CreateSnapshotProcessions() (err error) {

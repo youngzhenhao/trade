@@ -105,14 +105,14 @@ func (s *AssetOutsideSever) payToOutside(mission *OutsideMission) error {
 		b[len(b)-i-1] = temp
 	}
 	txId := hex.EncodeToString(b)
-	tx := models.PayOutsideTx{
+	tx := custodyModels.PayOutsideTx{
 		TxHash:     txId,
 		Timestamp:  response.Transfer.TransferTimestamp,
 		HeightHint: response.Transfer.AnchorTxHeightHint,
 		ChainFees:  response.Transfer.AnchorTxChainFees,
 		InputsNum:  uint(len(response.Transfer.Inputs)),
 		OutputsNum: uint(len(response.Transfer.Outputs)),
-		Status:     models.PayOutsideStatusTXPending,
+		Status:     custodyModels.PayOutsideStatusTXPending,
 	}
 	err = btldb.CreatePayOutsideTx(&tx)
 	if err != nil {
@@ -120,7 +120,7 @@ func (s *AssetOutsideSever) payToOutside(mission *OutsideMission) error {
 	}
 	for _, a := range mission.AddrTarget {
 		a.Mission.TxHash = txId
-		a.Mission.Status = models.PayOutsideStatusPaid
+		a.Mission.Status = custodyModels.PayOutsideStatusPaid
 		err = btldb.UpdatePayOutside(a.Mission)
 		if err != nil {
 			btlLog.CUST.Error("btldb.UpdatePayOutside error:%w", err)

@@ -131,10 +131,10 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&custodyModels.AccountBalance{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&models.PayOutside{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&custodyModels.PayOutside{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&models.PayOutsideTx{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&custodyModels.PayOutsideTx{}); err != nil {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&models.LogFileUpload{}); err != nil {

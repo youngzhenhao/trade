@@ -14,7 +14,6 @@ import (
 	"trade/services/btldb"
 	"trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
-	"trade/services/custodyAccount/defaultAccount/back"
 	"trade/services/custodyAccount/defaultAccount/custodyAssets"
 	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 	"trade/services/custodyAccount/lockPayment"
@@ -56,13 +55,21 @@ func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 		return false
 	}
 	fmt.Println("Custody account MacaroonDir is set:", cfg.ApiConfig.CustodyAccount.MacaroonDir)
-	// Start the custody account service
-	//custodyBtc.BtcSever.Start(ctx)
-	custodyBtc.InvoiceServer.Start(ctx)
-	custodyAssets.OutsideSever.Start(ctx)
-	custodyAssets.InSideSever.Start(ctx)
-	custodyAssets.AddressServer.Start(ctx)
-	//Check the custody service status
+	{
+		//收款地址监听
+		custodyBtc.InvoiceServer.Start(ctx)
+		// 加载pending mission
+		custodyBtc.LoadAOMMission()
+		custodyBtc.LoadAIMMission()
+	}
+
+	{
+		//收款地址监听
+		custodyAssets.AddressServer.Start(ctx)
+		//asset 转账监听
+		custodyAssets.OutsideSever.Start(ctx)
+		custodyAssets.InSideSever.Start(ctx)
+	}
 
 	return true
 }
@@ -124,15 +131,11 @@ func CheckPayInsideStatus(id uint) (bool, error) {
 }
 
 func BackAmount(payInsideId uint) (uint, error) {
-	missionId, err := back.CreateBackFeeMission(payInsideId)
-	if err != nil {
-		return 0, err
-	}
-	return missionId, nil
+	return 0, fmt.Errorf("not support")
 }
 
 func CheckBackFeeMission(missionId uint) bool {
-	return back.CheckBackFeeMissionById(missionId)
+	return false
 }
 
 // IsAccountBalanceEnoughByUserId

@@ -132,5 +132,5 @@ type OutsideMission struct {
 }
 
 type target struct {
-	Mission *models.PayOutside
+	Mission *custodyModels.PayOutside
 }

@@ -2729,6 +2729,8 @@ func CancelAndRefundFairLaunchMintedInfo(fairLaunchMintedInfoId int) (BackAmount
 // TODO: This function maybe need to update.
 //
 //	Consider if use scheduled task
+
+// Depreciated
 func RefundBlockFairLaunchMintedInfos() (missionIds []int, err error) {
 	fairLaunchMintedInfos, err := GetFairLaunchMintedInfoWhoseProcessNumberIsMoreThanTenThousand()
 	if err != nil {

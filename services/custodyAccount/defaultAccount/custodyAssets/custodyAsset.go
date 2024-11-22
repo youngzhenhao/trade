@@ -268,13 +268,13 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		btlLog.CUST.Error("payToOutside db error:balance %v", err)
 	}
 
-	outside := models.PayOutside{
+	outside := custodyModels.PayOutside{
 		AccountID: e.UserInfo.Account.ID,
 		AssetId:   assetId,
 		Address:   bt.DecodePayReq.Encoded,
 		Amount:    float64(bt.DecodePayReq.Amount),
 		BalanceId: outsideBalance.ID,
-		Status:    models.PayOutsideStatusPending,
+		Status:    custodyModels.PayOutsideStatusPending,
 	}
 	err = btldb.CreatePayOutside(&outside)
 	if err != nil {

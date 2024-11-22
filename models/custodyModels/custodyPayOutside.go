@@ -1,4 +1,4 @@
-package models
+package custodyModels
 
 import "gorm.io/gorm"
 
@@ -14,7 +14,7 @@ type PayOutside struct {
 }
 
 func (PayOutside) TableName() string {
-	return "user_outside"
+	return "user_account_outside_asset_mission"
 }
 
 type PayOutsideStatus int16
