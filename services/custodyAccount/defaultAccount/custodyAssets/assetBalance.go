@@ -45,7 +45,7 @@ func CheckAssetBalance(Db *gorm.DB, usr *account.UserInfo, assetId string, amoun
 	return true
 }
 
-func AddAssetBalance(Db *gorm.DB, usr *account.UserInfo, amount float64, assetId string, balanceId uint, ChangeType custodyModels.ChangeType) (uint, error) {
+func AddAssetBalance(Db *gorm.DB, usr *account.UserInfo, amount float64, balanceId uint, assetId string, ChangeType custodyModels.ChangeType) (uint, error) {
 	assetBalanceMutex.Lock()
 	defer assetBalanceMutex.Unlock()
 

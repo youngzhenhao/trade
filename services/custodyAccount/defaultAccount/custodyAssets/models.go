@@ -15,7 +15,7 @@ import (
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
 	"trade/services/custodyAccount/custodyBase/custodyLimit"
-	"trade/services/custodyAccount/custodyBase/custodyRpc"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 	"trade/services/custodyAccount/defaultAccount/custodyBtc/mempool"
 	rpc "trade/services/servicesrpc"
 )
@@ -91,24 +91,10 @@ func (p *AssetPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 		return err
 	}
 	//验证资产金额
-	balance, err := btldb.GetAccountBalanceByGroup(userinfo.Account.ID, assetId)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return cBase.NotEnoughAssetFunds
-		}
-		btlLog.CUST.Error("获取账户余额失败", err)
-		return models.ReadDbErr
-	}
-	if balance.Amount < float64(p.DecodePayReq.Amount) {
+	if !CheckAssetBalance(middleware.DB, userinfo, assetId, float64(p.DecodePayReq.Amount)) {
 		return cBase.NotEnoughAssetFunds
 	}
-	//验证托管账户余额
-	useAbleBalance, err := custodyRpc.GetAccountInfo(userinfo)
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
-		return cBase.GetBalanceErr
-	}
-	if useAbleBalance.CurrentBalance < int64(ServerFee) {
+	if !custodyBtc.CheckBtcBalance(middleware.DB, userinfo, float64(ServerFee)) {
 		return cBase.NotEnoughFeeFunds
 	}
 	return nil

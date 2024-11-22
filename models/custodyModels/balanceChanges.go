@@ -35,6 +35,12 @@ const (
 	ChangeTypeBtcPayLocal       = "pay_local_btc"
 	ChangeTypeBtcReceiveLocal   = "receive_local_btc"
 	ChangeTypeBackFee           = "back_fee"
+	ChangeTypeAward             = "award"
+
+	ChangTypeAssetReceiveOutside = "receive_outside_asset"
+
+	ChangeTypeAssetPayLocal     = "pay_local_asset"
+	ChangeTypeAssetReceiveLocal = "receive_local_asset"
 
 	ChangeTypeLock           = "lock"
 	ChangeTypeUnlock         = "unlock"

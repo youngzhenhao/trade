@@ -339,7 +339,7 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 	if err = tx.Create(&balanceBill).Error; err != nil {
 		return ServiceError
 	}
-	_, err = custodyBtc.LessBtcBalance(tx, usr, amount, balanceBill.ID, cModels.ChangeTypeLock)
+	_, err = custodyBtc.LessBtcBalance(tx, usr, amount, balanceBill.ID, cModels.ChangeTypeLockedTransfer)
 	if err != nil {
 		return err
 	}
