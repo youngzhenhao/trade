@@ -2,7 +2,6 @@ package models
 
 import "gorm.io/gorm"
 
-// TODO
 type AssetBalanceHistory struct {
 	gorm.Model
 	AssetId  string `json:"asset_id" gorm:"type:varchar(255);index"`

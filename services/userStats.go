@@ -30,10 +30,10 @@ func GetTotalUserNumber() (uint64, error) {
 func userToUserInfo(user models.User) models.StatsUserInfo {
 	loginTime := utils.TimestampToTime(user.RecentLoginTime)
 	var status string
-	if user.Status == 1 {
-		status = "已冻结"
-	} else if user.Status == 0 {
+	if user.Status == 0 {
 		status = "正常"
+	} else {
+		status = "冻结"
 	}
 	return models.StatsUserInfo{
 		ID:                user.ID,
@@ -370,6 +370,21 @@ type DateIpLoginRecord struct {
 	Username string `json:"username"`
 	Date     string `json:"date"`
 	Ip       string `json:"ip"`
+	Status   string `json:"status"`
+}
+
+type DateIpLoginRecordTime struct {
+	CreatedAt time.Time `json:"created_at"`
+	Username  string    `json:"username"`
+	Ip        string    `json:"ip"`
+	Status    int16     `json:"status"`
+}
+
+func UserStatusString(status int16) string {
+	if status == 0 {
+		return "正常"
+	}
+	return "冻结"
 }
 
 func GetDateIpLoginRecord(start string, end string, limit int, offset int) (*[]DateIpLoginRecord, error) {
@@ -393,20 +408,35 @@ func GetDateIpLoginRecord(start string, end string, limit int, offset int) (*[]D
 }
 
 func GetDateIpLoginRecordAll(start string, end string) (*[]DateIpLoginRecord, error) {
-	var dateIpLoginRecords []DateIpLoginRecord
 	if len(start) != len(time.DateOnly) {
-		return &dateIpLoginRecords, errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
+		return new([]DateIpLoginRecord), errors.New("invalid start time length(" + strconv.Itoa(len(start)) + "), should be like " + time.DateOnly)
 	}
 	if len(end) != len(time.DateOnly) {
-		return &dateIpLoginRecords, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
+		return new([]DateIpLoginRecord), errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
 	}
+	var _dateIpLoginRecordTime []DateIpLoginRecordTime
 	err := middleware.DB.Model(models.DateIpLogin{}).
+		Select("date_ip_logins.created_at, date_ip_logins.username, date_ip_logins.ip, user.status").
+		Joins("JOIN user ON date_ip_logins.username = user.user_name").
 		Where("date between ? and ?", start, end).
 		Order("id desc").
-		Scan(&dateIpLoginRecords).Error
+		Scan(&_dateIpLoginRecordTime).Error
 	if err != nil {
-		return &dateIpLoginRecords, err
+		return new([]DateIpLoginRecord), err
 	}
+	var dateIpLoginRecords []DateIpLoginRecord
+	dateIpLoginRecords = func(records []DateIpLoginRecordTime) []DateIpLoginRecord {
+		var _records []DateIpLoginRecord
+		for _, _record := range records {
+			_records = append(_records, DateIpLoginRecord{
+				Username: _record.Username,
+				Date:     _record.CreatedAt.Format(time.DateTime + ".000"),
+				Ip:       _record.Ip,
+				Status:   UserStatusString(_record.Status),
+			})
+		}
+		return _records
+	}(_dateIpLoginRecordTime)
 	return &dateIpLoginRecords, nil
 }
 
@@ -492,13 +522,15 @@ type userInfo struct {
 	CreatedAt         time.Time
 	Username          string `gorm:"unique;column:user_name;type:varchar(255)" json:"userName"` // 正确地将unique和column选项放在同一个gorm标签内
 	RecentIpAddresses string `json:"recent_ip_addresses" gorm:"type:varchar(255)"`
+	Status            int16  `json:"status"`
 }
 
 func UserToDateIpLoginRecord(user userInfo) DateIpLoginRecord {
 	return DateIpLoginRecord{
 		Username: user.Username,
-		Date:     user.CreatedAt.Format(time.DateOnly),
+		Date:     user.CreatedAt.Format(time.DateTime + ".000"),
 		Ip:       user.RecentIpAddresses,
+		Status:   UserStatusString(user.Status),
 	}
 }
 
