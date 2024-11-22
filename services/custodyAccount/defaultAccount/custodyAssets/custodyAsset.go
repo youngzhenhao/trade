@@ -62,10 +62,7 @@ func (e *AssetEvent) GetBalance() ([]cBase.Balance, error) {
 }
 
 func (e *AssetEvent) GetBalances() ([]cBase.Balance, error) {
-	temp, err := btldb.GetAccountBalanceByAccountId(e.UserInfo.Account.ID)
-	if err != nil {
-		return nil, models.ReadDbErr
-	}
+	temp := GetAssetsBalances(middleware.DB, e.UserInfo.Account.ID)
 	var balances []cBase.Balance
 	for _, b := range *temp {
 		balances = append(balances, cBase.Balance{
