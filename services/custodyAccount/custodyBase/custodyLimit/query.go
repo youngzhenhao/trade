@@ -129,10 +129,11 @@ func SetUserTodayLimit(userName, limitType string, amount int, count int) error 
 
 	var bill custodyModels.LimitBill
 	// 增加一个条件，筛选今日0点开始的记录
-	q := db.Where("user_limit.created_at >= ?", todayStart)
-	err = q.Where("user_limit.user_id =? and user_limit.limit_type =?", usr.ID, TypeID).First(&bill).Error
+	q := db.Where("created_at >= ?", todayStart)
+	err = q.Where("user_id =? and limit_type =?", usr.ID, TypeID).First(&bill).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			bill.LocalTime = todayStart
 			bill.UserId = usr.ID
 			bill.TotalAmount = float64(amount)
 			bill.UseAbleAmount = float64(amount)
