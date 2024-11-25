@@ -121,6 +121,9 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AssetBalanceBackup {
 		SetupAssetBalanceBackupRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.AssetBalanceHistory {
+		SetupAssetBalanceHistoryRouter(r)
+	}
 	SetupWsRouter(r)
 	return r
 }

@@ -244,6 +244,8 @@ const (
 	AssetBalanceBackupErr
 	InvalidHashLengthErr
 	UpdateAssetBalanceBackupErr
+	GetLatestAssetBalanceHistoriesErr
+	CreateAssetBalanceHistoriesErr
 )
 
 // Err type:CustodyAccount

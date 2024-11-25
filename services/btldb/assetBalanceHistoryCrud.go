@@ -13,9 +13,9 @@ func CreateAssetBalanceHistorys(assetBalanceHistorys *[]models.AssetBalanceHisto
 	return middleware.DB.Create(assetBalanceHistorys).Error
 }
 
-func ReadAssetBalanceHistory(assetId string) (*models.AssetBalanceHistory, error) {
+func ReadAssetBalanceHistory(assetId string, username string) (*models.AssetBalanceHistory, error) {
 	var assetBalanceHistory models.AssetBalanceHistory
-	err := middleware.DB.Where("asset_id = ?", assetId).Order("id desc").First(&assetBalanceHistory).Error
+	err := middleware.DB.Where("asset_id = ? and username = ?", assetId, username).Order("id desc").First(&assetBalanceHistory).Error
 	return &assetBalanceHistory, err
 }
 
