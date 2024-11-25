@@ -111,6 +111,9 @@ func SetUserTodayLimit(userName, limitType string, amount int, count int) error 
 
 	limitMux.Lock()
 	defer limitMux.Unlock()
+	if amount < 0 || count < 0 {
+		return fmt.Errorf("金额或次数不能为负数")
+	}
 
 	db := middleware.DB
 	GetUserTypeLimitMap()
@@ -138,17 +141,13 @@ func SetUserTodayLimit(userName, limitType string, amount int, count int) error 
 			bill.TotalAmount = float64(amount)
 			bill.UseAbleAmount = float64(amount)
 			bill.TotalCount = uint(count)
-			bill.TotalAmount = float64(count)
+			bill.UseAbleCount = uint(count)
 			return db.Create(&bill).Error
 		}
 		return err
 	}
-	if amount >= 0 {
-		bill.UseAbleAmount = float64(amount)
-	}
-	if count >= 0 {
-		bill.UseAbleCount = uint(count)
-	}
+	bill.UseAbleAmount = float64(amount)
+	bill.UseAbleCount = uint(count)
 	return db.Save(&bill).Error
 }
 
