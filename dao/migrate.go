@@ -32,6 +32,9 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.User{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.UserConfig{}); err != nil {
+		return err
+	}
 	if err = middleware.DB.AutoMigrate(&models.ScheduledTask{}); err != nil {
 		return err
 	}

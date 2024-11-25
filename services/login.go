@@ -290,3 +290,51 @@ func (cs *CronService) FiveSecondTask() {
 	fmt.Println("5 secs runs")
 	log.Println("5 secs runs")
 }
+
+func GetUserConfig(username string) (*models.UserConfig, error) {
+	db := middleware.DB
+
+	data := struct {
+		models.UserConfig
+		UserName string `gorm:"column:user_name"`
+	}{}
+	result := db.Table("user_config").
+		Joins(" left join user on user.id = user_config.user_id").
+		Where("user_name = ?", username).
+		Select("user_config.*, user.user_name").
+		Scan(&data)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	if data.Config == "" {
+		return nil, nil
+	}
+	data.User.Username = data.UserName
+	return &data.UserConfig, nil
+}
+func SetUserConfig(username string, config string) int {
+	db := middleware.DB
+	user := models.User{}
+	result := db.Where("user_name = ?", username).First(&user)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return 404
+	}
+	var userConfig models.UserConfig
+	result = db.Where("user_id = ?", user.ID).First(&userConfig)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		userConfig = models.UserConfig{
+			UserID: user.ID,
+			Config: config,
+		}
+		db.Create(&userConfig)
+	} else if result.Error == nil {
+		userConfig.Config = config
+		db.Save(&userConfig)
+	} else {
+		return 500
+	}
+	return 1
+}

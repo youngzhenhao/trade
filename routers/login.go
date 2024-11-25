@@ -17,6 +17,8 @@ func SetupLoginRouter(router *gin.Engine) *gin.Engine {
 	auth := router.Group("/auth")
 	auth.Use(middleware.AuthMiddleware())
 	{
+		auth.POST("/getConfig", handlers.GetConfigHandler)
+		auth.POST("/setConfig", handlers.SetConfigHandler)
 		auth.GET("/userinfo", handlers.UserInfoHandler)
 	}
 	return router
