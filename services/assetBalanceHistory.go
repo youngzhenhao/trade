@@ -25,6 +25,9 @@ func GetLatestAssetBalanceHistories(username string) (*[]models.AssetBalanceHist
 
 func CreateAssetBalanceHistories(username string, requests *[]models.AssetBalanceHistorySetRequest) error {
 	var records []models.AssetBalanceHistory
+	if requests == nil || len(*requests) == 0 {
+		return nil
+	}
 	for _, request := range *requests {
 		records = append(records, models.AssetBalanceHistory{
 			AssetId:  request.AssetId,

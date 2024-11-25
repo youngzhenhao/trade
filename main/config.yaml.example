@@ -58,6 +58,7 @@ router_disable:
     back_reward: false
     download: false
     asset_balance_backup: false
+    asset_balance_history: false
 api_config:
     lnd:
         host: ""
