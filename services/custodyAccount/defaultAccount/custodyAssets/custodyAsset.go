@@ -216,12 +216,11 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 	if err != nil {
 		btlLog.CUST.Error("payToOutside db error")
 	}
-	b, _ := btldb.GetAccountBalanceByGroup(e.UserInfo.Account.ID, assetId)
-	b.Amount -= float64(bt.DecodePayReq.Amount)
-	err = btldb.UpdateAccountBalance(b)
+	_, err = LessAssetBalance(db, e.UserInfo, outsideBalance.Amount, outsideBalance.ID, *outsideBalance.AssetId, custodyModels.ChangeTypeAssetPayOutside)
 	if err != nil {
-		btlLog.CUST.Error("payToOutside db error")
+		return
 	}
+
 	m := OutsideMission{
 		AddrTarget: []*target{
 			{
@@ -232,10 +231,9 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		TotalAmount: int64(bt.DecodePayReq.Amount),
 	}
 	//收取手续费
-	err = custodyFee.PayServiceFeeSync(e.UserInfo, uint64(mempool.GetCustodyAssetFee()), outsideBalance.ID, models.AssetOutSideFee, "payToOutside Asset Fee")
+	err = custodyBtc.PayFee(db, e.UserInfo, float64(mempool.GetCustodyAssetFee()), outsideBalance.ID)
 	if err != nil {
-		btlLog.CUST.Error(err.Error())
-		bt.err <- err
+		btlLog.CUST.Error("PayFee error:%s", err)
 		return
 	}
 	bt.err <- nil
