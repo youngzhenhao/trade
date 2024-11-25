@@ -137,6 +137,7 @@ func SetUserTodayLimit(userName, limitType string, amount int, count int) error 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			bill.LocalTime = todayStart
+			bill.LimitType = TypeID
 			bill.UserId = usr.ID
 			bill.TotalAmount = float64(amount)
 			bill.UseAbleAmount = float64(amount)
