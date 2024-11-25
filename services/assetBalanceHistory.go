@@ -16,6 +16,7 @@ func GetLatestAssetBalanceHistories(username string) (*[]models.AssetBalanceHist
 		Group("asset_id")
 
 	err := middleware.DB.
+		Table("asset_balance_histories").
 		Select("id, asset_id, balance, username").
 		Where("id IN (?)", subQuery).
 		Scan(&records).Error
