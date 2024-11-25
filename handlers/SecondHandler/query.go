@@ -1,4 +1,4 @@
-package SecondHander
+package SecondHandler
 
 import (
 	"github.com/gin-gonic/gin"
