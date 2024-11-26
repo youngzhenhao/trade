@@ -4,6 +4,7 @@ import (
 	"trade/middleware"
 	"trade/models"
 	"trade/models/custodyModels"
+	"trade/services/pool"
 )
 
 func Migrate() error {
@@ -182,14 +183,27 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.AssetBalanceHistory{}); err != nil {
 		return err
 	}
-
-	{
-		//if err = cpAmmAutoMigrate(); err != nil {
-		//	return err
-		//}
+	if err = poolMigrate(); err != nil {
+		return err
 	}
 
 	return err
+}
+
+func poolMigrate() (err error) {
+	if err = middleware.DB.AutoMigrate(&pool.Pair{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pool.Share{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pool.ShareBalance{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pool.ShareRecord{}); err != nil {
+		return err
+	}
+	return nil
 }
 
 func custodyMigrate(err error) error {
@@ -207,6 +221,7 @@ func custodyMigrate(err error) error {
 	}
 	return err
 }
+
 func custodyAwardMigrate(err error) error {
 	if err = middleware.DB.AutoMigrate(&models.AccountAwardExt{}); err != nil {
 		return err
