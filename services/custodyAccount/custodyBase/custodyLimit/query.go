@@ -43,12 +43,13 @@ func GetUserLimit(userName, LimitType string, page, pageSize int) (int64, *[]Use
 		}
 	}
 	// 获取今日0点的时间
-	todayStart := time.Now().Truncate(24 * time.Hour)
+
+	todayStart := time.Now().Truncate(24 * time.Hour).Add(-8 * time.Hour)
 
 	// 增加一个条件，筛选今日0点开始的记录
 	q = q.Where("user_limit.created_at >= ?", todayStart)
 
-	q = q.Debug().Table("user_limit").
+	q = q.Table("user_limit").
 		Joins("left join user on user.id = user_limit.user_id").
 		Joins("left join (select * from user_limit_bills where created_at >= ?) as bill on bill.user_id = user_limit.user_id", todayStart).
 		Joins("left join user_limit_type on user_limit_type.id = user_limit.limit_type")
@@ -128,11 +129,10 @@ func SetUserTodayLimit(userName, limitType string, amount int, count int) error 
 	}
 
 	// 获取今日0点的时间
-	todayStart := time.Now().Truncate(24 * time.Hour)
+	todayStart := time.Now().Truncate(24 * time.Hour).Add(-8 * time.Hour)
 
 	var bill custodyModels.LimitBill
 	// 增加一个条件，筛选今日0点开始的记录
-
 	err = db.Where("created_at >= ?", todayStart).Where("user_id =? and limit_type =?", usr.ID, TypeID).First(&bill).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
