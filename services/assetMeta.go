@@ -118,7 +118,7 @@ func StoreAssetMetasIfNotExist(assetIds []string) error {
 	return CreateAssetMetas(&assetMetas)
 }
 
-// ==================== GetAssetMeta ====================
+// ==================== GetAssetMetaImage ====================
 
 type AssetIdMetaDataImage struct {
 	AssetId   string `json:"asset_id"`
@@ -129,7 +129,7 @@ type AssetIdMetaDataErr struct {
 	Err     string `json:"err"`
 }
 
-func GetAssetMeta(assetIds []string) (*[]AssetIdMetaDataImage, *[]AssetIdMetaDataErr) {
+func GetAssetMetaImage(assetIds []string) (*[]AssetIdMetaDataImage, *[]AssetIdMetaDataErr) {
 	var assetIdMetaDatas []AssetIdMetaDataImage
 	var assetIdMetaDataErrs []AssetIdMetaDataErr
 	idMapData, idMapErr := api.FetchAssetMetaByAssetIds(assetIds)

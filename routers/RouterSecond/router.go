@@ -78,7 +78,7 @@ func SetupRouter() *gin.Engine {
 
 	// assetMeta
 	assetMeta := r.Group("/asset_meta")
-	assetMeta.POST("/query", handlers.GetAssetMeta)
+	assetMeta.POST("/image/query", handlers.GetAssetMetaImage)
 
 	return r
 }

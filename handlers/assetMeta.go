@@ -7,7 +7,7 @@ import (
 	"trade/services"
 )
 
-func GetAssetMeta(c *gin.Context) {
+func GetAssetMetaImage(c *gin.Context) {
 	var assetIds []string
 	err := c.ShouldBindJSON(&assetIds)
 	if err != nil {
@@ -18,7 +18,7 @@ func GetAssetMeta(c *gin.Context) {
 		})
 		return
 	}
-	datas, errs := services.GetAssetMeta(assetIds)
+	datas, errs := services.GetAssetMetaImage(assetIds)
 	c.JSON(http.StatusOK, Result2{
 		Errno:  0,
 		ErrMsg: models.SUCCESS.Error(),
