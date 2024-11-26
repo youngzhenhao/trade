@@ -1,12 +1,10 @@
 package pool
 
-import "trade/middleware"
-
 // TODO: Add Liquidity
 func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDesired string, amountAMin string, amountBMin string) error {
-	token0, token1, err := sortTokens(tokenA, tokenB)
-	tx := middleware.DB.Begin()
-
+	//token0, token1, err := sortTokens(tokenA, tokenB)
+	//tx := middleware.DB.Begin()
+	return nil
 }
 
 // TODO: Remove Liquidity
