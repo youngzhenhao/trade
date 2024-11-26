@@ -69,7 +69,6 @@ func createPair(token0 string, token1 string, reserve0 string, reserve1 string) 
 	return middleware.DB.Create(&pair).Error
 }
 
-// TODO: Mutex
 func updatePair(token0 string, token1 string, reserve0 string, reserve1 string) (err error) {
 	_token0, _token1, err := sortTokens(token0, token1)
 	if err != nil {
@@ -142,6 +141,37 @@ func NewPair(token0 string, token1 string, reserve0 string, reserve1 string) (pa
 	tokenMapReserve := make(map[string]string)
 	tokenMapReserve[token0] = reserve0
 	tokenMapReserve[token1] = reserve1
+	pair = &Pair{
+		IsTokenZeroSat: _token0 == TokenSatTag,
+		Token0:         _token0,
+		Token1:         _token1,
+		Reserve0:       tokenMapReserve[_token0],
+		Reserve1:       tokenMapReserve[_token1],
+	}
+	return pair, nil
+}
+
+func NewPairBig(token0 string, token1 string, _reserve0 *big.Int, _reserve1 *big.Int) (pair *Pair, err error) {
+	// sort token
+	_token0, _token1, err := sortTokens(token0, token1)
+	if err != nil {
+		return new(Pair), utils.AppendErrorInfo(err, "sortTokens")
+	}
+	// check reserves
+	if !((_reserve0.Sign() > 0) && (_reserve1.Sign() > 0)) {
+		err = errors.New("insufficientLiquidity(" + _reserve0.String() + "," + _reserve1.String() + ")")
+		return new(Pair), err
+	}
+	// cmp with minimum liquidity
+	_k := _reserve0.Mul(_reserve0, _reserve1)
+	_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
+	if _k.Cmp(_minLiquidity) < 0 {
+		err = errors.New("insufficientLiquidity k(" + _k.String() + "), need " + _minLiquidity.String())
+		return new(Pair), err
+	}
+	tokenMapReserve := make(map[string]string)
+	tokenMapReserve[token0] = _reserve0.String()
+	tokenMapReserve[token1] = _reserve1.String()
 	pair = &Pair{
 		IsTokenZeroSat: _token0 == TokenSatTag,
 		Token0:         _token0,

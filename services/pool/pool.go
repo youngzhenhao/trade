@@ -51,6 +51,7 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 	if err != nil {
 		return utils.AppendErrorInfo(err, "sortTokens")
 	}
+
 	var amount0Desired, amount1Desired, amount0Min, amount1Min string
 	if token0 == tokenB {
 		amount0Desired, amount1Desired = amountBDesired, amountADesired
@@ -65,11 +66,13 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 	if !success {
 		return utils.AppendErrorInfo(err, "SetString("+amount0Desired+") "+strconv.FormatBool(success))
 	}
+
 	// amount1Desired
 	_amount1Desired, success := new(big.Int).SetString(amount1Desired, 10)
 	if !success {
 		return utils.AppendErrorInfo(err, "SetString("+amount1Desired+") "+strconv.FormatBool(success))
 	}
+
 	// amount0Min
 	_amount0Min, success := new(big.Int).SetString(amount0Min, 10)
 	if !success {
@@ -81,6 +84,7 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 	if _amount0Min.Cmp(_amount0Desired) > 0 {
 		return errors.New("amount0Min(" + _amount0Min.String() + ") is greater than amount0Desired(" + _amount0Desired.String() + ")")
 	}
+
 	// amount1Min
 	_amount1Min, success := new(big.Int).SetString(amount1Min, 10)
 	if !success {
@@ -92,18 +96,22 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 	if _amount1Min.Cmp(_amount1Desired) > 0 {
 		return errors.New("amount1Min(" + _amount1Min.String() + ") is greater than amount1Desired(" + _amount1Desired.String() + ")")
 	}
+
 	// @dev: lock
 	Lock[token0][token1].Lock()
 	defer Lock[token0][token1].Unlock()
+
 	// @dev: transaction
 	tx := middleware.DB.Begin()
+	var _amount0, _amount1 *big.Int
 	// @dev: get pair
 	var _pair Pair
 	err = tx.Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
 	// @dev: pair does not exist
 	if err != nil {
+		_amount0, _amount1 = _amount0Desired, _amount1Desired
 		// @dev: create pair
-		newPair, err := NewPair(token0, token1, amount0Desired, amount1Desired)
+		newPair, err := NewPairBig(token0, token1, _amount0, _amount1)
 		if err != nil {
 			tx.Rollback()
 			return utils.AppendErrorInfo(err, "newPair")
@@ -126,29 +134,50 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 			return utils.AppendErrorInfo(err, "SetString("+_pair.Reserve1+") "+strconv.FormatBool(success))
 		}
 		// No fee for adding liquidity
-		_amount0, _amount1, err := _addLiquidity(_amount0Desired, _amount1Desired, _amount0Min, _amount1Min, _reserve0, _reserve1)
+		_amount0, _amount1, err = _addLiquidity(_amount0Desired, _amount1Desired, _amount0Min, _amount1Min, _reserve0, _reserve1)
 		if err != nil {
 			tx.Rollback()
 			return utils.AppendErrorInfo(err, "_addLiquidity")
 		}
 		_, _ = _amount0, _amount1
 
-		//	TODO: mint liquidity
-		//address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
-
-		//TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
-		// TODO: Transfer _amount0 of token0 from user to pool
-
-		//TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
-		// TODO: Transfer _amount1 of token1 from user to pool
-
-		//liquidity = IUniswapV2Pair(pair).mint(to);
-		//	TODO: mint share
-		// @dev: calculate liquidity
-		
-		//	TODO: update pair, share, shareBalance, shareRecord
+		// TODO: update pair
+		_newReserve0 := new(big.Int).Add(_reserve0, _amount0)
+		if _newReserve0.Cmp(_reserve0) < 0 {
+			tx.Rollback()
+			return errors.New("invalid _newReserve0(" + _newReserve0.String() + ")")
+		}
+		_newReserve1 := new(big.Int).Add(_reserve1, _amount1)
+		if _newReserve1.Cmp(_reserve1) < 0 {
+			tx.Rollback()
+			return errors.New("invalid _newReserve1(" + _newReserve1.String() + ")")
+		}
+		// TODO
+		err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).
+			Updates(map[string]any{
+				"reserve0": _newReserve0.String(),
+				"reserve1": _newReserve1.String(),
+			}).Error
+		if err != nil {
+			tx.Rollback()
+			return utils.AppendErrorInfo(err, "update pair")
+		}
 
 	}
+
+	//address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
+
+	//TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
+	// TODO: Transfer _amount0 of token0 from user to pool
+
+	//TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
+	// TODO: Transfer _amount1 of token1 from user to pool
+
+	//liquidity = IUniswapV2Pair(pair).mint(to);
+	//	TODO: mint share
+	// @dev: calculate liquidity
+
+	//	TODO: update pair, share, shareBalance, shareRecord
 
 	return tx.Commit().Error
 }
