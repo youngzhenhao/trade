@@ -76,5 +76,9 @@ func SetupRouter() *gin.Engine {
 	backReward := r.Group("/back_reward")
 	backReward.GET("/get", handlers.GetBackRewards)
 
+	// assetMeta
+	assetMeta := r.Group("/asset_meta")
+	assetMeta.POST("/query", handlers.GetAssetMeta)
+
 	return r
 }

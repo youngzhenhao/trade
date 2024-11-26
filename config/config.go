@@ -72,6 +72,7 @@ type Config struct {
 		Download              bool `yaml:"download" json:"download"`
 		AssetBalanceBackup    bool `yaml:"asset_balance_backup" json:"asset_balance_backup"`
 		AssetBalanceHistory   bool `yaml:"asset_balance_history" json:"asset_balance_history"`
+		AssetMeta             bool `yaml:"asset_meta" json:"asset_meta"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {

@@ -514,6 +514,10 @@ func FetchAssetMetaByAssetId(assetId string) (*AssetMeta, error) {
 	return &assetMeta, nil
 }
 
+func FetchAssetMetaByAssetIds(assetIds []string) (*map[string]string, *map[string]error) {
+	return fetchAssetMetaByAssetIds(assetIds)
+}
+
 func QueryProofAndGetResponse(isGroup bool, id string, outpoint string, scriptKey string, proofType universerpc.ProofType) (*universerpc.AssetProofResponse, error) {
 	return queryProof(isGroup, id, outpoint, scriptKey, proofType)
 }

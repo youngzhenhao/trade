@@ -473,6 +473,31 @@ func fetchAssetMetaByAssetId(assetId string) (*taprpc.AssetMeta, error) {
 	return response, err
 }
 
+func fetchAssetMetaByAssetIds(assetIds []string) (*map[string]string, *map[string]error) {
+	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
+	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
+	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	client := taprpc.NewTaprootAssetsClient(conn)
+	idMapData := make(map[string]string)
+	idMapErr := make(map[string]error)
+	for _, assetId := range assetIds {
+		request := &taprpc.FetchAssetMetaRequest{
+			Asset: &taprpc.FetchAssetMetaRequest_AssetIdStr{
+				AssetIdStr: assetId,
+			},
+		}
+		response, err := client.FetchAssetMeta(context.Background(), request)
+		if err != nil {
+			idMapErr[assetId] = err
+			continue
+		}
+		idMapData[assetId] = string(response.Data)
+	}
+	return &idMapData, &idMapErr
+}
+
 func queryAssetRoots(assetId string) *universerpc.QueryRootResponse {
 	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
 	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath

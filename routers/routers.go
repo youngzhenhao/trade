@@ -124,6 +124,9 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AssetBalanceHistory {
 		SetupAssetBalanceHistoryRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.AssetMeta {
+		SetupAssetMetaRouter(r)
+	}
 	SetupWsRouter(r)
 	return r
 }
