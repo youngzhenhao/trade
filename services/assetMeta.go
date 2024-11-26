@@ -120,24 +120,36 @@ func StoreAssetMetasIfNotExist(assetIds []string) error {
 
 // ==================== GetAssetMeta ====================
 
-type AssetIdMetaData struct {
-	AssetId  string `json:"asset_id"`
-	MetaData string `json:"meta_data"`
+type AssetIdMetaDataImage struct {
+	AssetId   string `json:"asset_id"`
+	ImageData string `json:"image_data"`
 }
 type AssetIdMetaDataErr struct {
 	AssetId string `json:"asset_id"`
 	Err     string `json:"err"`
 }
 
-func GetAssetMeta(assetIds []string) (*[]AssetIdMetaData, *[]AssetIdMetaDataErr) {
-	var assetIdMetaDatas []AssetIdMetaData
+func GetAssetMeta(assetIds []string) (*[]AssetIdMetaDataImage, *[]AssetIdMetaDataErr) {
+	var assetIdMetaDatas []AssetIdMetaDataImage
 	var assetIdMetaDataErrs []AssetIdMetaDataErr
 	idMapData, idMapErr := api.FetchAssetMetaByAssetIds(assetIds)
 	if idMapErr != nil {
 		for assetId, data := range *idMapData {
-			assetIdMetaDatas = append(assetIdMetaDatas, AssetIdMetaData{
-				AssetId:  assetId,
-				MetaData: data,
+			// @dev: get image data from meta
+			meta := new(api.Meta)
+			meta.GetMetaFromStr(data)
+			imageData := meta.ImageData
+			// @dev: check image data
+			if imageData == "" {
+				assetIdMetaDataErrs = append(assetIdMetaDataErrs, AssetIdMetaDataErr{
+					AssetId: assetId,
+					Err:     "image data is empty",
+				})
+				continue
+			}
+			assetIdMetaDatas = append(assetIdMetaDatas, AssetIdMetaDataImage{
+				AssetId:   assetId,
+				ImageData: imageData,
 			})
 		}
 	}
