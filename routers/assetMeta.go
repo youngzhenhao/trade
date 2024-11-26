@@ -2,14 +2,13 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
-	"trade/config"
 	"trade/handlers"
+	"trade/middleware"
 )
 
 func SetupAssetMetaRouter(router *gin.Engine) *gin.Engine {
-	authorized := router.Group("/asset_meta", gin.BasicAuth(gin.Accounts{
-		config.GetLoadConfig().AdminUser.Username: config.GetLoadConfig().AdminUser.Password,
-	}))
-	authorized.POST("/image/query", handlers.GetAssetMetaImage)
+	assetMeta := router.Group("/asset_meta")
+	assetMeta.Use(middleware.AuthMiddleware())
+	assetMeta.POST("/image/query", handlers.GetAssetMetaImage)
 	return router
 }
