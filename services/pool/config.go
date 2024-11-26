@@ -8,19 +8,19 @@ const (
 	AssetIdLength        = 64
 )
 
-// F is 1000 * Fee Rate
-// i.e. Fee Rate = F / 1000
+// FeeK is 1000 * Fee Rate
+// i.e. Fee Rate = FeeK / 1000
 
 const (
-	AddLiquidityF    uint16 = 0
-	RemoveLiquidityF uint16 = 3
+	AddLiquidityFeeK    uint16 = 0
+	RemoveLiquidityFeeK uint16 = 3
 )
 
 const (
-	ProjectPartyF = 3
-	LpAwardF      = 3
+	ProjectPartyFeeK = 3
+	LpAwardFeeK      = 3
 )
 
 const (
-	SwapF uint16 = ProjectPartyF + LpAwardF
+	SwapFeeK uint16 = ProjectPartyFeeK + LpAwardFeeK
 )
