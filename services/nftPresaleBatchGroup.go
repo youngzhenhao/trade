@@ -204,6 +204,7 @@ func CreateBatchGroupAndNftPresales(nftPresaleBatchGroup *models.NftPresaleBatch
 		tx.Rollback()
 		return err
 	}
+	// @dev: Get ID
 	batchGroupId := nftPresaleBatchGroup.ID
 	if batchGroupId == 0 {
 		tx.Rollback()

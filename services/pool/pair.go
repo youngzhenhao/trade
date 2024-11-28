@@ -48,10 +48,10 @@ func createPair(token0 string, token1 string, reserve0 string, reserve1 string) 
 		return err
 	}
 	// cmp with minimum liquidity
-	_k := _reserve0.Mul(_reserve0, _reserve1)
+	_liquidity := new(big.Int).Sqrt(new(big.Int).Mul(_reserve0, _reserve1))
 	_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
-	if _k.Cmp(_minLiquidity) < 0 {
-		err = errors.New("insufficientLiquidity k(" + _k.String() + "), need " + _minLiquidity.String())
+	if _liquidity.Cmp(_minLiquidity) < 0 {
+		err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
 		return
 	}
 	tokenMapReserve := make(map[string]string)
@@ -86,10 +86,10 @@ func updatePair(token0 string, token1 string, reserve0 string, reserve1 string) 
 		err = errors.New("insufficientLiquidity(" + _reserve0.String() + "," + _reserve1.String() + ")")
 		return err
 	}
-	_k := _reserve0.Mul(_reserve0, _reserve1)
+	_liquidity := new(big.Int).Sqrt(new(big.Int).Mul(_reserve0, _reserve1))
 	_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
-	if _k.Cmp(_minLiquidity) < 0 {
-		err = errors.New("insufficientLiquidity k(" + _k.String() + "), need " + _minLiquidity.String())
+	if _liquidity.Cmp(_minLiquidity) < 0 {
+		err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
 		return
 	}
 	tokenMapReserve := make(map[string]string)
@@ -132,10 +132,10 @@ func NewPair(token0 string, token1 string, reserve0 string, reserve1 string) (pa
 		return new(Pair), err
 	}
 	// cmp with minimum liquidity
-	_k := _reserve0.Mul(_reserve0, _reserve1)
+	_liquidity := new(big.Int).Sqrt(new(big.Int).Mul(_reserve0, _reserve1))
 	_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
-	if _k.Cmp(_minLiquidity) < 0 {
-		err = errors.New("insufficientLiquidity k(" + _k.String() + "), need " + _minLiquidity.String())
+	if _liquidity.Cmp(_minLiquidity) < 0 {
+		err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
 		return new(Pair), err
 	}
 	tokenMapReserve := make(map[string]string)
@@ -163,10 +163,10 @@ func NewPairBig(token0 string, token1 string, _reserve0 *big.Int, _reserve1 *big
 		return new(Pair), err
 	}
 	// cmp with minimum liquidity
-	_k := _reserve0.Mul(_reserve0, _reserve1)
+	_liquidity := new(big.Int).Sqrt(new(big.Int).Mul(_reserve0, _reserve1))
 	_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
-	if _k.Cmp(_minLiquidity) < 0 {
-		err = errors.New("insufficientLiquidity k(" + _k.String() + "), need " + _minLiquidity.String())
+	if _liquidity.Cmp(_minLiquidity) < 0 {
+		err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
 		return new(Pair), err
 	}
 	tokenMapReserve := make(map[string]string)

@@ -43,8 +43,8 @@ type NftPresaleBatchGroupSimplified struct {
 }
 
 type NftPresaleBatchGroupLaunchRequest struct {
-	BatchGroupSetRequest  NftPresaleBatchGroupSetRequest
-	NftPresaleSetRequests *[]NftPresaleSetRequest
+	BatchGroupSetRequest  NftPresaleBatchGroupSetRequest `json:"batch_group_set_request"`
+	NftPresaleSetRequests *[]NftPresaleSetRequest        `json:"nft_presale_set_requests"`
 }
 
 type NftPresaleBatchGroupState int

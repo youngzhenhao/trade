@@ -19,34 +19,10 @@ type Pool struct {
 
 var Lock map[string]map[string]*sync.Mutex
 
-func _addLiquidity(_amount0Desired *big.Int, _amount1Desired *big.Int, _amount0Min *big.Int, _amount1Min *big.Int, _reserve0 *big.Int, _reserve1 *big.Int) (_amount0 *big.Int, _amount1 *big.Int, err error) {
-	_amount1Optimal, err := quoteBig(_amount0Desired, _reserve0, _reserve1)
-	if err != nil {
-		return new(big.Int), new(big.Int), utils.AppendErrorInfo(err, "quoteBig(_amount0Desired, _reserve0, _reserve1)")
-	}
-	if _amount1Optimal.Cmp(_amount1Desired) <= 0 {
-		if !(_amount1Optimal.Cmp(_amount1Min) >= 0) {
-			return new(big.Int), new(big.Int), errors.New("insufficientAmount1(" + _amount1Optimal.String() + ")")
-		}
-		_amount0, _amount1 = _amount0Desired, _amount1Optimal
-	} else {
-		_amount0Optimal, err := quoteBig(_amount1Desired, _reserve1, _reserve0)
-		if err != nil {
-			return new(big.Int), new(big.Int), utils.AppendErrorInfo(err, "quoteBig(_amount1Desired, _reserve1, _reserve0)")
-		}
-		if !(_amount0Optimal.Cmp(_amount0Desired) <= 0) {
-			return new(big.Int), new(big.Int), errors.New("amount0Optimal(" + _amount0Optimal.String() + ") is greater than amount0Desired(" + _amount0Desired.String() + ")")
-		}
-		if !(_amount0Optimal.Cmp(_amount0Min) >= 0) {
-			return new(big.Int), new(big.Int), errors.New("insufficientAmount0(" + _amount0Optimal.String() + ")")
-		}
-		_amount0, _amount1 = _amount0Optimal, _amount1Desired
-	}
-	return _amount0, _amount1, nil
-}
-
-// TODO: Add Liquidity
-func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDesired string, amountAMin string, amountBMin string) error {
+// AddLiquidity
+// @Description: Add Liquidity
+// @param tx transaction, begin first, must be rollback or commit
+func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDesired string, amountAMin string, amountBMin string, username string) (err error) {
 	token0, token1, err := sortTokens(tokenA, tokenB)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "sortTokens")
@@ -98,88 +74,140 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 	}
 
 	// @dev: lock
+	if Lock == nil {
+		Lock = make(map[string]map[string]*sync.Mutex)
+	}
+	if Lock[token0] == nil {
+		Lock[token0] = make(map[string]*sync.Mutex)
+	}
+	if Lock[token0][token1] == nil {
+		Lock[token0][token1] = new(sync.Mutex)
+	}
 	Lock[token0][token1].Lock()
 	defer Lock[token0][token1].Unlock()
 
-	// @dev: transaction
 	tx := middleware.DB.Begin()
-	var _amount0, _amount1 *big.Int
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit().Error
+		}
+	}()
+
+	var _amount0, _amount1 = new(big.Int), new(big.Int)
+	var _reserve0, _reserve1 *big.Int
 	// @dev: get pair
 	var _pair Pair
-	err = tx.Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	var pairId uint
+	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
 	// @dev: pair does not exist
 	if err != nil {
-		_amount0, _amount1 = _amount0Desired, _amount1Desired
+		*_amount0, *_amount1 = *_amount0Desired, *_amount1Desired
 		// @dev: create pair
 		newPair, err := NewPairBig(token0, token1, _amount0, _amount1)
 		if err != nil {
-			tx.Rollback()
 			return utils.AppendErrorInfo(err, "newPair")
 		}
-		err = tx.Create(&newPair).Error
+		err = tx.Model(&Pair{}).Create(&newPair).Error
 		if err != nil {
-			tx.Rollback()
 			return utils.AppendErrorInfo(err, "create pair")
 		}
+		// @dev: set pairId
+		pairId = newPair.ID
+		_reserve0, _reserve1 = big.NewInt(0), big.NewInt(0)
 	} else {
 		// @dev: pair exists
 		// reserve0
-		_reserve0, success := new(big.Int).SetString(_pair.Reserve0, 10)
+		_reserve0, success = new(big.Int).SetString(_pair.Reserve0, 10)
 		if !success {
 			return utils.AppendErrorInfo(err, "SetString("+_pair.Reserve0+") "+strconv.FormatBool(success))
 		}
 		// reserve1
-		_reserve1, success := new(big.Int).SetString(_pair.Reserve1, 10)
+		_reserve1, success = new(big.Int).SetString(_pair.Reserve1, 10)
 		if !success {
 			return utils.AppendErrorInfo(err, "SetString("+_pair.Reserve1+") "+strconv.FormatBool(success))
 		}
 		// No fee for adding liquidity
 		_amount0, _amount1, err = _addLiquidity(_amount0Desired, _amount1Desired, _amount0Min, _amount1Min, _reserve0, _reserve1)
 		if err != nil {
-			tx.Rollback()
 			return utils.AppendErrorInfo(err, "_addLiquidity")
 		}
-		_, _ = _amount0, _amount1
-
-		// TODO: update pair
+		// update pair
 		_newReserve0 := new(big.Int).Add(_reserve0, _amount0)
 		if _newReserve0.Cmp(_reserve0) < 0 {
-			tx.Rollback()
 			return errors.New("invalid _newReserve0(" + _newReserve0.String() + ")")
 		}
 		_newReserve1 := new(big.Int).Add(_reserve1, _amount1)
 		if _newReserve1.Cmp(_reserve1) < 0 {
-			tx.Rollback()
 			return errors.New("invalid _newReserve1(" + _newReserve1.String() + ")")
 		}
-		// TODO
 		err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).
 			Updates(map[string]any{
 				"reserve0": _newReserve0.String(),
 				"reserve1": _newReserve1.String(),
 			}).Error
 		if err != nil {
-			tx.Rollback()
 			return utils.AppendErrorInfo(err, "update pair")
 		}
-
+		// @dev: update pairId
+		pairId = _pair.ID
 	}
 
-	//address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
-
+	// TODO: check balance then transfer, record transfer Id
 	//TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
 	// TODO: Transfer _amount0 of token0 from user to pool
-
 	//TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
 	// TODO: Transfer _amount1 of token1 from user to pool
 
-	//liquidity = IUniswapV2Pair(pair).mint(to);
-	//	TODO: mint share
-	// @dev: calculate liquidity
-
-	//	TODO: update pair, share, shareBalance, shareRecord
-
-	return tx.Commit().Error
+	// get share
+	var share Share
+	var _liquidity *big.Int
+	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).First(&share).Error
+	if err != nil {
+		// @dev: no share
+		_liquidity, err = _mintBig(_amount0, _amount1, big.NewInt(0), big.NewInt(0), big.NewInt(0))
+		if err != nil {
+			return utils.AppendErrorInfo(err, "_mintBig")
+		}
+		var newShare *Share
+		newShare, err = NewShare(pairId, _liquidity.String())
+		if err != nil {
+			return utils.AppendErrorInfo(err, "NewShare")
+		}
+		// @dev: update share, shareBalance, shareRecord
+		err = tx.Model(&Share{}).Create(&newShare).Error
+		if err != nil {
+			return utils.AppendErrorInfo(err, "create share")
+		}
+		shareSupply := big.NewInt(0).String()
+		err = UpdateShareBalanceAndRecord(tx, newShare, username, _liquidity, _reserve0.String(), _reserve1.String(), _amount0.String(), _amount1.String(), shareSupply, true)
+		if err != nil {
+			return utils.AppendErrorInfo(err, "UpdateShareBalanceAndRecord")
+		}
+	} else {
+		_totalSupply, success := new(big.Int).SetString(share.TotalSupply, 10)
+		if !success {
+			return utils.AppendErrorInfo(err, "SetString("+share.TotalSupply+") "+strconv.FormatBool(success))
+		}
+		_liquidity, err = _mintBig(_amount0, _amount1, _reserve0, _reserve1, _totalSupply)
+		if err != nil {
+			return utils.AppendErrorInfo(err, "_mintBig")
+		}
+		// @dev: update share, shareBalance, shareRecord
+		newSupply := new(big.Int).Add(_totalSupply, _liquidity)
+		err = tx.Model(&Share{}).Where("pair_id = ?", pairId).
+			Update("total_supply", newSupply.String()).Error
+		if err != nil {
+			return utils.AppendErrorInfo(err, "update share")
+		}
+		err = UpdateShareBalanceAndRecord(tx, &share, username, _liquidity, _reserve0.String(), _reserve1.String(), _amount0.String(), _amount1.String(), _totalSupply.String(), false)
+		if err != nil {
+			return utils.AppendErrorInfo(err, "UpdateShareBalanceAndRecord")
+		}
+	}
+	err = nil
+	return err
 }
 
 // TODO: Remove Liquidity

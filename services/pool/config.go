@@ -1,11 +1,12 @@
 package pool
 
 const (
-	ZeroValue            = "0"
-	TokenSatTag   string = "sat"
-	MinLiquidity  uint   = 1e3
-	MinSatFee     uint   = 20
-	AssetIdLength        = 64
+	ZeroValue          = "0"
+	TokenSatTag string = "sat"
+	// TODO: Set this
+	MinLiquidity  uint = 1e2
+	MinSatFee     uint = 20
+	AssetIdLength      = 64
 )
 
 // FeeK is 1000 * Fee Rate
