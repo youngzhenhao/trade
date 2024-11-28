@@ -134,7 +134,7 @@ func GetAccountAssetBalanceExtendsLimitAndOffset(assetId string, limit int, offs
 func GetAccountAssetBalanceLength(assetId string) (int64, error) {
 	var count int64
 	err := middleware.DB.
-		Model(&models.AccountBalance{}).
+		Model(&custodyModels.AccountBalance{}).
 		Where("amount <> ? AND asset_id = ?", 0, assetId).
 		Count(&count).Error
 	if err != nil {

@@ -259,7 +259,7 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 	}
 
 	// update user account
-	_, err = custodyAssets.AddAssetBalance(tx, usr, balanceBill.Amount, balanceBill.ID, *balanceBill.AssetId, cModels.ChangeTypeLockedTransfer)
+	_, err = custodyAssets.AddAssetBalance(tx, toUser, balanceBill.Amount, balanceBill.ID, *balanceBill.AssetId, cModels.ChangeTypeLockedTransfer)
 	if err != nil {
 		return err
 	}
