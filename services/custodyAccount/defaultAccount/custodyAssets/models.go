@@ -104,7 +104,6 @@ func (p *AssetPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 type isInsideMission struct {
 	isInside      bool
 	insideInvoice *models.Invoice
-	insideMission *models.PayInside
 	err           chan error
 }
 

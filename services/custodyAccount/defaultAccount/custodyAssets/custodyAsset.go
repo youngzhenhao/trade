@@ -165,7 +165,6 @@ func (e *AssetEvent) SendPayment(payRequest cBase.PayPacket) error {
 
 func (e *AssetEvent) payToInside(bt *AssetPacket) {
 	AssetId := hex.EncodeToString(bt.DecodePayReq.AssetId)
-
 	m := custodyModels.AccountInsideMission{
 		AccountId:  e.UserInfo.Account.ID,
 		AssetId:    AssetId,

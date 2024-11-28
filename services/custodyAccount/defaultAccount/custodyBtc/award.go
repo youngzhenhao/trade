@@ -6,8 +6,8 @@ import (
 	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 	caccount "trade/services/custodyAccount/account"
-	"trade/services/custodyAccount/custodyBase/custodyRpc"
 )
 
 func PutInAward(user *caccount.UserInfo, _ string, amount int, memo *string, lockedId string) (*models.AccountAward, error) {
@@ -73,10 +73,9 @@ func PutInAward(user *caccount.UserInfo, _ string, amount int, memo *string, loc
 	if amount < 0 || amount > 1000000 {
 		return nil, errors.New("award amount is error")
 	}
-	// Change the escrow account balance
-	_, err = custodyRpc.UpdateBalance(user, custodyRpc.UpdateBalancePlus, int64(amount))
+	// Add btc balance
+	_, err = AddBtcBalance(tx, user, ba.Amount, ba.ID, custodyModels.ChangeTypeAward)
 	if err != nil {
-		btlLog.CUST.Error(err.Error())
 		return nil, err
 	}
 	tx.Commit()

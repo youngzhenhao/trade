@@ -68,7 +68,6 @@ func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 		custodyAssets.AddressServer.Start(ctx)
 		//asset 转账监听
 		custodyAssets.OutsideSever.Start(ctx)
-		custodyAssets.InSideSever.Start(ctx)
 	}
 
 	return true

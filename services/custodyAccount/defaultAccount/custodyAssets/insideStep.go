@@ -157,7 +157,6 @@ func InsideSteps(usr *account.UserInfo, mission *custodyModels.AccountInsideMiss
 		mission.State = custodyModels.AIMStateSuccess
 		tx.Commit()
 		return
-
 	}
 }
 

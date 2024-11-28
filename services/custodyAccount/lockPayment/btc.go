@@ -267,7 +267,7 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 		return ServiceError
 	}
 
-	_, err = custodyBtc.AddBtcBalance(tx, usr, amount, balanceBill.ID, cModels.ChangeTypeLockedTransfer)
+	_, err = custodyBtc.AddBtcBalance(tx, toUser, amount, balanceBill.ID, cModels.ChangeTypeLockedTransfer)
 	if err != nil {
 		return ServiceError
 	}
@@ -374,7 +374,7 @@ func transferBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser
 		return ServiceError
 	}
 
-	_, err = custodyBtc.AddBtcBalance(tx, usr, amount, balanceBillRev.ID, cModels.ChangeTypeLockedTransfer)
+	_, err = custodyBtc.AddBtcBalance(tx, toUser, amount, balanceBillRev.ID, cModels.ChangeTypeLockedTransfer)
 	if err != nil {
 		return ServiceError
 	}
