@@ -1,8 +1,9 @@
 package custodyAccount
 
 import (
-	"trade/services/btldb"
+	"trade/middleware"
 	cBase "trade/services/custodyAccount/custodyBase"
+	"trade/services/custodyAccount/defaultAccount/custodyAssets"
 	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 	"trade/services/custodyAccount/lockPayment"
 )
@@ -21,10 +22,7 @@ func GetAssetBalanceList(userName string) (*[]cBase.Balance, error) {
 		AssetId: "00",
 		Amount:  int64(unlockedBalance + lockedBalance),
 	}
-	temp, err := btldb.GetAccountBalanceByAccountId(e.UserInfo.Account.ID)
-	if err != nil {
-		return nil, err
-	}
+	temp := custodyAssets.GetAssetsBalances(middleware.DB, e.UserInfo.Account.ID)
 	for _, v := range *temp {
 		_, exists := list[v.AssetId]
 		if exists {

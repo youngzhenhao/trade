@@ -6,17 +6,17 @@ import (
 
 type Balance struct {
 	gorm.Model
-	AccountId   uint            `gorm:"column:account_id;type:bigint unsigned" json:"accountId"` // 正确地将unique和column选项放在同一个gorm标签内
-	BillType    BalanceType     `gorm:"column:bill_type;type:smallint" json:"billType"`
-	Away        BalanceAway     `gorm:"column:away;type:smallint" json:"away"`
-	Amount      float64         `gorm:"column:amount;type:decimal(10,2)" json:"amount"`
-	Unit        BalanceUnit     `gorm:"column:Unit;type:smallint" json:"unit"`
-	ServerFee   uint64          `gorm:"column:server_fee;type:bigint unsigned" json:"serverFee"`
-	AssetId     *string         `gorm:"column:asset_id;type:varchar(512);default:'00'" json:"assetId"`
-	Invoice     *string         `gorm:"column:invoice;type:varchar(512)" json:"invoice"`
-	PaymentHash *string         `gorm:"column:payment_hash;type:varchar(100)" json:"paymentHash"`
-	State       BalanceState    `gorm:"column:State;type:smallint" json:"State"`
-	TypeExt     *BalanceTypeExt `gorm:"unique;"`
+	AccountId   uint         `gorm:"column:account_id;type:bigint unsigned" json:"accountId"`
+	BillType    BalanceType  `gorm:"column:bill_type;type:smallint" json:"billType"`
+	Away        BalanceAway  `gorm:"column:away;type:smallint" json:"away"`
+	Amount      float64      `gorm:"column:amount;type:decimal(10,2)" json:"amount"`
+	Unit        BalanceUnit  `gorm:"column:Unit;type:smallint" json:"unit"`
+	ServerFee   uint64       `gorm:"column:server_fee;type:bigint unsigned" json:"serverFee"`
+	AssetId     *string      `gorm:"column:asset_id;type:varchar(512);default:'00'" json:"assetId"`
+	Invoice     *string      `gorm:"column:invoice;type:varchar(512)" json:"invoice"`
+	PaymentHash *string      `gorm:"column:payment_hash;type:varchar(100)" json:"paymentHash"`
+	State       BalanceState `gorm:"column:State;type:smallint" json:"State"`
+	TypeExt     *BalanceTypeExt
 }
 
 func (Balance) TableName() string {

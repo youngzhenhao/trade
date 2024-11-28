@@ -18,6 +18,9 @@ func Migrate() error {
 		if err = custodyLimitMigrate(err); err != nil {
 			return err
 		}
+		if err = custodyBTCMigrate(err); err != nil {
+			return err
+		}
 	}
 
 	if err = middleware.DB.AutoMigrate(&models.Account{}); err != nil {
@@ -51,9 +54,6 @@ func Migrate() error {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&models.AssetIssuance{}); err != nil {
-		return err
-	}
-	if err = middleware.DB.AutoMigrate(&models.PayInside{}); err != nil {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&models.IdoPublishInfo{}); err != nil {
@@ -125,13 +125,13 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.BackFee{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&models.AccountBalance{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&custodyModels.AccountBalance{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&models.PayOutside{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&custodyModels.PayOutside{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&models.PayOutsideTx{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&custodyModels.PayOutsideTx{}); err != nil {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&models.LogFileUpload{}); err != nil {
@@ -231,5 +231,21 @@ func custodyLimitMigrate(err error) error {
 		return err
 	}
 
+	return err
+}
+
+func custodyBTCMigrate(err error) error {
+	if err = middleware.DB.AutoMigrate(&custodyModels.AccountInsideMission{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&custodyModels.AccountOutsideMission{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&custodyModels.AccountBalanceChange{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&custodyModels.AccountBtcBalance{}); err != nil {
+		return err
+	}
 	return err
 }

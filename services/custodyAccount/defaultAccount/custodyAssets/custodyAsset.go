@@ -18,6 +18,8 @@ import (
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
 	"trade/services/custodyAccount/custodyBase/custodyLimit"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc/mempool"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -44,27 +46,18 @@ func NewAssetEvent(UserName string, AssetId string) (*AssetEvent, error) {
 }
 
 func (e *AssetEvent) GetBalance() ([]cBase.Balance, error) {
-	balance, err := btldb.GetAccountBalanceByGroup(e.UserInfo.Account.ID, *e.AssetId)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, models.ReadDbErr
-	}
+	balance := GetAssetBalance(middleware.DB, e.UserInfo.Account.ID, *e.AssetId)
 	balances := []cBase.Balance{
 		{
-			AssetId: balance.AssetId,
-			Amount:  int64(balance.Amount),
+			AssetId: *e.AssetId,
+			Amount:  int64(balance),
 		},
 	}
 	return balances, nil
 }
 
 func (e *AssetEvent) GetBalances() ([]cBase.Balance, error) {
-	temp, err := btldb.GetAccountBalanceByAccountId(e.UserInfo.Account.ID)
-	if err != nil {
-		return nil, models.ReadDbErr
-	}
+	temp := GetAssetsBalances(middleware.DB, e.UserInfo.Account.ID)
 	var balances []cBase.Balance
 	for _, b := range *temp {
 		balances = append(balances, cBase.Balance{
@@ -172,76 +165,20 @@ func (e *AssetEvent) SendPayment(payRequest cBase.PayPacket) error {
 
 func (e *AssetEvent) payToInside(bt *AssetPacket) {
 	AssetId := hex.EncodeToString(bt.DecodePayReq.AssetId)
-	receiveBalance, err := btldb.GetAccountBalanceByGroup(e.UserInfo.Account.ID, AssetId)
-	if err != nil {
-		btlLog.CUST.Error("err:%v", models.ReadDbErr)
+	m := custodyModels.AccountInsideMission{
+		AccountId:  e.UserInfo.Account.ID,
+		AssetId:    AssetId,
+		Type:       custodyModels.AIMTypeBtc,
+		ReceiverId: *bt.isInsideMission.insideInvoice.AccountID,
+		InvoiceId:  bt.isInsideMission.insideInvoice.ID,
+		Amount:     float64(bt.DecodePayReq.Amount),
+		Fee:        float64(custodyFee.AssetInsideFee),
+		FeeType:    custodyBtc.BtcId,
+		State:      custodyModels.AIMStatePending,
 	}
-	receiveBalance.Amount -= float64(bt.DecodePayReq.Amount)
-	err = btldb.UpdateAccountBalance(receiveBalance)
-	if err != nil {
-		btlLog.CUST.Error("err:%v", models.ReadDbErr)
-	}
-	bill := models.Balance{
-		AccountId:   e.UserInfo.Account.ID,
-		BillType:    models.BillTypeAssetTransfer,
-		Away:        models.AWAY_OUT,
-		Amount:      float64(bt.DecodePayReq.Amount),
-		Unit:        models.UNIT_ASSET_NORMAL,
-		ServerFee:   custodyFee.AssetInsideFee,
-		AssetId:     &AssetId,
-		Invoice:     &bt.PayReq,
-		PaymentHash: nil,
-		State:       models.STATE_SUCCESS,
-		TypeExt: &models.BalanceTypeExt{
-			Type: models.BTExtLocal,
-		},
-	}
-	err = btldb.CreateBalance(&bill)
-	if err != nil {
-		btlLog.CUST.Error("err:%v", models.ReadDbErr)
-	}
-
-	//创建内部转账任务
-	payInside := models.PayInside{
-		PayUserId:     e.UserInfo.User.ID,
-		GasFee:        bt.DecodePayReq.Amount,
-		ServeFee:      0,
-		ReceiveUserId: bt.isInsideMission.insideInvoice.UserID,
-		PayType:       models.PayInsideByAddress,
-		AssetType:     AssetId,
-		PayReq:        &bt.PayReq,
-		BalanceId:     bill.ID,
-		Status:        models.PayInsideStatusPending,
-	}
-	//写入数据库
-	err = btldb.CreatePayInside(&payInside)
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
-		bt.err <- err
-		return
-	}
-	//收取手续费
-	err = custodyFee.PayServiceFeeSync(e.UserInfo, custodyFee.AssetInsideFee, bill.ID, models.AssetInSideFee, "payToInside Asset Fee")
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
-		bt.err <- err
-		return
-	}
-	//递交给内部转账服务
-	bt.isInsideMission.insideMission = &payInside
-	InSideSever.Queue.addNewPkg(bt.isInsideMission)
-	//更新额度限制
-	limitType := custodyModels.LimitType{
-		AssetId:      AssetId,
-		TransferType: custodyModels.LimitTransferTypeLocal,
-	}
-	err = custodyLimit.MinusLimit(middleware.DB, e.UserInfo, &limitType, float64(bt.DecodePayReq.Amount))
-	if err != nil {
-		btlLog.CUST.Error("额度限制未正常更新:%s", err.Error())
-		btlLog.CUST.Error("error payInsideId:%v", payInside.ID)
-		return
-	}
-
+	custodyBtc.LogAIM(middleware.DB, &m)
+	err := RunInsideStep(e.UserInfo, &m)
+	bt.err <- err
 }
 
 func (e *AssetEvent) payToOutside(bt *AssetPacket) {
@@ -252,7 +189,7 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		Away:      models.AWAY_OUT,
 		Amount:    float64(bt.DecodePayReq.Amount),
 		Unit:      models.UNIT_ASSET_NORMAL,
-		ServerFee: uint64(custodyFee.GetCustodyAssetFee()),
+		ServerFee: uint64(mempool.GetCustodyAssetFee()),
 		AssetId:   &assetId,
 		Invoice:   &bt.PayReq,
 		State:     models.STATE_UNKNOW,
@@ -260,29 +197,29 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 			Type: models.BTExtOnChannel,
 		},
 	}
-	err := btldb.CreateBalance(&outsideBalance)
+	db := middleware.DB
+	err := btldb.CreateBalance(db, &outsideBalance)
 	if err != nil {
 		btlLog.CUST.Error("payToOutside db error:balance %v", err)
 	}
 
-	outside := models.PayOutside{
+	outside := custodyModels.PayOutside{
 		AccountID: e.UserInfo.Account.ID,
 		AssetId:   assetId,
 		Address:   bt.DecodePayReq.Encoded,
 		Amount:    float64(bt.DecodePayReq.Amount),
 		BalanceId: outsideBalance.ID,
-		Status:    models.PayOutsideStatusPending,
+		Status:    custodyModels.PayOutsideStatusPending,
 	}
 	err = btldb.CreatePayOutside(&outside)
 	if err != nil {
 		btlLog.CUST.Error("payToOutside db error")
 	}
-	b, _ := btldb.GetAccountBalanceByGroup(e.UserInfo.Account.ID, assetId)
-	b.Amount -= float64(bt.DecodePayReq.Amount)
-	err = btldb.UpdateAccountBalance(b)
+	_, err = LessAssetBalance(db, e.UserInfo, outsideBalance.Amount, outsideBalance.ID, *outsideBalance.AssetId, custodyModels.ChangeTypeAssetPayOutside)
 	if err != nil {
-		btlLog.CUST.Error("payToOutside db error")
+		return
 	}
+
 	m := OutsideMission{
 		AddrTarget: []*target{
 			{
@@ -293,10 +230,9 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 		TotalAmount: int64(bt.DecodePayReq.Amount),
 	}
 	//收取手续费
-	err = custodyFee.PayServiceFeeSync(e.UserInfo, uint64(custodyFee.GetCustodyAssetFee()), outsideBalance.ID, models.AssetOutSideFee, "payToOutside Asset Fee")
+	err = custodyBtc.PayFee(db, e.UserInfo, float64(mempool.GetCustodyAssetFee()), outsideBalance.ID)
 	if err != nil {
-		btlLog.CUST.Error(err.Error())
-		bt.err <- err
+		btlLog.CUST.Error("PayFee error:%s", err)
 		return
 	}
 	bt.err <- nil

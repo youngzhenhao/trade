@@ -17,6 +17,7 @@ import (
 	"trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
 	"trade/services/custodyAccount/defaultAccount/custodyAssets"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc/mempool"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -365,7 +366,7 @@ func DecodeAddress(c *gin.Context) {
 		result.FeeRate = 0
 	}
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		result.FeeRate = float64(custodyFee.GetCustodyAssetFee())
+		result.FeeRate = float64(mempool.GetCustodyAssetFee())
 	} else {
 		result.FeeRate = float64(custodyFee.AssetInsideFee)
 	}

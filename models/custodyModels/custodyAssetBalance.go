@@ -1,4 +1,4 @@
-package models
+package custodyModels
 
 import "gorm.io/gorm"
 

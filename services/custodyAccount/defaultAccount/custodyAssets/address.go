@@ -11,7 +11,8 @@ import (
 	"trade/config"
 	"trade/middleware"
 	"trade/models"
-	"trade/services/btldb"
+	"trade/models/custodyModels"
+	"trade/services/custodyAccount/account"
 	"trade/utils"
 )
 
@@ -118,28 +119,16 @@ func dealEvent(tx *gorm.DB, event *taprpc.ReceiveEvent) error {
 			btlLog.CUST.Error(err.Error())
 			return err
 		}
+		usr, err := account.GetUserInfoById(i.UserID)
+		if err != nil {
+			btlLog.CUST.Error(err.Error())
+			return err
+		}
+		_, err = AddAssetBalance(tx, usr, b.Amount, b.ID, *b.AssetId, custodyModels.ChangTypeAssetReceiveOutside)
+		if err != nil {
+			return err
+		}
 
-		receiveBalance, err := btldb.GetAccountBalanceByGroup(*i.AccountID, i.AssetId)
-		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			btlLog.CUST.Error("err:%v", models.ReadDbErr)
-		}
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			newBalance := models.AccountBalance{
-				AccountID: *i.AccountID,
-				AssetId:   i.AssetId,
-				Amount:    r.Amount,
-			}
-			if err = tx.Create(&newBalance).Error; err != nil {
-				btlLog.CUST.Error(err.Error())
-				return err
-			}
-		} else {
-			receiveBalance.Amount += r.Amount
-			if err = tx.Save(&receiveBalance).Error; err != nil {
-				btlLog.CUST.Error(err.Error())
-				return err
-			}
-		}
 		return nil
 
 	default:
