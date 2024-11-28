@@ -1,102 +1,58 @@
 package custodyBtc
 
 import (
-	"fmt"
-	"time"
-	"trade/btlLog"
-	"trade/config"
+	"gorm.io/gorm"
+	"trade/middleware"
 	"trade/models"
-	"trade/services/btldb"
-	caccount "trade/services/custodyAccount/account"
-	"trade/services/custodyAccount/custodyBase/custodyFee"
-	"trade/services/custodyAccount/custodyBase/custodyRpc"
-	rpc "trade/services/servicesrpc"
+	"trade/models/custodyModels"
+	"trade/services/custodyAccount/account"
 )
 
 func PayFirLunchFee(e *BtcChannelEvent, gasFee uint64) (uint, error) {
-	//获取账户信息
-	acc, err := custodyRpc.GetAccountInfo(e.UserInfo)
-	if err != nil {
-		btlLog.CUST.Error("AccountInfo error(UserId=%v):%v", e.UserInfo.User.ID, err)
-		return 0, fmt.Errorf("AccountInfo error")
+	tx, back := middleware.GetTx()
+	defer back()
+	var err error
+	assetId := BtcId
+	invoice := "lnfirlunchFee"
+	balance := models.Balance{
+		AccountId:   e.UserInfo.Account.ID,
+		BillType:    models.BillTypePayment,
+		Away:        models.AWAY_OUT,
+		Amount:      float64(gasFee),
+		Unit:        models.UNIT_SATOSHIS,
+		ServerFee:   0,
+		AssetId:     &assetId,
+		Invoice:     &invoice,
+		PaymentHash: nil,
+		State:       1,
+		TypeExt: &models.BalanceTypeExt{
+			Type: models.BTExtFirLaunch,
+		},
 	}
-	//检查账户余额是否足够
-	if acc.CurrentBalance < int64(gasFee) {
-		btlLog.CUST.Error("Account balance not enough(UserId=%v)", e.UserInfo.User.ID)
-		return 0, fmt.Errorf("account balance not enough")
-	}
-	//管理员账户
-	macaroonFile := config.GetConfig().ApiConfig.Lnd.MacaroonPath
-	if macaroonFile == "" {
-		btlLog.CUST.Error(caccount.MacaroonFindErr.Error())
-		return 0, caccount.MacaroonFindErr
-	}
-	//调用Lit节点发票申请接口
-	res, err := rpc.InvoiceCreate(int64(gasFee), custodyFee.SetMemoSign(), macaroonFile)
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
-		return 0, fmt.Errorf("%w: %s", CreateInvoiceErr, err.Error())
-	}
-
-	//构建invoice对象
-	var invoiceModel models.Invoice
-	var adminId uint = 1
-	invoiceModel.UserID = adminId
-	invoiceModel.AccountID = &adminId
-
-	invoiceModel.Invoice = res.PaymentRequest
-	invoiceModel.Amount = float64(gasFee)
-
-	invoiceModel.Status = models.InvoiceStatusPending
-	template := time.Now()
-	invoiceModel.CreateDate = &template
-	expiry := 86400
-	invoiceModel.Expiry = &expiry
-	//写入数据库
-	err = btldb.CreateInvoice(&invoiceModel)
-	if err != nil {
-		btlLog.CUST.Error(err.Error(), models.ReadDbErr)
-		return 0, models.ReadDbErr
-	}
-
-	//创建内部转账任务
-	payInside := models.PayInside{
-		PayUserId:     e.UserInfo.User.ID,
-		GasFee:        gasFee,
-		ServeFee:      0,
-		ReceiveUserId: 1,
-		PayType:       models.FairLunchFee,
-		AssetType:     "00",
-		PayReq:        &res.PaymentRequest,
-		Status:        models.PayInsideStatusPending,
-	}
-	//写入数据库
-	err = btldb.CreatePayInside(&payInside)
-	if err != nil {
-		btlLog.CUST.Error(err.Error())
+	if err = tx.Create(&balance).Error; err != nil {
 		return 0, err
 	}
-	//递交给内部转账服务
-	var mission isInsideMission
-	mission.isInside = true
-	mission.insideInvoice = &invoiceModel
-	mission.insideMission = &payInside
-	BtcSever.NewMission(&mission)
-	return payInside.ID, nil
+	//扣除手续费
+	id, err := LessBtcBalance(tx, e.UserInfo, float64(gasFee), balance.ID, custodyModels.ChangeFirLunchFee)
+	if err != nil {
+		return 0, err
+	}
+	tx.Commit()
+
+	return id, nil
 }
 
 // CheckFirLunchFee 检查内部转账任务状态是否成功
 func CheckFirLunchFee(id uint) (bool, error) {
-	p, err := btldb.ReadPayInside(id)
+	p := custodyModels.AccountBalanceChange{}
+	err := middleware.DB.Where("id =?", id).First(&p).Error
 	if err != nil {
 		return false, err
 	}
-	switch p.Status {
-	case models.PayInsideStatusSuccess:
-		return true, nil
-	case models.PayInsideStatusFailed:
-		return false, models.CustodyAccountPayInsideMissionFaild
-	default:
-		return false, models.CustodyAccountPayInsideMissionPending
-	}
+	return true, nil
+}
+
+func PayFee(Db *gorm.DB, usr *account.UserInfo, amount float64, balanceId uint) error {
+	_, err := LessBtcBalance(Db, usr, amount, balanceId, custodyModels.ChangeTypeBtcFee)
+	return err
 }

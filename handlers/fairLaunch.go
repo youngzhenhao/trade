@@ -739,6 +739,7 @@ func GetFairLaunchInfoPlusByAssetId(c *gin.Context) {
 	})
 }
 
+// Deprecated
 func RefundUserFirstMintByUsernameAndAssetId(c *gin.Context) {
 	var refundUserFirstMintRequest services.RefundUserFirstMintRequest
 	err := c.BindJSON(&refundUserFirstMintRequest)

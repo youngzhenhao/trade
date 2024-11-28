@@ -4,32 +4,33 @@ import (
 	"math"
 	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
 	"trade/utils"
 )
 
-func ReadUserAccountBalancesByAssetId(assetId string) (*[]models.AccountBalance, error) {
-	var accountBalances []models.AccountBalance
+func ReadUserAccountBalancesByAssetId(assetId string) (*[]custodyModels.AccountBalance, error) {
+	var accountBalances []custodyModels.AccountBalance
 	err := middleware.DB.Where("amount <> ? AND asset_id = ?", 0, assetId).Order("amount desc").Find(&accountBalances).Error
 	return &accountBalances, err
 }
 
-func ReadAccountBalancesByAssetId(assetId string) (*[]models.AccountBalance, error) {
-	var accountBalances []models.AccountBalance
+func ReadAccountBalancesByAssetId(assetId string) (*[]custodyModels.AccountBalance, error) {
+	var accountBalances []custodyModels.AccountBalance
 	err := middleware.DB.Where("asset_id = ?", assetId).Find(&accountBalances).Error
 	return &accountBalances, err
 }
 
-func ReadUserAccountBalancesByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*[]models.AccountBalance, error) {
-	var accountBalances []models.AccountBalance
+func ReadUserAccountBalancesByAssetIdLimitAndOffset(assetId string, limit int, offset int) (*[]custodyModels.AccountBalance, error) {
+	var accountBalances []custodyModels.AccountBalance
 	err := middleware.DB.Where("amount <> ? AND asset_id = ?", 0, assetId).Order("amount desc").Limit(limit).Offset(offset).Find(&accountBalances).Error
 	return &accountBalances, err
 }
 
-func ReadAllAccountAssetBalancesByAssetId(assetId string) (*[]models.AccountBalance, error) {
+func ReadAllAccountAssetBalancesByAssetId(assetId string) (*[]custodyModels.AccountBalance, error) {
 	return ReadUserAccountBalancesByAssetId(assetId)
 }
 
-func GetAllAccountAssetBalancesByAssetId(assetId string) (*[]models.AccountBalance, error) {
+func GetAllAccountAssetBalancesByAssetId(assetId string) (*[]custodyModels.AccountBalance, error) {
 	return ReadAllAccountAssetBalancesByAssetId(assetId)
 }
 

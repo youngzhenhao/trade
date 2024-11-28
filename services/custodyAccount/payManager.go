@@ -55,13 +55,20 @@ func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 		return false
 	}
 	fmt.Println("Custody account MacaroonDir is set:", cfg.ApiConfig.CustodyAccount.MacaroonDir)
-	// Start the custody account service
-	custodyBtc.BtcSever.Start(ctx)
-	custodyBtc.InvoiceServer.Start(ctx)
-	custodyAssets.OutsideSever.Start(ctx)
-	custodyAssets.InSideSever.Start(ctx)
-	custodyAssets.AddressServer.Start(ctx)
-	//Check the custody service status
+	{
+		//收款地址监听
+		custodyBtc.InvoiceServer.Start(ctx)
+		// 加载pending mission
+		custodyBtc.LoadAOMMission()
+		custodyBtc.LoadAIMMission()
+	}
+
+	{
+		//收款地址监听
+		custodyAssets.AddressServer.Start(ctx)
+		//asset 转账监听
+		custodyAssets.OutsideSever.Start(ctx)
+	}
 
 	return true
 }
@@ -116,33 +123,18 @@ func PayAmountToAdmin(payUserId uint, gasFee uint64) (uint, error) {
 	return id, nil
 }
 
-func BackAmount(payInsideId uint) (uint, error) {
-	missionId, err := CreateBackFeeMission(payInsideId)
-	if err != nil {
-		return 0, err
-	}
-	return missionId, nil
-}
-
-func CheckBackFeeMission(missionId uint) bool {
-	return checkBackFeeMissionById(missionId)
-}
-
 // CheckPayInsideStatus
 // 检查内部转账任务状态是否成功
 func CheckPayInsideStatus(id uint) (bool, error) {
-	p, err := btldb.ReadPayInside(id)
-	if err != nil {
-		return false, err
-	}
-	switch p.Status {
-	case models.PayInsideStatusSuccess:
-		return true, nil
-	case models.PayInsideStatusFailed:
-		return false, models.CustodyAccountPayInsideMissionFaild
-	default:
-		return false, models.CustodyAccountPayInsideMissionPending
-	}
+	return custodyBtc.CheckFirLunchFee(id)
+}
+
+func BackAmount(payInsideId uint) (uint, error) {
+	return 0, fmt.Errorf("not support")
+}
+
+func CheckBackFeeMission(missionId uint) bool {
+	return false
 }
 
 // IsAccountBalanceEnoughByUserId

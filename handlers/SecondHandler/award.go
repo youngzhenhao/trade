@@ -94,7 +94,7 @@ func PutAssetAward(c *gin.Context) {
 	}
 	switch creds.AccountType {
 	case "default":
-		award, err := custodyAssets.PutInAward(e.UserInfo.Account, creds.AssetId, creds.Amount, &creds.Memo, creds.LockedId)
+		award, err := custodyAssets.PutInAward(e.UserInfo, creds.AssetId, creds.Amount, &creds.Memo, creds.LockedId)
 		if err != nil {
 			btlLog.CUST.Error("%v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

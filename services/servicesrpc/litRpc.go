@@ -2,10 +2,8 @@ package servicesrpc
 
 import (
 	"context"
-	"errors"
 	"github.com/lightninglabs/lightning-terminal/litrpc"
 	"strconv"
-	"trade/btlLog"
 	"trade/config"
 	"trade/utils"
 )
@@ -52,92 +50,6 @@ func AccountInfo(id string) (*litrpc.Account, error) {
 		return nil, err
 	}
 	return response, err
-}
-
-func AccountUpdate(id string, balance int64, expirationDate int64) (*litrpc.Account, error) {
-	litdconf := config.GetConfig().ApiConfig.Litd
-
-	grpcHost := litdconf.Host + ":" + strconv.Itoa(litdconf.Port)
-	tlsCertPath := litdconf.TlsCertPath
-	macaroonPath := litdconf.MacaroonPath
-
-	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
-	defer connClose()
-
-	if balance < 0 || balance > 500000000 {
-		btlLog.CUST.Error("balance must be between 0 and 5000000 sat")
-		return nil, errors.New("balance must be between 0 and 5000000 sat")
-	}
-
-	request := &litrpc.UpdateAccountRequest{
-		Id:             id,
-		AccountBalance: balance,
-		ExpirationDate: expirationDate,
-	}
-	client := litrpc.NewAccountsClient(conn)
-	response, err := client.UpdateAccount(context.Background(), request)
-	if err != nil {
-		return nil, err
-	}
-	return response, err
-}
-
-func acountList() ([]*litrpc.Account, error) {
-	litdconf := config.GetConfig().ApiConfig.Litd
-
-	grpcHost := litdconf.Host + ":" + strconv.Itoa(litdconf.Port)
-	tlsCertPath := litdconf.TlsCertPath
-	macaroonPath := litdconf.MacaroonPath
-
-	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
-	defer connClose()
-
-	request := &litrpc.ListAccountsRequest{}
-	client := litrpc.NewAccountsClient(conn)
-	response, err := client.ListAccounts(context.Background(), request)
-	if err != nil {
-		return nil, err
-	}
-	return response.Accounts, err
-}
-
-func accountQueryId(label string) (string, error) {
-	litdconf := config.GetConfig().ApiConfig.Litd
-
-	grpcHost := litdconf.Host + ":" + strconv.Itoa(litdconf.Port)
-	tlsCertPath := litdconf.TlsCertPath
-	macaroonPath := litdconf.MacaroonPath
-
-	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
-	defer connClose()
-
-	request := &litrpc.AccountInfoRequest{
-		Label: label,
-	}
-	client := litrpc.NewAccountsClient(conn)
-	response, err := client.AccountInfo(context.Background(), request)
-	if err != nil {
-		return "", err
-	}
-	return response.Id, err
-}
-
-func AccountRemove(id string) error {
-	litdconf := config.GetConfig().ApiConfig.Litd
-
-	grpcHost := litdconf.Host + ":" + strconv.Itoa(litdconf.Port)
-	tlsCertPath := litdconf.TlsCertPath
-	macaroonPath := litdconf.MacaroonPath
-
-	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
-	defer connClose()
-
-	request := &litrpc.RemoveAccountRequest{
-		Id: id,
-	}
-	client := litrpc.NewAccountsClient(conn)
-	_, err := client.RemoveAccount(context.Background(), request)
-	return err
 }
 
 func LitdInfo() string {

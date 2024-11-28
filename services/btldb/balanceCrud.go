@@ -1,6 +1,7 @@
 package btldb
 
 import (
+	"gorm.io/gorm"
 	"sync"
 	"trade/middleware"
 	"trade/models"
@@ -9,10 +10,10 @@ import (
 var balanceMutex sync.Mutex
 
 // CreateBalance creates a new balance record
-func CreateBalance(balance *models.Balance) error {
+func CreateBalance(tx *gorm.DB, balance *models.Balance) error {
 	balanceMutex.Lock()
 	defer balanceMutex.Unlock()
-	return middleware.DB.Create(balance).Error
+	return tx.Create(balance).Error
 }
 
 // ReadBalance retrieves a balance by Id
@@ -23,10 +24,10 @@ func ReadBalance(id uint) (*models.Balance, error) {
 }
 
 // UpdateBalance updates an existing balance
-func UpdateBalance(balance *models.Balance) error {
+func UpdateBalance(tx *gorm.DB, balance *models.Balance) error {
 	balanceMutex.Lock()
 	defer balanceMutex.Unlock()
-	return middleware.DB.Save(balance).Error
+	return tx.Save(balance).Error
 }
 
 // DeleteBalance soft deletes a balance by Id

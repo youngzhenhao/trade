@@ -191,7 +191,7 @@ func BalanceQuery(quest BalanceQueryQuest) *[]BalanceQueryResp {
 			})
 		}
 
-		var accountBalances []models.AccountBalance
+		var accountBalances []custodyModels.AccountBalance
 		_ = db.Where("account_id =?", account.ID).Find(&accountBalances).Error
 		if len(accountBalances) != 0 {
 			for _, balance := range accountBalances {
@@ -245,7 +245,7 @@ func GetAssetList(quest GetAssetListQuest) (*[]GetAssetListResp, int64) {
 
 	// 查询总记录数
 	var total int64
-	err := q.Model(&models.AccountBalance{}).Count(&total).Error
+	err := q.Model(&custodyModels.AccountBalance{}).Count(&total).Error
 	if err != nil || total == 0 {
 		return nil, 0
 	}

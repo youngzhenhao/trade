@@ -9,6 +9,8 @@ import (
 	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
+	"trade/models/custodyModels"
+	caccount "trade/services/custodyAccount/account"
 )
 
 var (
@@ -21,7 +23,7 @@ var (
 	AwardLock = sync.Mutex{}
 )
 
-func PutInAward(account *models.Account, AssetId string, amount int, memo *string, lockedId string) (*models.AccountAward, error) {
+func PutInAward(user *caccount.UserInfo, AssetId string, amount int, memo *string, lockedId string) (*models.AccountAward, error) {
 	tx, back := middleware.GetTx()
 	if tx == nil {
 		return nil, ServerBusy
@@ -55,40 +57,13 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 		return nil, ServerBusy
 	}
 
-	// Update the account balance
-	var receiveBalance models.AccountBalance
-	err = tx.Where("account_Id =? and asset_Id =?", account.ID, AssetId).First(&receiveBalance).Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		btlLog.CUST.Error("err:%v", err)
-		return nil, ServerBusy
-	}
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		r := models.AccountBalance{
-			AccountID: account.ID,
-			AssetId:   AssetId,
-			Amount:    float64(amount),
-		}
-		err = tx.Save(&r).Error
-		if err != nil {
-			btlLog.CUST.Error("err:%v", err)
-			return nil, ServerBusy
-		}
-	} else {
-		receiveBalance.Amount += float64(amount)
-		err = tx.Save(&receiveBalance).Error
-		if err != nil {
-			btlLog.CUST.Error("err:%v", err)
-			return nil, ServerBusy
-		}
-	}
-
 	// Build a database balance
 	ba := models.Balance{
 		TypeExt: &models.BalanceTypeExt{
 			Type: models.BTExtAward,
 		},
 	}
-	ba.AccountId = account.ID
+	ba.AccountId = user.Account.ID
 	ba.Amount = float64(amount)
 	ba.Unit = models.UNIT_ASSET_NORMAL
 	ba.BillType = models.BillTypeAwardAsset
@@ -108,7 +83,7 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 	}
 	// Build a database AccountAward
 	award := models.AccountAward{
-		AccountID: account.ID,
+		AccountID: user.Account.ID,
 		AssetId:   AssetId,
 		Amount:    float64(amount),
 		Memo:      memo,
@@ -117,6 +92,11 @@ func PutInAward(account *models.Account, AssetId string, amount int, memo *strin
 	if err != nil {
 		btlLog.CUST.Error(err.Error())
 		return nil, ServerBusy
+	}
+
+	_, err = AddAssetBalance(tx, user, ba.Amount, ba.ID, *ba.AssetId, custodyModels.ChangeTypeAward)
+	if err != nil {
+		return nil, err
 	}
 
 	//Build a database AwardIdempotent

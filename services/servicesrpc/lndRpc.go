@@ -46,11 +46,11 @@ func getBlockInfo(request *chainrpc.GetBlockRequest) (*chainrpc.GetBlockResponse
 }
 
 // 开具发票
-func InvoiceCreate(amount int64, memo string, macaroonPath string) (*lnrpc.AddInvoiceResponse, error) {
+func InvoiceCreate(amount int64, memo string) (*lnrpc.AddInvoiceResponse, error) {
 	lndconf := config.GetConfig().ApiConfig.Lnd
-
 	grpcHost := lndconf.Host + ":" + strconv.Itoa(lndconf.Port)
 	tlsCertPath := lndconf.TlsCertPath
+	macaroonPath := config.GetConfig().ApiConfig.Lnd.MacaroonPath
 
 	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
 	defer connClose()
@@ -113,13 +113,13 @@ func InvoiceFind(rHash []byte) (*lnrpc.Invoice, error) {
 }
 
 // 支付非0发票
-func InvoicePay(macaroonPath string, invoice string, amt, feeLimit int64) (*lnrpc.Payment, error) {
+func InvoicePay(invoice string, amt, feeLimit int64) (*lnrpc.Payment, error) {
 	lndconf := config.GetConfig().ApiConfig.Lnd
-
+	macaroonFile := config.GetConfig().ApiConfig.Lnd.MacaroonPath
 	grpcHost := lndconf.Host + ":" + strconv.Itoa(lndconf.Port)
 	tlsCertPath := lndconf.TlsCertPath
 
-	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonFile)
 	defer connClose()
 
 	request := &routerrpc.SendPaymentRequest{
@@ -144,7 +144,12 @@ func InvoicePay(macaroonPath string, invoice string, amt, feeLimit int64) (*lnrp
 			return nil, err
 		}
 		if payment != nil {
-			return payment, nil
+			switch payment.Status {
+			case lnrpc.Payment_INITIATED:
+			case lnrpc.Payment_IN_FLIGHT:
+			case lnrpc.Payment_SUCCEEDED, lnrpc.Payment_FAILED:
+				return payment, nil
+			}
 		}
 	}
 }
