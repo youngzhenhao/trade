@@ -92,11 +92,11 @@ func checkAdminAccount() bool {
 			return false
 		}
 	}
-	err = AutoMargeBalance()
-	if err != nil {
-		btlLog.CUST.Error("AutoMargeBalance failed:%s", err)
-		return false
-	}
+	//err = AutoMargeBalance()
+	//if err != nil {
+	//	btlLog.CUST.Error("AutoMargeBalance failed:%s", err)
+	//	return false
+	//}
 	adminAccount, err := account.GetUserInfo("admin")
 	if err != nil {
 		btlLog.CUST.Error("CheckAdminAccount failed:%s", err)
