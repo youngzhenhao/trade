@@ -261,6 +261,12 @@ func quoteBig(_amountA *big.Int, _reserveA *big.Int, _reserveB *big.Int) (_amoun
 	return _amountB, nil
 }
 
+// getAmountOutBig
+// @Description:
+//
+//			dx(1000 - k)y_0
+//	dy = ——————————————————————————
+//			1000x_0 + dx(1000 - k)
 func getAmountOutBig(_amountIn *big.Int, _reserveIn *big.Int, _reserveOut *big.Int, feeK uint16) (_amountOut *big.Int, err error) {
 	if !(feeK <= 1000) {
 		err = errors.New("invalid fee rate k(" + strconv.FormatUint(uint64(feeK), 10) + "), must less equal than 1000")
@@ -287,6 +293,12 @@ func getAmountOutBig(_amountIn *big.Int, _reserveIn *big.Int, _reserveOut *big.I
 	return _amountOut, nil
 }
 
+// getAmountInBig
+// @Description:
+//
+//				1000x_0dy
+//	dx = ——————————————————————————
+//			(y_0 - dy)(1000 - k)
 func getAmountInBig(_amountOut *big.Int, _reserveIn *big.Int, _reserveOut *big.Int, feeK uint16) (_amountIn *big.Int, err error) {
 	if !(feeK <= 1000) {
 		err = errors.New("invalid fee rate k(" + strconv.FormatUint(uint64(feeK), 10) + "), must less equal than 1000")

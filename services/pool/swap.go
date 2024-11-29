@@ -16,7 +16,7 @@ const (
 
 type SwapRecord struct {
 	gorm.Model
-	PairId         uint           `json:"pair_id" gorm:"uniqueIndex"`
+	PairId         uint           `json:"pair_id" gorm:"index"`
 	Username       string         `json:"username" gorm:"type:varchar(255);index"`
 	TokenIn        string         `json:"token_in" gorm:"type:varchar(255);index"`
 	TokenOut       string         `json:"token_out" gorm:"type:varchar(255);index"`
