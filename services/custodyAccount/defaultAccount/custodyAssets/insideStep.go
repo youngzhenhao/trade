@@ -174,3 +174,11 @@ func getBillBalanceModel(usr *account.UserInfo, amount float64, assetId string, 
 	ba.TypeExt = &models.BalanceTypeExt{Type: models.BTExtLocal}
 	return &ba
 }
+
+func LoadAIMMission() {
+	var missions []custodyModels.AccountInsideMission
+	middleware.DB.Where("type = 'asset' AND (state =? OR state =?)", custodyModels.AIMStatePending, custodyModels.AIMStatePaid).Find(&missions)
+	for _, m := range missions {
+		_ = RunInsideStep(nil, &m)
+	}
+}

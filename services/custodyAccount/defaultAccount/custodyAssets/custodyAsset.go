@@ -168,7 +168,7 @@ func (e *AssetEvent) payToInside(bt *AssetPacket) {
 	m := custodyModels.AccountInsideMission{
 		AccountId:  e.UserInfo.Account.ID,
 		AssetId:    AssetId,
-		Type:       custodyModels.AIMTypeBtc,
+		Type:       custodyModels.AIMTypeAsset,
 		ReceiverId: *bt.isInsideMission.insideInvoice.AccountID,
 		InvoiceId:  bt.isInsideMission.insideInvoice.ID,
 		Amount:     float64(bt.DecodePayReq.Amount),

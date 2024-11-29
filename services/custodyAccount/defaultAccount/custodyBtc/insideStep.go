@@ -194,7 +194,7 @@ func LogAIM(tx *gorm.DB, mission *custodyModels.AccountInsideMission) {
 
 func LoadAIMMission() {
 	var missions []custodyModels.AccountInsideMission
-	middleware.DB.Where("state =? OR state =?", custodyModels.AIMStatePending, custodyModels.AIMStatePaid).Find(&missions)
+	middleware.DB.Where("type = 'btc' AND (state =? OR state =?)", custodyModels.AIMStatePending, custodyModels.AIMStatePaid).Find(&missions)
 	for _, m := range missions {
 		_ = RunInsideStep(nil, &m)
 	}

@@ -17,6 +17,7 @@ import (
 	"trade/services/custodyAccount/defaultAccount/custodyAssets"
 	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 	"trade/services/custodyAccount/lockPayment"
+	"trade/services/servicesrpc"
 )
 
 var (
@@ -68,6 +69,8 @@ func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 		custodyAssets.AddressServer.Start(ctx)
 		//asset 转账监听
 		custodyAssets.OutsideSever.Start(ctx)
+		// 加载pending mission
+		custodyAssets.LoadAIMMission()
 	}
 
 	return true
@@ -88,6 +91,11 @@ func checkAdminAccount() bool {
 			btlLog.CUST.Error("create AdminUser failed:%s", err)
 			return false
 		}
+	}
+	err = AutoMargeBalance()
+	if err != nil {
+		btlLog.CUST.Error("AutoMargeBalance failed:%s", err)
+		return false
 	}
 	adminAccount, err := account.GetUserInfo("admin")
 	if err != nil {
@@ -205,4 +213,35 @@ func LockPaymentToPaymentList(usr *account.UserInfo, assetId string, pageNum, pa
 		list.PaymentList = append(list.PaymentList, r)
 	}
 	return &list, nil
+}
+
+func AutoMargeBalance() error {
+	accounts, err := servicesrpc.ListAccounts()
+	if err != nil {
+		return err
+	}
+	for _, acc := range accounts {
+		if acc.CurrentBalance > 100 {
+			db := middleware.DB
+			var a models.Account
+			err := db.Where("user_account_code =?", acc.Id).First(&a).Error
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				continue
+			}
+			var balance custodyModels.AccountBtcBalance
+			err = db.Where("account_id =?", a.ID).First(&balance).Error
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				balance.AccountId = a.ID
+				balance.Amount = float64(acc.CurrentBalance)
+				db.Create(&balance)
+			}
+		}
+	}
+	return nil
 }

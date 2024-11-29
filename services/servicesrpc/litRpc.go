@@ -91,4 +91,20 @@ func LitdStatus() string {
 	return response.String()
 }
 
-//TODO:rpc锁下方到rpc请求层次，
+func ListAccounts() ([]*litrpc.Account, error) {
+	litdconf := config.GetConfig().ApiConfig.Litd
+
+	grpcHost := litdconf.Host + ":" + strconv.Itoa(litdconf.Port)
+	tlsCertPath := litdconf.TlsCertPath
+	macaroonPath := litdconf.MacaroonPath
+
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	request := &litrpc.ListAccountsRequest{}
+	client := litrpc.NewAccountsClient(conn)
+	response, err := client.ListAccounts(context.Background(), request)
+	if err != nil {
+		return nil, err
+	}
+	return response.Accounts, nil
+}
