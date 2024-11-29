@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"sync"
+	"trade/btlLog"
 	"trade/middleware"
 	cModels "trade/models/custodyModels"
 	caccount "trade/services/custodyAccount/account"
@@ -109,6 +110,11 @@ func Lock(npubkey, lockedId, assetId string, amount float64) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
+	if amount <= 0 {
+		btlLog.CUST.Error("amount <= 0,lockedId:%s,assetId:%s,amount:%f", lockedId, assetId, amount)
+		return BadRequest
+	}
+
 	if assetId != btcId {
 		err := LockAsset(usr, lockedId, assetId, amount)
 		if err != nil {
@@ -132,6 +138,11 @@ func Unlock(npubkey, lockedId, assetId string, amount float64) error {
 	mutex := GetLockPaymentMutex(usr.User.ID)
 	mutex.Lock()
 	defer mutex.Unlock()
+
+	if amount <= 0 {
+		btlLog.CUST.Error("amount <= 0,lockedId:%s,assetId:%s,amount:%f", lockedId, assetId, amount)
+		return BadRequest
+	}
 
 	if assetId != btcId {
 		err := UnlockAsset(usr, lockedId, assetId, amount)
@@ -170,6 +181,11 @@ func TransferByUnlock(lockedId, npubkey, toNpubkey, assetId string, amount float
 	mutexTo.Lock()
 	defer mutexTo.Unlock()
 
+	if amount <= 0 {
+		btlLog.CUST.Error("amount <= 0,lockedId:%s,assetId:%s,amount:%f", lockedId, assetId, amount)
+		return BadRequest
+	}
+
 	if assetId != btcId {
 		err := transferAsset(usr, lockedId, assetId, amount, toUsr)
 		if err != nil {
@@ -206,7 +222,10 @@ func TransferByLock(lockedId, npubkey, toNpubkey, assetId string, amount float64
 	mutexTo := GetLockPaymentMutex(toUsr.User.ID)
 	mutexTo.Lock()
 	defer mutexTo.Unlock()
-
+	if amount <= 0 {
+		btlLog.CUST.Error("amount <= 0,lockedId:%s,assetId:%s,amount:%f", lockedId, assetId, amount)
+		return BadRequest
+	}
 	if assetId != btcId {
 		err := transferLockedAsset(usr, lockedId, assetId, amount, toUsr)
 		if err != nil {
