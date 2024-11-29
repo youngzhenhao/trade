@@ -21,8 +21,7 @@ type Pool struct {
 var Lock map[string]map[string]*sync.Mutex
 
 // AddLiquidity
-// @Description: Add Liquidity
-// @param tx transaction, begin first, must be rollback or commit
+// @Description: Add Liquidity, create pair and share if not exist
 func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDesired string, amountAMin string, amountBMin string, username string) (amountA string, amountB string, liquidity string, err error) {
 	token0, token1, err := sortTokens(tokenA, tokenB)
 	if err != nil {
@@ -228,6 +227,8 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 	return amountA, amountB, liquidity, err
 }
 
+// RemoveLiquidity
+// @Description: Remove Liquidity, pair and share must exist
 func RemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin string, amountBMin string, username string, feeK uint16) (amountA string, amountB string, err error) {
 	token0, token1, err := sortTokens(tokenA, tokenB)
 	if err != nil {
@@ -323,6 +324,22 @@ func RemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 		return ZeroValue, ZeroValue, errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 
+	// @dev: check liquidity
+	var shareBalance string
+	err = tx.Model(&ShareBalance{}).Select("balance").
+		Where("share_id = ? AND username = ?", shareId, username).
+		Scan(&shareBalance).Error
+	if err != nil {
+		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "get shareBalance")
+	}
+	_shareBalance, success := new(big.Int).SetString(shareBalance, 10)
+	if !success {
+		return ZeroValue, ZeroValue, errors.New("shareBalance SetString(" + shareBalance + ") " + strconv.FormatBool(success))
+	}
+	if _shareBalance.Cmp(_liquidity) < 0 {
+		return ZeroValue, ZeroValue, errors.New("insufficientShareBalance(" + _shareBalance.String() + ")")
+	}
+
 	_totalSupply, success := new(big.Int).SetString(share.TotalSupply, 10)
 	if !success {
 		return ZeroValue, ZeroValue, errors.New("TotalSupply SetString(" + share.TotalSupply + ") " + strconv.FormatBool(success))
@@ -341,9 +358,9 @@ func RemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 		return ZeroValue, ZeroValue, errors.New("insufficientAmount1(" + _amount1.String() + "), need amount1Min(" + _amount1Min.String() + ")")
 	}
 
-	//        _safeTransfer(_token0, to, amount0);
+	//_safeTransfer(_token0, to, amount0);
 	// TODO: transfer _amount0 of token0 from pool to user
-	//        _safeTransfer(_token1, to, amount1);
+	//_safeTransfer(_token1, to, amount1);
 	// TODO: transfer _amount1 of token1 from pool to user
 
 	// @dev: update pair, share, shareBalance, shareRecord
