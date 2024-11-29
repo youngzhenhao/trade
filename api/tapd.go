@@ -7,6 +7,7 @@ import (
 	"github.com/lightninglabs/taproot-assets/taprpc"
 	"github.com/lightninglabs/taproot-assets/taprpc/mintrpc"
 	"github.com/lightninglabs/taproot-assets/taprpc/universerpc"
+	"sort"
 	"strconv"
 	"strings"
 	"trade/config"
@@ -651,4 +652,76 @@ func MintNftAssetFirst(name string, meta *Meta) (*mintrpc.MintAssetResponse, err
 
 func MintNftAssetAppend(name string, meta *Meta, groupKey string) (*mintrpc.MintAssetResponse, error) {
 	return MintNftAsset(name, meta, false, true, groupKey)
+}
+
+func GetGroupFirstImageData(network models.Network, groupKey string) (imageData string, err error) {
+	// @dev: 1. Get outpoints by group key
+	assetKeys, err := AssetLeafKeys(true, groupKey, universerpc.ProofType_PROOF_TYPE_ISSUANCE)
+	if err != nil {
+		return "", utils.AppendErrorInfo(err, "AssetLeafKeys")
+	}
+	if len(*assetKeys) == 0 {
+		err = errors.New("length of assetKeys(" + strconv.Itoa(len(*assetKeys)) + ") is zero, not fount AssetLeafKey")
+		if err != nil {
+			return "", utils.AppendErrorInfo(err, "AssetLeafKeys")
+		}
+	}
+	var outpoints []string
+	opMapScriptKey := make(map[string]string)
+	for _, assetKey := range *assetKeys {
+		outpoints = append(outpoints, assetKey.OpStr)
+		opMapScriptKey[assetKey.OpStr] = assetKey.ScriptKeyBytes
+	}
+	// @dev: 2. Get time by outpoints
+	outpointTime, err := GetTimesByOutpointSlice(network, outpoints)
+	if err != nil {
+		return "", utils.AppendErrorInfo(err, "GetTimesByOutpointSlice")
+	}
+	type timeAndAssetKey struct {
+		Time           int    `json:"time"`
+		OpStr          string `json:"op_str"`
+		ScriptKeyBytes string `json:"script_key_bytes"`
+	}
+	var timeAndAssetKeys []timeAndAssetKey
+	for op, _time := range outpointTime {
+		timeAndAssetKeys = append(timeAndAssetKeys, timeAndAssetKey{
+			Time:           _time,
+			OpStr:          op,
+			ScriptKeyBytes: opMapScriptKey[op],
+		})
+	}
+	if len(timeAndAssetKeys) == 0 {
+		err = errors.New("length of timeAndAssetKey(" + strconv.Itoa(len(timeAndAssetKeys)) + ") is zero")
+		return "", utils.AppendErrorInfo(err, "")
+	}
+	{
+		// @dev: Do not check length here
+		//if len(outpoints) != len(outpointTime) {
+		//	err = errors.New("length of outpoints(" + strconv.Itoa(len(outpoints)) + ") is not equal length of outpointTime(" + strconv.Itoa(len(outpointTime)) + ")")
+		//	return "", utils.AppendErrorInfo(err, "")
+		//}
+	}
+	// @dev: 3. Sort outpoints by time
+	func(tak []timeAndAssetKey) {
+		sort.Slice(tak, func(i, j int) bool {
+			return (tak)[i].Time < (tak)[j].Time
+		})
+	}(timeAndAssetKeys)
+	// @dev: 4. Get first asset of group
+	firstAssetKey := timeAndAssetKeys[0]
+	// @dev: Get asset id by outpoint
+	assetId, err := QueryProofToGetAssetId(groupKey, firstAssetKey.OpStr, firstAssetKey.ScriptKeyBytes)
+	if err != nil {
+		return "", utils.AppendErrorInfo(err, "QueryProofToGetAssetId")
+	}
+	// @dev: Get asset meta by asset id
+	assetMeta, err := FetchAssetMetaByAssetId(assetId)
+	if err != nil {
+		return "", utils.AppendErrorInfo(err, "FetchAssetMetaByAssetId")
+	}
+	// @dev: Decode metadata and determines whether the group name is empty
+	var meta Meta
+	meta.GetMetaFromStr(assetMeta.Data)
+	imageData = meta.ImageData
+	return imageData, nil
 }

@@ -358,6 +358,7 @@ func RemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 		return ZeroValue, ZeroValue, errors.New("insufficientAmount1(" + _amount1.String() + "), need amount1Min(" + _amount1Min.String() + ")")
 	}
 
+	// TODO: check balance then transfer, record transfer Id
 	//_safeTransfer(_token0, to, amount0);
 	// TODO: transfer _amount0 of token0 from pool to user
 	//_safeTransfer(_token1, to, amount1);
@@ -409,11 +410,135 @@ func RemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 }
 
 // TODO: Swap Exact Tokens For Tokens
-func swapExactTokensForTokens() {
+// TODO: Test
+func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn string, amountOutMin string, username string, projectPartyFeeK uint16, lpAwardFeeK uint16) (amountOut string, err error) {
+	feeK := projectPartyFeeK + lpAwardFeeK
+	// TODO: 手续费体现?,min20,换算price还是单独收取?
 
+	token0, token1, err := sortTokens(tokenIn, tokenOut)
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	// amountIn
+	_amountIn, success := new(big.Int).SetString(amountIn, 10)
+	if !success {
+		return ZeroValue, errors.New("amountIn SetString(" + amountIn + ") " + strconv.FormatBool(success))
+	}
+	// amountOutMin
+	_amountOutMin, success := new(big.Int).SetString(amountOutMin, 10)
+	if !success {
+		return ZeroValue, errors.New("amountOutMin SetString(" + amountOutMin + ") " + strconv.FormatBool(success))
+	}
+
+	// @dev: lock
+	if Lock == nil {
+		Lock = make(map[string]map[string]*sync.Mutex)
+	}
+	if Lock[token0] == nil {
+		Lock[token0] = make(map[string]*sync.Mutex)
+	}
+	if Lock[token0][token1] == nil {
+		Lock[token0][token1] = new(sync.Mutex)
+	}
+	Lock[token0][token1].Lock()
+	// @dev: defer finally unlock
+	defer Lock[token0][token1].Unlock()
+
+	tx := middleware.DB.Begin()
+	// @dev: defer firstly commit
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit().Error
+		}
+	}()
+
+	// get pair
+	var _pair Pair
+	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	if err != nil {
+		//@dev: pair does not exist
+		return ZeroValue, utils.AppendErrorInfo(err, "pair does not exist")
+	}
+	pairId := _pair.ID
+
+	var _reserve0, _reserve1 *big.Int
+	// reserve0
+	_reserve0, success = new(big.Int).SetString(_pair.Reserve0, 10)
+	if !success {
+		return ZeroValue, errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
+	}
+	// reserve1
+	_reserve1, success = new(big.Int).SetString(_pair.Reserve1, 10)
+	if !success {
+		return ZeroValue, errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
+	}
+
+	var _reserveIn, _reserveOut = new(big.Int), new(big.Int)
+
+	if token0 == tokenOut {
+		*_reserveIn, *_reserveOut = *_reserve1, *_reserve0
+	} else {
+		*_reserveIn, *_reserveOut = *_reserve0, *_reserve1
+	}
+	_amountOut, err := getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
+	}
+	if _amountOut.Cmp(_amountOutMin) < 0 {
+		return ZeroValue, errors.New("insufficientAmountOut(" + _amountOut.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
+	}
+
+	// TODO: check balance then transfer, record transfer Id
+
+	// TODO: Transfer _amountIn of tokenIn from user to pool
+
+	// TODO: Transfer _amountOut of tokenOut from pool to user
+
+	// Update pair, swapRecord
+
+	var _newReserve0, _newReserve1 *big.Int
+	if token0 == tokenOut {
+		_newReserve0 = new(big.Int).Sub(_reserve0, _amountOut)
+		_newReserve1 = new(big.Int).Add(_reserve1, _amountIn)
+	} else {
+		_newReserve0 = new(big.Int).Add(_reserve0, _amountIn)
+		_newReserve1 = new(big.Int).Sub(_reserve1, _amountOut)
+	}
+	if _newReserve0.Sign() <= 0 {
+		return ZeroValue, errors.New("invalid _newReserve0(" + _newReserve0.String() + ")")
+	}
+	if _newReserve1.Sign() <= 0 {
+		return ZeroValue, errors.New("invalid _newReserve1(" + _newReserve1.String() + ")")
+	}
+
+	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).
+		Updates(map[string]any{
+			"reserve0": _newReserve0.String(),
+			"reserve1": _newReserve1.String(),
+		}).Error
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "update pair")
+	}
+
+	// @dev: update swapRecord
+	err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, amountIn, _amountOut.String(), _reserveIn.String(), _reserveOut.String(), SwapExactTokenNoPath)
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "CreateSwapRecord")
+	}
+
+	// TODO: 衡量收费费聪价值，给所有LP发放奖励
+
+	// TODO: update LpAwardBalance and LpAwardRecord
+
+	amountOut = _amountOut.String()
+	err = nil
+	return amountOut, err
 }
 
 // TODO: Swap Tokens For Exact Tokens
-func swapTokensForExactTokens() {
+func swapTokenForExactTokenNoPath() {
 
 }

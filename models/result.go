@@ -246,6 +246,7 @@ const (
 	UpdateAssetBalanceBackupErr
 	GetLatestAssetBalanceHistoriesErr
 	CreateAssetBalanceHistoriesErr
+	GetGroupFirstImageDataErr
 )
 
 // Err type:CustodyAccount

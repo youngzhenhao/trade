@@ -983,7 +983,7 @@ func CheckIsNftPresaleProcessing() error {
 
 // GetGroupNameByGroupKey
 // @dev: Get group name by group key
-// TODO: this fun may has bug
+// TODO: this func may has bug
 func GetGroupNameByGroupKey(network models.Network, groupKey string) (string, error) {
 	var groupName string
 	// @dev: 1. Get outpoints by group key

@@ -203,6 +203,9 @@ func poolMigrate() (err error) {
 	if err = middleware.DB.AutoMigrate(&pool.ShareRecord{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&pool.SwapRecord{}); err != nil {
+		return err
+	}
 	return nil
 }
 
