@@ -88,7 +88,7 @@ func PutAssetAward(c *gin.Context) {
 	btlLog.CUST.Info("%v", creds)
 	e, err := custodyAssets.NewAssetEvent(creds.Username, "")
 	if err != nil {
-		btlLog.CUST.Error("%v", err)
+		btlLog.CUST.Info("%v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

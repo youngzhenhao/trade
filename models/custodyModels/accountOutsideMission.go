@@ -19,7 +19,7 @@ type AccountOutsideMission struct {
 	TxId      string   `gorm:"type:varchar(128);column:tx_id" json:"txId"`
 	Retries   int      `gorm:"type:int;column:retries" json:"retries"`
 	Error     string   `gorm:"type:text;column:error" json:"error"`
-	State     AOMState `gorm:"type:tinyint unsigned;column:state" json:"state"`
+	State     AOMState `gorm:"type:int8;column:state" json:"state"`
 }
 
 func (AccountOutsideMission) TableName() string {
