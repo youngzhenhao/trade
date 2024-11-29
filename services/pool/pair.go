@@ -37,11 +37,11 @@ func createPair(token0 string, token1 string, reserve0 string, reserve1 string) 
 	// check reserves
 	_reserve0, success := new(big.Int).SetString(reserve0, 10)
 	if !success {
-		return utils.AppendErrorInfo(err, "SetString("+reserve0+") "+strconv.FormatBool(success))
+		return errors.New("reserve0 SetString(" + reserve0 + ") " + strconv.FormatBool(success))
 	}
 	_reserve1, success := new(big.Int).SetString(reserve1, 10)
 	if !success {
-		return utils.AppendErrorInfo(err, "SetString("+reserve1+") "+strconv.FormatBool(success))
+		return errors.New("reserve1 SetString(" + reserve1 + ") " + strconv.FormatBool(success))
 	}
 	if !((_reserve0.Sign() > 0) && (_reserve1.Sign() > 0)) {
 		err = errors.New("insufficientLiquidity(" + _reserve0.String() + "," + _reserve1.String() + ")")
@@ -76,11 +76,11 @@ func updatePair(token0 string, token1 string, reserve0 string, reserve1 string) 
 	}
 	_reserve0, success := new(big.Int).SetString(reserve0, 10)
 	if !success {
-		return utils.AppendErrorInfo(err, "SetString("+reserve0+") "+strconv.FormatBool(success))
+		return errors.New("reserve0 SetString(" + reserve0 + ") " + strconv.FormatBool(success))
 	}
 	_reserve1, success := new(big.Int).SetString(reserve1, 10)
 	if !success {
-		return utils.AppendErrorInfo(err, "SetString("+reserve1+") "+strconv.FormatBool(success))
+		return errors.New("reserve1 SetString(" + reserve1 + ") " + strconv.FormatBool(success))
 	}
 	if !((_reserve0.Sign() > 0) && (_reserve1.Sign() > 0)) {
 		err = errors.New("insufficientLiquidity(" + _reserve0.String() + "," + _reserve1.String() + ")")
@@ -121,11 +121,11 @@ func NewPair(token0 string, token1 string, reserve0 string, reserve1 string) (pa
 	// check reserves
 	_reserve0, success := new(big.Int).SetString(reserve0, 10)
 	if !success {
-		return new(Pair), utils.AppendErrorInfo(err, "SetString("+reserve0+") "+strconv.FormatBool(success))
+		return new(Pair), errors.New("reserve0 SetString(" + reserve0 + ") " + strconv.FormatBool(success))
 	}
 	_reserve1, success := new(big.Int).SetString(reserve1, 10)
 	if !success {
-		return new(Pair), utils.AppendErrorInfo(err, "SetString("+reserve1+") "+strconv.FormatBool(success))
+		return new(Pair), errors.New("reserve1 SetString(" + reserve1 + ") " + strconv.FormatBool(success))
 	}
 	if !((_reserve0.Sign() > 0) && (_reserve1.Sign() > 0)) {
 		err = errors.New("insufficientLiquidity(" + _reserve0.String() + "," + _reserve1.String() + ")")

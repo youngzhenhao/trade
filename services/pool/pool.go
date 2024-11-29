@@ -13,7 +13,8 @@ import (
 // TODO: Pool
 type Pool struct {
 	gorm.Model
-	PairId    uint `json:"pair_id" gorm:"uniqueIndex"`
+	PairId uint `json:"pair_id" gorm:"uniqueIndex"`
+	// TODO: Account
 	AccountId uint `json:"account_id" gorm:"index"`
 }
 
@@ -40,19 +41,19 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 	// amount0Desired
 	_amount0Desired, success := new(big.Int).SetString(amount0Desired, 10)
 	if !success {
-		return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "SetString("+amount0Desired+") "+strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, ZeroValue, errors.New("amount0Desired SetString(" + amount0Desired + ") " + strconv.FormatBool(success))
 	}
 
 	// amount1Desired
 	_amount1Desired, success := new(big.Int).SetString(amount1Desired, 10)
 	if !success {
-		return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "SetString("+amount1Desired+") "+strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, ZeroValue, errors.New("amount1Desired SetString(" + amount1Desired + ") " + strconv.FormatBool(success))
 	}
 
 	// amount0Min
 	_amount0Min, success := new(big.Int).SetString(amount0Min, 10)
 	if !success {
-		return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "SetString("+amount0Min+") "+strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, ZeroValue, errors.New("amount0Min SetString(" + amount0Min + ") " + strconv.FormatBool(success))
 	}
 	if _amount0Min.Sign() < 0 {
 		return ZeroValue, ZeroValue, ZeroValue, errors.New("amount0Min(" + _amount0Min.String() + ") is negative")
@@ -64,7 +65,7 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 	// amount1Min
 	_amount1Min, success := new(big.Int).SetString(amount1Min, 10)
 	if !success {
-		return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "SetString("+amount1Min+") "+strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, ZeroValue, errors.New("amount1Min SetString(" + amount1Min + ") " + strconv.FormatBool(success))
 	}
 	if _amount1Min.Sign() < 0 {
 		return ZeroValue, ZeroValue, ZeroValue, errors.New("amount1Min(" + _amount1Min.String() + ") is negative")
@@ -124,12 +125,12 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 		// reserve0
 		_reserve0, success = new(big.Int).SetString(_pair.Reserve0, 10)
 		if !success {
-			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "SetString("+_pair.Reserve0+") "+strconv.FormatBool(success))
+			return ZeroValue, ZeroValue, ZeroValue, errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
 		}
 		// reserve1
 		_reserve1, success = new(big.Int).SetString(_pair.Reserve1, 10)
 		if !success {
-			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "SetString("+_pair.Reserve1+") "+strconv.FormatBool(success))
+			return ZeroValue, ZeroValue, ZeroValue, errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
 		}
 		// No fee for adding liquidity
 		_amount0, _amount1, err = _addLiquidity(_amount0Desired, _amount1Desired, _amount0Min, _amount1Min, _reserve0, _reserve1)
@@ -165,6 +166,7 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 
 	// get share
 	var share Share
+	var shareId uint
 	var _liquidity *big.Int
 	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).First(&share).Error
 	if err != nil {
@@ -183,17 +185,21 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 		if err != nil {
 			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "create share")
 		}
+		shareId = newShare.ID
+
 		shareSupply := big.NewInt(0).String()
-		err = UpdateShareBalanceAndRecord(tx, newShare, username, _liquidity, _reserve0.String(), _reserve1.String(), _amount0.String(), _amount1.String(), shareSupply, true)
+		err = UpdateShareBalanceAndRecordMint(tx, shareId, username, _liquidity, _reserve0.String(), _reserve1.String(), _amount0.String(), _amount1.String(), shareSupply, true)
 		if err != nil {
-			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "UpdateShareBalanceAndRecord")
+			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "UpdateShareBalanceAndRecordMint")
 		}
 		// record liquidity
 		liquidity = _liquidity.String()
 	} else {
+		shareId = share.ID
+
 		_totalSupply, success := new(big.Int).SetString(share.TotalSupply, 10)
 		if !success {
-			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "SetString("+share.TotalSupply+") "+strconv.FormatBool(success))
+			return ZeroValue, ZeroValue, ZeroValue, errors.New("TotalSupply SetString(" + share.TotalSupply + ") " + strconv.FormatBool(success))
 		}
 		_liquidity, err = _mintBig(_amount0, _amount1, _reserve0, _reserve1, _totalSupply)
 		if err != nil {
@@ -206,9 +212,9 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 		if err != nil {
 			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "update share")
 		}
-		err = UpdateShareBalanceAndRecord(tx, &share, username, _liquidity, _reserve0.String(), _reserve1.String(), _amount0.String(), _amount1.String(), _totalSupply.String(), false)
+		err = UpdateShareBalanceAndRecordMint(tx, shareId, username, _liquidity, _reserve0.String(), _reserve1.String(), _amount0.String(), _amount1.String(), _totalSupply.String(), false)
 		if err != nil {
-			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "UpdateShareBalanceAndRecord")
+			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "UpdateShareBalanceAndRecordMint")
 		}
 		// record liquidity
 		liquidity = newSupply.String()
@@ -222,7 +228,6 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 	return amountA, amountB, liquidity, err
 }
 
-// TODO: Remove Liquidity
 func RemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin string, amountBMin string, username string, feeK uint16) (amountA string, amountB string, err error) {
 	token0, token1, err := sortTokens(tokenA, tokenB)
 	if err != nil {
@@ -239,7 +244,7 @@ func RemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 	// amount0Min
 	_amount0Min, success := new(big.Int).SetString(amount0Min, 10)
 	if !success {
-		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "SetString("+amount0Min+") "+strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, errors.New("amount0Min SetString(" + amount0Min + ") " + strconv.FormatBool(success))
 	}
 	if _amount0Min.Sign() < 0 {
 		return ZeroValue, ZeroValue, errors.New("amount0Min(" + _amount0Min.String() + ") is negative")
@@ -248,7 +253,7 @@ func RemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 	// amount1Min
 	_amount1Min, success := new(big.Int).SetString(amount1Min, 10)
 	if !success {
-		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "SetString("+amount1Min+") "+strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, errors.New("amount1Min SetString(" + amount1Min + ") " + strconv.FormatBool(success))
 	}
 	if _amount1Min.Sign() < 0 {
 		return ZeroValue, ZeroValue, errors.New("amount1Min(" + _amount1Min.String() + ") is negative")
@@ -285,27 +290,113 @@ func RemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 		//@dev: pair does not exist
 		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "pair does not exist")
 	}
-	//TODO
-	//var _amount0, _amount1 = new(big.Int), new(big.Int)
+	pairId := _pair.ID
+	if pairId <= 0 {
+		return ZeroValue, ZeroValue, errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
+	}
 
-	//        IUniswapV2Pair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
+	var _reserve0, _reserve1 *big.Int
+	// reserve0
+	_reserve0, success = new(big.Int).SetString(_pair.Reserve0, 10)
+	if !success {
+		return ZeroValue, ZeroValue, errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
+	}
+	// reserve1
+	_reserve1, success = new(big.Int).SetString(_pair.Reserve1, 10)
+	if !success {
+		return ZeroValue, ZeroValue, errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
+	}
+	// liquidity
+	_liquidity, success := new(big.Int).SetString(liquidity, 10)
+	if !success {
+		return ZeroValue, ZeroValue, errors.New("liquidity SetString(" + liquidity + ") " + strconv.FormatBool(success))
+	}
 
-	//        (uint amount0, uint amount1) = IUniswapV2Pair(pair).burn(to);
+	// get share
+	var share Share
+	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).First(&share).Error
+	if err != nil {
+		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "share does not exist")
+	}
+	shareId := share.ID
+	if shareId <= 0 {
+		return ZeroValue, ZeroValue, errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
+	}
 
-	//        (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
-	//        require(amountA >= amountAMin, 'UniswapV2Router: INSUFFICIENT_A_AMOUNT');
-	//        require(amountB >= amountBMin, 'UniswapV2Router: INSUFFICIENT_B_AMOUNT');
+	_totalSupply, success := new(big.Int).SetString(share.TotalSupply, 10)
+	if !success {
+		return ZeroValue, ZeroValue, errors.New("TotalSupply SetString(" + share.TotalSupply + ") " + strconv.FormatBool(success))
+	}
+
+	_amount0, _amount1, err := _burnBig(_reserve0, _reserve1, _totalSupply, _liquidity, feeK)
+	if err != nil {
+		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "_burnBig")
+	}
+
+	if !(_amount0.Cmp(_amount0Min) >= 0) {
+		return ZeroValue, ZeroValue, errors.New("insufficientAmount0(" + _amount0.String() + "), need amount0Min(" + _amount0Min.String() + ")")
+	}
+
+	if !(_amount1.Cmp(_amount1Min) >= 0) {
+		return ZeroValue, ZeroValue, errors.New("insufficientAmount1(" + _amount1.String() + "), need amount1Min(" + _amount1Min.String() + ")")
+	}
+
+	//        _safeTransfer(_token0, to, amount0);
+	// TODO: transfer _amount0 of token0 from pool to user
+	//        _safeTransfer(_token1, to, amount1);
+	// TODO: transfer _amount1 of token1 from pool to user
+
+	// @dev: update pair, share, shareBalance, shareRecord
+
+	// update pair
+	_newReserve0 := new(big.Int).Sub(_reserve0, _amount0)
+	if _newReserve0.Sign() <= 0 {
+		return ZeroValue, ZeroValue, errors.New("invalid _newReserve0(" + _newReserve0.String() + ")")
+	}
+	_newReserve1 := new(big.Int).Sub(_reserve1, _amount1)
+	if _newReserve1.Sign() <= 0 {
+		return ZeroValue, ZeroValue, errors.New("invalid _newReserve1(" + _newReserve1.String() + ")")
+	}
+
+	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).
+		Updates(map[string]any{
+			"reserve0": _newReserve0.String(),
+			"reserve1": _newReserve1.String(),
+		}).Error
+	if err != nil {
+		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "update pair")
+	}
+
+	// update share
+	newSupply := new(big.Int).Sub(_totalSupply, _liquidity)
+	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).
+		Update("total_supply", newSupply.String()).Error
+	if err != nil {
+		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "update share")
+	}
+
+	// update shareBalance and shareRecord
+	err = UpdateShareBalanceAndRecordBurn(tx, shareId, username, _liquidity, _reserve0.String(), _reserve1.String(), _amount0.String(), _amount1.String(), _totalSupply.String())
+	if err != nil {
+		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "UpdateShareBalanceAndRecordBurn")
+	}
+
+	if token0 == tokenB {
+		amountA, amountB = _amount1.String(), _amount0.String()
+	} else {
+		amountA, amountB = _amount0.String(), _amount1.String()
+	}
 
 	err = nil
 	return amountA, amountB, err
 }
 
-// TODO: Swap In
-func SwapIn() {
+// TODO: Swap Exact Tokens For Tokens
+func swapExactTokensForTokens() {
 
 }
 
-// TODO: Swap Out
-func SwapOut() {
+// TODO: Swap Tokens For Exact Tokens
+func swapTokensForExactTokens() {
 
 }

@@ -32,7 +32,7 @@ func createShare(pairId uint, totalSupply string) (err error) {
 	}
 	_totalSupply, success := new(big.Int).SetString(totalSupply, 10)
 	if !success {
-		return utils.AppendErrorInfo(err, "SetString("+totalSupply+") "+strconv.FormatBool(success))
+		return errors.New("totalSupply SetString(" + totalSupply + ") " + strconv.FormatBool(success))
 	}
 	if _totalSupply.Sign() < 0 {
 		return errors.New("invalid totalSupply(" + _totalSupply.String() + ")")
@@ -47,7 +47,7 @@ func createShare(pairId uint, totalSupply string) (err error) {
 func updateShare(pairId uint, totalSupply string) (err error) {
 	_totalSupply, success := new(big.Int).SetString(totalSupply, 10)
 	if !success {
-		return utils.AppendErrorInfo(err, "SetString("+totalSupply+") "+strconv.FormatBool(success))
+		return errors.New("totalSupply SetString(" + totalSupply + ") " + strconv.FormatBool(success))
 	}
 	if _totalSupply.Sign() <= 0 {
 		return errors.New("invalid totalSupply(" + _totalSupply.String() + ")")
@@ -65,7 +65,7 @@ func NewShare(pairId uint, totalSupply string) (share *Share, err error) {
 	}
 	_totalSupply, success := new(big.Int).SetString(totalSupply, 10)
 	if !success {
-		return new(Share), utils.AppendErrorInfo(err, "SetString("+totalSupply+") "+strconv.FormatBool(success))
+		return new(Share), errors.New("totalSupply SetString(" + totalSupply + ") " + strconv.FormatBool(success))
 	}
 	if _totalSupply.Sign() < 0 {
 		return new(Share), errors.New("invalid totalSupply(" + _totalSupply.String() + ")")
@@ -93,45 +93,33 @@ func _mintBig(_amount0 *big.Int, _amount1 *big.Int, _reserve0 *big.Int, _reserve
 }
 
 func _burnBig(_reserve0 *big.Int, _reserve1 *big.Int, _totalSupply *big.Int, _liquidity *big.Int, feeK uint16) (_amount0 *big.Int, _amount1 *big.Int, err error) {
-	// TODO: consider if allow user to burn all liquidity
+	// TODO: consider if allow user to burn all liquidity, now it's not allowed
 	if _liquidity.Cmp(_totalSupply) >= 0 {
-		return new(big.Int), new(big.Int), errors.New("insufficientLiquidityBurned(" + _liquidity.String() + ") totalSupply(" + _totalSupply.String() + ")")
+		return new(big.Int), new(big.Int), errors.New("insufficientLiquidityBurned _liquidity(" + _liquidity.String() + ") _totalSupply(" + _totalSupply.String() + ")")
 	}
 
 	k := new(big.Int).SetUint64(uint64(feeK))
 	oneThousand := new(big.Int).SetUint64(1000)
 
-	_, _ = k, oneThousand
+	// x_0 * S * (1000 - k)
+	_amount0Numerator := new(big.Int).Mul(new(big.Int).Mul(_liquidity, _reserve0), new(big.Int).Sub(oneThousand, k))
+	// T * 1000
+	_amount0Denominator := new(big.Int).Mul(_totalSupply, oneThousand)
+	_amount0 = new(big.Int).Div(_amount0Numerator, _amount0Denominator)
+	if !(_amount0.Sign() > 0) {
+		return new(big.Int), new(big.Int), errors.New("insufficientAmount0Burned _amount0(" + _amount0.String() + ")")
+	}
 
-	_amount0 = new(big.Int).Div(new(big.Int).Mul(_liquidity, _reserve0), _totalSupply)
+	// y_0 * S * (1000 - k)
+	_amount1Numerator := new(big.Int).Mul(new(big.Int).Mul(_liquidity, _reserve1), new(big.Int).Sub(oneThousand, k))
+	// T * 1000
+	_amount1Denominator := new(big.Int).Mul(_totalSupply, oneThousand)
+	_amount1 = new(big.Int).Div(_amount1Numerator, _amount1Denominator)
+	if !(_amount1.Sign() > 0) {
+		return new(big.Int), new(big.Int), errors.New("insufficientAmount1Burned _amount1(" + _amount1.String() + ")")
+	}
 
-	//TODO
-
-	//    function burn(address to) external lock returns (uint amount0, uint amount1) {
-	//        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-	//        address _token0 = token0;                                // gas savings
-	//        address _token1 = token1;                                // gas savings
-	//        uint balance0 = IERC20(_token0).balanceOf(address(this));
-	//        uint balance1 = IERC20(_token1).balanceOf(address(this));
-	//        uint liquidity = balanceOf[address(this)];
-	//
-	//        bool feeOn = _mintFee(_reserve0, _reserve1);
-	//        uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
-	//        amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
-	//        amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
-	//        require(amount0 > 0 && amount1 > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_BURNED');
-	//        _burn(address(this), liquidity);
-	//        _safeTransfer(_token0, to, amount0);
-	//        _safeTransfer(_token1, to, amount1);
-	//        balance0 = IERC20(_token0).balanceOf(address(this));
-	//        balance1 = IERC20(_token1).balanceOf(address(this));
-	//
-	//        _update(balance0, balance1, _reserve0, _reserve1);
-	//        if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
-	//        emit Burn(msg.sender, amount0, amount1, to);
-	//    }
-
-	return nil, nil, err
+	return _amount0, _amount1, nil
 }
 
 // ShareBalance
@@ -154,11 +142,11 @@ func getShareBalance(shareId uint, username string) (*ShareBalance, error) {
 
 func createShareBalance(shareId uint, username string, balance string) (err error) {
 	if shareId <= 0 {
-		return errors.New("invalid shareId(" + strconv.Itoa(int(shareId)) + ")")
+		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	_balance, success := new(big.Int).SetString(balance, 10)
 	if !success {
-		return utils.AppendErrorInfo(err, "SetString("+balance+") "+strconv.FormatBool(success))
+		return errors.New("balance SetString(" + balance + ") " + strconv.FormatBool(success))
 	}
 	if _balance.Sign() < 0 {
 		return errors.New("invalid balance(" + _balance.String() + ")")
@@ -174,7 +162,7 @@ func createShareBalance(shareId uint, username string, balance string) (err erro
 func updateShareBalance(shareId uint, username string, balance string) (err error) {
 	_balance, success := new(big.Int).SetString(balance, 10)
 	if !success {
-		return utils.AppendErrorInfo(err, "SetString("+balance+") "+strconv.FormatBool(success))
+		return errors.New("balance SetString(" + balance + ") " + strconv.FormatBool(success))
 	}
 	if _balance.Sign() < 0 {
 		return errors.New("invalid balance(" + _balance.String() + ")")
@@ -188,7 +176,7 @@ func updateShareBalance(shareId uint, username string, balance string) (err erro
 
 func getShareBalanceIfNotExistCreate(shareId uint, username string) (*ShareBalance, error) {
 	if shareId <= 0 {
-		return new(ShareBalance), errors.New("invalid shareId(" + strconv.Itoa(int(shareId)) + ")")
+		return new(ShareBalance), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	shareBalance, err := getShareBalance(shareId, username)
 	if err != nil {
@@ -207,11 +195,11 @@ func getShareBalanceIfNotExistCreate(shareId uint, username string) (*ShareBalan
 
 func updateShareBalanceIfNotExistCreate(shareId uint, username string, balance string) (err error) {
 	if shareId <= 0 {
-		return errors.New("invalid shareId(" + strconv.Itoa(int(shareId)) + ")")
+		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	_balance, success := new(big.Int).SetString(balance, 10)
 	if !success {
-		return utils.AppendErrorInfo(err, "SetString("+balance+") "+strconv.FormatBool(success))
+		return errors.New("balance SetString(" + balance + ") " + strconv.FormatBool(success))
 	}
 	if _balance.Sign() < 0 {
 		return errors.New("invalid balance(" + _balance.String() + ")")
@@ -237,11 +225,11 @@ func updateShareBalanceIfNotExistCreate(shareId uint, username string, balance s
 
 func NewShareBalance(shareId uint, username string, balance string) (shareBalance *ShareBalance, err error) {
 	if shareId <= 0 {
-		return new(ShareBalance), errors.New("invalid shareId(" + strconv.Itoa(int(shareId)) + ")")
+		return new(ShareBalance), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	_balance, success := new(big.Int).SetString(balance, 10)
 	if !success {
-		return new(ShareBalance), utils.AppendErrorInfo(err, "SetString("+balance+") "+strconv.FormatBool(success))
+		return new(ShareBalance), errors.New("balance SetString(" + balance + ") " + strconv.FormatBool(success))
 	}
 	if _balance.Sign() < 0 {
 		return new(ShareBalance), errors.New("invalid balance(" + _balance.String() + ")")
@@ -254,15 +242,15 @@ func NewShareBalance(shareId uint, username string, balance string) (shareBalanc
 	return &_shareBalance, nil
 }
 
-func CreateOrUpdateShareBalance(tx *gorm.DB, share *Share, username string, _liquidity *big.Int) (previousShare string, err error) {
-	if share.ID <= 0 {
-		return ZeroValue, errors.New("invalid shareId(" + strconv.Itoa(int(share.ID)) + ")")
+func CreateOrUpdateShareBalance(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int) (previousShare string, err error) {
+	if shareId <= 0 {
+		return ZeroValue, errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	var shareBalance *ShareBalance
-	err = tx.Model(&ShareBalance{}).Where("share_id = ? AND username = ?", share.ID, username).First(&shareBalance).Error
+	err = tx.Model(&ShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).First(&shareBalance).Error
 	if err != nil {
 		// @dev: no shareBalance
-		shareBalance, err = NewShareBalance(share.ID, username, _liquidity.String())
+		shareBalance, err = NewShareBalance(shareId, username, _liquidity.String())
 		if err != nil {
 			return ZeroValue, utils.AppendErrorInfo(err, "NewShareBalance")
 		}
@@ -274,16 +262,46 @@ func CreateOrUpdateShareBalance(tx *gorm.DB, share *Share, username string, _liq
 	} else {
 		oldBalance, success := new(big.Int).SetString(shareBalance.Balance, 10)
 		if !success {
-			return ZeroValue, utils.AppendErrorInfo(err, "SetString("+shareBalance.Balance+") "+strconv.FormatBool(success))
+			return ZeroValue, errors.New("shareBalance SetString(" + shareBalance.Balance + ") " + strconv.FormatBool(success))
 		}
 		newBalance := new(big.Int).Add(oldBalance, _liquidity)
-		err = tx.Model(&ShareBalance{}).Where("share_id = ? AND username = ?", share.ID, username).
+		err = tx.Model(&ShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).
 			Update("balance", newBalance.String()).Error
 		if err != nil {
 			return ZeroValue, utils.AppendErrorInfo(err, "update shareBalance")
 		}
 		previousShare = oldBalance.String()
 	}
+	return previousShare, nil
+}
+
+func UpdateShareBalanceBurn(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int) (previousShare string, err error) {
+	if shareId <= 0 {
+		return ZeroValue, errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
+	}
+	var shareBalance *ShareBalance
+	err = tx.Model(&ShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).First(&shareBalance).Error
+	if err != nil {
+		// @dev: no shareBalance
+		return ZeroValue, errors.New("no shareBalance")
+	}
+
+	oldBalance, success := new(big.Int).SetString(shareBalance.Balance, 10)
+	if !success {
+		return ZeroValue, errors.New("shareBalance SetString(" + shareBalance.Balance + ") " + strconv.FormatBool(success))
+	}
+	newBalance := new(big.Int).Sub(oldBalance, _liquidity)
+	if newBalance.Sign() < 0 {
+		return ZeroValue, errors.New("insufficient newBalance(" + newBalance.String() + ")")
+	}
+
+	err = tx.Model(&ShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).
+		Update("balance", newBalance.String()).Error
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "update shareBalance")
+	}
+	previousShare = oldBalance.String()
+
 	return previousShare, nil
 }
 
@@ -315,7 +333,7 @@ type ShareRecord struct {
 
 func createShareRecord(shareId uint, username string, liquidity string, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (err error) {
 	if shareId <= 0 {
-		return errors.New("invalid shareId(" + strconv.Itoa(int(shareId)) + ")")
+		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	return middleware.DB.Create(&ShareRecord{
 		ShareId:     shareId,
@@ -334,7 +352,7 @@ func createShareRecord(shareId uint, username string, liquidity string, reserve0
 
 func NewShareRecord(shareId uint, username string, liquidity string, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (shareRecord *ShareRecord, err error) {
 	if shareId <= 0 {
-		return new(ShareRecord), errors.New("invalid shareId(" + strconv.Itoa(int(shareId)) + ")")
+		return new(ShareRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	return &ShareRecord{
 		ShareId:     shareId,
@@ -351,12 +369,12 @@ func NewShareRecord(shareId uint, username string, liquidity string, reserve0 st
 	}, nil
 }
 
-func CreateShareRecord(tx *gorm.DB, share *Share, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool) (err error) {
-	if share.ID <= 0 {
-		return errors.New("invalid shareId(" + strconv.Itoa(int(share.ID)) + ")")
+func CreateShareRecord(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (err error) {
+	if shareId <= 0 {
+		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	var shareRecord *ShareRecord
-	shareRecord, err = NewShareRecord(share.ID, username, _liquidity.String(), reserve0, reserve1, amount0, amount1, shareSupply, shareAmt, isFirstMint, AddLiquidityShareMint)
+	shareRecord, err = NewShareRecord(shareId, username, _liquidity.String(), reserve0, reserve1, amount0, amount1, shareSupply, shareAmt, isFirstMint, recordType)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "NewShareRecord")
 	}
@@ -367,16 +385,32 @@ func CreateShareRecord(tx *gorm.DB, share *Share, username string, _liquidity *b
 	return nil
 }
 
-func UpdateShareBalanceAndRecord(tx *gorm.DB, share *Share, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, isFirstMint bool) (err error) {
-	if share.ID <= 0 {
-		return errors.New("invalid shareId(" + strconv.Itoa(int(share.ID)) + ")")
+func UpdateShareBalanceAndRecordMint(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, isFirstMint bool) (err error) {
+	if shareId <= 0 {
+		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	var previousShare string
-	previousShare, err = CreateOrUpdateShareBalance(tx, share, username, _liquidity)
+	previousShare, err = CreateOrUpdateShareBalance(tx, shareId, username, _liquidity)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "CreateOrUpdateShareBalance")
 	}
-	err = CreateShareRecord(tx, share, username, _liquidity, reserve0, reserve1, amount0, amount1, shareSupply, previousShare, isFirstMint)
+	err = CreateShareRecord(tx, shareId, username, _liquidity, reserve0, reserve1, amount0, amount1, shareSupply, previousShare, isFirstMint, AddLiquidityShareMint)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "CreateShareRecord")
+	}
+	return nil
+}
+
+func UpdateShareBalanceAndRecordBurn(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string) (err error) {
+	if shareId <= 0 {
+		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
+	}
+	var previousShare string
+	previousShare, err = UpdateShareBalanceBurn(tx, shareId, username, _liquidity)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "UpdateShareBalanceBurn")
+	}
+	err = CreateShareRecord(tx, shareId, username, _liquidity, reserve0, reserve1, amount0, amount1, shareSupply, previousShare, false, RemoveLiquidityShareBurn)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "CreateShareRecord")
 	}

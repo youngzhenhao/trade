@@ -42,7 +42,7 @@ func sortTokens(tokenA string, tokenB string) (token0 string, token1 string, err
 func quote(amountA string, reserveA string, reserveB string) (amountB string, err error) {
 	_amountA, success := new(big.Int).SetString(amountA, 10)
 	if !success {
-		return "", utils.AppendErrorInfo(err, "SetString("+amountA+") "+strconv.FormatBool(success))
+		return "", errors.New("amountA SetString(" + amountA + ") " + strconv.FormatBool(success))
 	}
 	if _amountA.Sign() < 0 {
 		err = errors.New("insufficientAmount(" + _amountA.String() + ")")
@@ -50,11 +50,11 @@ func quote(amountA string, reserveA string, reserveB string) (amountB string, er
 	}
 	_reserveA, success := new(big.Int).SetString(reserveA, 10)
 	if !success {
-		return "", utils.AppendErrorInfo(err, "SetString("+reserveA+") "+strconv.FormatBool(success))
+		return "", errors.New("reserveA SetString(" + reserveA + ") " + strconv.FormatBool(success))
 	}
 	_reserveB, success := new(big.Int).SetString(reserveB, 10)
 	if !success {
-		return "", utils.AppendErrorInfo(err, "SetString("+reserveB+") "+strconv.FormatBool(success))
+		return "", errors.New("reserveB SetString(" + reserveB + ") " + strconv.FormatBool(success))
 	}
 	if !((_reserveA.Sign() > 0) && (_reserveB.Sign() > 0)) {
 		err = errors.New("insufficientLiquidity(" + _reserveA.String() + "," + _reserveB.String() + ")")
@@ -114,7 +114,7 @@ func getAmountOut(amountIn string, reserveIn string, reserveOut string, feeK uin
 	}
 	_amountIn, success := new(big.Int).SetString(amountIn, 10)
 	if !success {
-		return "", utils.AppendErrorInfo(err, "SetString("+amountIn+") "+strconv.FormatBool(success))
+		return "", errors.New("amountIn SetString(" + amountIn + ") " + strconv.FormatBool(success))
 	}
 	if !(_amountIn.Sign() > 0) {
 		err = errors.New("insufficientInputAmount(" + _amountIn.String() + ")")
@@ -122,11 +122,11 @@ func getAmountOut(amountIn string, reserveIn string, reserveOut string, feeK uin
 	}
 	_reserveIn, success := new(big.Int).SetString(reserveIn, 10)
 	if !success {
-		return "", utils.AppendErrorInfo(err, "SetString("+reserveIn+") "+strconv.FormatBool(success))
+		return "", errors.New("reserveIn SetString(" + reserveIn + ") " + strconv.FormatBool(success))
 	}
 	_reserveOut, success := new(big.Int).SetString(reserveOut, 10)
 	if !success {
-		return "", utils.AppendErrorInfo(err, "SetString("+reserveOut+") "+strconv.FormatBool(success))
+		return "", errors.New("reserveOut SetString(" + reserveOut + ") " + strconv.FormatBool(success))
 	}
 	if !((_reserveIn.Sign() > 0) && (_reserveOut.Sign() > 0)) {
 		err = errors.New("insufficientLiquidity(" + _reserveIn.String() + "," + _reserveOut.String() + ")")
@@ -194,7 +194,7 @@ func getAmountIn(amountOut string, reserveIn string, reserveOut string, feeK uin
 	}
 	_amountOut, success := new(big.Int).SetString(amountOut, 10)
 	if !success {
-		return "", utils.AppendErrorInfo(err, "SetString("+amountOut+") "+strconv.FormatBool(success))
+		return "", errors.New("amountOut SetString(" + amountOut + ") " + strconv.FormatBool(success))
 	}
 	if !(_amountOut.Sign() > 0) {
 		err = errors.New("insufficientOutputAmount(" + _amountOut.String() + ")")
@@ -202,11 +202,11 @@ func getAmountIn(amountOut string, reserveIn string, reserveOut string, feeK uin
 	}
 	_reserveIn, success := new(big.Int).SetString(reserveIn, 10)
 	if !success {
-		return "", utils.AppendErrorInfo(err, "SetString("+reserveIn+") "+strconv.FormatBool(success))
+		return "", errors.New("reserveIn SetString(" + reserveIn + ") " + strconv.FormatBool(success))
 	}
 	_reserveOut, success := new(big.Int).SetString(reserveOut, 10)
 	if !success {
-		return "", utils.AppendErrorInfo(err, "SetString("+reserveOut+") "+strconv.FormatBool(success))
+		return "", errors.New("reserveOut SetString(" + reserveOut + ") " + strconv.FormatBool(success))
 	}
 	if !((_reserveIn.Sign() > 0) && (_reserveOut.Sign() > 0)) {
 		err = errors.New("insufficientLiquidity(" + _reserveIn.String() + "," + _reserveOut.String() + ")")
@@ -234,11 +234,11 @@ func getAmountIn(amountOut string, reserveIn string, reserveOut string, feeK uin
 func getLiquidityK(reserve0 string, reserve1 string) (k string, err error) {
 	_reserve0, success := new(big.Int).SetString(reserve0, 10)
 	if !success {
-		return "", utils.AppendErrorInfo(err, "SetString("+reserve0+") "+strconv.FormatBool(success))
+		return "", errors.New("reserve0 SetString(" + reserve0 + ") " + strconv.FormatBool(success))
 	}
 	_reserve1, success := new(big.Int).SetString(reserve1, 10)
 	if !success {
-		return "", utils.AppendErrorInfo(err, "SetString("+reserve1+") "+strconv.FormatBool(success))
+		return "", errors.New("reserve0 SetString(" + reserve1 + ") " + strconv.FormatBool(success))
 	}
 	if !((_reserve0.Sign() > 0) && (_reserve1.Sign() > 0)) {
 		err = errors.New("insufficientLiquidity(" + _reserve0.String() + "," + _reserve1.String() + ")")
