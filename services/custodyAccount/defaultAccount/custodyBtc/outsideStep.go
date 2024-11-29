@@ -65,7 +65,7 @@ func OutsideSteps(usr *account.UserInfo, mission *custodyModels.AccountOutsideMi
 		if err != nil || payment.Status != lnrpc.Payment_SUCCEEDED {
 			btlLog.CUST.Error("PayBtcInvoice error:%s", err)
 			mission.State = custodyModels.AOMStateDone
-			mission.Error = err.Error()
+			mission.Error = fmt.Errorf("PayBtcInvoice error:%s", err).Error()
 			return
 		}
 		tx.Commit()
