@@ -238,24 +238,38 @@ type GetAssetListResp struct {
 func GetAssetList(quest GetAssetListQuest) (*[]GetAssetListResp, int64) {
 	db := middleware.DB
 	var assetList []GetAssetListResp
+	var total int64
 	if quest.AssetId == "" {
 		return &assetList, 0
-	}
-	q := db.Where("asset_id =?", quest.AssetId)
+	} else if quest.AssetId != "00" {
+		q := db.Where("asset_id =?", quest.AssetId)
 
-	// 查询总记录数
-	var total int64
-	err := q.Model(&custodyModels.AccountBalance{}).Count(&total).Error
-	if err != nil || total == 0 {
-		return nil, 0
-	}
+		// 查询总记录数
+		err := q.Model(&custodyModels.AccountBalance{}).Count(&total).Error
+		if err != nil || total == 0 {
+			return nil, 0
+		}
 
-	q.Table("user_account_balance").
-		Joins("LEFT JOIN user_account ON user_account.id = user_account_balance.account_id").
-		Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize).
-		Select("user_account_balance.*, user_account.user_name").
-		Order("user_account_balance.amount DESC").
-		Scan(&assetList)
+		q.Table("user_account_balance").
+			Joins("LEFT JOIN user_account ON user_account.id = user_account_balance.account_id").
+			Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize).
+			Select("user_account_balance.*, user_account.user_name").
+			Order("user_account_balance.amount DESC").
+			Scan(&assetList)
+	} else {
+		err := db.Model(custodyModels.AccountBtcBalance{}).Count(&total).Error
+
+		if err != nil || total == 0 {
+			return nil, 0
+		}
+		db.Table("user_account_balance_btc").
+			Joins("LEFT JOIN user_account ON user_account.id = user_account_balance_btc.account_id").
+			Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize).
+			Select("user_account_balance_btc.amount, '00' as asset_id,user_account.user_name").
+			Order("user_account_balance_btc.amount DESC").
+			Scan(&assetList)
+		return &assetList, total
+	}
 
 	return &assetList, total
 }
