@@ -1,7 +1,7 @@
 package models
 
 type BalanceTypeExt struct {
-	BalanceID uint               `json:"balance" gorm:"not null;unique;index;"`
+	BalanceID uint               `json:"balance" gorm:"not null;"`
 	Type      BalanceTypeExtList `json:"type" gorm:"not null"`
 }
 
