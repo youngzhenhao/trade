@@ -100,7 +100,7 @@ func quote(amountA string, reserveA string, reserveB string) (amountB string, er
 //
 // ========================================
 //
-// @dev: fee rate should be 3/1000 (0.3%)
+// @dev: e.g. fee rate is 3/1000 (0.3%)
 //
 //			dx(997)y_0
 //	dy = —————————————————————— (k = 3)
@@ -180,7 +180,7 @@ func getAmountOut(amountIn string, reserveIn string, reserveOut string, feeK uin
 //
 // ========================================
 //
-// @dev: fee rate should be 3/1000 (0.3%)
+// @dev: e.g. fee rate is 3/1000 (0.3%)
 //
 //				1000x_0dy
 //	dx = —————————————————————————— (k = 3)
