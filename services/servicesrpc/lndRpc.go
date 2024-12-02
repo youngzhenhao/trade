@@ -250,3 +250,22 @@ func GetBalance() (*lnrpc.WalletBalanceResponse, error) {
 	}
 	return response, nil
 }
+
+func GetChannelInfo() ([]*lnrpc.Channel, error) {
+	lndconf := config.GetConfig().ApiConfig.Lnd
+
+	grpcHost := lndconf.Host + ":" + strconv.Itoa(lndconf.Port)
+	tlsCertPath := lndconf.TlsCertPath
+	macaroonPath := lndconf.MacaroonPath
+
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+
+	client := lnrpc.NewLightningClient(conn)
+	request := lnrpc.ListChannelsRequest{}
+	response, err := client.ListChannels(context.Background(), &request)
+	if err != nil {
+		return nil, err
+	}
+	return response.Channels, nil
+}

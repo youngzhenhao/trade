@@ -14,6 +14,7 @@ import (
 	caccount "trade/services/custodyAccount/account"
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/custodyBase/custodyFee"
+	"trade/services/custodyAccount/custodyBase/custodyLimit"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -178,6 +179,24 @@ func (e *BtcChannelEvent) SendPayment(payRequest cBase.PayPacket) error {
 		//错误处理
 		return err
 	}
+}
+
+func (e *BtcChannelEvent) SendPaymentToUser(amount int64) error {
+	var err error
+	//验证余额，检查限额
+	limitType := custodyModels.LimitType{
+		AssetId:      "00",
+		TransferType: custodyModels.LimitTransferTypeLocal,
+	}
+	err = custodyLimit.CheckLimit(middleware.DB, e.UserInfo, &limitType, float64(amount))
+	if err != nil {
+		return err
+	}
+	if !CheckBtcBalance(middleware.DB, e.UserInfo, float64(amount)) {
+		return NotSufficientFunds
+	}
+
+	return nil
 }
 
 func (e *BtcChannelEvent) payToInside(bt *BtcPacket) {

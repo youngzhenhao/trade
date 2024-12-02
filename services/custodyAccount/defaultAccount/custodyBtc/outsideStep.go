@@ -12,6 +12,8 @@ import (
 	"trade/services/custodyAccount/custodyBase/custodyFee"
 	"trade/services/custodyAccount/custodyBase/custodyLimit"
 	"trade/services/custodyAccount/custodyBase/custodyRpc"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc/mempool"
+	"trade/services/servicesrpc"
 )
 
 func RunOutsideSteps(usr *account.UserInfo, mission *custodyModels.AccountOutsideMission) error {
@@ -72,6 +74,7 @@ func OutsideSteps(usr *account.UserInfo, mission *custodyModels.AccountOutsideMi
 			return
 		}
 		tx.Commit()
+		go subscriptionLndBalance(float64(payment.ValueSat + payment.FeeSat))
 
 		//todo 检查如果发票已被使用，则需要查询发票以获取相关信息
 		mission.Fee = float64(payment.FeeSat)
@@ -103,4 +106,24 @@ func LoadAOMMission() {
 
 func LogAOM(tx *gorm.DB, mission *custodyModels.AccountOutsideMission) {
 	tx.Save(mission)
+}
+
+func subscriptionLndBalance(amount float64) {
+	d := mempool.NewDingding()
+
+	channels, err := servicesrpc.GetChannelInfo()
+	if err != nil {
+		btlLog.CUST.Error("GetChannelInfo error:%s", err)
+		return
+	}
+	var balances []float64
+	for _, c := range channels {
+		if c.LocalBalance >= 0 {
+			balances = append(balances, float64(c.LocalBalance))
+		}
+	}
+	err = d.SendBtcPayOutChange(amount, balances)
+	if err != nil {
+		btlLog.CUST.Error("SendBtcPayOutChange error:%s", err)
+	}
 }
