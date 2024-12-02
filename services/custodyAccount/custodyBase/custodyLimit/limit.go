@@ -157,7 +157,7 @@ func MinusLimit(db *gorm.DB, user *caccount.UserInfo, limitType *custodyModels.L
 	}
 
 	// 检查可用额度是否足够
-	if limitBill.UseAbleAmount < amount {
+	if limitBill.UseAbleAmount < amount+20 {
 		return errors.New("可用额度不足")
 	}
 	if limitBill.UseAbleCount <= 0 {
