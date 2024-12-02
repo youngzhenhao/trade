@@ -9,7 +9,6 @@ import (
 	"trade/middleware"
 	"trade/models"
 	"trade/models/custodyModels"
-	"trade/services/servicesrpc"
 )
 
 const (
@@ -182,15 +181,15 @@ func BalanceQuery(quest BalanceQueryQuest) *[]BalanceQueryResp {
 	}
 	err = db.Where(&account).First(&account).Error
 	if err == nil {
-		info, _ := servicesrpc.AccountInfo(account.UserAccountCode)
-		if info != nil && info.CurrentBalance > 0 {
+		var btcBalance custodyModels.AccountBtcBalance
+		err = db.Where("account_id =?", account.ID).First(&btcBalance).Error
+		if err == nil {
 			balances = append(balances, BalanceQueryResp{
 				AccountName: DefaultAccount,
 				AssetId:     "00",
-				Balance:     float64(info.CurrentBalance),
+				Balance:     btcBalance.Amount,
 			})
 		}
-
 		var accountBalances []custodyModels.AccountBalance
 		_ = db.Where("account_id =?", account.ID).Find(&accountBalances).Error
 		if len(accountBalances) != 0 {

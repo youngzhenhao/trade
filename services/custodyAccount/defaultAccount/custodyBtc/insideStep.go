@@ -55,6 +55,10 @@ func RunInsideStep(usr *account.UserInfo, mission *custodyModels.AccountInsideMi
 
 }
 
+func RunInsidePTNStep(usr *account.UserInfo, mission *custodyModels.AccountInsideMission) error {
+	return nil
+}
+
 func InsideSteps(usr *account.UserInfo, mission *custodyModels.AccountInsideMission, i invoiceInfo) {
 	var err error
 	switch mission.State {
@@ -196,6 +200,11 @@ func LoadAIMMission() {
 	var missions []custodyModels.AccountInsideMission
 	middleware.DB.Where("type = 'btc' AND (state =? OR state =?)", custodyModels.AIMStatePending, custodyModels.AIMStatePaid).Find(&missions)
 	for _, m := range missions {
-		_ = RunInsideStep(nil, &m)
+		if m.InvoiceId == 0 {
+
+		} else {
+			_ = RunInsideStep(nil, &m)
+		}
+
 	}
 }
