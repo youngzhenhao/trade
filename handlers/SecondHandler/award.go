@@ -1,10 +1,12 @@
 package SecondHandler
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"trade/btlLog"
 	"trade/models"
+	"trade/services/custodyAccount/account"
 	"trade/services/custodyAccount/defaultAccount/custodyAssets"
 	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 	"trade/services/custodyAccount/lockPayment"
@@ -28,10 +30,14 @@ func PutInSatoshiAward(c *gin.Context) {
 	btlLog.CUST.Info("%v", creds)
 	e, err := custodyBtc.NewBtcChannelEvent(creds.Username)
 	if err != nil {
-		btlLog.CUST.Error("%v", err)
+		if !errors.Is(err, account.ErrUserLocked) {
+			btlLog.CUST.Info("%v", creds)
+			btlLog.CUST.Info("%v", err)
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	switch creds.AccountType {
 	case "default":
 		award, err := custodyBtc.PutInAward(e.UserInfo, "", creds.Amount, &creds.Memo, creds.LockedId)
@@ -85,10 +91,13 @@ func PutAssetAward(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	btlLog.CUST.Info("%v", creds)
+
 	e, err := custodyAssets.NewAssetEvent(creds.Username, "")
 	if err != nil {
-		btlLog.CUST.Info("%v", err)
+		if !errors.Is(err, account.ErrUserLocked) {
+			btlLog.CUST.Info("%v", creds)
+			btlLog.CUST.Info("%v", err)
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

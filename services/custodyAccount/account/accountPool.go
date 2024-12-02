@@ -16,6 +16,7 @@ import (
 var (
 	ErrMaxUserPoolReached = fmt.Errorf("用户池已满，无法添加新用户")
 	ErrUserNotFound       = fmt.Errorf("用户不存在")
+	ErrUserLocked         = fmt.Errorf("用户已被冻结")
 )
 
 var pool *UserPool
@@ -172,7 +173,7 @@ func GetUserInfoFromDb(username string) (*models.User, *models.Account, *cModels
 		return nil, nil, nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
 	}
 	if user.Status != 0 {
-		return nil, nil, nil, errors.New("用户已被冻结")
+		return nil, nil, nil, ErrUserLocked
 	}
 	// 获取Lit账户信息
 	account := &models.Account{}
