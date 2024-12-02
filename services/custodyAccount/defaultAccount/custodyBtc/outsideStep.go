@@ -5,6 +5,7 @@ import (
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"gorm.io/gorm"
 	"trade/btlLog"
+	"trade/config"
 	"trade/middleware"
 	"trade/models"
 	"trade/models/custodyModels"
@@ -109,8 +110,10 @@ func LogAOM(tx *gorm.DB, mission *custodyModels.AccountOutsideMission) {
 }
 
 func subscriptionLndBalance(amount float64) {
+	if config.GetLoadConfig().NetWork == "regtest" {
+		return
+	}
 	d := mempool.NewDingding()
-
 	channels, err := servicesrpc.GetChannelInfo()
 	if err != nil {
 		btlLog.CUST.Error("GetChannelInfo error:%s", err)
