@@ -51,6 +51,34 @@ func QueryBalance(c *gin.Context) {
 	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: a})
 }
 
+func QueryBalancesChange(c *gin.Context) {
+	var creds localQuery.BalanceChangeQuest
+	if err := c.ShouldBindJSON(&creds); err != nil {
+		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+	if creds.AssetId == "" || creds.UserName == "" {
+		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: "AssetId and UserName must not be empty", Data: nil})
+		return
+	}
+	if creds.Page != 0 {
+		creds.Page = creds.Page - 1
+	}
+	count, resp, err := localQuery.BalancesChange(creds)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+	a := struct {
+		Count int64                           `json:"count"`
+		List  *[]localQuery.BalanceChangeResp `json:"list"`
+	}{
+		Count: count,
+		List:  resp,
+	}
+	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: a})
+}
+
 func GetBalanceList(c *gin.Context) {
 	var creds localQuery.GetAssetListQuest
 	if err := c.ShouldBindJSON(&creds); err != nil {

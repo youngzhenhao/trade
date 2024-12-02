@@ -224,6 +224,52 @@ func BalanceQuery(quest BalanceQueryQuest) *[]BalanceQueryResp {
 	return &balances
 }
 
+type BalanceChangeQuest struct {
+	UserName  string `json:"username"`
+	AssetId   string `json:"assetId"`
+	TimeStart string `json:"timeStart"`
+	TimeEnd   string `json:"timeEnd"`
+	Page      int    `json:"page"`
+	PageSize  int    `json:"pageSize"`
+}
+type BalanceChangeResp struct {
+	Time         time.Time `json:"time" gorm:"column:created_at"`
+	Amount       float64   `json:"amount" gorm:"column:amount"`
+	Away         int       `json:"away" gorm:"column:away"`
+	FinalBalance float64   `json:"finalBalance" gorm:"column:final_balance"`
+	BalanceId    uint      `json:"balanceId" gorm:"column:balance_id"`
+	ChangeType   string    `json:"changeType" gorm:"column:change_type"`
+}
+
+func BalancesChange(quest BalanceChangeQuest) (int64, *[]BalanceChangeResp, error) {
+	db := middleware.DB
+	var err error
+	var balances []BalanceChangeResp
+	q := db.Table("user_account_changes").
+		Select("user_account_changes.*, user_account.*").
+		Joins("left join user_account on user_account_changes.account_id = user_account.id").
+		Where("user_name = ? AND asset_id = ?", quest.UserName, quest.AssetId)
+	if quest.TimeStart != "" {
+		q = q.Where("user_account_changes.created_at >=?", quest.TimeStart)
+	}
+	if quest.TimeEnd != "" {
+		q = q.Where("user_account_changes.created_at <=?", quest.TimeEnd)
+	}
+	var count int64
+	err = q.Count(&count).Error
+	if err != nil {
+		return 0, nil, err
+	}
+	q.Select("user_account_changes.*").
+		Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize).
+		Order("user_account_changes.created_at DESC")
+	err = q.Scan(&balances).Error
+	if err != nil {
+		return 0, nil, err
+	}
+	return count, &balances, nil
+}
+
 type GetAssetListQuest struct {
 	AssetId  string `json:"assetId"`
 	Page     int    `json:"page"`

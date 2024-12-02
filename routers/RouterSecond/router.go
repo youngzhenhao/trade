@@ -39,6 +39,7 @@ func SetupRouter() *gin.Engine {
 		{
 			query.POST("/QueryBills", SecondHandler.QueryBills)
 			query.POST("/QueryBalances", SecondHandler.QueryBalance)
+			query.POST("/QueryBalancesChange", SecondHandler.QueryBalancesChange)
 			query.POST("/QueryBalanceList", SecondHandler.GetBalanceList)
 			query.POST("/TotalBillList", SecondHandler.TotalBillList)
 		}
