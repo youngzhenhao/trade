@@ -28,6 +28,8 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 		return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "sortTokens")
 	}
 
+	isTokenZeroSat := token0 == TokenSatTag
+
 	var amount0Desired, amount1Desired, amount0Min, amount1Min string
 	if token0 == tokenB {
 		amount0Desired, amount1Desired = amountBDesired, amountADesired
@@ -170,7 +172,7 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).First(&share).Error
 	if err != nil {
 		// @dev: no share
-		_liquidity, err = _mintBig(_amount0, _amount1, big.NewInt(0), big.NewInt(0), big.NewInt(0))
+		_liquidity, err = _mintBig(_amount0, _amount1, big.NewInt(0), big.NewInt(0), big.NewInt(0), isTokenZeroSat)
 		if err != nil {
 			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "_mintBig")
 		}
@@ -200,12 +202,13 @@ func AddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 		if !success {
 			return ZeroValue, ZeroValue, ZeroValue, errors.New("TotalSupply SetString(" + share.TotalSupply + ") " + strconv.FormatBool(success))
 		}
-		_liquidity, err = _mintBig(_amount0, _amount1, _reserve0, _reserve1, _totalSupply)
+		_liquidity, err = _mintBig(_amount0, _amount1, _reserve0, _reserve1, _totalSupply, isTokenZeroSat)
 		if err != nil {
 			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "_mintBig")
 		}
 		// @dev: update share, shareBalance, shareRecord
 		newSupply := new(big.Int).Add(_totalSupply, _liquidity)
+		//fmt.Printf("newSupply: %v;(_totalSupply: %v + _liquidity: %v)\n", newSupply, _totalSupply, _liquidity)
 		err = tx.Model(&Share{}).Where("pair_id = ?", pairId).
 			Update("total_supply", newSupply.String()).Error
 		if err != nil {
@@ -235,6 +238,8 @@ func RemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "sortTokens")
 	}
 
+	isTokenZeroSat := token0 == TokenSatTag
+
 	var amount0Min, amount1Min string
 	if token0 == tokenB {
 		amount0Min, amount1Min = amountBMin, amountAMin
@@ -249,6 +254,13 @@ func RemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 	}
 	if _amount0Min.Sign() < 0 {
 		return ZeroValue, ZeroValue, errors.New("amount0Min(" + _amount0Min.String() + ") is negative")
+	}
+
+	if isTokenZeroSat {
+		_minRemoveLiquiditySat := new(big.Int).SetUint64(uint64(MinRemoveLiquiditySat))
+		if _amount0Min.Cmp(_minRemoveLiquiditySat) < 0 {
+			return ZeroValue, ZeroValue, errors.New("insufficient _amount0Min(" + _amount0Min.String() + "), need " + _minRemoveLiquiditySat.String())
+		}
 	}
 
 	// amount1Min
@@ -413,12 +425,13 @@ func RemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 // TODO: Test
 func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn string, amountOutMin string, username string, projectPartyFeeK uint16, lpAwardFeeK uint16) (amountOut string, err error) {
 	feeK := projectPartyFeeK + lpAwardFeeK
-	// TODO: 手续费体现?,min20,换算price还是单独收取?
 
 	token0, token1, err := sortTokens(tokenIn, tokenOut)
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "sortTokens")
 	}
+
+	isTokenZeroSat := token0 == TokenSatTag
 
 	// amountIn
 	_amountIn, success := new(big.Int).SetString(amountIn, 10)
@@ -429,6 +442,19 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 	_amountOutMin, success := new(big.Int).SetString(amountOutMin, 10)
 	if !success {
 		return ZeroValue, errors.New("amountOutMin SetString(" + amountOutMin + ") " + strconv.FormatBool(success))
+	}
+
+	if isTokenZeroSat {
+		_minSwapSat := new(big.Int).SetUint64(uint64(MinSwapSatFee))
+		if tokenIn == TokenSatTag {
+			if _amountIn.Cmp(_minSwapSat) <= 0 {
+				return ZeroValue, errors.New("insufficient _amountIn(" + _amountIn.String() + "), need " + _minSwapSat.String())
+			}
+		} else if tokenOut == TokenSatTag {
+			if _amountOutMin.Cmp(_minSwapSat) <= 0 {
+				return ZeroValue, errors.New("insufficient _amountOutMin(" + _amountOutMin.String() + "), need gt " + _minSwapSat.String())
+			}
+		}
 	}
 
 	// @dev: lock
@@ -478,15 +504,71 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 
 	var _reserveIn, _reserveOut = new(big.Int), new(big.Int)
 
+	var _amountOut = new(big.Int)
+
+	var swapFeeType SwapFeeType
+
 	if token0 == tokenOut {
 		*_reserveIn, *_reserveOut = *_reserve1, *_reserve0
+		if isTokenZeroSat {
+			_amountOutWithFee, err := getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
+			}
+			if _amountOutWithFee.Cmp(_amountOutMin) < 0 {
+				return ZeroValue, errors.New("insufficientAmountOutWithFee(" + _amountOutWithFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
+			}
+
+			_amountOutWithoutFee, err := getAmountOutBigWithoutFee(_amountIn, _reserveIn, _reserveOut)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBigWithoutFee")
+			}
+			if _amountOutWithoutFee.Cmp(_amountOutMin) < 0 {
+				return ZeroValue, errors.New("insufficientAmountOutWithoutFee(" + _amountOutWithoutFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
+			}
+
+			_minSwapSat := new(big.Int).SetUint64(uint64(MinSwapSatFee))
+			if new(big.Int).Sub(_amountOutWithoutFee, _amountOutWithFee).Cmp(_minSwapSat) < 0 {
+				_amountOut = new(big.Int).Sub(_amountOutWithoutFee, _minSwapSat)
+				swapFeeType = SwapFee20Sat
+			} else {
+				_amountOut = _amountOutWithFee
+				swapFeeType = SwapFee6Thousands
+			}
+		} else {
+			_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
+			}
+			swapFeeType = SwapFee6Thousands
+		}
 	} else {
 		*_reserveIn, *_reserveOut = *_reserve0, *_reserve1
+		if isTokenZeroSat {
+			_minSwapSat := new(big.Int).SetUint64(uint64(MinSwapSat))
+			_minSwapSatFee := new(big.Int).SetUint64(uint64(MinSwapSatFee))
+			if _amountIn.Cmp(_minSwapSat) < 0 {
+				_amountOut, err = getAmountOutBigWithoutFee(new(big.Int).Sub(_amountIn, _minSwapSatFee), _reserveIn, _reserveOut)
+				if err != nil {
+					return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBigWithoutFee")
+				}
+				swapFeeType = SwapFee20Sat
+			} else {
+				_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
+				if err != nil {
+					return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
+				}
+				swapFeeType = SwapFee6Thousands
+			}
+		} else {
+			_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
+			}
+			swapFeeType = SwapFee6Thousands
+		}
 	}
-	_amountOut, err := getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
-	if err != nil {
-		return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
-	}
+
 	if _amountOut.Cmp(_amountOutMin) < 0 {
 		return ZeroValue, errors.New("insufficientAmountOut(" + _amountOut.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
 	}
@@ -524,12 +606,12 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 	}
 
 	// @dev: update swapRecord
-	err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, amountIn, _amountOut.String(), _reserveIn.String(), _reserveOut.String(), SwapExactTokenNoPath)
+	err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, amountIn, _amountOut.String(), _reserveIn.String(), _reserveOut.String(), swapFeeType, SwapExactTokenNoPath)
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "CreateSwapRecord")
 	}
 
-	// TODO: 衡量收费费聪价值，给所有LP发放奖励
+	// TODO: 根据聪？，给所有LP发放奖励
 
 	// TODO: update LpAwardBalance and LpAwardRecord
 
@@ -548,6 +630,8 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 		return ZeroValue, utils.AppendErrorInfo(err, "sortTokens")
 	}
 
+	isTokenZeroSat := token0 == TokenSatTag
+
 	// amountOut
 	_amountOut, success := new(big.Int).SetString(amountOut, 10)
 	if !success {
@@ -557,6 +641,19 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 	_amountInMax, success := new(big.Int).SetString(amountInMax, 10)
 	if !success {
 		return ZeroValue, errors.New("amountInMax SetString(" + amountInMax + ") " + strconv.FormatBool(success))
+	}
+
+	if isTokenZeroSat {
+		_minSwapSat := new(big.Int).SetUint64(uint64(MinSwapSatFee))
+		if tokenOut == TokenSatTag {
+			if _amountOut.Cmp(_minSwapSat) <= 0 {
+				return ZeroValue, errors.New("insufficient _amountOut(" + _amountOut.String() + "), need " + _minSwapSat.String())
+			}
+		} else if tokenIn == TokenSatTag {
+			if _amountInMax.Cmp(_minSwapSat) <= 0 {
+				return ZeroValue, errors.New("insufficient _amountInMax(" + _amountInMax.String() + "), need gt " + _minSwapSat.String())
+			}
+		}
 	}
 
 	// @dev: lock
@@ -606,15 +703,98 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 
 	var _reserveIn, _reserveOut = new(big.Int), new(big.Int)
 
+	var _amountIn = new(big.Int)
+
+	var swapFeeType SwapFeeType
+
 	if token0 == tokenOut {
 		*_reserveIn, *_reserveOut = *_reserve1, *_reserve0
+		if isTokenZeroSat {
+
+			_minSwapSatFee := new(big.Int).SetUint64(uint64(MinSwapSatFee))
+			_amountInWithFee, err := getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBig")
+			}
+			if _amountInWithFee.Cmp(_amountInMax) > 0 {
+				return ZeroValue, errors.New("excessive _amountInWithFee(" + _amountIn.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
+			}
+
+			_amountInWithoutFee, err := getAmountInBigWithoutFee(_amountOut, _reserveIn, _reserveOut)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBigWithoutFee")
+			}
+			if _amountInWithoutFee.Cmp(_amountInMax) > 0 {
+				return ZeroValue, errors.New("excessive _amountInWithoutFee(" + _amountIn.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
+			}
+
+			_amountInFee := new(big.Int).Sub(_amountInWithFee, _amountInWithoutFee)
+			_amountInFeeFloat := new(big.Float).SetInt(_amountInFee)
+
+			// TODO
+			_price, err := GetToken1PriceBig(_reserve0, _reserve1)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "GetToken1PriceBig")
+			}
+			_minSwapSatFeeFloat := new(big.Float).SetUint64(uint64(MinSwapSatFee))
+			_feeValueFloat := new(big.Float).Mul(_amountInFeeFloat, _price)
+
+			if _feeValueFloat.Cmp(_minSwapSatFeeFloat) < 0 {
+				_amountIn, err = getAmountInBigWithoutFee(new(big.Int).Add(_amountOut, _minSwapSatFee), _reserveIn, _reserveOut)
+				if err != nil {
+					return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBigWithoutFee")
+				}
+				swapFeeType = SwapFee20Sat
+			} else {
+				//	TODO
+			}
+
+		} else {
+			_amountIn, err = getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBig")
+			}
+			swapFeeType = SwapFee6Thousands
+		}
+
 	} else {
 		*_reserveIn, *_reserveOut = *_reserve0, *_reserve1
+		if isTokenZeroSat {
+			_minSwapSatFee := new(big.Int).SetUint64(uint64(MinSwapSatFee))
+
+			_amountInWithFee, err := getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBig")
+			}
+			if _amountInWithFee.Cmp(_amountInMax) > 0 {
+				return ZeroValue, errors.New("excessive _amountInWithFee(" + _amountIn.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
+			}
+
+			_amountInWithoutFee, err := getAmountInBigWithoutFee(_amountOut, _reserveIn, _reserveOut)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBigWithoutFee")
+			}
+			if _amountInWithoutFee.Cmp(_amountInMax) > 0 {
+				return ZeroValue, errors.New("excessive _amountInWithoutFee(" + _amountIn.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
+			}
+
+			if new(big.Int).Sub(_amountInWithFee, _amountInWithoutFee).Cmp(_minSwapSatFee) < 0 {
+				_amountIn = new(big.Int).Add(_amountInWithoutFee, _minSwapSatFee)
+				swapFeeType = SwapFee20Sat
+			} else {
+				_amountIn = _amountInWithFee
+				swapFeeType = SwapFee6Thousands
+			}
+
+		} else {
+			_amountIn, err = getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBig")
+			}
+			swapFeeType = SwapFee6Thousands
+		}
 	}
-	_amountIn, err := getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
-	if err != nil {
-		return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBig")
-	}
+
 	if _amountIn.Cmp(_amountInMax) > 0 {
 		return ZeroValue, errors.New("excessiveAmountIn(" + _amountIn.String() + "), need amountInMax(" + _amountInMax.String() + ")")
 	}
@@ -652,12 +832,13 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 	}
 
 	// @dev: update swapRecord
-	err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, _amountIn.String(), amountOut, _reserveIn.String(), _reserveOut.String(), SwapForExactTokenNoPath)
+	err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, _amountIn.String(), amountOut, _reserveIn.String(), _reserveOut.String(), swapFeeType, SwapForExactTokenNoPath)
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "CreateSwapRecord")
 	}
 
-	// TODO: 衡量收费费聪价值，给所有LP发放奖励
+	// TODO: 根据聪？，给所有LP发放奖励
+	// TODO: 衡量收费费聪价值？
 
 	// TODO: update LpAwardBalance and LpAwardRecord
 
@@ -665,3 +846,5 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 	err = nil
 	return amountIn, err
 }
+
+// TODO: Tolerance

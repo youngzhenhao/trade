@@ -47,12 +47,22 @@ func createPair(token0 string, token1 string, reserve0 string, reserve1 string) 
 		err = errors.New("insufficientLiquidity(" + _reserve0.String() + "," + _reserve1.String() + ")")
 		return err
 	}
-	// cmp with minimum liquidity
-	_liquidity := new(big.Int).Sqrt(new(big.Int).Mul(_reserve0, _reserve1))
-	_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
-	if _liquidity.Cmp(_minLiquidity) < 0 {
-		err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
-		return
+	// cmp with minimum liquidity sat
+	if _token0 == TokenSatTag {
+		_minLiquiditySat := new(big.Int).SetUint64(uint64(MinAddLiquiditySat))
+		if _reserve0.Cmp(_minLiquiditySat) < 0 {
+			err = errors.New("insufficientLiquidity Sat(" + _reserve0.String() + "), need " + _minLiquiditySat.String())
+			return err
+		}
+	} else {
+		// _token0 != TokenSatTag
+		// TODO: Add MinLiquidity check for pair whose token0 is not sat
+		_liquidity := new(big.Int).Sqrt(new(big.Int).Mul(_reserve0, _reserve1))
+		_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
+		if _liquidity.Cmp(_minLiquidity) < 0 {
+			err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
+			return err
+		}
 	}
 	tokenMapReserve := make(map[string]string)
 	tokenMapReserve[token0] = reserve0
@@ -86,11 +96,22 @@ func updatePair(token0 string, token1 string, reserve0 string, reserve1 string) 
 		err = errors.New("insufficientLiquidity(" + _reserve0.String() + "," + _reserve1.String() + ")")
 		return err
 	}
-	_liquidity := new(big.Int).Sqrt(new(big.Int).Mul(_reserve0, _reserve1))
-	_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
-	if _liquidity.Cmp(_minLiquidity) < 0 {
-		err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
-		return
+	// cmp with minimum liquidity sat
+	if _token0 == TokenSatTag {
+		_minLiquiditySat := new(big.Int).SetUint64(uint64(MinAddLiquiditySat))
+		if _reserve0.Cmp(_minLiquiditySat) < 0 {
+			err = errors.New("insufficientLiquidity Sat(" + _reserve0.String() + "), need " + _minLiquiditySat.String())
+			return err
+		}
+	} else {
+		// _token0 != TokenSatTag
+		// TODO: Add MinLiquidity check for pair whose token0 is not sat
+		_liquidity := new(big.Int).Sqrt(new(big.Int).Mul(_reserve0, _reserve1))
+		_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
+		if _liquidity.Cmp(_minLiquidity) < 0 {
+			err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
+			return err
+		}
 	}
 	tokenMapReserve := make(map[string]string)
 	tokenMapReserve[token0] = reserve0
@@ -131,12 +152,22 @@ func NewPair(token0 string, token1 string, reserve0 string, reserve1 string) (pa
 		err = errors.New("insufficientLiquidity(" + _reserve0.String() + "," + _reserve1.String() + ")")
 		return new(Pair), err
 	}
-	// cmp with minimum liquidity
-	_liquidity := new(big.Int).Sqrt(new(big.Int).Mul(_reserve0, _reserve1))
-	_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
-	if _liquidity.Cmp(_minLiquidity) < 0 {
-		err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
-		return new(Pair), err
+	// cmp with minimum liquidity sat
+	if _token0 == TokenSatTag {
+		_minLiquiditySat := new(big.Int).SetUint64(uint64(MinAddLiquiditySat))
+		if _reserve0.Cmp(_minLiquiditySat) < 0 {
+			err = errors.New("insufficientLiquidity Sat(" + _reserve0.String() + "), need " + _minLiquiditySat.String())
+			return new(Pair), err
+		}
+	} else {
+		// _token0 != TokenSatTag
+		// TODO: Add MinLiquidity check for pair whose token0 is not sat
+		_liquidity := new(big.Int).Sqrt(new(big.Int).Mul(_reserve0, _reserve1))
+		_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
+		if _liquidity.Cmp(_minLiquidity) < 0 {
+			err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
+			return new(Pair), err
+		}
 	}
 	tokenMapReserve := make(map[string]string)
 	tokenMapReserve[token0] = reserve0
@@ -162,12 +193,22 @@ func NewPairBig(token0 string, token1 string, _reserve0 *big.Int, _reserve1 *big
 		err = errors.New("insufficientLiquidity(" + _reserve0.String() + "," + _reserve1.String() + ")")
 		return new(Pair), err
 	}
-	// cmp with minimum liquidity
-	_liquidity := new(big.Int).Sqrt(new(big.Int).Mul(_reserve0, _reserve1))
-	_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
-	if _liquidity.Cmp(_minLiquidity) < 0 {
-		err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
-		return new(Pair), err
+	// cmp with minimum liquidity sat
+	if _token0 == TokenSatTag {
+		_minLiquiditySat := new(big.Int).SetUint64(uint64(MinAddLiquiditySat))
+		if _reserve0.Cmp(_minLiquiditySat) < 0 {
+			err = errors.New("insufficientLiquidity Sat(" + _reserve0.String() + "), need " + _minLiquiditySat.String())
+			return new(Pair), err
+		}
+	} else {
+		// _token0 != TokenSatTag
+		// TODO: Add MinLiquidity check for pair whose token0 is not sat
+		_liquidity := new(big.Int).Sqrt(new(big.Int).Mul(_reserve0, _reserve1))
+		_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
+		if _liquidity.Cmp(_minLiquidity) < 0 {
+			err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
+			return new(Pair), err
+		}
 	}
 	tokenMapReserve := make(map[string]string)
 	tokenMapReserve[token0] = _reserve0.String()
@@ -180,4 +221,17 @@ func NewPairBig(token0 string, token1 string, _reserve0 *big.Int, _reserve1 *big
 		Reserve1:       tokenMapReserve[_token1],
 	}
 	return pair, nil
+}
+
+func GetToken1PriceBig( _reserve0 *big.Int, _reserve1 *big.Int) (price *big.Float, err error) {
+	_reserve0Float:= new(big.Float).SetInt(_reserve0)
+	_reserve1Float:= new(big.Float).SetInt(_reserve1)
+	_price:= new(big.Float).Quo(_reserve0Float, _reserve1Float)
+	if _price.IsInf() {
+		return new(big.Float), errors.New("price is Inf")
+	}
+	if _price.Sign() <= 0 {
+		return new(big.Float), errors.New("price("+_price.String()+") is less equal than zero")
+	}
+	return _price, nil
 }

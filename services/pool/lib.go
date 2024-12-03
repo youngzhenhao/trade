@@ -258,6 +258,7 @@ func quoteBig(_amountA *big.Int, _reserveA *big.Int, _reserveB *big.Int) (_amoun
 		return new(big.Int), err
 	}
 	_amountB = new(big.Int).Div(new(big.Int).Mul(_amountA, _reserveB), _reserveA)
+	//fmt.Printf("[quoteBig] _amountB: %v;(_amountA:%v * _reserveB:%v / _reserveA:%v)\n", _amountB, _amountA, _reserveB, _reserveA)
 	return _amountB, nil
 }
 
@@ -370,4 +371,60 @@ func _addLiquidity(_amount0Desired *big.Int, _amount1Desired *big.Int, _amount0M
 		_amount0, _amount1 = _amount0Optimal, _amount1Desired
 	}
 	return _amount0, _amount1, nil
+}
+
+// getAmountOutBigWithoutFee
+// @Description:
+//
+//			dx * y_0
+//	dy = ——————————————————————————
+//			x_0 + dx
+func getAmountOutBigWithoutFee(_amountIn *big.Int, _reserveIn *big.Int, _reserveOut *big.Int) (_amountOut *big.Int, err error) {
+	if !(_amountIn.Sign() > 0) {
+		err = errors.New("insufficientInputAmount(" + _amountIn.String() + ")")
+		return new(big.Int), err
+	}
+	if !((_reserveIn.Sign() > 0) && (_reserveOut.Sign() > 0)) {
+		err = errors.New("insufficientLiquidity(" + _reserveIn.String() + "," + _reserveOut.String() + ")")
+		return new(big.Int), err
+	}
+	// @dev: numerator dx * y_0
+	numerator := new(big.Int).Mul(_amountIn, _reserveOut)
+	// @dev: denominator x_0 + dx
+	denominator := new(big.Int).Add(_reserveIn, _amountIn)
+	// @dev: dy = numerator / denominator
+	_amountOut = new(big.Int).Div(numerator, denominator)
+	return _amountOut, nil
+}
+
+// getAmountInBigWithoutFee
+// @Description:
+//
+//				x_0 * dy
+//	dx = ——————————————————————————
+//				y_0 - dy
+func getAmountInBigWithoutFee(_amountOut *big.Int, _reserveIn *big.Int, _reserveOut *big.Int) (_amountIn *big.Int, err error) {
+	if !(_amountOut.Sign() > 0) {
+		err = errors.New("insufficientOutputAmount(" + _amountOut.String() + ")")
+		return new(big.Int), err
+	}
+	if !((_reserveIn.Sign() > 0) && (_reserveOut.Sign() > 0)) {
+		err = errors.New("insufficientLiquidity(" + _reserveIn.String() + "," + _reserveOut.String() + ")")
+		return new(big.Int), err
+	}
+
+	// @dev: numerator x_0 * dy
+	numerator := new(big.Int).Mul(_reserveIn, _amountOut)
+	// @dev: denominator y_0 - dy
+	denominator := new(big.Int).Sub(_reserveOut, _amountOut)
+	// @dev: Addition of 1 is to compensate for the loss of precision that may result from integer division
+	one := new(big.Int).SetUint64(1)
+	m := new(big.Int)
+	// @dev: dy, mod = numerator div mod denominator
+	_amountIn, m = new(big.Int).DivMod(numerator, denominator, m)
+	if m.Sign() != 0 {
+		// @dev: dy = (numerator / denominator) + 1
+		_amountIn = new(big.Int).Add(_amountIn, one)
+	}
+	return _amountIn, nil
 }

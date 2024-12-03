@@ -77,13 +77,27 @@ func NewShare(pairId uint, totalSupply string) (share *Share, err error) {
 	return &_share, nil
 }
 
-func _mintBig(_amount0 *big.Int, _amount1 *big.Int, _reserve0 *big.Int, _reserve1 *big.Int, _totalSupply *big.Int) (_liquidity *big.Int, err error) {
-	_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
+func _mintBig(_amount0 *big.Int, _amount1 *big.Int, _reserve0 *big.Int, _reserve1 *big.Int, _totalSupply *big.Int, isTokenZeroSat bool) (_liquidity *big.Int, err error) {
+
+	if isTokenZeroSat {
+		// cmp with minimum liquidity sat
+		_minLiquiditySat := new(big.Int).SetUint64(uint64(MinAddLiquiditySat))
+		if _amount0.Cmp(_minLiquiditySat) < 0 {
+			err = errors.New("insufficient amount0 Sat(" + _reserve0.String() + "), need " + _minLiquiditySat.String())
+			return new(big.Int), err
+		}
+	}
+
 	if _totalSupply.Sign() == 0 {
+		// @dev: Make sure that liquidity is not completely removed
+		_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
 		_liquidity = new(big.Int).Sub(new(big.Int).Sqrt(new(big.Int).Mul(_amount0, _amount1)), _minLiquidity)
+		//fmt.Printf("[_mintBig] _liquidity: %v;(sqrt(_amount0:%v * _amount1:%v) - _minLiquidity:%v)\n", _liquidity, _amount0, _amount1, _minLiquidity)
 	} else {
 		_liquidity0 := new(big.Int).Div(new(big.Int).Mul(_amount0, _totalSupply), _reserve0)
+		//fmt.Printf("[_mintBig] _liquidity0: %v;(_amount0:%v * _totalSupply:%v / _reserve0:%v)\n", _liquidity0, _amount0, _totalSupply, _reserve0)
 		_liquidity1 := new(big.Int).Div(new(big.Int).Mul(_amount1, _totalSupply), _reserve1)
+		//fmt.Printf("[_mintBig] _liquidity1: %v;(_amount1:%v * _totalSupply:%v / _reserve1:%v)\n", _liquidity1, _amount1, _totalSupply, _reserve1)
 		_liquidity = minBigInt(_liquidity0, _liquidity1)
 	}
 	if _liquidity.Sign() <= 0 {
