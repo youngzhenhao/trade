@@ -1,6 +1,7 @@
 package custodyPayTN
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -33,4 +34,14 @@ func (p *PayToNpubKey) Decode(encoded string) error {
 		return err
 	}
 	return json.Unmarshal(data, p)
+}
+
+func HashEncodedString(encoded string) (string, error) {
+	hash := sha256.New()
+	_, err := hash.Write([]byte(encoded))
+	if err != nil {
+		return "", err
+	}
+	hashedBytes := hash.Sum(nil)
+	return hex.EncodeToString(hashedBytes), nil
 }

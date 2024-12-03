@@ -4,12 +4,14 @@ import (
 	"encoding/hex"
 	"fmt"
 	"gorm.io/gorm"
+	"strings"
 	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
 	"trade/models/custodyModels"
 	"trade/services/custodyAccount/account"
 	"trade/services/custodyAccount/custodyBase/custodyLimit"
+	"trade/services/custodyAccount/custodyBase/custodyPayTN"
 	rpc "trade/services/servicesrpc"
 )
 
@@ -55,9 +57,52 @@ func RunInsideStep(usr *account.UserInfo, mission *custodyModels.AccountInsideMi
 
 }
 
-func RunInsidePTNStep(usr *account.UserInfo, mission *custodyModels.AccountInsideMission) error {
+func RunInsidePTNStep(usr *account.UserInfo, receiveUsr *account.UserInfo, mission *custodyModels.AccountInsideMission) error {
+	db := middleware.DB
+	//获取usrInfo
+	if usr == nil {
+		var a models.Account
+		if err := db.Where("id =?", mission.AccountId).First(&a).Error; err != nil {
+			btlLog.CUST.Error("GetAccount error:%s", err)
+			return err
+		}
+		usr, _ = account.GetUserInfo(a.UserName)
+	}
+	if receiveUsr == nil {
+		var a models.Account
+		if err := db.Where("id =?", mission.ReceiverId).First(&a).Error; err != nil {
+			btlLog.CUST.Error("GetAccount error:%s", err)
+			return err
+		}
+		receiveUsr, _ = account.GetUserInfo(a.UserName)
+	}
+	//获取发票信息
+	PTN := custodyPayTN.PayToNpubKey{
+		NpubKey: receiveUsr.User.Username,
+		Amount:  mission.Amount,
+		Time:    mission.CreatedAt.Unix(),
+		Vision:  0,
+	}
+	invoice, _ := PTN.Encode()
+	h, _ := custodyPayTN.HashEncodedString(invoice)
 
-	return nil
+	i := invoiceInfo{
+		Invoice: invoice,
+		Hash:    h,
+	}
+	//run steps
+	for {
+		InsideSteps(usr, mission, i)
+		LogAIM(middleware.DB, mission)
+		switch {
+		case mission.State == custodyModels.AIMStateSuccess:
+			return nil
+		case mission.State == custodyModels.AIMStateDone:
+			return fmt.Errorf(mission.Error)
+		case mission.Retries >= 30:
+			return nil
+		}
+	}
 }
 
 func InsideSteps(usr *account.UserInfo, mission *custodyModels.AccountInsideMission, i invoiceInfo) {
@@ -125,6 +170,10 @@ func InsideSteps(usr *account.UserInfo, mission *custodyModels.AccountInsideMiss
 				btlLog.CUST.Error("error PayInsideId:%v", mission.ID)
 			}
 			//取消发票
+			if strings.HasPrefix(i.Invoice, "PTN") {
+				//PTN发票不需要取消
+				return
+			}
 			h, _ := hex.DecodeString(i.Hash)
 			err = rpc.InvoiceCancel(h)
 			if err != nil {

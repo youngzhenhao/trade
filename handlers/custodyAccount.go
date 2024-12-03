@@ -99,6 +99,40 @@ func PayInvoice(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"payment": "success"})
 }
+func PayUserBtc(c *gin.Context) {
+	// 获取登录用户信息
+	userName := c.MustGet("username").(string)
+	if config.GetConfig().NetWork != "regtest" {
+		if (len(userName) != 91 && len(userName) != 92) || !strings.HasPrefix(userName, "npub") {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "当前服务调用失败，请稍后再试"})
+			return
+		}
+	}
+	e, err := custodyBtc.NewBtcChannelEvent(userName)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "用户不存在"})
+		return
+	}
+	e.UserInfo.PaymentMux.Lock()
+	defer e.UserInfo.PaymentMux.Unlock()
+
+	//获取支付请求
+	pay := struct {
+		NpubKey string  `json:"npub_key"`
+		Amount  float64 `json:"amount"`
+	}{}
+	if err := c.ShouldBindJSON(&pay); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "请求参数错误"})
+		return
+	}
+
+	err = e.SendPaymentToUser(pay.NpubKey, pay.Amount)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"error": "SendPayment error:" + err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"payment": "success"})
+}
 
 // QueryBalance CustodyAccount查询发票
 func QueryBalance(c *gin.Context) {

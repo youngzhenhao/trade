@@ -181,21 +181,47 @@ func (e *BtcChannelEvent) SendPayment(payRequest cBase.PayPacket) error {
 	}
 }
 
-func (e *BtcChannelEvent) SendPaymentToUser(amount int64) error {
+func (e *BtcChannelEvent) SendPaymentToUser(receiverUserName string, amount float64) error {
+	//检查接收方是否存在
 	var err error
+	receiver, err := caccount.GetUserInfo(receiverUserName)
+	if err != nil {
+		btlLog.CUST.Warning("%s,UserName:%s", err.Error(), receiverUserName)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("%w: %s", caccount.CustodyAccountGetErr, "userName不存在")
+		}
+		return fmt.Errorf("%w: %w", caccount.CustodyAccountGetErr, err)
+	}
+
 	//验证余额，检查限额
 	limitType := custodyModels.LimitType{
 		AssetId:      "00",
 		TransferType: custodyModels.LimitTransferTypeLocal,
 	}
-	err = custodyLimit.CheckLimit(middleware.DB, e.UserInfo, &limitType, float64(amount))
+	err = custodyLimit.CheckLimit(middleware.DB, e.UserInfo, &limitType, amount)
 	if err != nil {
 		return err
 	}
-	if !CheckBtcBalance(middleware.DB, e.UserInfo, float64(amount)) {
+	if !CheckBtcBalance(middleware.DB, e.UserInfo, amount) {
 		return NotSufficientFunds
 	}
-
+	//构建转账请求
+	m := custodyModels.AccountInsideMission{
+		AccountId:  e.UserInfo.Account.ID,
+		AssetId:    BtcId,
+		Type:       custodyModels.AIMTypeBtc,
+		ReceiverId: receiver.Account.ID,
+		InvoiceId:  0,
+		Amount:     amount,
+		Fee:        float64(custodyFee.ChannelBtcInsideServiceFee),
+		FeeType:    BtcId,
+		State:      custodyModels.AIMStatePending,
+	}
+	LogAIM(middleware.DB, &m)
+	err = RunInsidePTNStep(e.UserInfo, receiver, &m)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
