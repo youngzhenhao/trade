@@ -64,6 +64,9 @@ func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 		return models.ReadDbErr
 	}
 	if errors.Is(err, gorm.ErrRecordNotFound) {
+		if p.FeeLimit == 0 {
+			p.FeeLimit = 10
+		}
 		p.isInsideMission = nil
 	} else {
 		if i.Status != models.InvoiceStatusPending {
@@ -81,6 +84,7 @@ func (p *BtcPacket) VerifyPayReq(userinfo *caccount.UserInfo) error {
 		btlLog.CUST.Error("发票解析失败", err)
 		return fmt.Errorf("(pay_request=%s)", "发票解析失败：", p.PayReq)
 	}
+	//验证金额
 	endAmount := p.DecodePayReq.NumSatoshis + p.FeeLimit + int64(ServerFee)
 
 	//验证限额

@@ -1,9 +1,14 @@
 package SecondHandler
 
 import (
+	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 	"trade/btlLog"
+	"trade/middleware"
+	"trade/models"
 	"trade/services/custodyAccount/lockPayment"
 )
 
@@ -135,5 +140,43 @@ func PayAsset(c *gin.Context) {
 		return
 	}
 	res.TxId = creds.LockedId
+	c.JSON(http.StatusOK, &res)
+}
+
+type CheckUserStatusRequest struct {
+	Npubkey string `json:"npubkey"`
+}
+
+type CheckUserStatusResponse struct {
+	Status int8   `json:"status"`
+	Error  string `json:"error"`
+}
+
+func CheckUserStatus(c *gin.Context) {
+	var creds CheckUserStatusRequest
+	var res CheckUserStatusResponse
+	if err := c.ShouldBindJSON(&creds); err != nil {
+		res.Error = fmt.Sprintf("Invalid request: %v", err)
+		c.JSON(http.StatusBadRequest, &res)
+		return
+	}
+	db := middleware.DB
+	var user models.User
+	err := db.Where("user_name = ?", creds.Npubkey).First(&user).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		res.Error = fmt.Sprintf("Server error: %v", err)
+		c.JSON(http.StatusInternalServerError, &res)
+		return
+	}
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		res.Status = -1
+		res.Error = "User not found"
+	case user.Status != 0:
+		res.Status = 0
+		res.Error = "User locked"
+	default:
+		res.Status = 1
+	}
 	c.JSON(http.StatusOK, &res)
 }

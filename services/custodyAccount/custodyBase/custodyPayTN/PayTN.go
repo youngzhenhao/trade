@@ -32,6 +32,5 @@ func (p *PayToNpubKey) Decode(encoded string) error {
 	if err != nil {
 		return err
 	}
-
 	return json.Unmarshal(data, p)
 }

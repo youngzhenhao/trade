@@ -56,6 +56,7 @@ func RunInsideStep(usr *account.UserInfo, mission *custodyModels.AccountInsideMi
 }
 
 func RunInsidePTNStep(usr *account.UserInfo, mission *custodyModels.AccountInsideMission) error {
+
 	return nil
 }
 

@@ -28,6 +28,7 @@ func SetupRouter() *gin.Engine {
 	//lockAccount
 	{
 		locked := r.Group("/lockAccount")
+		locked.POST("/CheckUserStatus", SecondHandler.CheckUserStatus)
 		locked.POST("/getBalance", SecondHandler.GetBalance)
 		locked.POST("/lock", SecondHandler.Lock)
 		locked.POST("/unlock", SecondHandler.Unlock)
