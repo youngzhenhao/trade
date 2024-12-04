@@ -2,6 +2,7 @@ package pool
 
 import (
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"math/big"
 	"strconv"
@@ -508,10 +509,19 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 
 	var swapFeeType SwapFeeType
 
+	var _swapFee = big.NewInt(0)
+
+	var _swapFeeFloat = big.NewFloat(0)
+
 	if token0 == tokenOut {
+
 		*_reserveIn, *_reserveOut = *_reserve1, *_reserve0
 		if isTokenZeroSat {
-			_amountOutWithFee, err := getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
+			// @dev: token => ?sat
+
+			var _amountOutWithFee, _amountOutWithoutFee *big.Int
+
+			_amountOutWithFee, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
 			if err != nil {
 				return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
 			}
@@ -519,7 +529,7 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 				return ZeroValue, errors.New("insufficientAmountOutWithFee(" + _amountOutWithFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
 			}
 
-			_amountOutWithoutFee, err := getAmountOutBigWithoutFee(_amountIn, _reserveIn, _reserveOut)
+			_amountOutWithoutFee, err = getAmountOutBigWithoutFee(_amountIn, _reserveIn, _reserveOut)
 			if err != nil {
 				return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBigWithoutFee")
 			}
@@ -529,43 +539,113 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 
 			_minSwapSat := new(big.Int).SetUint64(uint64(MinSwapSatFee))
 			if new(big.Int).Sub(_amountOutWithoutFee, _amountOutWithFee).Cmp(_minSwapSat) < 0 {
+				// @dev: fee 20 sat
+
 				_amountOut = new(big.Int).Sub(_amountOutWithoutFee, _minSwapSat)
 				swapFeeType = SwapFee20Sat
+				_swapFee = _minSwapSat
+				_swapFeeFloat.SetInt(_swapFee)
+				fmt.Printf("_swapFee: %v\n", _swapFee)
 			} else {
+				// @dev: fee _amountOutWithoutFee - _amountOutWithFee
+
 				_amountOut = _amountOutWithFee
 				swapFeeType = SwapFee6Thousands
+				_swapFee = new(big.Int).Sub(_amountOutWithoutFee, _amountOutWithFee)
+				_swapFeeFloat.SetInt(_swapFee)
+				fmt.Printf("_swapFee: %v\n", _swapFee)
 			}
 		} else {
 			_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
 			if err != nil {
 				return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
 			}
-			swapFeeType = SwapFee6Thousands
+
+			swapFeeType = SwapFee6ThousandsNotSat
+			fmt.Printf("_swapFee: %v\n", _swapFee)
+
+			// TODO: Swap Fee Calculation
+
 		}
 	} else {
+		// @dev: sat => ?token
+
 		*_reserveIn, *_reserveOut = *_reserve0, *_reserve1
+
 		if isTokenZeroSat {
-			_minSwapSat := new(big.Int).SetUint64(uint64(MinSwapSat))
 			_minSwapSatFee := new(big.Int).SetUint64(uint64(MinSwapSatFee))
-			if _amountIn.Cmp(_minSwapSat) < 0 {
+
+			var _amountOutWithFee, _amountOutWithoutFee *big.Int
+
+			_amountOutWithFee, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
+			}
+			if _amountOutWithFee.Cmp(_amountOutMin) < 0 {
+				return ZeroValue, errors.New("insufficientAmountOutWithFee(" + _amountOutWithFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
+			}
+
+			_amountOutWithoutFee, err = getAmountOutBigWithoutFee(_amountIn, _reserveIn, _reserveOut)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBigWithoutFee")
+			}
+			if _amountOutWithoutFee.Cmp(_amountOutMin) < 0 {
+				return ZeroValue, errors.New("insufficientAmountOutWithoutFee(" + _amountOutWithoutFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
+			}
+			_swapFeeToken1 := new(big.Int).Sub(_amountOutWithoutFee, _amountOutWithFee)
+			_swapFeeToken1Float := new(big.Float).SetInt(_swapFeeToken1)
+
+			var _price *big.Float
+			_price, err = GetToken1PriceBig(_reserve0, _reserve1)
+			if err != nil {
+				return ZeroValue, utils.AppendErrorInfo(err, "GetToken1PriceBig")
+			}
+
+			_swapFeeToken1ValueFloat := new(big.Float).Mul(_swapFeeToken1Float, _price)
+			_minSwapSatFeeFloat := new(big.Float).SetUint64(uint64(MinSwapSatFee))
+
+			fmt.Printf("_swapFeeToken1ValueFloat: %v; _minSwapSatFeeFloat:%v\n", _swapFeeToken1ValueFloat, _minSwapSatFeeFloat)
+
+			if _swapFeeToken1ValueFloat.Cmp(_minSwapSatFeeFloat) < 0 {
+				// @dev: fee 20 sat
+
+				// TODO: Test
 				_amountOut, err = getAmountOutBigWithoutFee(new(big.Int).Sub(_amountIn, _minSwapSatFee), _reserveIn, _reserveOut)
 				if err != nil {
 					return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBigWithoutFee")
 				}
+
 				swapFeeType = SwapFee20Sat
+				_swapFee = _minSwapSatFee
+				_swapFeeFloat.SetInt(_swapFee)
+				fmt.Printf("_swapFee: %v\n", _swapFee)
 			} else {
+				// @dev: fee _swapFeeToken1ValueFloat
+
+				// TODO: Test
 				_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
 				if err != nil {
 					return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
 				}
+
 				swapFeeType = SwapFee6Thousands
+
+				// TODO: 考虑根据实际手续费发放奖励并存储
+				_swapFeeToken1ValueFloat.Int(_swapFee)
+				_swapFeeFloat = _swapFeeToken1ValueFloat
+				fmt.Printf("_swapFee: %v\n", _swapFee)
+
 			}
 		} else {
 			_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
 			if err != nil {
 				return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
 			}
-			swapFeeType = SwapFee6Thousands
+			swapFeeType = SwapFee6ThousandsNotSat
+			fmt.Printf("_swapFee: %v\n", _swapFee)
+
+			// TODO: Swap Fee Calculation
+
 		}
 	}
 
@@ -606,7 +686,7 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 	}
 
 	// @dev: update swapRecord
-	err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, amountIn, _amountOut.String(), _reserveIn.String(), _reserveOut.String(), swapFeeType, SwapExactTokenNoPath)
+	err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, amountIn, _amountOut.String(), _reserveIn.String(), _reserveOut.String(), _swapFeeFloat.String(), swapFeeType, SwapExactTokenNoPath)
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "CreateSwapRecord")
 	}
@@ -707,32 +787,44 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 
 	var swapFeeType SwapFeeType
 
+	var _swapFee = big.NewInt(0)
+
+	var _swapFeeFloat = big.NewFloat(0)
+
 	if token0 == tokenOut {
 		*_reserveIn, *_reserveOut = *_reserve1, *_reserve0
+
+		if _amountOut.Cmp(_reserveOut) >= 0 {
+			return ZeroValue, errors.New("excessive _amountOut(" + _amountOut.String() + "), need lt reserveOut(" + _reserveOut.String() + ")")
+		}
+
 		if isTokenZeroSat {
+			// @dev: ?token => sat
+			var _amountInWithFee, _amountInWithoutFee *big.Int
 
 			_minSwapSatFee := new(big.Int).SetUint64(uint64(MinSwapSatFee))
-			_amountInWithFee, err := getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
+			_amountInWithFee, err = getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
 			if err != nil {
 				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBig")
 			}
 			if _amountInWithFee.Cmp(_amountInMax) > 0 {
-				return ZeroValue, errors.New("excessive _amountInWithFee(" + _amountIn.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
+				return ZeroValue, errors.New("excessive _amountInWithFee(" + _amountInWithFee.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
 			}
 
-			_amountInWithoutFee, err := getAmountInBigWithoutFee(_amountOut, _reserveIn, _reserveOut)
+			_amountInWithoutFee, err = getAmountInBigWithoutFee(_amountOut, _reserveIn, _reserveOut)
 			if err != nil {
 				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBigWithoutFee")
 			}
 			if _amountInWithoutFee.Cmp(_amountInMax) > 0 {
-				return ZeroValue, errors.New("excessive _amountInWithoutFee(" + _amountIn.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
+				return ZeroValue, errors.New("excessive _amountInWithoutFee(" + _amountInWithoutFee.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
 			}
 
 			_amountInFee := new(big.Int).Sub(_amountInWithFee, _amountInWithoutFee)
 			_amountInFeeFloat := new(big.Float).SetInt(_amountInFee)
 
-			// TODO
-			_price, err := GetToken1PriceBig(_reserve0, _reserve1)
+			var _price *big.Float
+
+			_price, err = GetToken1PriceBig(_reserve0, _reserve1)
 			if err != nil {
 				return ZeroValue, utils.AppendErrorInfo(err, "GetToken1PriceBig")
 			}
@@ -740,13 +832,30 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 			_feeValueFloat := new(big.Float).Mul(_amountInFeeFloat, _price)
 
 			if _feeValueFloat.Cmp(_minSwapSatFeeFloat) < 0 {
+				// @dev: fee 20 sat
 				_amountIn, err = getAmountInBigWithoutFee(new(big.Int).Add(_amountOut, _minSwapSatFee), _reserveIn, _reserveOut)
 				if err != nil {
 					return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBigWithoutFee")
 				}
 				swapFeeType = SwapFee20Sat
+
+				_swapFee = _minSwapSatFee
+				_swapFeeFloat.SetInt(_swapFee)
+
+				fmt.Printf("_swapFee: %v\n", _swapFee)
+
 			} else {
-				//	TODO
+				// @dev: fee _feeValueFloat
+				_amountIn = _amountInWithFee
+				swapFeeType = SwapFee6Thousands
+
+				_swapFeeFloat = _feeValueFloat
+				_feeValueFloat.Int(_swapFee)
+
+				fmt.Printf("_swapFee: %v\n", _swapFee)
+
+				// TODO
+
 			}
 
 		} else {
@@ -754,36 +863,63 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 			if err != nil {
 				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBig")
 			}
-			swapFeeType = SwapFee6Thousands
+			swapFeeType = SwapFee6ThousandsNotSat
+			fmt.Printf("_swapFee: %v\n", _swapFee)
+
+			// TODO: Swap Fee Calculation
 		}
 
 	} else {
 		*_reserveIn, *_reserveOut = *_reserve0, *_reserve1
+
+		if _amountOut.Cmp(_reserveOut) >= 0 {
+			return ZeroValue, errors.New("excessive _amountOut(" + _amountOut.String() + "), need lt reserveOut(" + _reserveOut.String() + ")")
+		}
+
 		if isTokenZeroSat {
+			// @dev: ?sat => token
+
 			_minSwapSatFee := new(big.Int).SetUint64(uint64(MinSwapSatFee))
 
-			_amountInWithFee, err := getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
+			var _amountInWithFee, _amountInWithoutFee *big.Int
+
+			_amountInWithFee, err = getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
 			if err != nil {
 				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBig")
 			}
 			if _amountInWithFee.Cmp(_amountInMax) > 0 {
-				return ZeroValue, errors.New("excessive _amountInWithFee(" + _amountIn.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
+				return ZeroValue, errors.New("excessive _amountInWithFee(" + _amountInWithFee.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
 			}
 
-			_amountInWithoutFee, err := getAmountInBigWithoutFee(_amountOut, _reserveIn, _reserveOut)
+			_amountInWithoutFee, err = getAmountInBigWithoutFee(_amountOut, _reserveIn, _reserveOut)
 			if err != nil {
 				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBigWithoutFee")
 			}
 			if _amountInWithoutFee.Cmp(_amountInMax) > 0 {
-				return ZeroValue, errors.New("excessive _amountInWithoutFee(" + _amountIn.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
+				return ZeroValue, errors.New("excessive _amountInWithoutFee(" + _amountInWithoutFee.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
 			}
 
 			if new(big.Int).Sub(_amountInWithFee, _amountInWithoutFee).Cmp(_minSwapSatFee) < 0 {
+				// @dev: fee 20 sat
+
 				_amountIn = new(big.Int).Add(_amountInWithoutFee, _minSwapSatFee)
 				swapFeeType = SwapFee20Sat
+
+				_swapFee = _minSwapSatFee
+				_swapFeeFloat.SetInt(_swapFee)
+				fmt.Printf("_swapFee: %v\n", _swapFee)
+
 			} else {
+				// @dev: fee _amountInWithFee - _amountInWithoutFee
+
 				_amountIn = _amountInWithFee
 				swapFeeType = SwapFee6Thousands
+
+				_swapFee = new(big.Int).Sub(_amountInWithFee, _amountInWithoutFee)
+				_swapFeeFloat.SetInt(_swapFee)
+
+				fmt.Printf("_swapFee: %v\n", _swapFee)
+
 			}
 
 		} else {
@@ -791,12 +927,20 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 			if err != nil {
 				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBig")
 			}
-			swapFeeType = SwapFee6Thousands
+			swapFeeType = SwapFee6ThousandsNotSat
+
+			// TODO: Swap Fee Calculation
+			fmt.Printf("_swapFee: %v\n", _swapFee)
+
 		}
 	}
 
 	if _amountIn.Cmp(_amountInMax) > 0 {
 		return ZeroValue, errors.New("excessiveAmountIn(" + _amountIn.String() + "), need amountInMax(" + _amountInMax.String() + ")")
+	}
+
+	if _amountIn.Sign() <= 0 {
+		return ZeroValue, errors.New("invalid _amountIn(" + _amountIn.String() + ")")
 	}
 
 	// TODO: check balance then transfer, record transfer Id
@@ -832,7 +976,7 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 	}
 
 	// @dev: update swapRecord
-	err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, _amountIn.String(), amountOut, _reserveIn.String(), _reserveOut.String(), swapFeeType, SwapForExactTokenNoPath)
+	err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, _amountIn.String(), amountOut, _reserveIn.String(), _reserveOut.String(), _swapFeeFloat.String(), swapFeeType, SwapForExactTokenNoPath)
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "CreateSwapRecord")
 	}
