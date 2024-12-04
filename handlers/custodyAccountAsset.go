@@ -90,6 +90,41 @@ func SendAsset(c *gin.Context) {
 	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", result))
 }
 
+func SendToUserAsset(c *gin.Context) {
+	// 获取登录用户信息
+	userName := c.MustGet("username").(string)
+	e, err := custodyAssets.NewAssetEvent(userName, "")
+	if err != nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
+		return
+	}
+
+	e.UserInfo.PaymentMux.Lock()
+	defer e.UserInfo.PaymentMux.Unlock()
+
+	pay := struct {
+		NpubKey string  `json:"npub_key"`
+		AssetId string  `json:"asset_id"`
+		Amount  float64 `json:"amount"`
+	}{}
+	if err = c.ShouldBindJSON(&pay); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error() + "请求参数错误"})
+		return
+	}
+
+	err = e.SendPaymentToUser(pay.NpubKey, pay.Amount, pay.AssetId)
+	if err != nil {
+		c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.DefaultErr, err.Error(), nil))
+		return
+	}
+	result := struct {
+		Success string `json:"success"`
+	}{
+		Success: "success",
+	}
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", result))
+}
+
 type QueryAssetRequest struct {
 	AssetId string `json:"asset_id"`
 }

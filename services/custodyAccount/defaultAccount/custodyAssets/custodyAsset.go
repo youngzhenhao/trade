@@ -121,6 +121,54 @@ func (e *AssetEvent) ApplyPayReq(Request cBase.PayReqApplyRequest) (cBase.PayReq
 	}, nil
 }
 
+func (e *AssetEvent) SendPaymentToUser(receiverUserName string, amount float64, assetId string) error {
+	//检查接收方是否存在
+	var err error
+	receiver, err := caccount.GetUserInfo(receiverUserName)
+	if err != nil {
+		btlLog.CUST.Warning("%s,UserName:%s", err.Error(), receiverUserName)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("%w: %s", caccount.CustodyAccountGetErr, "userName不存在")
+		}
+		return fmt.Errorf("%w: %w", caccount.CustodyAccountGetErr, err)
+	}
+	//检查余额是否足够
+	limitType := custodyModels.LimitType{
+		AssetId:      assetId,
+		TransferType: custodyModels.LimitTransferTypeLocal,
+	}
+	err = custodyLimit.CheckLimit(middleware.DB, e.UserInfo, &limitType, amount)
+	if err != nil {
+		return err
+	}
+
+	//验证资产金额
+	if !CheckAssetBalance(middleware.DB, e.UserInfo, assetId, amount) {
+		return cBase.NotEnoughAssetFunds
+	}
+	if !custodyBtc.CheckBtcBalance(middleware.DB, e.UserInfo, float64(custodyFee.AssetInsideFee)) {
+		return cBase.NotEnoughFeeFunds
+	}
+	//构建转账记录
+	m := custodyModels.AccountInsideMission{
+		AccountId:  e.UserInfo.Account.ID,
+		AssetId:    assetId,
+		Type:       custodyModels.AIMTypeAsset,
+		ReceiverId: receiver.Account.ID,
+		InvoiceId:  0,
+		Amount:     amount,
+		Fee:        float64(custodyFee.AssetInsideFee),
+		FeeType:    custodyBtc.BtcId,
+		State:      custodyModels.AIMStatePending,
+	}
+	custodyBtc.LogAIM(middleware.DB, &m)
+	err = RunInsideStepByUserId(e.UserInfo, receiver, &m)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (e *AssetEvent) SendPayment(payRequest cBase.PayPacket) error {
 	var bt *AssetPacket
 	var ok bool

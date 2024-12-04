@@ -80,6 +80,7 @@ func RunInsidePTNStep(usr *account.UserInfo, receiveUsr *account.UserInfo, missi
 	PTN := custodyPayTN.PayToNpubKey{
 		NpubKey: receiveUsr.User.Username,
 		Amount:  mission.Amount,
+		AssetId: mission.AssetId,
 		Time:    mission.CreatedAt.Unix(),
 		Vision:  0,
 	}

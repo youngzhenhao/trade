@@ -30,6 +30,7 @@ func SetupCustodyAccountRouter(router *gin.Engine) *gin.Engine {
 		{
 			Asset.POST("/apply", handlers.ApplyAddress)
 			Asset.POST("/send", handlers.SendAsset)
+			Asset.POST("/sendToUserAsset", handlers.SendToUserAsset)
 			Asset.POST("/queryassets", handlers.QueryAssets)
 			Asset.POST("/querypayment", handlers.QueryAssetPayment)
 			Asset.POST("/queryaddress", handlers.QueryAddress)

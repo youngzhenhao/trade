@@ -10,6 +10,7 @@ import (
 
 type PayToNpubKey struct {
 	NpubKey string
+	AssetId string
 	Amount  float64
 	Time    int64
 	Vision  uint8

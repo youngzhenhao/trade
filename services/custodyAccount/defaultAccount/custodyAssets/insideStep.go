@@ -9,6 +9,7 @@ import (
 	"trade/models/custodyModels"
 	"trade/services/custodyAccount/account"
 	"trade/services/custodyAccount/custodyBase/custodyLimit"
+	"trade/services/custodyAccount/custodyBase/custodyPayTN"
 	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 	rpc "trade/services/servicesrpc"
 )
@@ -62,6 +63,56 @@ func RunInsideStep(usr *account.UserInfo, mission *custodyModels.AccountInsideMi
 		}
 	}
 }
+
+func RunInsideStepByUserId(usr *account.UserInfo, receiveUsr *account.UserInfo, mission *custodyModels.AccountInsideMission) error {
+	db := middleware.DB
+	//获取usrInfo
+	if usr == nil {
+		var a models.Account
+		if err := db.Where("id =?", mission.AccountId).First(&a).Error; err != nil {
+			btlLog.CUST.Error("GetAccount error:%s", err)
+			return err
+		}
+		usr, _ = account.GetUserInfo(a.UserName)
+	}
+	if receiveUsr == nil {
+		var a models.Account
+		if err := db.Where("id =?", mission.ReceiverId).First(&a).Error; err != nil {
+			btlLog.CUST.Error("GetAccount error:%s", err)
+			return err
+		}
+		receiveUsr, _ = account.GetUserInfo(a.UserName)
+	}
+	//获取发票信息
+	PTN := custodyPayTN.PayToNpubKey{
+		NpubKey: receiveUsr.User.Username,
+		Amount:  mission.Amount,
+		AssetId: mission.AssetId,
+		Time:    mission.CreatedAt.Unix(),
+		Vision:  0,
+	}
+	invoice, _ := PTN.Encode()
+	h, _ := custodyPayTN.HashEncodedString(invoice)
+	i := invoiceInfo{
+		Invoice: invoice,
+		AssetId: mission.AssetId,
+		Hash:    &h,
+	}
+	for {
+		InsideSteps(usr, mission, i)
+		custodyBtc.LogAIM(middleware.DB, mission)
+		switch {
+		case mission.State == custodyModels.AIMStateSuccess:
+			return nil
+		case mission.State == custodyModels.AIMStateDone:
+			return fmt.Errorf(mission.Error)
+		case mission.Retries >= 30:
+			return nil
+		}
+	}
+
+}
+
 func InsideSteps(usr *account.UserInfo, mission *custodyModels.AccountInsideMission, i invoiceInfo) {
 	var err error
 	switch mission.State {
@@ -106,6 +157,7 @@ func InsideSteps(usr *account.UserInfo, mission *custodyModels.AccountInsideMiss
 		mission.State = custodyModels.AIMStatePaid
 		tx.Commit()
 
+		//TODO 额度限制更新放在前面
 		go func() {
 			//更新额度
 			limitType := custodyModels.LimitType{
