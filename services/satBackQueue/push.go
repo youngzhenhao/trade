@@ -80,10 +80,10 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 			}
 			var requestHeader, requestBody, responseHeader, responseBody []byte
 			requestHeader, _ = json.Marshal(req.Header)
-			requestBody, _ = json.Marshal(req.Body)
+			requestBody, _ = io.ReadAll(req.Body)
 			if res != nil {
 				responseHeader, _ = json.Marshal(res.Header)
-				responseBody, _ = json.Marshal(res.Body)
+				responseBody, _ = io.ReadAll(res.Body)
 			}
 			var restRecord = models.RestRecord{
 				Method:         "POST",
@@ -105,6 +105,14 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 			return
 		}
 	}(res.Body)
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			return
+		}
+	}(req.Body)
+
 	body, err := io.ReadAll(res.Body)
 
 	func(url string, method string, req *http.Request, res *http.Response, err error) {
@@ -114,9 +122,9 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 		}
 		var requestHeader, requestBody, responseHeader, responseBody []byte
 		requestHeader, _ = json.Marshal(req.Header)
-		requestBody, _ = json.Marshal(req.Body)
+		requestBody, _ = io.ReadAll(req.Body)
 		responseHeader, _ = json.Marshal(res.Header)
-		responseBody, _ = json.Marshal(res.Body)
+		responseBody, _ = io.ReadAll(res.Body)
 		var restRecord = models.RestRecord{
 			Method:         "POST",
 			Url:            url,
