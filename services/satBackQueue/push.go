@@ -72,6 +72,31 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 	req.Header.Add("content-type", "application/json")
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
+
+		func(url string, method string, req *http.Request, res *http.Response, err error) {
+			var errInfo string
+			if err != nil {
+				errInfo = err.Error()
+			}
+			var requestHeader, requestBody, responseHeader, responseBody []byte
+			requestHeader, _ = json.Marshal(req.Header)
+			requestBody, _ = json.Marshal(req.Body)
+			if res != nil {
+				responseHeader, _ = json.Marshal(res.Header)
+				responseBody, _ = json.Marshal(res.Body)
+			}
+			var restRecord = models.RestRecord{
+				Method:         "POST",
+				Url:            url,
+				RequestHeader:  string(requestHeader),
+				RequestBody:    string(requestBody),
+				ResponseHeader: string(responseHeader),
+				ResponseBody:   string(responseBody),
+				Error:          errInfo,
+			}
+			_ = middleware.DB.Model(&models.RestRecord{}).Create(&restRecord).Error
+		}(url, "POST", req, res, err)
+
 		return nil, err
 	}
 	defer func(Body io.ReadCloser) {
@@ -81,6 +106,29 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 		}
 	}(res.Body)
 	body, err := io.ReadAll(res.Body)
+
+	func(url string, method string, req *http.Request, res *http.Response, err error) {
+		var errInfo string
+		if err != nil {
+			errInfo = err.Error()
+		}
+		var requestHeader, requestBody, responseHeader, responseBody []byte
+		requestHeader, _ = json.Marshal(req.Header)
+		requestBody, _ = json.Marshal(req.Body)
+		responseHeader, _ = json.Marshal(res.Header)
+		responseBody, _ = json.Marshal(res.Body)
+		var restRecord = models.RestRecord{
+			Method:         "POST",
+			Url:            url,
+			RequestHeader:  string(requestHeader),
+			RequestBody:    string(requestBody),
+			ResponseHeader: string(responseHeader),
+			ResponseBody:   string(responseBody),
+			Error:          errInfo,
+		}
+		_ = middleware.DB.Model(&models.RestRecord{}).Create(&restRecord).Error
+	}(url, "POST", req, res, err)
+
 	return body, nil
 }
 

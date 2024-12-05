@@ -187,6 +187,9 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&satBackQueue.PushQueueRecord{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.RestRecord{}); err != nil {
+		return err
+	}
 	if err = poolMigrate(); err != nil {
 		return err
 	}
