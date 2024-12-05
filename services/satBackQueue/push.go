@@ -63,7 +63,8 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 		return nil, err
 	}
 	payload := bytes.NewBuffer(requestJsonBytes)
-	payloadString := payload.String()
+	payloadCopy := *payload
+	payloadString := payloadCopy.String()
 	req, err := http.NewRequest("POST", url, payload)
 	if err != nil {
 		return nil, err
