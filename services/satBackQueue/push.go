@@ -63,10 +63,14 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 		return nil, err
 	}
 	payload := bytes.NewBuffer(requestJsonBytes)
+	payloadString := payload.String()
 	req, err := http.NewRequest("POST", url, payload)
 	if err != nil {
 		return nil, err
 	}
+	reqBody := req.Body
+	reqBodyString, _ := io.ReadAll(reqBody)
+
 	//req.Header.Add("Authorization", "Bearer "+token)
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("content-type", "application/json")
@@ -80,7 +84,7 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 			}
 			var requestHeader, requestBody, responseHeader, responseBody []byte
 			requestHeader, _ = json.Marshal(req.Header)
-			requestBody, _ = io.ReadAll(req.Body)
+			requestBody = reqBodyString
 			if res != nil {
 				responseHeader, _ = json.Marshal(res.Header)
 				responseBody, _ = io.ReadAll(res.Body)
@@ -90,7 +94,7 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 				Url:            url,
 				RequestHeader:  string(requestHeader),
 				Data:           string(requestJsonBytes),
-				Payload:        payload.String(),
+				Payload:        payloadString,
 				RequestBody:    string(requestBody),
 				ResponseHeader: string(responseHeader),
 				ResponseBody:   string(responseBody),
@@ -117,29 +121,29 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 
 	body, err := io.ReadAll(res.Body)
 
-	func(url string, method string, req *http.Request, res *http.Response, err error) {
+	func(url string, method string, req *http.Request, res *http.Response, body []byte, err error) {
 		var errInfo string
 		if err != nil {
 			errInfo = err.Error()
 		}
 		var requestHeader, requestBody, responseHeader, responseBody []byte
 		requestHeader, _ = json.Marshal(req.Header)
-		requestBody, _ = io.ReadAll(req.Body)
+		requestBody = reqBodyString
 		responseHeader, _ = json.Marshal(res.Header)
-		responseBody, _ = io.ReadAll(res.Body)
+		responseBody = body
 		var restRecord = models.RestRecord{
 			Method:         "POST",
 			Url:            url,
 			RequestHeader:  string(requestHeader),
 			Data:           string(requestJsonBytes),
-			Payload:        payload.String(),
+			Payload:        payloadString,
 			RequestBody:    string(requestBody),
 			ResponseHeader: string(responseHeader),
 			ResponseBody:   string(responseBody),
 			Error:          errInfo,
 		}
 		_ = middleware.DB.Model(&models.RestRecord{}).Create(&restRecord).Error
-	}(url, "POST", req, res, err)
+	}(url, "POST", req, res, body, err)
 
 	return body, nil
 }
