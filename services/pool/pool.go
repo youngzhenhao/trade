@@ -2,7 +2,6 @@ package pool
 
 import (
 	"errors"
-	"fmt"
 	"gorm.io/gorm"
 	"math/big"
 	"strconv"
@@ -545,7 +544,7 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 				swapFeeType = SwapFee20Sat
 				_swapFee = _minSwapSat
 				_swapFeeFloat.SetInt(_swapFee)
-				fmt.Printf("_swapFee: %v\n", _swapFee)
+				//fmt.Printf("_swapFee: %v\n", _swapFee)
 			} else {
 				// @dev: fee _amountOutWithoutFee - _amountOutWithFee
 
@@ -553,7 +552,7 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 				swapFeeType = SwapFee6Thousands
 				_swapFee = new(big.Int).Sub(_amountOutWithoutFee, _amountOutWithFee)
 				_swapFeeFloat.SetInt(_swapFee)
-				fmt.Printf("_swapFee: %v\n", _swapFee)
+				//fmt.Printf("_swapFee: %v\n", _swapFee)
 			}
 		} else {
 			_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
@@ -562,7 +561,7 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 			}
 
 			swapFeeType = SwapFee6ThousandsNotSat
-			fmt.Printf("_swapFee: %v\n", _swapFee)
+			//fmt.Printf("_swapFee: %v\n", _swapFee)
 
 			// TODO: Swap Fee Calculation
 
@@ -604,12 +603,11 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 			_swapFeeToken1ValueFloat := new(big.Float).Mul(_swapFeeToken1Float, _price)
 			_minSwapSatFeeFloat := new(big.Float).SetUint64(uint64(MinSwapSatFee))
 
-			fmt.Printf("_swapFeeToken1ValueFloat: %v; _minSwapSatFeeFloat:%v\n", _swapFeeToken1ValueFloat, _minSwapSatFeeFloat)
+			//fmt.Printf("_swapFeeToken1ValueFloat: %v; _minSwapSatFeeFloat:%v\n", _swapFeeToken1ValueFloat, _minSwapSatFeeFloat)
 
 			if _swapFeeToken1ValueFloat.Cmp(_minSwapSatFeeFloat) < 0 {
 				// @dev: fee 20 sat
 
-				// TODO: Test
 				_amountOut, err = getAmountOutBigWithoutFee(new(big.Int).Sub(_amountIn, _minSwapSatFee), _reserveIn, _reserveOut)
 				if err != nil {
 					return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBigWithoutFee")
@@ -618,11 +616,10 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 				swapFeeType = SwapFee20Sat
 				_swapFee = _minSwapSatFee
 				_swapFeeFloat.SetInt(_swapFee)
-				fmt.Printf("_swapFee: %v\n", _swapFee)
+				//fmt.Printf("_swapFee: %v\n", _swapFee)
 			} else {
 				// @dev: fee _swapFeeToken1ValueFloat
 
-				// TODO: Test
 				_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
 				if err != nil {
 					return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
@@ -630,11 +627,12 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 
 				swapFeeType = SwapFee6Thousands
 
-				// TODO: 考虑根据实际手续费发放奖励并存储
-				_swapFeeToken1ValueFloat.Int(_swapFee)
 				_swapFeeFloat = _swapFeeToken1ValueFloat
-				fmt.Printf("_swapFee: %v\n", _swapFee)
 
+				// @dev: Set _swapFee
+				_swapFeeToken1ValueFloat.Int(_swapFee)
+
+				//fmt.Printf("_swapFee: %v\n", _swapFee)
 			}
 		} else {
 			_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
@@ -642,7 +640,7 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 				return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
 			}
 			swapFeeType = SwapFee6ThousandsNotSat
-			fmt.Printf("_swapFee: %v\n", _swapFee)
+			//fmt.Printf("_swapFee: %v\n", _swapFee)
 
 			// TODO: Swap Fee Calculation
 
@@ -691,7 +689,7 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 		return ZeroValue, utils.AppendErrorInfo(err, "CreateSwapRecord")
 	}
 
-	// TODO: 根据聪？，给所有LP发放奖励
+	// TODO: 使用 _swapFeeFloat 进行奖励发放，给所有LP发放奖励
 
 	// TODO: update LpAwardBalance and LpAwardRecord
 
@@ -842,7 +840,7 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 				_swapFee = _minSwapSatFee
 				_swapFeeFloat.SetInt(_swapFee)
 
-				fmt.Printf("_swapFee: %v\n", _swapFee)
+				//fmt.Printf("_swapFee: %v\n", _swapFee)
 
 			} else {
 				// @dev: fee _feeValueFloat
@@ -850,12 +848,10 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 				swapFeeType = SwapFee6Thousands
 
 				_swapFeeFloat = _feeValueFloat
+				// @dev: Set _swapFee
 				_feeValueFloat.Int(_swapFee)
 
-				fmt.Printf("_swapFee: %v\n", _swapFee)
-
-				// TODO
-
+				//fmt.Printf("_swapFee: %v\n", _swapFee)
 			}
 
 		} else {
@@ -864,7 +860,7 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 				return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBig")
 			}
 			swapFeeType = SwapFee6ThousandsNotSat
-			fmt.Printf("_swapFee: %v\n", _swapFee)
+			//fmt.Printf("_swapFee: %v\n", _swapFee)
 
 			// TODO: Swap Fee Calculation
 		}
@@ -907,7 +903,7 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 
 				_swapFee = _minSwapSatFee
 				_swapFeeFloat.SetInt(_swapFee)
-				fmt.Printf("_swapFee: %v\n", _swapFee)
+				//fmt.Printf("_swapFee: %v\n", _swapFee)
 
 			} else {
 				// @dev: fee _amountInWithFee - _amountInWithoutFee
@@ -918,8 +914,7 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 				_swapFee = new(big.Int).Sub(_amountInWithFee, _amountInWithoutFee)
 				_swapFeeFloat.SetInt(_swapFee)
 
-				fmt.Printf("_swapFee: %v\n", _swapFee)
-
+				//fmt.Printf("_swapFee: %v\n", _swapFee)
 			}
 
 		} else {
@@ -930,7 +925,7 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 			swapFeeType = SwapFee6ThousandsNotSat
 
 			// TODO: Swap Fee Calculation
-			fmt.Printf("_swapFee: %v\n", _swapFee)
+			//fmt.Printf("_swapFee: %v\n", _swapFee)
 
 		}
 	}
@@ -981,8 +976,7 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 		return ZeroValue, utils.AppendErrorInfo(err, "CreateSwapRecord")
 	}
 
-	// TODO: 根据聪？，给所有LP发放奖励
-	// TODO: 衡量收费费聪价值？
+	// TODO: 使用 _swapFeeFloat 进行奖励发放，给所有LP发放奖励
 
 	// TODO: update LpAwardBalance and LpAwardRecord
 
