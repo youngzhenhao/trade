@@ -19,6 +19,7 @@ type GetBalanceRequest struct {
 type GetBalanceResponse struct {
 	UnlockedBalance float64 `json:"unlockedBalance"`
 	LockedBalance   float64 `json:"lockedBalance"`
+	LockedId        string  `json:"lockedId"`
 }
 
 func GetBalance(c *gin.Context) {
@@ -74,6 +75,7 @@ type UnlockRequest struct {
 	LockedId string  `json:"lockedId"`
 	AssetId  string  `json:"assetId"`
 	Amount   float64 `json:"amount"`
+	Version  int     `json:"version"`
 }
 type UnlockResponse struct {
 	Error string `json:"error"`
@@ -89,7 +91,7 @@ func Unlock(c *gin.Context) {
 		return
 	}
 	//TODO Verification request
-	err := lockPayment.Unlock(creds.Npubkey, creds.LockedId, creds.AssetId, creds.Amount)
+	err := lockPayment.Unlock(creds.Npubkey, creds.LockedId, creds.AssetId, creds.Amount, creds.Version)
 	if err != nil {
 		res.Error = err.Error()
 		c.JSON(http.StatusInternalServerError, &res)

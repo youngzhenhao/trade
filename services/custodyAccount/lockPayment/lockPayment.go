@@ -129,7 +129,7 @@ func Lock(npubkey, lockedId, assetId string, amount float64) error {
 	return nil
 }
 
-func Unlock(npubkey, lockedId, assetId string, amount float64) error {
+func Unlock(npubkey, lockedId, assetId string, amount float64, version int) error {
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
 		return GetAccountError
@@ -145,12 +145,12 @@ func Unlock(npubkey, lockedId, assetId string, amount float64) error {
 	}
 
 	if assetId != btcId {
-		err := UnlockAsset(usr, lockedId, assetId, amount)
+		err := UnlockAsset(usr, lockedId, assetId, amount, version)
 		if err != nil {
 			return err
 		}
 	} else {
-		err := UnlockBTC(usr, lockedId, amount)
+		err := UnlockBTC(usr, lockedId, amount, version)
 		if err != nil {
 			return err
 		}

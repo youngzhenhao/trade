@@ -19,7 +19,7 @@ var (
 	NoEnoughAward = fmt.Errorf("not enough award")
 )
 
-func PutInAwardLockBTC(usr *caccount.UserInfo, amount float64, memo *string, lockedId string) (*models.AccountAward, error) {
+func PutInAwardLockBTC(usr *caccount.UserInfo, amount float64, memo *string, lockedId string, version int) (*models.AccountAward, error) {
 	mutex := GetLockPaymentMutex(usr.User.ID)
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -39,8 +39,12 @@ func PutInAwardLockBTC(usr *caccount.UserInfo, amount float64, memo *string, loc
 		lockedBalance.AssetId = btcId
 		lockedBalance.AccountID = usr.LockAccount.ID
 		lockedBalance.Amount = 0
+		lockedBalance.AwardAmount = 0
 	}
 	lockedBalance.Amount += amount
+	if version == 1 {
+		lockedBalance.AwardAmount += amount
+	}
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		tx.Rollback()
 		return nil, ServiceError
@@ -107,7 +111,7 @@ func PutInAwardLockBTC(usr *caccount.UserInfo, amount float64, memo *string, loc
 	return &award, nil
 }
 
-func PutInAwardLockAsset(usr *caccount.UserInfo, assetId string, amount float64, memo *string, lockedId string) (*models.AccountAward, error) {
+func PutInAwardLockAsset(usr *caccount.UserInfo, assetId string, amount float64, memo *string, lockedId string, version int) (*models.AccountAward, error) {
 	mutex := GetLockPaymentMutex(usr.User.ID)
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -144,8 +148,12 @@ func PutInAwardLockAsset(usr *caccount.UserInfo, assetId string, amount float64,
 		lockedBalance.AssetId = assetId
 		lockedBalance.AccountID = usr.LockAccount.ID
 		lockedBalance.Amount = 0
+		lockedBalance.AwardAmount = 0
 	}
 	lockedBalance.Amount += amount
+	if version == 1 {
+		lockedBalance.AwardAmount += amount
+	}
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		tx.Rollback()
 		return nil, ServiceError

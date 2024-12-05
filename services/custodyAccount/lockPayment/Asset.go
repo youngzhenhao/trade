@@ -2,6 +2,7 @@ package lockPayment
 
 import (
 	"errors"
+	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"trade/middleware"
@@ -107,7 +108,7 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 	return nil
 }
 
-func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount float64) error {
+func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount float64, version int) error {
 	tx := middleware.DB.Begin()
 	defer tx.Rollback()
 	var err error
@@ -120,12 +121,25 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 		}
 		lockedBalance.Amount = 0
 	}
-	if lockedBalance.Amount < amount {
-		return NoEnoughBalance
+	// version 1.0 check awardAmount
+	if version == 0 {
+		if lockedBalance.Amount < amount {
+			return NoEnoughBalance
+		}
+		if (lockedBalance.Amount - lockedBalance.AwardAmount) < amount {
+			return fmt.Errorf("%w,have  %f is awardAmount", NoEnoughBalance, lockedBalance.AwardAmount)
+		}
+		// update locked balance
+		lockedBalance.Amount -= amount
+	} else if version == 1 {
+		if lockedBalance.AwardAmount < amount {
+			return fmt.Errorf("%w,have  %f is awardAmount", NoEnoughBalance, lockedBalance.AwardAmount)
+		}
+		// update locked balance
+		lockedBalance.Amount -= amount
+		lockedBalance.AwardAmount -= amount
 	}
 
-	// update locked balance
-	lockedBalance.Amount -= amount
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		return ServiceError
 	}
