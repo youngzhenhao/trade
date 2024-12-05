@@ -22,11 +22,11 @@ func (p *PayToNpubKey) Encode() (string, error) {
 		return "", err
 	}
 	hexData := hex.EncodeToString(data)
-	return "PTN" + hexData, nil
+	return "ptn" + hexData, nil
 }
 func (p *PayToNpubKey) Decode(encoded string) error {
-	if !strings.HasPrefix(encoded, "PTN") {
-		return errors.New("无效的编码字符串: 缺少前缀 'PTN'")
+	if !strings.HasPrefix(encoded, "ptn") {
+		return errors.New("无效的编码字符串: 缺少前缀 'ptn'")
 	}
 
 	hexData := encoded[3:] // 去掉前缀 "PTN"
