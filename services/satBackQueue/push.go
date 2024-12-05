@@ -31,9 +31,15 @@ type Request struct {
 	Data string `json:"data"`
 }
 
-type Response struct {
+type ResponseData struct {
 	Qid string `json:"qid"`
 	Rid string `json:"rid"`
+}
+
+type Response struct {
+	Errno  int          `json:"errno"`
+	ErrMsg string       `json:"errmsg"`
+	Data   ResponseData `json:"data"`
 }
 
 type FeeInfo struct {
@@ -237,16 +243,17 @@ func GetNotPushedPurchasePresaleNFT() ([]FeeInfo, error) {
 
 type PushQueueRecord struct {
 	gorm.Model
-	InfoID    uint       `json:"info_id" gorm:"index"`
-	NpubKey   string     `json:"npub_key" gorm:"type:varchar(255);index"`
-	AssetsID  string     `json:"assets_id" gorm:"type:varchar(255);index"`
-	HandFee   int        `json:"hand_fee" gorm:"index"`
-	Topic     queueTopic `json:"topic" gorm:"type:varchar(255);index"`
-	Qid       string     `json:"qid" gorm:"type:varchar(255);index"`
-	Data      string     `json:"data" gorm:"type:varchar(255);index"`
-	IsSuccess bool       `json:"is_success" gorm:"index"`
-	Rid       string     `json:"rid" gorm:"type:varchar(255);index"`
-	Error     string     `json:"error" gorm:"type:varchar(255);index"`
+	InfoID       uint       `json:"info_id" gorm:"index"`
+	NpubKey      string     `json:"npub_key" gorm:"type:varchar(255);index"`
+	AssetsID     string     `json:"assets_id" gorm:"type:varchar(255);index"`
+	HandFee      int        `json:"hand_fee" gorm:"index"`
+	Topic        queueTopic `json:"topic" gorm:"type:varchar(255);index"`
+	Qid          string     `json:"qid" gorm:"type:varchar(255);index"`
+	Data         string     `json:"data" gorm:"type:varchar(255);index"`
+	IsSuccess    bool       `json:"is_success" gorm:"index"`
+	ResponseBody string     `json:"response_body" gorm:"index"`
+	Rid          string     `json:"rid" gorm:"type:varchar(255);index"`
+	Error        string     `json:"error" gorm:"type:varchar(255);index"`
 }
 
 func GetAndPushClaimAsset() {
@@ -259,19 +266,20 @@ func GetAndPushClaimAsset() {
 		var response Response
 		var qid, data string
 		qid, data, response, err = PushClaimAsset(feeInfo)
-
+		responseBody, _ := json.Marshal(response)
 		if err != nil {
 			var pushQueueRecord = PushQueueRecord{
-				InfoID:    feeInfo.ID,
-				NpubKey:   feeInfo.NpubKey,
-				AssetsID:  feeInfo.AssetsID,
-				HandFee:   feeInfo.HandFee,
-				Topic:     topic,
-				Qid:       qid,
-				Data:      data,
-				IsSuccess: false,
-				Rid:       "",
-				Error:     err.Error(),
+				InfoID:       feeInfo.ID,
+				NpubKey:      feeInfo.NpubKey,
+				AssetsID:     feeInfo.AssetsID,
+				HandFee:      feeInfo.HandFee,
+				Topic:        topic,
+				Qid:          qid,
+				Data:         data,
+				IsSuccess:    false,
+				ResponseBody: "",
+				Rid:          "",
+				Error:        err.Error(),
 			}
 			_err := middleware.DB.Model(&PushQueueRecord{}).Create(&pushQueueRecord)
 			if _err != nil {
@@ -279,16 +287,17 @@ func GetAndPushClaimAsset() {
 			}
 		} else {
 			var pushQueueRecord = PushQueueRecord{
-				InfoID:    feeInfo.ID,
-				NpubKey:   feeInfo.NpubKey,
-				AssetsID:  feeInfo.AssetsID,
-				HandFee:   feeInfo.HandFee,
-				Topic:     topic,
-				Qid:       qid,
-				Data:      data,
-				IsSuccess: true,
-				Rid:       response.Rid,
-				Error:     "",
+				InfoID:       feeInfo.ID,
+				NpubKey:      feeInfo.NpubKey,
+				AssetsID:     feeInfo.AssetsID,
+				HandFee:      feeInfo.HandFee,
+				Topic:        topic,
+				Qid:          qid,
+				Data:         data,
+				IsSuccess:    true,
+				ResponseBody: string(responseBody),
+				Rid:          response.Data.Rid,
+				Error:        "",
 			}
 			_err := middleware.DB.Model(&PushQueueRecord{}).Create(&pushQueueRecord).Error
 			if _err != nil {
@@ -315,18 +324,21 @@ func GetAndPushPurchasePresaleNFT() {
 		var response Response
 		var qid, data string
 		qid, data, response, err = PushPurchasePresaleNFT(feeInfo)
+		responseBody, _ := json.Marshal(response)
+
 		if err != nil {
 			var pushQueueRecord = PushQueueRecord{
-				InfoID:    feeInfo.ID,
-				NpubKey:   feeInfo.NpubKey,
-				AssetsID:  feeInfo.AssetsID,
-				HandFee:   feeInfo.HandFee,
-				Topic:     topic,
-				Qid:       qid,
-				Data:      data,
-				IsSuccess: false,
-				Rid:       "",
-				Error:     err.Error(),
+				InfoID:       feeInfo.ID,
+				NpubKey:      feeInfo.NpubKey,
+				AssetsID:     feeInfo.AssetsID,
+				HandFee:      feeInfo.HandFee,
+				Topic:        topic,
+				Qid:          qid,
+				Data:         data,
+				IsSuccess:    false,
+				ResponseBody: "",
+				Rid:          "",
+				Error:        err.Error(),
 			}
 			_err := middleware.DB.Model(&PushQueueRecord{}).Create(&pushQueueRecord)
 			if _err != nil {
@@ -334,16 +346,17 @@ func GetAndPushPurchasePresaleNFT() {
 			}
 		} else {
 			var pushQueueRecord = PushQueueRecord{
-				InfoID:    feeInfo.ID,
-				NpubKey:   feeInfo.NpubKey,
-				AssetsID:  feeInfo.AssetsID,
-				HandFee:   feeInfo.HandFee,
-				Topic:     topic,
-				Qid:       qid,
-				Data:      data,
-				IsSuccess: true,
-				Rid:       response.Rid,
-				Error:     "",
+				InfoID:       feeInfo.ID,
+				NpubKey:      feeInfo.NpubKey,
+				AssetsID:     feeInfo.AssetsID,
+				HandFee:      feeInfo.HandFee,
+				Topic:        topic,
+				Qid:          qid,
+				Data:         data,
+				IsSuccess:    true,
+				ResponseBody: string(responseBody),
+				Rid:          response.Data.Rid,
+				Error:        "",
 			}
 			_err := middleware.DB.Model(&PushQueueRecord{}).Create(&pushQueueRecord).Error
 			if _err != nil {
