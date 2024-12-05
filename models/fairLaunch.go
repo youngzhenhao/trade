@@ -139,6 +139,7 @@ type FairLaunchMintedInfo struct {
 	Status                FairLaunchStatus      `json:"status" gorm:"default:1"`
 	State                 FairLaunchMintedState `json:"state"`
 	ProcessNumber         int                   `json:"process_number"`
+	IsPushedQueue         bool                  `json:"is_pushed_queue"`
 }
 
 type MintFairLaunchRequest struct {
