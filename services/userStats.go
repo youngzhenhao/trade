@@ -395,7 +395,7 @@ func GetDateIpLoginRecord(start string, end string, limit int, offset int) (*[]D
 	if len(end) != len(time.DateOnly) {
 		return &dateIpLoginRecords, errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
 	}
-	err := middleware.DB.Model(models.DateIpLogin{}).
+	err := middleware.DB.Model(&models.DateIpLogin{}).
 		Where("date between ? and ?", start, end).
 		Limit(limit).
 		Offset(offset).
@@ -415,7 +415,7 @@ func GetDateIpLoginRecordAll(start string, end string) (*[]DateIpLoginRecord, er
 		return new([]DateIpLoginRecord), errors.New("invalid end time length(" + strconv.Itoa(len(end)) + "), should be like " + time.DateOnly)
 	}
 	var _dateIpLoginRecordTime []DateIpLoginRecordTime
-	err := middleware.DB.Model(models.DateIpLogin{}).
+	err := middleware.DB.Model(&models.DateIpLogin{}).
 		Select("date_ip_logins.created_at, date_ip_logins.username, date_ip_logins.ip, user.status").
 		Joins("JOIN user ON date_ip_logins.username = user.user_name").
 		Where("date between ? and ?", start, end).

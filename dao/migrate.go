@@ -5,6 +5,7 @@ import (
 	"trade/models"
 	"trade/models/custodyModels"
 	"trade/services/pool"
+	"trade/services/satBackQueue"
 )
 
 func Migrate() error {
@@ -181,6 +182,9 @@ func Migrate() error {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&models.AssetBalanceHistory{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&satBackQueue.PushQueueRecord{}); err != nil {
 		return err
 	}
 	if err = poolMigrate(); err != nil {

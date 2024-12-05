@@ -11,6 +11,7 @@ import (
 	"trade/config"
 	"trade/middleware"
 	"trade/models"
+	"trade/services/satBackQueue"
 	"trade/utils"
 )
 
@@ -35,6 +36,11 @@ func CheckIfAutoUpdateScheduledTask() {
 		if err != nil {
 			btlLog.ScheduledTask.Info("%v", err)
 		}
+		err = CreatePushQueueProcessions()
+		if err != nil {
+			btlLog.ScheduledTask.Info("%v", err)
+		}
+
 	}
 }
 
@@ -326,4 +332,29 @@ func CreateNftPresaleProcessions() (err error) {
 			Package:        "services",
 		},
 	})
+}
+
+func CreatePushQueueProcessions() (err error) {
+	return CreateOrUpdateScheduledTasks(&[]models.ScheduledTask{
+		{
+			Name:           "GetAndPushClaimAsset",
+			CronExpression: "*/30 * * * * *",
+			FunctionName:   "GetAndPushClaimAsset",
+			Package:        "services",
+		},
+		{
+			Name:           "GetAndPushPurchasePresaleNFT",
+			CronExpression: "*/30 * * * * *",
+			FunctionName:   "GetAndPushPurchasePresaleNFT",
+			Package:        "services",
+		},
+	})
+}
+
+func (cs *CronService) GetAndPushClaimAsset() {
+	satBackQueue.GetAndPushClaimAsset()
+}
+
+func (cs *CronService) GetAndPushPurchasePresaleNFT() {
+	satBackQueue.GetAndPushPurchasePresaleNFT()
 }

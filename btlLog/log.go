@@ -87,6 +87,7 @@ var (
 	userStatsLogFile    *os.File
 	cpAmmLogFile        *os.File
 	dateIpLoginLogFile  *os.File
+	pushQueueLogFile    *os.File
 )
 
 func openLogFile() error {
@@ -132,6 +133,10 @@ func openLogFile() error {
 	if err != nil {
 		return err
 	}
+	pushQueueLogFile, err = utils.GetLogFile("./logs/trade.push_queue.log")
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -159,6 +164,7 @@ var (
 	UserStats             *ServicesLogger
 	CPAmm                 *ServicesLogger
 	DateIpLogin           *ServicesLogger
+	PushQueue             *ServicesLogger
 )
 
 func loadDefaultLog() {
@@ -172,4 +178,5 @@ func loadDefaultLog() {
 	UserStats = NewLogger("USTS", Level, defaultLogFile, userStatsLogFile)
 	CPAmm = NewLogger("CPAM", Level, defaultLogFile, cpAmmLogFile)
 	DateIpLogin = NewLogger("DILR", Level, defaultLogFile, dateIpLoginLogFile)
+	PushQueue = NewLogger("PUSH", Level, defaultLogFile, pushQueueLogFile)
 }
