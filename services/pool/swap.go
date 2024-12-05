@@ -56,18 +56,19 @@ func NewSwapRecord(pairId uint, username string, tokenIn string, tokenOut string
 	}, nil
 }
 
-func CreateSwapRecord(tx *gorm.DB, pairId uint, username string, tokenIn string, tokenOut string, amountIn string, amountOut string, reserveIn string, reserveOut string, swapFee string, swapFeeType SwapFeeType, swapRecordType SwapRecordType) (err error) {
+func CreateSwapRecord(tx *gorm.DB, pairId uint, username string, tokenIn string, tokenOut string, amountIn string, amountOut string, reserveIn string, reserveOut string, swapFee string, swapFeeType SwapFeeType, swapRecordType SwapRecordType) (recordId uint, err error) {
 	if pairId <= 0 {
-		return errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
+		return 0, errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
 	}
 	var swapRecord *SwapRecord
 	swapRecord, err = NewSwapRecord(pairId, username, tokenIn, tokenOut, amountIn, amountOut, reserveIn, reserveOut, swapFee, swapFeeType, swapRecordType)
 	if err != nil {
-		return utils.AppendErrorInfo(err, "NewSwapRecord")
+		return 0, utils.AppendErrorInfo(err, "NewSwapRecord")
 	}
 	err = tx.Model(&SwapRecord{}).Create(&swapRecord).Error
 	if err != nil {
-		return utils.AppendErrorInfo(err, "create swapRecord")
+		return 0, utils.AppendErrorInfo(err, "create swapRecord")
 	}
-	return nil
+	recordId = swapRecord.ID
+	return recordId, nil
 }

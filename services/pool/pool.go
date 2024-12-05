@@ -684,7 +684,8 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 	}
 
 	// @dev: update swapRecord
-	err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, amountIn, _amountOut.String(), _reserveIn.String(), _reserveOut.String(), _swapFeeFloat.String(), swapFeeType, SwapExactTokenNoPath)
+	var recordId uint
+	recordId, err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, amountIn, _amountOut.String(), _reserveIn.String(), _reserveOut.String(), _swapFeeFloat.String(), swapFeeType, SwapExactTokenNoPath)
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "CreateSwapRecord")
 	}
@@ -692,6 +693,56 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 	// TODO: 使用 _swapFeeFloat 进行奖励发放，给所有LP发放奖励
 
 	// TODO: update LpAwardBalance and LpAwardRecord
+
+	//TODO
+	//COPY
+	// get share
+	var share Share
+	var shareId uint
+	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).First(&share).Error
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "share does not exist")
+	}
+	shareId = share.ID
+	totalSupply := share.TotalSupply
+
+	_totalSupplyFloat, success := new(big.Float).SetString(totalSupply)
+	if !success {
+		return ZeroValue, errors.New("TotalSupply SetString(" + totalSupply + ") " + strconv.FormatBool(success))
+	}
+
+	type userAndShare struct {
+		Username string `json:"username"`
+		Balance  string `json:"balance"`
+	}
+
+	var userAndShares []userAndShare
+
+	err = tx.Model(&ShareBalance{}).
+		Select("username, balance").
+		Where("share_id = ?", shareId).
+		Scan(&userAndShares).Error
+
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "get userAndShares")
+	}
+
+	for _, _userAndShare := range userAndShares {
+		_balanceFloat, success := new(big.Float).SetString(_userAndShare.Balance)
+		if !success {
+			return ZeroValue, errors.New(_userAndShare.Username + " balance SetString(" + _userAndShare.Balance + ") " + strconv.FormatBool(success))
+		}
+
+		var _awardFloat = big.NewFloat(0)
+
+		_awardFloat = new(big.Float).Quo(new(big.Float).Mul(_swapFeeFloat, _balanceFloat), _totalSupplyFloat)
+		err = UpdateLpAwardBalanceAndRecordSwap(tx, shareId, _userAndShare.Username, _awardFloat, _userAndShare.Balance, _totalSupplyFloat.String(), recordId)
+
+		if err != nil {
+			return ZeroValue, utils.AppendErrorInfo(err, "UpdateLpAwardBalanceAndRecordSwap")
+		}
+	}
+	//COPY END
 
 	amountOut = _amountOut.String()
 	err = nil
@@ -971,14 +1022,61 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 	}
 
 	// @dev: update swapRecord
-	err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, _amountIn.String(), amountOut, _reserveIn.String(), _reserveOut.String(), _swapFeeFloat.String(), swapFeeType, SwapForExactTokenNoPath)
+	var recordId uint
+	recordId, err = CreateSwapRecord(tx, pairId, username, tokenIn, tokenOut, _amountIn.String(), amountOut, _reserveIn.String(), _reserveOut.String(), _swapFeeFloat.String(), swapFeeType, SwapForExactTokenNoPath)
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "CreateSwapRecord")
 	}
 
 	// TODO: 使用 _swapFeeFloat 进行奖励发放，给所有LP发放奖励
+	// TODO: Test
 
-	// TODO: update LpAwardBalance and LpAwardRecord
+	// get share
+	var share Share
+	var shareId uint
+	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).First(&share).Error
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "share does not exist")
+	}
+	shareId = share.ID
+	totalSupply := share.TotalSupply
+
+	_totalSupplyFloat, success := new(big.Float).SetString(totalSupply)
+	if !success {
+		return ZeroValue, errors.New("TotalSupply SetString(" + totalSupply + ") " + strconv.FormatBool(success))
+	}
+
+	type userAndShare struct {
+		Username string `json:"username"`
+		Balance  string `json:"balance"`
+	}
+
+	var userAndShares []userAndShare
+
+	err = tx.Model(&ShareBalance{}).
+		Select("username, balance").
+		Where("share_id = ?", shareId).
+		Scan(&userAndShares).Error
+
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "get userAndShares")
+	}
+
+	for _, _userAndShare := range userAndShares {
+		_balanceFloat, success := new(big.Float).SetString(_userAndShare.Balance)
+		if !success {
+			return ZeroValue, errors.New(_userAndShare.Username + " balance SetString(" + _userAndShare.Balance + ") " + strconv.FormatBool(success))
+		}
+
+		var _awardFloat = big.NewFloat(0)
+
+		_awardFloat = new(big.Float).Quo(new(big.Float).Mul(_swapFeeFloat, _balanceFloat), _totalSupplyFloat)
+		err = UpdateLpAwardBalanceAndRecordSwap(tx, shareId, _userAndShare.Username, _awardFloat, _userAndShare.Balance, _totalSupplyFloat.String(), recordId)
+
+		if err != nil {
+			return ZeroValue, utils.AppendErrorInfo(err, "UpdateLpAwardBalanceAndRecordSwap")
+		}
+	}
 
 	amountIn = _amountIn.String()
 	err = nil
