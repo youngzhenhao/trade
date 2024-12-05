@@ -63,14 +63,10 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 		return nil, err
 	}
 	payload := bytes.NewBuffer(requestJsonBytes)
-	payloadCopy := *payload
-	payloadString := payloadCopy.String()
 	req, err := http.NewRequest("POST", url, payload)
 	if err != nil {
 		return nil, err
 	}
-	reqBody := req.Body
-	reqBodyString, _ := io.ReadAll(reqBody)
 
 	//req.Header.Add("Authorization", "Bearer "+token)
 	req.Header.Add("accept", "application/json")
@@ -83,9 +79,8 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 			if err != nil {
 				errInfo = err.Error()
 			}
-			var requestHeader, requestBody, responseHeader, responseBody []byte
+			var requestHeader, responseHeader, responseBody []byte
 			requestHeader, _ = json.Marshal(req.Header)
-			requestBody = reqBodyString
 			if res != nil {
 				responseHeader, _ = json.Marshal(res.Header)
 				responseBody, _ = io.ReadAll(res.Body)
@@ -95,8 +90,6 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 				Url:            url,
 				RequestHeader:  string(requestHeader),
 				Data:           string(requestJsonBytes),
-				Payload:        payloadString,
-				RequestBody:    string(requestBody),
 				ResponseHeader: string(responseHeader),
 				ResponseBody:   string(responseBody),
 				Error:          errInfo,
@@ -127,9 +120,8 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 		if err != nil {
 			errInfo = err.Error()
 		}
-		var requestHeader, requestBody, responseHeader, responseBody []byte
+		var requestHeader, responseHeader, responseBody []byte
 		requestHeader, _ = json.Marshal(req.Header)
-		requestBody = reqBodyString
 		responseHeader, _ = json.Marshal(res.Header)
 		responseBody = body
 		var restRecord = models.RestRecord{
@@ -137,8 +129,6 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 			Url:            url,
 			RequestHeader:  string(requestHeader),
 			Data:           string(requestJsonBytes),
-			Payload:        payloadString,
-			RequestBody:    string(requestBody),
 			ResponseHeader: string(responseHeader),
 			ResponseBody:   string(responseBody),
 			Error:          errInfo,
