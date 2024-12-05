@@ -80,7 +80,7 @@ type TransactionVout struct {
 }
 
 type GetRawTransactionResponseMsgTx struct {
-	Version  int                   `json:"Version"`
+	Version  int                   `json:"Tag"`
 	TxIn     []TransactionMsgTxIn  `json:"TxIn"`
 	TxOut    []TransactionMsgTxOut `json:"TxOut"`
 	LockTime int                   `json:"LockTime"`

@@ -101,7 +101,7 @@ func GetBalances(npubkey string) (*[]cModels.LockBalance, error) {
 	return &balances, nil
 }
 
-func Lock(npubkey, lockedId, assetId string, amount float64) error {
+func Lock(npubkey, lockedId, assetId string, amount float64, tag int) error {
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
 		return fmt.Errorf("%w: %s", GetAccountError, err.Error())
@@ -116,12 +116,12 @@ func Lock(npubkey, lockedId, assetId string, amount float64) error {
 	}
 
 	if assetId != btcId {
-		err := LockAsset(usr, lockedId, assetId, amount)
+		err := LockAsset(usr, lockedId, assetId, amount, tag)
 		if err != nil {
 			return err
 		}
 	} else {
-		err := LockBTC(usr, lockedId, amount)
+		err := LockBTC(usr, lockedId, amount, tag)
 		if err != nil {
 			return err
 		}
@@ -129,7 +129,7 @@ func Lock(npubkey, lockedId, assetId string, amount float64) error {
 	return nil
 }
 
-func Unlock(npubkey, lockedId, assetId string, amount float64, version int) error {
+func Unlock(npubkey, lockedId, assetId string, amount float64, tag int) error {
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
 		return GetAccountError
@@ -145,12 +145,12 @@ func Unlock(npubkey, lockedId, assetId string, amount float64, version int) erro
 	}
 
 	if assetId != btcId {
-		err := UnlockAsset(usr, lockedId, assetId, amount, version)
+		err := UnlockAsset(usr, lockedId, assetId, amount, tag)
 		if err != nil {
 			return err
 		}
 	} else {
-		err := UnlockBTC(usr, lockedId, amount, version)
+		err := UnlockBTC(usr, lockedId, amount, tag)
 		if err != nil {
 			return err
 		}
@@ -200,7 +200,7 @@ func TransferByUnlock(lockedId, npubkey, toNpubkey, assetId string, amount float
 	return nil
 }
 
-func TransferByLock(lockedId, npubkey, toNpubkey, assetId string, amount float64) error {
+func TransferByLock(lockedId, npubkey, toNpubkey, assetId string, amount float64, tag int) error {
 	if npubkey == FeeNpubkey {
 		npubkey = "admin"
 	}
@@ -227,12 +227,12 @@ func TransferByLock(lockedId, npubkey, toNpubkey, assetId string, amount float64
 		return BadRequest
 	}
 	if assetId != btcId {
-		err := transferLockedAsset(usr, lockedId, assetId, amount, toUsr)
+		err := transferLockedAsset(usr, lockedId, assetId, amount, toUsr, tag)
 		if err != nil {
 			return err
 		}
 	} else {
-		err := transferLockedBTC(usr, lockedId, amount, toUsr)
+		err := transferLockedBTC(usr, lockedId, amount, toUsr, tag)
 		if err != nil {
 			return err
 		}

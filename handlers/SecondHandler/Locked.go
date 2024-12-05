@@ -46,6 +46,7 @@ type LockRequest struct {
 	LockedId string  `json:"lockedId"`
 	AssetId  string  `json:"assetId"`
 	Amount   float64 `json:"amount"`
+	Tag      int     `json:"tag"`
 }
 type LockResponse struct {
 	Error string `json:"error"`
@@ -61,7 +62,7 @@ func Lock(c *gin.Context) {
 		return
 	}
 	//TODO Verification request
-	err := lockPayment.Lock(creds.Npubkey, creds.LockedId, creds.AssetId, creds.Amount)
+	err := lockPayment.Lock(creds.Npubkey, creds.LockedId, creds.AssetId, creds.Amount, creds.Tag)
 	if err != nil {
 		res.Error = err.Error()
 		c.JSON(http.StatusInternalServerError, &res)
@@ -75,7 +76,7 @@ type UnlockRequest struct {
 	LockedId string  `json:"lockedId"`
 	AssetId  string  `json:"assetId"`
 	Amount   float64 `json:"amount"`
-	Version  int     `json:"version"`
+	Tag      int     `json:"tag"`
 }
 type UnlockResponse struct {
 	Error string `json:"error"`
@@ -91,7 +92,7 @@ func Unlock(c *gin.Context) {
 		return
 	}
 	//TODO Verification request
-	err := lockPayment.Unlock(creds.Npubkey, creds.LockedId, creds.AssetId, creds.Amount, creds.Version)
+	err := lockPayment.Unlock(creds.Npubkey, creds.LockedId, creds.AssetId, creds.Amount, creds.Tag)
 	if err != nil {
 		res.Error = err.Error()
 		c.JSON(http.StatusInternalServerError, &res)
@@ -107,6 +108,7 @@ type PayByLockedRequest struct {
 	AssetId         string  `json:"assetId"`
 	Amount          float64 `json:"amount"`
 	PayType         int8    `json:"payType"`
+	Tag             int     `json:"tag"`
 }
 type PayType int8
 
@@ -132,8 +134,13 @@ func PayAsset(c *gin.Context) {
 	//TODO Verification request
 	var err error
 	if creds.PayType == int8(PayTypeLock) {
-		err = lockPayment.TransferByLock(creds.LockedId, creds.PayerNpubkey, creds.ReceiverNpubkey, creds.AssetId, creds.Amount)
+		err = lockPayment.TransferByLock(creds.LockedId, creds.PayerNpubkey, creds.ReceiverNpubkey, creds.AssetId, creds.Amount, creds.Tag)
 	} else if creds.PayType == int8(PayTypeUnlock) {
+		if creds.Tag != 0 {
+			res.ErrorCode = lockPayment.GetErrorCode(lockPayment.BadRequest)
+			c.JSON(http.StatusBadRequest, &res)
+			return
+		}
 		err = lockPayment.TransferByUnlock(creds.LockedId, creds.PayerNpubkey, creds.ReceiverNpubkey, creds.AssetId, creds.Amount)
 	}
 	if err != nil {

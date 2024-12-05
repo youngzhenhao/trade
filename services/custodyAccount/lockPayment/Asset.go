@@ -41,7 +41,7 @@ func GetAssetBalance(usr *caccount.UserInfo, assetId string) (err error, unlock 
 }
 
 // LockAsset 冻结Asset
-func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount float64) error {
+func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount float64, tag int) error {
 
 	tx := middleware.DB.Begin()
 	defer tx.Rollback()
@@ -59,6 +59,13 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 		lockedBalance.Amount = 0
 	}
 	lockedBalance.Amount += amount
+	switch tag {
+	case 0:
+	case 1:
+		lockedBalance.Tag1 += amount
+	default:
+		return fmt.Errorf("invalid tag")
+	}
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		return ServiceError
 	}
@@ -108,7 +115,7 @@ func LockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount f
 	return nil
 }
 
-func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount float64, version int) error {
+func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount float64, tag int) error {
 	tx := middleware.DB.Begin()
 	defer tx.Rollback()
 	var err error
@@ -121,23 +128,25 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 		}
 		lockedBalance.Amount = 0
 	}
-	// version 1.0 check awardAmount
-	if version == 0 {
+	// tag 1.0 check awardAmount
+	if tag == 0 {
 		if lockedBalance.Amount < amount {
 			return NoEnoughBalance
 		}
 		if (lockedBalance.Amount - lockedBalance.Tag1) < amount {
-			return fmt.Errorf("%w,have  %f is awardAmount", NoEnoughBalance, lockedBalance.Tag1)
+			return fmt.Errorf("%w,have  %f is disable unlock", NoEnoughBalance, lockedBalance.Tag1)
 		}
 		// update locked balance
 		lockedBalance.Amount -= amount
-	} else if version == 1 {
+	} else if tag == 1 {
 		if lockedBalance.Tag1 < amount {
-			return fmt.Errorf("%w,have  %f is awardAmount", NoEnoughBalance, lockedBalance.Tag1)
+			return fmt.Errorf("%w,have  %f ", NoEnoughBalance, lockedBalance.Tag1)
 		}
 		// update locked balance
 		lockedBalance.Amount -= amount
 		lockedBalance.Tag1 -= amount
+	} else {
+		return fmt.Errorf("invalid tag")
 	}
 
 	if err = tx.Save(&lockedBalance).Error; err != nil {
@@ -191,7 +200,7 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 	return nil
 }
 
-func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount float64, toUser *caccount.UserInfo) error {
+func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount float64, toUser *caccount.UserInfo, tag int) error {
 	tx := middleware.DB.Begin()
 	defer tx.Rollback()
 
@@ -204,12 +213,25 @@ func transferLockedAsset(usr *caccount.UserInfo, lockedId string, assetId string
 		}
 		lockedBalance.Amount = 0
 	}
-	if lockedBalance.Amount < amount {
-		return NoEnoughBalance
+	if tag == 0 {
+		if lockedBalance.Amount < amount {
+			return NoEnoughBalance
+		}
+		if (lockedBalance.Amount - lockedBalance.Tag1) < amount {
+			return fmt.Errorf("%w,have  %f is disable unlock", NoEnoughBalance, lockedBalance.Tag1)
+		}
+		// update locked balance
+		lockedBalance.Amount -= amount
+	} else if tag == 1 {
+		if lockedBalance.Tag1 < amount {
+			return fmt.Errorf("%w,have  %f ", NoEnoughBalance, lockedBalance.Tag1)
+		}
+		// update locked balance
+		lockedBalance.Amount -= amount
+		lockedBalance.Tag1 -= amount
+	} else {
+		return fmt.Errorf("invalid tag")
 	}
-
-	// update locked balance
-	lockedBalance.Amount -= amount
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		return ServiceError
 	}

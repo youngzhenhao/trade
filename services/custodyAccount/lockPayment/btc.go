@@ -32,7 +32,7 @@ func GetBtcBalance(usr *caccount.UserInfo) (err error, unlock float64, locked fl
 }
 
 // LockBTC 冻结BTC
-func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
+func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64, tag int) error {
 	tx, back := middleware.GetTx()
 	defer back()
 
@@ -50,6 +50,13 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 		lockedBalance.Amount = 0
 	}
 	lockedBalance.Amount += amount
+	switch tag {
+	case 0:
+	case 1:
+		lockedBalance.Tag1 += amount
+	default:
+		return fmt.Errorf("invalid tag")
+	}
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		return ServiceError
 	}
@@ -104,7 +111,7 @@ func LockBTC(usr *caccount.UserInfo, lockedId string, amount float64) error {
 }
 
 // UnlockBTC 解冻BTC
-func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64, version int) error {
+func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64, tag int) error {
 	tx, back := middleware.GetTx()
 	defer back()
 	var err error
@@ -113,28 +120,29 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64, version 
 	lockedBalance := cModels.LockBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, btcId).First(&lockedBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			tx.Rollback()
 			return ServiceError
 		}
 		lockedBalance.Amount = 0
 	}
-	// version 1.0 check awardAmount
-	if version == 0 {
+	// tag 1.0 check awardAmount
+	if tag == 0 {
 		if lockedBalance.Amount < amount {
 			return NoEnoughBalance
 		}
 		if (lockedBalance.Amount - lockedBalance.Tag1) < amount {
-			return fmt.Errorf("%w,have  %f is awardAmount", NoEnoughBalance, lockedBalance.Tag1)
+			return fmt.Errorf("%w,have  %f is disable unlock", NoEnoughBalance, lockedBalance.Tag1)
 		}
 		// update locked balance
 		lockedBalance.Amount -= amount
-	} else if version == 1 {
+	} else if tag == 1 {
 		if lockedBalance.Tag1 < amount {
-			return fmt.Errorf("%w,have  %f is awardAmount", NoEnoughBalance, lockedBalance.Tag1)
+			return fmt.Errorf("%w,have  %f ", NoEnoughBalance, lockedBalance.Tag1)
 		}
 		// update locked balance
 		lockedBalance.Amount -= amount
 		lockedBalance.Tag1 -= amount
+	} else {
+		return fmt.Errorf("invalid tag")
 	}
 
 	if err = tx.Save(&lockedBalance).Error; err != nil {
@@ -191,7 +199,7 @@ func UnlockBTC(usr *caccount.UserInfo, lockedId string, amount float64, version 
 }
 
 // transferLockedBTC 转账冻结的BTC
-func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser *caccount.UserInfo) error {
+func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, toUser *caccount.UserInfo, tag int) error {
 	tx, back := middleware.GetTx()
 	defer back()
 	BtcId := btcId
@@ -207,12 +215,25 @@ func transferLockedBTC(usr *caccount.UserInfo, lockedId string, amount float64, 
 		}
 		lockedBalance.Amount = 0
 	}
-	if lockedBalance.Amount < amount {
-		return NoEnoughBalance
+	if tag == 0 {
+		if lockedBalance.Amount < amount {
+			return NoEnoughBalance
+		}
+		if (lockedBalance.Amount - lockedBalance.Tag1) < amount {
+			return fmt.Errorf("%w,have  %f is disable unlock", NoEnoughBalance, lockedBalance.Tag1)
+		}
+		// update locked balance
+		lockedBalance.Amount -= amount
+	} else if tag == 1 {
+		if lockedBalance.Tag1 < amount {
+			return fmt.Errorf("%w,have  %f ", NoEnoughBalance, lockedBalance.Tag1)
+		}
+		// update locked balance
+		lockedBalance.Amount -= amount
+		lockedBalance.Tag1 -= amount
+	} else {
+		return fmt.Errorf("invalid tag")
 	}
-
-	// update locked balance
-	lockedBalance.Amount -= amount
 	if err = tx.Save(&lockedBalance).Error; err != nil {
 		return ServiceError
 	}
