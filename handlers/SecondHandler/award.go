@@ -18,7 +18,6 @@ type AwardRequest struct {
 	Memo        string `json:"memo"`
 	LockedId    string `json:"lockedId"`
 	AccountType string `json:"accountType"`
-	Version     int    `json:"version"`
 }
 
 func PutInSatoshiAward(c *gin.Context) {
@@ -41,10 +40,6 @@ func PutInSatoshiAward(c *gin.Context) {
 
 	switch creds.AccountType {
 	case "default":
-		if creds.Version == 1 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "version 1 not support default account"})
-			return
-		}
 		award, err := custodyBtc.PutInAward(e.UserInfo, "", creds.Amount, &creds.Memo, creds.LockedId)
 		if err != nil {
 			btlLog.CUST.Error("%v", err)
@@ -60,7 +55,7 @@ func PutInSatoshiAward(c *gin.Context) {
 		})
 		return
 	case "locked":
-		award, err := lockPayment.PutInAwardLockBTC(e.UserInfo, float64(creds.Amount), &creds.Memo, creds.LockedId, creds.Version)
+		award, err := lockPayment.PutInAwardLockBTC(e.UserInfo, float64(creds.Amount), &creds.Memo, creds.LockedId)
 		if err != nil {
 			btlLog.CUST.Error("%v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -87,7 +82,6 @@ type AwardAssetRequest struct {
 	Memo        string `json:"memo"`
 	LockedId    string `json:"lockedId"`
 	AccountType string `json:"accountType"`
-	Version     int    `json:"version"`
 }
 
 func PutAssetAward(c *gin.Context) {
@@ -109,10 +103,6 @@ func PutAssetAward(c *gin.Context) {
 	}
 	switch creds.AccountType {
 	case "default":
-		if creds.Version == 1 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "version 1 not support default account"})
-			return
-		}
 		award, err := custodyAssets.PutInAward(e.UserInfo, creds.AssetId, creds.Amount, &creds.Memo, creds.LockedId)
 		if err != nil {
 			btlLog.CUST.Error("%v", err)
@@ -128,7 +118,7 @@ func PutAssetAward(c *gin.Context) {
 		})
 		return
 	case "locked":
-		award, err := lockPayment.PutInAwardLockAsset(e.UserInfo, creds.AssetId, float64(creds.Amount), &creds.Memo, creds.LockedId, creds.Version)
+		award, err := lockPayment.PutInAwardLockAsset(e.UserInfo, creds.AssetId, float64(creds.Amount), &creds.Memo, creds.LockedId)
 		if err != nil {
 			btlLog.CUST.Error("%v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

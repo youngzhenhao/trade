@@ -126,18 +126,18 @@ func UnlockAsset(usr *caccount.UserInfo, lockedId string, assetId string, amount
 		if lockedBalance.Amount < amount {
 			return NoEnoughBalance
 		}
-		if (lockedBalance.Amount - lockedBalance.AwardAmount) < amount {
-			return fmt.Errorf("%w,have  %f is awardAmount", NoEnoughBalance, lockedBalance.AwardAmount)
+		if (lockedBalance.Amount - lockedBalance.Tag1) < amount {
+			return fmt.Errorf("%w,have  %f is awardAmount", NoEnoughBalance, lockedBalance.Tag1)
 		}
 		// update locked balance
 		lockedBalance.Amount -= amount
 	} else if version == 1 {
-		if lockedBalance.AwardAmount < amount {
-			return fmt.Errorf("%w,have  %f is awardAmount", NoEnoughBalance, lockedBalance.AwardAmount)
+		if lockedBalance.Tag1 < amount {
+			return fmt.Errorf("%w,have  %f is awardAmount", NoEnoughBalance, lockedBalance.Tag1)
 		}
 		// update locked balance
 		lockedBalance.Amount -= amount
-		lockedBalance.AwardAmount -= amount
+		lockedBalance.Tag1 -= amount
 	}
 
 	if err = tx.Save(&lockedBalance).Error; err != nil {
