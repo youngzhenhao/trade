@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -666,4 +667,14 @@ func RandString(r *rand.Rand, length int) string {
 		b[i] = dic[r.Intn(len(dic))]
 	}
 	return string(b)
+}
+
+func Sha256(data any) (string, error) {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+	hash := sha256.Sum256(jsonData)
+	hashString := fmt.Sprintf("%x", hash)
+	return hashString, nil
 }

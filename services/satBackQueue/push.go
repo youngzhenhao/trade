@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"gorm.io/gorm"
 	"io"
-	"math/rand"
 	"net/http"
-	"time"
 	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
@@ -47,6 +45,11 @@ type FeeInfo struct {
 	NpubKey  string `json:"npub_key"`
 	AssetsID string `json:"assets_id"`
 	HandFee  int    `json:"hand_fee"`
+}
+
+type TopicAndInfoId struct {
+	Topic  queueTopic `json:"topic"`
+	InfoID uint       `json:"info_id"`
 }
 
 func Push(topic queueTopic, qid string, request Request) (Response, error) {
@@ -147,8 +150,12 @@ func Post(topic queueTopic, qid string, data any) ([]byte, error) {
 
 func PushClaimAsset(info FeeInfo) (string, string, Response, error) {
 	topic := claimAsset
-	seed := rand.New(rand.NewSource(time.Now().UnixNano()))
-	qid := utils.RandString(seed, 64)
+
+	qid, err := utils.Sha256(TopicAndInfoId{
+		Topic:  topic,
+		InfoID: info.ID,
+	})
+
 	data, err := json.Marshal(info)
 	if err != nil {
 		return "", "", Response{}, err
@@ -158,13 +165,18 @@ func PushClaimAsset(info FeeInfo) (string, string, Response, error) {
 	}
 	var response Response
 	response, err = Push(topic, qid, request)
+
 	return qid, string(data), response, err
 }
 
 func PushPurchasePresaleNFT(info FeeInfo) (string, string, Response, error) {
 	topic := purchasePresaleNFT
-	seed := rand.New(rand.NewSource(time.Now().UnixNano()))
-	qid := utils.RandString(seed, 64)
+
+	qid, err := utils.Sha256(TopicAndInfoId{
+		Topic:  topic,
+		InfoID: info.ID,
+	})
+
 	data, err := json.Marshal(info)
 	if err != nil {
 		return "", "", Response{}, err
@@ -263,6 +275,9 @@ func GetAndPushClaimAsset() {
 		btlLog.PushQueue.Error("%v", utils.AppendErrorInfo(err, "GetNotPushedClaimAsset"))
 	}
 	for _, feeInfo := range feeInfos {
+
+		tx := middleware.DB.Begin()
+
 		var response Response
 		var qid, data string
 		qid, data, response, err = PushClaimAsset(feeInfo)
@@ -281,9 +296,11 @@ func GetAndPushClaimAsset() {
 				Rid:          "",
 				Error:        err.Error(),
 			}
-			_err := middleware.DB.Model(&PushQueueRecord{}).Create(&pushQueueRecord)
+			_err := tx.Model(&PushQueueRecord{}).Create(&pushQueueRecord)
 			if _err != nil {
 				btlLog.PushQueue.Error("Create _err:\n%v\nPQR:\n%v", _err.Error, utils.ValueJsonString(pushQueueRecord))
+				tx.Rollback()
+				continue
 			}
 		} else {
 			var pushQueueRecord = PushQueueRecord{
@@ -299,16 +316,24 @@ func GetAndPushClaimAsset() {
 				Rid:          response.Data.Rid,
 				Error:        "",
 			}
-			_err := middleware.DB.Model(&PushQueueRecord{}).Create(&pushQueueRecord).Error
+			_err := tx.Model(&PushQueueRecord{}).Create(&pushQueueRecord).Error
 			if _err != nil {
 				btlLog.PushQueue.Error("Create _err:\n%v\nPQR:\n%v", _err, utils.ValueJsonString(pushQueueRecord))
+				tx.Rollback()
+				continue
 			}
-			_err = middleware.DB.Model(&models.FairLaunchMintedInfo{}).
+			_err = tx.Model(&models.FairLaunchMintedInfo{}).
 				Where("id = ?", feeInfo.ID).
 				Update("is_pushed_queue", true).Error
 			if _err != nil {
 				btlLog.PushQueue.Error("Update FairLaunchMintedInfo _err:\n%v\nid:\n%v", _err, feeInfo.ID)
+				tx.Rollback()
+				continue
 			}
+		}
+		err = tx.Commit().Error
+		if err != nil {
+			btlLog.PushQueue.Error("Commit err:\n%v", err)
 		}
 	}
 	return
@@ -321,6 +346,9 @@ func GetAndPushPurchasePresaleNFT() {
 		btlLog.PushQueue.Error("%v", utils.AppendErrorInfo(err, "GetNotPushedPurchasePresaleNFT"))
 	}
 	for _, feeInfo := range feeInfos {
+
+		tx := middleware.DB.Begin()
+
 		var response Response
 		var qid, data string
 		qid, data, response, err = PushPurchasePresaleNFT(feeInfo)
@@ -340,9 +368,11 @@ func GetAndPushPurchasePresaleNFT() {
 				Rid:          "",
 				Error:        err.Error(),
 			}
-			_err := middleware.DB.Model(&PushQueueRecord{}).Create(&pushQueueRecord)
+			_err := tx.Model(&PushQueueRecord{}).Create(&pushQueueRecord)
 			if _err != nil {
 				btlLog.PushQueue.Error("Create _err:\n%v\nPQR:\n%v", _err.Error, utils.ValueJsonString(pushQueueRecord))
+				tx.Rollback()
+				continue
 			}
 		} else {
 			var pushQueueRecord = PushQueueRecord{
@@ -358,16 +388,24 @@ func GetAndPushPurchasePresaleNFT() {
 				Rid:          response.Data.Rid,
 				Error:        "",
 			}
-			_err := middleware.DB.Model(&PushQueueRecord{}).Create(&pushQueueRecord).Error
+			_err := tx.Model(&PushQueueRecord{}).Create(&pushQueueRecord).Error
 			if _err != nil {
 				btlLog.PushQueue.Error("Create _err:\n%v\nPQR:\n%v", _err, utils.ValueJsonString(pushQueueRecord))
+				tx.Rollback()
+				continue
 			}
-			_err = middleware.DB.Model(&models.NftPresale{}).
+			_err = tx.Model(&models.NftPresale{}).
 				Where("id = ?", feeInfo.ID).
 				Update("is_pushed_queue", true).Error
 			if _err != nil {
 				btlLog.PushQueue.Error("Update NftPresale _err:\n%v\nid:\n%v", _err, feeInfo.ID)
+				tx.Rollback()
+				continue
 			}
+		}
+		err = tx.Commit().Error
+		if err != nil {
+			btlLog.PushQueue.Error("Commit err:\n%v", err)
 		}
 	}
 	return
