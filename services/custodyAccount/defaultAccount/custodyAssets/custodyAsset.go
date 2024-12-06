@@ -229,7 +229,22 @@ func (e *AssetEvent) payToInside(bt *AssetPacket) {
 }
 
 func (e *AssetEvent) payToOutside(bt *AssetPacket) {
+	tx, back := middleware.GetTx()
+	defer back()
+	var err error
+	//获取资产id
 	assetId := hex.EncodeToString(bt.DecodePayReq.AssetId)
+	//更新额度限制
+	limitType := custodyModels.LimitType{
+		AssetId:      assetId,
+		TransferType: custodyModels.LimitTransferTypeOutside,
+	}
+	err = custodyLimit.MinusLimit(tx, e.UserInfo, &limitType, float64(bt.DecodePayReq.Amount))
+	if err != nil {
+		bt.err <- fmt.Errorf("payToOutside limit error: %s", err.Error())
+		return
+	}
+	//更新bills
 	outsideBalance := models.Balance{
 		AccountId: e.UserInfo.Account.ID,
 		BillType:  models.BillTypeAssetTransfer,
@@ -244,12 +259,23 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 			Type: models.BTExtOnChannel,
 		},
 	}
-	db := middleware.DB
-	err := btldb.CreateBalance(db, &outsideBalance)
+	err = btldb.CreateBalance(tx, &outsideBalance)
 	if err != nil {
-		btlLog.CUST.Error("payToOutside db error:balance %v", err)
+		bt.err <- fmt.Errorf("payToOutside bill error: %s", err.Error())
+		return
 	}
-
+	//收取费用
+	_, err = LessAssetBalance(tx, e.UserInfo, outsideBalance.Amount, outsideBalance.ID, *outsideBalance.AssetId, custodyModels.ChangeTypeAssetPayOutside)
+	if err != nil {
+		bt.err <- fmt.Errorf("payToOutside asset balance error: %s", err.Error())
+		return
+	}
+	err = custodyBtc.PayFee(tx, e.UserInfo, float64(mempool.GetCustodyAssetFee()), outsideBalance.ID)
+	if err != nil {
+		btlLog.CUST.Error("PayFee error:%s", err)
+		return
+	}
+	// 创建对外转账记录
 	outside := custodyModels.PayOutside{
 		AccountID: e.UserInfo.Account.ID,
 		AssetId:   assetId,
@@ -262,40 +288,8 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 	if err != nil {
 		btlLog.CUST.Error("payToOutside db error")
 	}
-	_, err = LessAssetBalance(db, e.UserInfo, outsideBalance.Amount, outsideBalance.ID, *outsideBalance.AssetId, custodyModels.ChangeTypeAssetPayOutside)
-	if err != nil {
-		return
-	}
-
-	m := OutsideMission{
-		AddrTarget: []*target{
-			{
-				Mission: &outside,
-			},
-		},
-		AssetID:     assetId,
-		TotalAmount: int64(bt.DecodePayReq.Amount),
-	}
-	//收取手续费
-	err = custodyBtc.PayFee(db, e.UserInfo, float64(mempool.GetCustodyAssetFee()), outsideBalance.ID)
-	if err != nil {
-		btlLog.CUST.Error("PayFee error:%s", err)
-		return
-	}
 	bt.err <- nil
-	OutsideSever.Queue.addNewPkg(&m)
 	btlLog.CUST.Info("Create payToOutside mission success: id=%v,amount=%v", assetId, float64(bt.DecodePayReq.Amount))
-	//更新额度限制
-	limitType := custodyModels.LimitType{
-		AssetId:      assetId,
-		TransferType: custodyModels.LimitTransferTypeOutside,
-	}
-	err = custodyLimit.MinusLimit(middleware.DB, e.UserInfo, &limitType, float64(bt.DecodePayReq.Amount))
-	if err != nil {
-		btlLog.CUST.Error("额度限制未正常更新:%s", err.Error())
-		btlLog.CUST.Error("error outsideId:%v", outside.ID)
-		return
-	}
 }
 
 func (e *AssetEvent) QueryPayReq() ([]*models.Invoice, error) {

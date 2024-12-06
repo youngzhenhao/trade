@@ -110,6 +110,11 @@ func Lock(npubkey, lockedId, assetId string, amount float64, tag int) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
+	err = CheckLockId(lockedId)
+	if err != nil {
+		return err
+	}
+
 	if amount <= 0 {
 		btlLog.CUST.Error("amount <= 0,lockedId:%s,assetId:%s,amount:%f", lockedId, assetId, amount)
 		return BadRequest
@@ -133,6 +138,10 @@ func Unlock(npubkey, lockedId, assetId string, amount float64, tag int) error {
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
 		return GetAccountError
+	}
+	err = CheckLockId(lockedId)
+	if err != nil {
+		return err
 	}
 
 	mutex := GetLockPaymentMutex(usr.User.ID)
@@ -169,6 +178,11 @@ func TransferByUnlock(lockedId, npubkey, toNpubkey, assetId string, amount float
 	mutex := GetLockPaymentMutex(usr.User.ID)
 	mutex.Lock()
 	defer mutex.Unlock()
+
+	err = CheckLockId(lockedId)
+	if err != nil {
+		return err
+	}
 
 	if toNpubkey == FeeNpubkey {
 		toNpubkey = "admin"
@@ -211,6 +225,11 @@ func TransferByLock(lockedId, npubkey, toNpubkey, assetId string, amount float64
 	mutex := GetLockPaymentMutex(usr.User.ID)
 	mutex.Lock()
 	defer mutex.Unlock()
+
+	err = CheckLockId(lockedId)
+	if err != nil {
+		return err
+	}
 
 	if toNpubkey == FeeNpubkey {
 		toNpubkey = "admin"

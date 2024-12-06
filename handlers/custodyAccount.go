@@ -131,7 +131,12 @@ func PayUserBtc(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"error": "SendPayment error:" + err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"payment": "success"})
+	result := struct {
+		Success string `json:"success"`
+	}{
+		Success: "success",
+	}
+	c.JSON(http.StatusOK, models.MakeJsonErrorResultForHttp(models.SUCCESS, "", result))
 }
 
 // QueryBalance CustodyAccount查询发票
