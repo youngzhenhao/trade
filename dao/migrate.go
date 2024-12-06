@@ -219,6 +219,9 @@ func poolMigrate() (err error) {
 	if err = middleware.DB.AutoMigrate(&pool.LpAwardRecord{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&pool.WithdrawAwardRecord{}); err != nil {
+		return err
+	}
 	return nil
 }
 

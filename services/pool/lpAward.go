@@ -5,8 +5,11 @@ import (
 	"gorm.io/gorm"
 	"math/big"
 	"strconv"
+	"sync"
 	"trade/utils"
 )
+
+var LockLpA map[string]*sync.Mutex
 
 type LpAwardBalance struct {
 	gorm.Model
@@ -33,7 +36,7 @@ type LpAwardRecord struct {
 	AwardType    AwardType `json:"award_type" gorm:"index"`
 }
 
-func NewLpAwardBalance(username string, balance string) (lpAwardBalance *LpAwardBalance, err error) {
+func newLpAwardBalance(username string, balance string) (lpAwardBalance *LpAwardBalance, err error) {
 	_balanceFloat, success := new(big.Float).SetString(balance)
 	if !success {
 		return new(LpAwardBalance), errors.New("balance SetString(" + balance + ") " + strconv.FormatBool(success))
@@ -48,14 +51,14 @@ func NewLpAwardBalance(username string, balance string) (lpAwardBalance *LpAward
 	return &_lpAwardBalance, nil
 }
 
-func CreateOrUpdateLpAwardBalance(tx *gorm.DB, username string, amount *big.Float) (previousAwardBalance string, err error) {
+func createOrUpdateLpAwardBalance(tx *gorm.DB, username string, amount *big.Float) (previousAwardBalance string, err error) {
 	var lpAwardBalance *LpAwardBalance
 	err = tx.Model(&LpAwardBalance{}).Where("username = ?", username).First(&lpAwardBalance).Error
 	if err != nil {
 		// @dev: no lpAwardBalance
-		lpAwardBalance, err = NewLpAwardBalance(username, amount.String())
+		lpAwardBalance, err = newLpAwardBalance(username, amount.String())
 		if err != nil {
-			return ZeroValue, utils.AppendErrorInfo(err, "NewLpAwardBalance")
+			return ZeroValue, utils.AppendErrorInfo(err, "newLpAwardBalance")
 		}
 		err = tx.Model(&LpAwardBalance{}).Create(&lpAwardBalance).Error
 		if err != nil {
@@ -78,7 +81,7 @@ func CreateOrUpdateLpAwardBalance(tx *gorm.DB, username string, amount *big.Floa
 	return previousAwardBalance, nil
 }
 
-func NewLpAwardRecord(shareId uint, username string, amount string, fee string, awardBalance string, shareBalance string, totalSupply string, swapRecordId uint, awardType AwardType) (lpAwardRecord *LpAwardRecord, err error) {
+func newLpAwardRecord(shareId uint, username string, amount string, fee string, awardBalance string, shareBalance string, totalSupply string, swapRecordId uint, awardType AwardType) (lpAwardRecord *LpAwardRecord, err error) {
 	if shareId <= 0 {
 		return new(LpAwardRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
@@ -95,14 +98,14 @@ func NewLpAwardRecord(shareId uint, username string, amount string, fee string, 
 	}, nil
 }
 
-func CreateLpAwardRecord(tx *gorm.DB, shareId uint, username string, amount *big.Float, fee string, awardBalance string, shareBalance string, totalSupply string, swapRecordId uint, awardType AwardType) (err error) {
+func createLpAwardRecord(tx *gorm.DB, shareId uint, username string, amount *big.Float, fee string, awardBalance string, shareBalance string, totalSupply string, swapRecordId uint, awardType AwardType) (err error) {
 	if shareId <= 0 {
 		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	var lpAwardRecord *LpAwardRecord
-	lpAwardRecord, err = NewLpAwardRecord(shareId, username, amount.String(), fee, awardBalance, shareBalance, totalSupply, swapRecordId, awardType)
+	lpAwardRecord, err = newLpAwardRecord(shareId, username, amount.String(), fee, awardBalance, shareBalance, totalSupply, swapRecordId, awardType)
 	if err != nil {
-		return utils.AppendErrorInfo(err, "NewLpAwardRecord")
+		return utils.AppendErrorInfo(err, "newLpAwardRecord")
 	}
 	err = tx.Model(&LpAwardRecord{}).Create(&lpAwardRecord).Error
 	if err != nil {
@@ -111,18 +114,80 @@ func CreateLpAwardRecord(tx *gorm.DB, shareId uint, username string, amount *big
 	return nil
 }
 
-func UpdateLpAwardBalanceAndRecordSwap(tx *gorm.DB, shareId uint, username string, amount *big.Float, fee string, shareBalance string, totalSupply string, swapRecordId uint) (err error) {
+func updateLpAwardBalanceAndRecordSwap(tx *gorm.DB, shareId uint, username string, amount *big.Float, fee string, shareBalance string, totalSupply string, swapRecordId uint) (err error) {
 	if shareId <= 0 {
 		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	var previousAwardBalance string
-	previousAwardBalance, err = CreateOrUpdateLpAwardBalance(tx, username, amount)
+	previousAwardBalance, err = createOrUpdateLpAwardBalance(tx, username, amount)
 	if err != nil {
-		return utils.AppendErrorInfo(err, "CreateOrUpdateLpAwardBalance")
+		return utils.AppendErrorInfo(err, "createOrUpdateLpAwardBalance")
 	}
-	err = CreateLpAwardRecord(tx, shareId, username, amount, fee, previousAwardBalance, shareBalance, totalSupply, swapRecordId, SwapAward)
+	err = createLpAwardRecord(tx, shareId, username, amount, fee, previousAwardBalance, shareBalance, totalSupply, swapRecordId, SwapAward)
 	if err != nil {
-		return utils.AppendErrorInfo(err, "CreateLpAwardRecord")
+		return utils.AppendErrorInfo(err, "createLpAwardRecord")
 	}
 	return nil
+}
+
+type WithdrawAwardRecord struct {
+	gorm.Model
+	Username     string `json:"username" gorm:"type:varchar(255);index"`
+	Amount       string `json:"amount" gorm:"type:varchar(255);index"`
+	AwardBalance string `json:"award_balance" gorm:"type:varchar(255);index"`
+}
+
+func newWithdrawAwardRecord(username string, amount string, awardBalance string) (withdrawAwardRecord *WithdrawAwardRecord, err error) {
+	return &WithdrawAwardRecord{
+		Username:     username,
+		Amount:       amount,
+		AwardBalance: awardBalance,
+	}, nil
+}
+
+func createWithdrawAwardRecord(tx *gorm.DB, username string, amount *big.Int, awardBalance string) (err error) {
+	var withdrawAwardRecord *WithdrawAwardRecord
+	withdrawAwardRecord, err = newWithdrawAwardRecord(username, amount.String(), awardBalance)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "newWithdrawAwardRecord")
+	}
+	err = tx.Model(&WithdrawAwardRecord{}).Create(&withdrawAwardRecord).Error
+	if err != nil {
+		return utils.AppendErrorInfo(err, "create withdrawAwardRecord")
+	}
+	return nil
+}
+
+func _withdrawAward(tx *gorm.DB, username string, amount *big.Int) (oldBalance string, newBalance string, err error) {
+	var lpAwardBalance *LpAwardBalance
+	err = tx.Model(&LpAwardBalance{}).Where("username = ?", username).First(&lpAwardBalance).Error
+	if err != nil {
+		// @dev: no lpAwardBalance
+		return ZeroValue, ZeroValue, errors.New("lpAwardBalance of " + username + " not found")
+	} else {
+		_oldBalance, success := new(big.Float).SetString(lpAwardBalance.Balance)
+		if !success {
+			return ZeroValue, ZeroValue, errors.New("lpAwardBalance SetString(" + lpAwardBalance.Balance + ") " + strconv.FormatBool(success))
+		}
+		_amountFloat := new(big.Float).SetInt(amount)
+		_minWithdrawAwardSat := new(big.Float).SetUint64(uint64(MinWithdrawAwardSat))
+
+		if _amountFloat.Cmp(_minWithdrawAwardSat) < 0 {
+			return ZeroValue, ZeroValue, errors.New("insufficient _amountFloat(" + _amountFloat.String() + "), need ge " + _minWithdrawAwardSat.String())
+		}
+
+		_newBalance := new(big.Float).Sub(_oldBalance, _amountFloat)
+		if _newBalance.Sign() < 0 {
+			return ZeroValue, ZeroValue, errors.New("insufficient _newBalance(" + _newBalance.String() + "), _oldBalance(" + _oldBalance.String() + ") _amountFloat(" + _amountFloat.String() + ")")
+		}
+
+		err = tx.Model(&LpAwardBalance{}).Where("username = ?", username).
+			Update("balance", _newBalance.String()).Error
+		if err != nil {
+			return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "update lpAwardBalance")
+		}
+		newBalance = _newBalance.String()
+		oldBalance = _oldBalance.String()
+	}
+	return oldBalance, newBalance, nil
 }

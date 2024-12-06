@@ -10,6 +10,8 @@ const (
 	// TODO: ?
 	MinRemoveLiquiditySat uint = 1e3
 
+	MinWithdrawAwardSat uint = 1e2
+
 	MinSwapSatFee uint = 20
 
 	AssetIdLength = 64

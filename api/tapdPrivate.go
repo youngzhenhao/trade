@@ -491,9 +491,13 @@ func fetchAssetMetaByAssetIds(assetIds []string) (*map[string]string, *map[strin
 		response, err := client.FetchAssetMeta(context.Background(), request)
 		if err != nil {
 			idMapErr[assetId] = err
-			continue
+			//continue
 		}
-		idMapData[assetId] = string(response.Data)
+		if response == nil {
+			idMapData[assetId] = ""
+		} else {
+			idMapData[assetId] = string(response.Data)
+		}
 	}
 	return &idMapData, &idMapErr
 }

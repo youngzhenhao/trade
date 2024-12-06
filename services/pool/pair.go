@@ -133,7 +133,7 @@ func updatePair(token0 string, token1 string, reserve0 string, reserve1 string) 
 		Error
 }
 
-func NewPair(token0 string, token1 string, reserve0 string, reserve1 string) (pair *Pair, err error) {
+func _newPair(token0 string, token1 string, reserve0 string, reserve1 string) (pair *Pair, err error) {
 	// sort token
 	_token0, _token1, err := sortTokens(token0, token1)
 	if err != nil {
@@ -182,7 +182,7 @@ func NewPair(token0 string, token1 string, reserve0 string, reserve1 string) (pa
 	return pair, nil
 }
 
-func NewPairBig(token0 string, token1 string, _reserve0 *big.Int, _reserve1 *big.Int) (pair *Pair, err error) {
+func newPairBig(token0 string, token1 string, _reserve0 *big.Int, _reserve1 *big.Int) (pair *Pair, err error) {
 	// sort token
 	_token0, _token1, err := sortTokens(token0, token1)
 	if err != nil {
@@ -223,15 +223,15 @@ func NewPairBig(token0 string, token1 string, _reserve0 *big.Int, _reserve1 *big
 	return pair, nil
 }
 
-func GetToken1PriceBig( _reserve0 *big.Int, _reserve1 *big.Int) (price *big.Float, err error) {
-	_reserve0Float:= new(big.Float).SetInt(_reserve0)
-	_reserve1Float:= new(big.Float).SetInt(_reserve1)
-	_price:= new(big.Float).Quo(_reserve0Float, _reserve1Float)
+func getToken1PriceBig(_reserve0 *big.Int, _reserve1 *big.Int) (price *big.Float, err error) {
+	_reserve0Float := new(big.Float).SetInt(_reserve0)
+	_reserve1Float := new(big.Float).SetInt(_reserve1)
+	_price := new(big.Float).Quo(_reserve0Float, _reserve1Float)
 	if _price.IsInf() {
 		return new(big.Float), errors.New("price is Inf")
 	}
 	if _price.Sign() <= 0 {
-		return new(big.Float), errors.New("price("+_price.String()+") is less equal than zero")
+		return new(big.Float), errors.New("price(" + _price.String() + ") is less equal than zero")
 	}
 	return _price, nil
 }

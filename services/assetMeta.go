@@ -140,13 +140,13 @@ func GetAssetMetaImage(assetIds []string) (*[]AssetIdMetaDataImage, *[]AssetIdMe
 			meta.GetMetaFromStr(data)
 			imageData := meta.ImageData
 			// @dev: check image data
-			if imageData == "" {
-				assetIdMetaDataErrs = append(assetIdMetaDataErrs, AssetIdMetaDataErr{
-					AssetId: assetId,
-					Err:     "image data is empty",
-				})
-				continue
-			}
+			//if imageData == "" {
+			//	assetIdMetaDataErrs = append(assetIdMetaDataErrs, AssetIdMetaDataErr{
+			//		AssetId: assetId,
+			//		Err:     "image data is empty",
+			//	})
+			//	continue
+			//}
 			assetIdMetaDatas = append(assetIdMetaDatas, AssetIdMetaDataImage{
 				AssetId:   assetId,
 				ImageData: imageData,
