@@ -219,7 +219,7 @@ func addLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "updateShareBalanceAndRecordMint")
 		}
 		// record liquidity
-		liquidity = newSupply.String()
+		liquidity = _liquidity.String()
 	}
 	if token0 == tokenB {
 		amountA, amountB = _amount1.String(), _amount0.String()
@@ -1300,12 +1300,14 @@ func calcAddLiquidity(tokenA string, tokenB string, amountADesired string, amoun
 		newSupply := new(big.Int).Add(_totalSupply, _liquidity)
 		//fmt.Printf("newSupply: %v;(_totalSupply: %v + _liquidity: %v)\n", newSupply, _totalSupply, _liquidity)
 
+		_ = newSupply
+
 		shareRecord, err = calcUpdateShareBalanceAndRecordMint(tx, shareId, username, _liquidity, _reserve0.String(), _reserve1.String(), _amount0.String(), _amount1.String(), _totalSupply.String(), false)
 		if err != nil {
 			return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "updateShareBalanceAndRecordMint")
 		}
 		// record liquidity
-		liquidity = newSupply.String()
+		liquidity = _liquidity.String()
 	}
 	if token0 == tokenB {
 		amountA, amountB = _amount1.String(), _amount0.String()
