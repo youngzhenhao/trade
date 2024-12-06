@@ -1,6 +1,7 @@
 package btldb
 
 import (
+	"gorm.io/gorm"
 	"sync"
 	"trade/middleware"
 	"trade/models/custodyModels"
@@ -29,10 +30,10 @@ func LoadPendingOutsides() (*[]custodyModels.PayOutside, error) {
 }
 
 // UpdatePayOutside updates an existing payOutside
-func UpdatePayOutside(pay *custodyModels.PayOutside) error {
+func UpdatePayOutside(tx *gorm.DB, pay *custodyModels.PayOutside) error {
 	payOutsideMutex.Lock()
 	defer payOutsideMutex.Unlock()
-	return middleware.DB.Save(pay).Error
+	return tx.Save(pay).Error
 }
 
 func DeletePayOutside(id uint) error {

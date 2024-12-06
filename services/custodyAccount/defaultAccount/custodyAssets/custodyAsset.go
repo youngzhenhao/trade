@@ -288,6 +288,11 @@ func (e *AssetEvent) payToOutside(bt *AssetPacket) {
 	if err != nil {
 		btlLog.CUST.Error("payToOutside db error")
 	}
+	if tx.Commit().Error != nil {
+		btlLog.CUST.Error("payToOutside commit error")
+		bt.err <- fmt.Errorf("payToOutside commit error")
+		return
+	}
 	bt.err <- nil
 	btlLog.CUST.Info("Create payToOutside mission success: id=%v,amount=%v", assetId, float64(bt.DecodePayReq.Amount))
 }

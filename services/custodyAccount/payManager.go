@@ -68,7 +68,7 @@ func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 		//收款地址监听
 		custodyAssets.AddressServer.Start(ctx)
 		//asset 转账监听
-		//custodyAssets.OutsideSever.Start(ctx)
+		custodyAssets.GoOutsideMission()
 		// 加载pending mission
 		custodyAssets.LoadAIMMission()
 	}
