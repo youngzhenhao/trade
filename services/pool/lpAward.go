@@ -25,6 +25,7 @@ type LpAwardRecord struct {
 	ShareId      uint      `json:"share_id" gorm:"index"`
 	Username     string    `json:"username" gorm:"type:varchar(255);index"`
 	Amount       string    `json:"amount" gorm:"type:varchar(255);index"`
+	Fee          string    `json:"fee" gorm:"type:varchar(255);index"`
 	AwardBalance string    `json:"award_balance" gorm:"type:varchar(255);index"`
 	ShareBalance string    `json:"share_balance" gorm:"type:varchar(255);index"`
 	TotalSupply  string    `json:"total_supply" gorm:"type:varchar(255);index"`
@@ -77,7 +78,7 @@ func CreateOrUpdateLpAwardBalance(tx *gorm.DB, username string, amount *big.Floa
 	return previousAwardBalance, nil
 }
 
-func NewLpAwardRecord(shareId uint, username string, amount string, awardBalance string, shareBalance string, totalSupply string, swapRecordId uint, awardType AwardType) (lpAwardRecord *LpAwardRecord, err error) {
+func NewLpAwardRecord(shareId uint, username string, amount string, fee string, awardBalance string, shareBalance string, totalSupply string, swapRecordId uint, awardType AwardType) (lpAwardRecord *LpAwardRecord, err error) {
 	if shareId <= 0 {
 		return new(LpAwardRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
@@ -85,6 +86,7 @@ func NewLpAwardRecord(shareId uint, username string, amount string, awardBalance
 		ShareId:      shareId,
 		Username:     username,
 		Amount:       amount,
+		Fee:          fee,
 		AwardBalance: awardBalance,
 		ShareBalance: shareBalance,
 		TotalSupply:  totalSupply,
@@ -93,12 +95,12 @@ func NewLpAwardRecord(shareId uint, username string, amount string, awardBalance
 	}, nil
 }
 
-func CreateLpAwardRecord(tx *gorm.DB, shareId uint, username string, amount *big.Float, awardBalance string, shareBalance string, totalSupply string, swapRecordId uint, awardType AwardType) (err error) {
+func CreateLpAwardRecord(tx *gorm.DB, shareId uint, username string, amount *big.Float, fee string, awardBalance string, shareBalance string, totalSupply string, swapRecordId uint, awardType AwardType) (err error) {
 	if shareId <= 0 {
 		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	var lpAwardRecord *LpAwardRecord
-	lpAwardRecord, err = NewLpAwardRecord(shareId, username, amount.String(), awardBalance, shareBalance, totalSupply, swapRecordId, awardType)
+	lpAwardRecord, err = NewLpAwardRecord(shareId, username, amount.String(), fee, awardBalance, shareBalance, totalSupply, swapRecordId, awardType)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "NewLpAwardRecord")
 	}
@@ -109,7 +111,7 @@ func CreateLpAwardRecord(tx *gorm.DB, shareId uint, username string, amount *big
 	return nil
 }
 
-func UpdateLpAwardBalanceAndRecordSwap(tx *gorm.DB, shareId uint, username string, amount *big.Float, shareBalance string, totalSupply string, swapRecordId uint) (err error) {
+func UpdateLpAwardBalanceAndRecordSwap(tx *gorm.DB, shareId uint, username string, amount *big.Float, fee string, shareBalance string, totalSupply string, swapRecordId uint) (err error) {
 	if shareId <= 0 {
 		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
@@ -118,7 +120,7 @@ func UpdateLpAwardBalanceAndRecordSwap(tx *gorm.DB, shareId uint, username strin
 	if err != nil {
 		return utils.AppendErrorInfo(err, "CreateOrUpdateLpAwardBalance")
 	}
-	err = CreateLpAwardRecord(tx, shareId, username, amount, previousAwardBalance, shareBalance, totalSupply, swapRecordId, SwapAward)
+	err = CreateLpAwardRecord(tx, shareId, username, amount, fee, previousAwardBalance, shareBalance, totalSupply, swapRecordId, SwapAward)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "CreateLpAwardRecord")
 	}

@@ -690,12 +690,7 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 		return ZeroValue, utils.AppendErrorInfo(err, "CreateSwapRecord")
 	}
 
-	// TODO: 使用 _swapFeeFloat 进行奖励发放，给所有LP发放奖励
-
-	// TODO: update LpAwardBalance and LpAwardRecord
-
-	//TODO
-	//COPY
+	// == COPY ==
 	// get share
 	var share Share
 	var shareId uint
@@ -735,14 +730,18 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 
 		var _awardFloat = big.NewFloat(0)
 
-		_awardFloat = new(big.Float).Quo(new(big.Float).Mul(_swapFeeFloat, _balanceFloat), _totalSupplyFloat)
-		err = UpdateLpAwardBalanceAndRecordSwap(tx, shareId, _userAndShare.Username, _awardFloat, _userAndShare.Balance, _totalSupplyFloat.String(), recordId)
+		LpAwardFeeKFloat := new(big.Float).SetUint64(uint64(lpAwardFeeK))
+		SwapFeeKFloat := new(big.Float).SetUint64(uint64(feeK))
+		_swapFeeForAwardFloat := new(big.Float).Quo(new(big.Float).Mul(_swapFeeFloat, LpAwardFeeKFloat), SwapFeeKFloat)
+
+		_awardFloat = new(big.Float).Quo(new(big.Float).Mul(_swapFeeForAwardFloat, _balanceFloat), _totalSupplyFloat)
+		err = UpdateLpAwardBalanceAndRecordSwap(tx, shareId, _userAndShare.Username, _awardFloat, _swapFeeFloat.String(), _userAndShare.Balance, _totalSupplyFloat.String(), recordId)
 
 		if err != nil {
 			return ZeroValue, utils.AppendErrorInfo(err, "UpdateLpAwardBalanceAndRecordSwap")
 		}
 	}
-	//COPY END
+	// == COPY END ==
 
 	amountOut = _amountOut.String()
 	err = nil
@@ -1028,9 +1027,6 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 		return ZeroValue, utils.AppendErrorInfo(err, "CreateSwapRecord")
 	}
 
-	// TODO: 使用 _swapFeeFloat 进行奖励发放，给所有LP发放奖励
-	// TODO: Test
-
 	// get share
 	var share Share
 	var shareId uint
@@ -1070,8 +1066,12 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 
 		var _awardFloat = big.NewFloat(0)
 
-		_awardFloat = new(big.Float).Quo(new(big.Float).Mul(_swapFeeFloat, _balanceFloat), _totalSupplyFloat)
-		err = UpdateLpAwardBalanceAndRecordSwap(tx, shareId, _userAndShare.Username, _awardFloat, _userAndShare.Balance, _totalSupplyFloat.String(), recordId)
+		LpAwardFeeKFloat := new(big.Float).SetUint64(uint64(lpAwardFeeK))
+		SwapFeeKFloat := new(big.Float).SetUint64(uint64(feeK))
+		_swapFeeForAwardFloat := new(big.Float).Quo(new(big.Float).Mul(_swapFeeFloat, LpAwardFeeKFloat), SwapFeeKFloat)
+
+		_awardFloat = new(big.Float).Quo(new(big.Float).Mul(_swapFeeForAwardFloat, _balanceFloat), _totalSupplyFloat)
+		err = UpdateLpAwardBalanceAndRecordSwap(tx, shareId, _userAndShare.Username, _awardFloat, _swapFeeFloat.String(), _userAndShare.Balance, _totalSupplyFloat.String(), recordId)
 
 		if err != nil {
 			return ZeroValue, utils.AppendErrorInfo(err, "UpdateLpAwardBalanceAndRecordSwap")
@@ -1084,3 +1084,8 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 }
 
 // TODO: Tolerance
+
+// TODO: Encapsulate API
+
+// TODO: 1. Award Query
+// TODO: 2. Award Withdraw

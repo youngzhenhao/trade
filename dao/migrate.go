@@ -213,6 +213,12 @@ func poolMigrate() (err error) {
 	if err = middleware.DB.AutoMigrate(&pool.SwapRecord{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&pool.LpAwardBalance{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pool.LpAwardRecord{}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -247,6 +253,7 @@ func custodyAwardMigrate(err error) error {
 	}
 	return err
 }
+
 func custodyLimitMigrate(err error) error {
 	if err = middleware.DB.AutoMigrate(&custodyModels.Limit{}); err != nil {
 		return err
