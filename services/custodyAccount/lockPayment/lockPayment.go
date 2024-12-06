@@ -261,7 +261,8 @@ func TransferByLock(lockedId, npubkey, toNpubkey, assetId string, amount float64
 
 func CheckLockId(lockedId string) error {
 	bill := cModels.LockBill{}
-	if err := middleware.DB.Where("locked_id = ?", lockedId).First(&bill).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+	err := middleware.DB.Where("lock_id = ?", lockedId).First(&bill).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil
 	}
 	return RepeatedLockId
