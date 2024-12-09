@@ -22,7 +22,7 @@ const (
 	SwapFee20Sat
 )
 
-type SwapRecord struct {
+type PoolSwapRecord struct {
 	gorm.Model
 	PairId         uint           `json:"pair_id" gorm:"index"`
 	Username       string         `json:"username" gorm:"type:varchar(255);index"`
@@ -37,11 +37,11 @@ type SwapRecord struct {
 	SwapRecordType SwapRecordType `json:"swap_record_type" gorm:"index"`
 }
 
-func newSwapRecord(pairId uint, username string, tokenIn string, tokenOut string, amountIn string, amountOut string, reserveIn string, reserveOut string, swapFee string, swapFeeType SwapFeeType, swapRecordType SwapRecordType) (swapRecord *SwapRecord, err error) {
+func newSwapRecord(pairId uint, username string, tokenIn string, tokenOut string, amountIn string, amountOut string, reserveIn string, reserveOut string, swapFee string, swapFeeType SwapFeeType, swapRecordType SwapRecordType) (swapRecord *PoolSwapRecord, err error) {
 	if pairId <= 0 {
-		return new(SwapRecord), errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
+		return new(PoolSwapRecord), errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
 	}
-	return &SwapRecord{
+	return &PoolSwapRecord{
 		PairId:         pairId,
 		Username:       username,
 		TokenIn:        tokenIn,
@@ -60,12 +60,12 @@ func createSwapRecord(tx *gorm.DB, pairId uint, username string, tokenIn string,
 	if pairId <= 0 {
 		return 0, errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
 	}
-	var swapRecord *SwapRecord
+	var swapRecord *PoolSwapRecord
 	swapRecord, err = newSwapRecord(pairId, username, tokenIn, tokenOut, amountIn, amountOut, reserveIn, reserveOut, swapFee, swapFeeType, swapRecordType)
 	if err != nil {
 		return 0, utils.AppendErrorInfo(err, "newSwapRecord")
 	}
-	err = tx.Model(&SwapRecord{}).Create(&swapRecord).Error
+	err = tx.Model(&PoolSwapRecord{}).Create(&swapRecord).Error
 	if err != nil {
 		return 0, utils.AppendErrorInfo(err, "create swapRecord")
 	}
@@ -73,13 +73,13 @@ func createSwapRecord(tx *gorm.DB, pairId uint, username string, tokenIn string,
 	return recordId, nil
 }
 
-func calcSwapRecord(pairId uint, username string, tokenIn string, tokenOut string, amountIn string, amountOut string, reserveIn string, reserveOut string, swapFee string, swapFeeType SwapFeeType, swapRecordType SwapRecordType) (swapRecord *SwapRecord, err error) {
+func calcSwapRecord(pairId uint, username string, tokenIn string, tokenOut string, amountIn string, amountOut string, reserveIn string, reserveOut string, swapFee string, swapFeeType SwapFeeType, swapRecordType SwapRecordType) (swapRecord *PoolSwapRecord, err error) {
 	if pairId <= 0 {
-		return new(SwapRecord), errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
+		return new(PoolSwapRecord), errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
 	}
 	swapRecord, err = newSwapRecord(pairId, username, tokenIn, tokenOut, amountIn, amountOut, reserveIn, reserveOut, swapFee, swapFeeType, swapRecordType)
 	if err != nil {
-		return new(SwapRecord), utils.AppendErrorInfo(err, "newSwapRecord")
+		return new(PoolSwapRecord), utils.AppendErrorInfo(err, "newSwapRecord")
 	}
 	return swapRecord, nil
 }

@@ -9,19 +9,19 @@ import (
 	"trade/utils"
 )
 
-// Share
+// PoolShare
 
-type Share struct {
+type PoolShare struct {
 	gorm.Model
 	PairId      uint   `json:"pair_id" gorm:"uniqueIndex"`
 	TotalSupply string `json:"total_supply" gorm:"type:varchar(255);index"`
 }
 
-func getShare(pairId uint) (*Share, error) {
-	var share Share
+func getShare(pairId uint) (*PoolShare, error) {
+	var share PoolShare
 	err := middleware.DB.Where("pair_id = ?", pairId).First(&share).Error
 	if err != nil {
-		return new(Share), err
+		return new(PoolShare), err
 	}
 	return &share, nil
 }
@@ -37,7 +37,7 @@ func createShare(pairId uint, totalSupply string) (err error) {
 	if _totalSupply.Sign() < 0 {
 		return errors.New("invalid totalSupply(" + _totalSupply.String() + ")")
 	}
-	share := Share{
+	share := PoolShare{
 		PairId:      pairId,
 		TotalSupply: totalSupply,
 	}
@@ -53,24 +53,24 @@ func updateShare(pairId uint, totalSupply string) (err error) {
 		return errors.New("invalid totalSupply(" + _totalSupply.String() + ")")
 	}
 	return middleware.DB.
-		Model(&Share{}).
+		Model(&PoolShare{}).
 		Where("pair_id = ?", pairId).
 		Update("total_supply", totalSupply).
 		Error
 }
 
-func _newShare(pairId uint, totalSupply string) (share *Share, err error) {
+func _newShare(pairId uint, totalSupply string) (share *PoolShare, err error) {
 	if pairId <= 0 {
-		return new(Share), errors.New("invalid pairId(" + strconv.Itoa(int(pairId)) + ")")
+		return new(PoolShare), errors.New("invalid pairId(" + strconv.Itoa(int(pairId)) + ")")
 	}
 	_totalSupply, success := new(big.Int).SetString(totalSupply, 10)
 	if !success {
-		return new(Share), errors.New("totalSupply SetString(" + totalSupply + ") " + strconv.FormatBool(success))
+		return new(PoolShare), errors.New("totalSupply SetString(" + totalSupply + ") " + strconv.FormatBool(success))
 	}
 	if _totalSupply.Sign() < 0 {
-		return new(Share), errors.New("invalid totalSupply(" + _totalSupply.String() + ")")
+		return new(PoolShare), errors.New("invalid totalSupply(" + _totalSupply.String() + ")")
 	}
-	_share := Share{
+	_share := PoolShare{
 		PairId:      pairId,
 		TotalSupply: totalSupply,
 	}
@@ -136,20 +136,20 @@ func _burnBig(_reserve0 *big.Int, _reserve1 *big.Int, _totalSupply *big.Int, _li
 	return _amount0, _amount1, nil
 }
 
-// ShareBalance
+// PoolShareBalance
 
-type ShareBalance struct {
+type PoolShareBalance struct {
 	gorm.Model
 	ShareId  uint   `json:"share_id" gorm:"uniqueIndex:idx_share_id_username"`
 	Username string `json:"username" gorm:"type:varchar(255);uniqueIndex:idx_share_id_username"`
 	Balance  string `json:"balance" gorm:"type:varchar(255);index"`
 }
 
-func getShareBalance(shareId uint, username string) (*ShareBalance, error) {
-	var shareBalance ShareBalance
+func getShareBalance(shareId uint, username string) (*PoolShareBalance, error) {
+	var shareBalance PoolShareBalance
 	err := middleware.DB.Where("share_id = ? AND username = ?", shareId, username).First(&shareBalance).Error
 	if err != nil {
-		return new(ShareBalance), err
+		return new(PoolShareBalance), err
 	}
 	return &shareBalance, nil
 }
@@ -165,7 +165,7 @@ func createShareBalance(shareId uint, username string, balance string) (err erro
 	if _balance.Sign() < 0 {
 		return errors.New("invalid balance(" + _balance.String() + ")")
 	}
-	shareBalance := ShareBalance{
+	shareBalance := PoolShareBalance{
 		ShareId:  shareId,
 		Username: username,
 		Balance:  balance,
@@ -182,19 +182,19 @@ func updateShareBalance(shareId uint, username string, balance string) (err erro
 		return errors.New("invalid balance(" + _balance.String() + ")")
 	}
 	return middleware.DB.
-		Model(&ShareBalance{}).
+		Model(&PoolShareBalance{}).
 		Where("share_id = ? AND username = ?", shareId, username).
 		Update("balance", balance).
 		Error
 }
 
-func getShareBalanceIfNotExistCreate(shareId uint, username string) (*ShareBalance, error) {
+func getShareBalanceIfNotExistCreate(shareId uint, username string) (*PoolShareBalance, error) {
 	if shareId <= 0 {
-		return new(ShareBalance), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
+		return new(PoolShareBalance), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	shareBalance, err := getShareBalance(shareId, username)
 	if err != nil {
-		shareBalance = &ShareBalance{
+		shareBalance = &PoolShareBalance{
 			ShareId:  shareId,
 			Username: username,
 			Balance:  ZeroValue,
@@ -220,7 +220,7 @@ func updateShareBalanceIfNotExistCreate(shareId uint, username string, balance s
 	}
 	shareBalance, err := getShareBalance(shareId, username)
 	if err != nil {
-		shareBalance = &ShareBalance{
+		shareBalance = &PoolShareBalance{
 			ShareId:  shareId,
 			Username: username,
 			Balance:  balance,
@@ -231,24 +231,24 @@ func updateShareBalanceIfNotExistCreate(shareId uint, username string, balance s
 		}
 	}
 	return middleware.DB.
-		Model(&ShareBalance{}).
+		Model(&PoolShareBalance{}).
 		Where("share_id = ? AND username = ?", shareId, username).
 		Update("balance", balance).
 		Error
 }
 
-func newShareBalance(shareId uint, username string, balance string) (shareBalance *ShareBalance, err error) {
+func newShareBalance(shareId uint, username string, balance string) (shareBalance *PoolShareBalance, err error) {
 	if shareId <= 0 {
-		return new(ShareBalance), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
+		return new(PoolShareBalance), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	_balance, success := new(big.Int).SetString(balance, 10)
 	if !success {
-		return new(ShareBalance), errors.New("balance SetString(" + balance + ") " + strconv.FormatBool(success))
+		return new(PoolShareBalance), errors.New("balance SetString(" + balance + ") " + strconv.FormatBool(success))
 	}
 	if _balance.Sign() < 0 {
-		return new(ShareBalance), errors.New("invalid balance(" + _balance.String() + ")")
+		return new(PoolShareBalance), errors.New("invalid balance(" + _balance.String() + ")")
 	}
-	_shareBalance := ShareBalance{
+	_shareBalance := PoolShareBalance{
 		ShareId:  shareId,
 		Username: username,
 		Balance:  balance,
@@ -260,15 +260,15 @@ func createOrUpdateShareBalance(tx *gorm.DB, shareId uint, username string, _liq
 	if shareId <= 0 {
 		return ZeroValue, errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
-	var shareBalance *ShareBalance
-	err = tx.Model(&ShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).First(&shareBalance).Error
+	var shareBalance *PoolShareBalance
+	err = tx.Model(&PoolShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).First(&shareBalance).Error
 	if err != nil {
 		// @dev: no shareBalance
 		shareBalance, err = newShareBalance(shareId, username, _liquidity.String())
 		if err != nil {
 			return ZeroValue, utils.AppendErrorInfo(err, "newShareBalance")
 		}
-		err = tx.Model(&ShareBalance{}).Create(&shareBalance).Error
+		err = tx.Model(&PoolShareBalance{}).Create(&shareBalance).Error
 		if err != nil {
 			return ZeroValue, utils.AppendErrorInfo(err, "create shareBalance")
 		}
@@ -279,7 +279,7 @@ func createOrUpdateShareBalance(tx *gorm.DB, shareId uint, username string, _liq
 			return ZeroValue, errors.New("shareBalance SetString(" + shareBalance.Balance + ") " + strconv.FormatBool(success))
 		}
 		newBalance := new(big.Int).Add(oldBalance, _liquidity)
-		err = tx.Model(&ShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).
+		err = tx.Model(&PoolShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).
 			Update("balance", newBalance.String()).Error
 		if err != nil {
 			return ZeroValue, utils.AppendErrorInfo(err, "update shareBalance")
@@ -293,8 +293,8 @@ func updateShareBalanceBurn(tx *gorm.DB, shareId uint, username string, _liquidi
 	if shareId <= 0 {
 		return ZeroValue, errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
-	var shareBalance *ShareBalance
-	err = tx.Model(&ShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).First(&shareBalance).Error
+	var shareBalance *PoolShareBalance
+	err = tx.Model(&PoolShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).First(&shareBalance).Error
 	if err != nil {
 		// @dev: no shareBalance
 		return ZeroValue, errors.New("no shareBalance")
@@ -309,7 +309,7 @@ func updateShareBalanceBurn(tx *gorm.DB, shareId uint, username string, _liquidi
 		return ZeroValue, errors.New("insufficient newBalance(" + newBalance.String() + ")")
 	}
 
-	err = tx.Model(&ShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).
+	err = tx.Model(&PoolShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).
 		Update("balance", newBalance.String()).Error
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "update shareBalance")
@@ -319,7 +319,7 @@ func updateShareBalanceBurn(tx *gorm.DB, shareId uint, username string, _liquidi
 	return previousShare, nil
 }
 
-// ShareRecord
+// PoolShareRecord
 
 type ShareRecordType int64
 
@@ -330,7 +330,7 @@ const (
 )
 
 // TODO: record token transfer Id
-type ShareRecord struct {
+type PoolShareRecord struct {
 	gorm.Model
 	ShareId     uint            `json:"share_id" gorm:"index"`
 	Username    string          `json:"username" gorm:"type:varchar(255);index"`
@@ -349,7 +349,7 @@ func _createShareRecord(shareId uint, username string, liquidity string, reserve
 	if shareId <= 0 {
 		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
-	return middleware.DB.Create(&ShareRecord{
+	return middleware.DB.Create(&PoolShareRecord{
 		ShareId:     shareId,
 		Username:    username,
 		Liquidity:   liquidity,
@@ -364,11 +364,11 @@ func _createShareRecord(shareId uint, username string, liquidity string, reserve
 	}).Error
 }
 
-func newShareRecord(shareId uint, username string, liquidity string, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (shareRecord *ShareRecord, err error) {
+func newShareRecord(shareId uint, username string, liquidity string, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (shareRecord *PoolShareRecord, err error) {
 	if shareId <= 0 {
-		return new(ShareRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
+		return new(PoolShareRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
-	return &ShareRecord{
+	return &PoolShareRecord{
 		ShareId:     shareId,
 		Username:    username,
 		Liquidity:   liquidity,
@@ -387,12 +387,12 @@ func createShareRecord(tx *gorm.DB, shareId uint, username string, _liquidity *b
 	if shareId <= 0 {
 		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
-	var shareRecord *ShareRecord
+	var shareRecord *PoolShareRecord
 	shareRecord, err = newShareRecord(shareId, username, _liquidity.String(), reserve0, reserve1, amount0, amount1, shareSupply, shareAmt, isFirstMint, recordType)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "newShareRecord")
 	}
-	err = tx.Model(&ShareRecord{}).Create(&shareRecord).Error
+	err = tx.Model(&PoolShareRecord{}).Create(&shareRecord).Error
 	if err != nil {
 		return utils.AppendErrorInfo(err, "create shareRecord")
 	}
@@ -433,8 +433,8 @@ func updateShareBalanceAndRecordBurn(tx *gorm.DB, shareId uint, username string,
 
 // calc
 
-func calcNewShareRecord(shareId uint, username string, liquidity string, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (shareRecord *ShareRecord, err error) {
-	return &ShareRecord{
+func calcNewShareRecord(shareId uint, username string, liquidity string, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (shareRecord *PoolShareRecord, err error) {
+	return &PoolShareRecord{
 		ShareId:     shareId,
 		Username:    username,
 		Liquidity:   liquidity,
@@ -449,10 +449,10 @@ func calcNewShareRecord(shareId uint, username string, liquidity string, reserve
 	}, nil
 }
 
-func calcShareRecord(shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (shareRecord *ShareRecord, err error) {
+func calcShareRecord(shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (shareRecord *PoolShareRecord, err error) {
 	shareRecord, err = calcNewShareRecord(shareId, username, _liquidity.String(), reserve0, reserve1, amount0, amount1, shareSupply, shareAmt, isFirstMint, recordType)
 	if err != nil {
-		return new(ShareRecord), utils.AppendErrorInfo(err, "calcNewShareRecord")
+		return new(PoolShareRecord), utils.AppendErrorInfo(err, "calcNewShareRecord")
 	}
 	return shareRecord, nil
 }
@@ -461,8 +461,8 @@ func calcCreateOrUpdateShareBalance(tx *gorm.DB, shareId uint, username string, 
 	if shareId <= 0 {
 		return ZeroValue, errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
-	var shareBalance *ShareBalance
-	err = tx.Model(&ShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).First(&shareBalance).Error
+	var shareBalance *PoolShareBalance
+	err = tx.Model(&PoolShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).First(&shareBalance).Error
 	if err != nil {
 		previousShare = big.NewInt(0).String()
 	} else {
@@ -479,8 +479,8 @@ func calcUpdateShareBalanceBurn(tx *gorm.DB, shareId uint, username string, _liq
 	if shareId <= 0 {
 		return ZeroValue, errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
-	var shareBalance *ShareBalance
-	err = tx.Model(&ShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).First(&shareBalance).Error
+	var shareBalance *PoolShareBalance
+	err = tx.Model(&PoolShareBalance{}).Where("share_id = ? AND username = ?", shareId, username).First(&shareBalance).Error
 	if err != nil {
 		// @dev: no shareBalance
 		return ZeroValue, errors.New("no shareBalance")
@@ -495,31 +495,31 @@ func calcUpdateShareBalanceBurn(tx *gorm.DB, shareId uint, username string, _liq
 	return previousShare, nil
 }
 
-func calcUpdateShareBalanceAndRecordMint(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, isFirstMint bool) (shareRecord *ShareRecord, err error) {
+func calcUpdateShareBalanceAndRecordMint(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, isFirstMint bool) (shareRecord *PoolShareRecord, err error) {
 	var previousShare string
 	previousShare, err = calcCreateOrUpdateShareBalance(tx, shareId, username, _liquidity)
 	if err != nil {
-		return new(ShareRecord), utils.AppendErrorInfo(err, "createOrUpdateShareBalance")
+		return new(PoolShareRecord), utils.AppendErrorInfo(err, "createOrUpdateShareBalance")
 	}
 	shareRecord, err = calcShareRecord(shareId, username, _liquidity, reserve0, reserve1, amount0, amount1, shareSupply, previousShare, isFirstMint, AddLiquidityShareMint)
 	if err != nil {
-		return new(ShareRecord), utils.AppendErrorInfo(err, "createShareRecord")
+		return new(PoolShareRecord), utils.AppendErrorInfo(err, "createShareRecord")
 	}
 	return shareRecord, nil
 }
 
-func calcUpdateShareBalanceAndRecordBurn(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string) (shareRecord *ShareRecord, err error) {
+func calcUpdateShareBalanceAndRecordBurn(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string) (shareRecord *PoolShareRecord, err error) {
 	if shareId <= 0 {
-		return new(ShareRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
+		return new(PoolShareRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	var previousShare string
 	previousShare, err = calcUpdateShareBalanceBurn(tx, shareId, username, _liquidity)
 	if err != nil {
-		return new(ShareRecord), utils.AppendErrorInfo(err, "updateShareBalanceBurn")
+		return new(PoolShareRecord), utils.AppendErrorInfo(err, "updateShareBalanceBurn")
 	}
 	shareRecord, err = calcShareRecord(shareId, username, _liquidity, reserve0, reserve1, amount0, amount1, shareSupply, previousShare, false, RemoveLiquidityShareBurn)
 	if err != nil {
-		return new(ShareRecord), utils.AppendErrorInfo(err, "createShareRecord")
+		return new(PoolShareRecord), utils.AppendErrorInfo(err, "createShareRecord")
 	}
 	return shareRecord, nil
 }

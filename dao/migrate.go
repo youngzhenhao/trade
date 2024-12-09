@@ -198,28 +198,43 @@ func Migrate() error {
 }
 
 func poolMigrate() (err error) {
-	if err = middleware.DB.AutoMigrate(&pool.Pair{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&pool.PoolPair{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&pool.Share{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&pool.PoolShare{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&pool.ShareBalance{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&pool.PoolShareBalance{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&pool.ShareRecord{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&pool.PoolShareRecord{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&pool.SwapRecord{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&pool.PoolSwapRecord{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&pool.LpAwardBalance{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&pool.PoolLpAwardBalance{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&pool.LpAwardRecord{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&pool.PoolLpAwardRecord{}); err != nil {
 		return err
 	}
-	if err = middleware.DB.AutoMigrate(&pool.WithdrawAwardRecord{}); err != nil {
+	if err = middleware.DB.AutoMigrate(&pool.PoolWithdrawAwardRecord{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pool.PoolAddLiquidityBatch{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pool.PoolRemoveLiquidityBatch{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pool.PoolSwapExactTokenForTokenNoPathBatch{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pool.PoolSwapTokenForExactTokenNoPathBatch{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pool.PoolWithdrawAwardBatch{}); err != nil {
 		return err
 	}
 	return nil

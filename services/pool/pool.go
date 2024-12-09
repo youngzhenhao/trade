@@ -2,7 +2,6 @@ package pool
 
 import (
 	"errors"
-	"gorm.io/gorm"
 	"math/big"
 	"strconv"
 	"sync"
@@ -12,7 +11,7 @@ import (
 
 // TODO: Pool
 type Pool struct {
-	gorm.Model
+	//gorm.Model
 	PairId uint `json:"pair_id" gorm:"uniqueIndex"`
 	// TODO: Account
 	AccountId uint `json:"account_id" gorm:"index"`
@@ -102,9 +101,9 @@ func addLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 	var _amount0, _amount1 = new(big.Int), new(big.Int)
 	var _reserve0, _reserve1 *big.Int
 	// @dev: get pair
-	var _pair Pair
+	var _pair PoolPair
 	var pairId uint
-	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
 	// @dev: pair does not exist
 	if err != nil {
 		*_amount0, *_amount1 = *_amount0Desired, *_amount1Desired
@@ -113,7 +112,7 @@ func addLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 		if err != nil {
 			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "newPairBig")
 		}
-		err = tx.Model(&Pair{}).Create(&newPair).Error
+		err = tx.Model(&PoolPair{}).Create(&newPair).Error
 		if err != nil {
 			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "create pair")
 		}
@@ -147,7 +146,7 @@ func addLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 		if _newReserve1.Cmp(_reserve1) < 0 {
 			return ZeroValue, ZeroValue, ZeroValue, errors.New("invalid _newReserve1(" + _newReserve1.String() + ")")
 		}
-		err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).
+		err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).
 			Updates(map[string]any{
 				"reserve0": _newReserve0.String(),
 				"reserve1": _newReserve1.String(),
@@ -166,23 +165,23 @@ func addLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 	// TODO: Transfer _amount1 of token1 from user to pool
 
 	// get share
-	var share Share
+	var share PoolShare
 	var shareId uint
 	var _liquidity *big.Int
-	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).First(&share).Error
+	err = tx.Model(&PoolShare{}).Where("pair_id = ?", pairId).First(&share).Error
 	if err != nil {
 		// @dev: no share
 		_liquidity, err = _mintBig(_amount0, _amount1, big.NewInt(0), big.NewInt(0), big.NewInt(0), isTokenZeroSat)
 		if err != nil {
 			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "_mintBig")
 		}
-		var newShare *Share
+		var newShare *PoolShare
 		newShare, err = _newShare(pairId, _liquidity.String())
 		if err != nil {
 			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "_newShare")
 		}
 		// @dev: update share, shareBalance, shareRecord
-		err = tx.Model(&Share{}).Create(&newShare).Error
+		err = tx.Model(&PoolShare{}).Create(&newShare).Error
 		if err != nil {
 			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "create share")
 		}
@@ -209,7 +208,7 @@ func addLiquidity(tokenA string, tokenB string, amountADesired string, amountBDe
 		// @dev: update share, shareBalance, shareRecord
 		newSupply := new(big.Int).Add(_totalSupply, _liquidity)
 		//fmt.Printf("newSupply: %v;(_totalSupply: %v + _liquidity: %v)\n", newSupply, _totalSupply, _liquidity)
-		err = tx.Model(&Share{}).Where("pair_id = ?", pairId).
+		err = tx.Model(&PoolShare{}).Where("pair_id = ?", pairId).
 			Update("total_supply", newSupply.String()).Error
 		if err != nil {
 			return ZeroValue, ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "update share")
@@ -297,8 +296,8 @@ func removeLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 	}()
 
 	// @dev: get pair
-	var _pair Pair
-	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	var _pair PoolPair
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
 	if err != nil {
 		//@dev: pair does not exist
 		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "pair does not exist")
@@ -326,8 +325,8 @@ func removeLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 	}
 
 	// get share
-	var share Share
-	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).First(&share).Error
+	var share PoolShare
+	err = tx.Model(&PoolShare{}).Where("pair_id = ?", pairId).First(&share).Error
 	if err != nil {
 		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "share does not exist")
 	}
@@ -338,7 +337,7 @@ func removeLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 
 	// @dev: check liquidity
 	var shareBalance string
-	err = tx.Model(&ShareBalance{}).Select("balance").
+	err = tx.Model(&PoolShareBalance{}).Select("balance").
 		Where("share_id = ? AND username = ?", shareId, username).
 		Scan(&shareBalance).Error
 	if err != nil {
@@ -388,7 +387,7 @@ func removeLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 		return ZeroValue, ZeroValue, errors.New("invalid _newReserve1(" + _newReserve1.String() + ")")
 	}
 
-	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).
 		Updates(map[string]any{
 			"reserve0": _newReserve0.String(),
 			"reserve1": _newReserve1.String(),
@@ -399,7 +398,7 @@ func removeLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 
 	// update share
 	newSupply := new(big.Int).Sub(_totalSupply, _liquidity)
-	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).
+	err = tx.Model(&PoolShare{}).Where("pair_id = ?", pairId).
 		Update("total_supply", newSupply.String()).Error
 	if err != nil {
 		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "update share")
@@ -480,8 +479,8 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 	}()
 
 	// get pair
-	var _pair Pair
-	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	var _pair PoolPair
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
 	if err != nil {
 		//@dev: pair does not exist
 		return ZeroValue, utils.AppendErrorInfo(err, "pair does not exist")
@@ -672,7 +671,7 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 		return ZeroValue, errors.New("invalid _newReserve1(" + _newReserve1.String() + ")")
 	}
 
-	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).
 		Updates(map[string]any{
 			"reserve0": _newReserve0.String(),
 			"reserve1": _newReserve1.String(),
@@ -690,9 +689,9 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 
 	// == COPY ==
 	// get share
-	var share Share
+	var share PoolShare
 	var shareId uint
-	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).First(&share).Error
+	err = tx.Model(&PoolShare{}).Where("pair_id = ?", pairId).First(&share).Error
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "share does not exist")
 	}
@@ -711,7 +710,7 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 
 	var userAndShares []userAndShare
 
-	err = tx.Model(&ShareBalance{}).
+	err = tx.Model(&PoolShareBalance{}).
 		Select("username, balance").
 		Where("share_id = ?", shareId).
 		Scan(&userAndShares).Error
@@ -817,8 +816,8 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 	}()
 
 	// get pair
-	var _pair Pair
-	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	var _pair PoolPair
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
 	if err != nil {
 		//@dev: pair does not exist
 		return ZeroValue, utils.AppendErrorInfo(err, "pair does not exist")
@@ -1019,7 +1018,7 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 		return ZeroValue, errors.New("invalid _newReserve1(" + _newReserve1.String() + ")")
 	}
 
-	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).
 		Updates(map[string]any{
 			"reserve0": _newReserve0.String(),
 			"reserve1": _newReserve1.String(),
@@ -1036,9 +1035,9 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 	}
 
 	// get share
-	var share Share
+	var share PoolShare
 	var shareId uint
-	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).First(&share).Error
+	err = tx.Model(&PoolShare{}).Where("pair_id = ?", pairId).First(&share).Error
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "share does not exist")
 	}
@@ -1057,7 +1056,7 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 
 	var userAndShares []userAndShare
 
-	err = tx.Model(&ShareBalance{}).
+	err = tx.Model(&PoolShareBalance{}).
 		Select("username, balance").
 		Where("share_id = ?", shareId).
 		Scan(&userAndShares).Error
@@ -1155,10 +1154,10 @@ func withdrawAward(username string, amount string) (newBalance string, err error
 
 // calc
 
-func calcAddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDesired string, amountAMin string, amountBMin string, username string) (amountA string, amountB string, liquidity string, shareRecord *ShareRecord, err error) {
+func calcAddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDesired string, amountAMin string, amountBMin string, username string) (amountA string, amountB string, liquidity string, shareRecord *PoolShareRecord, err error) {
 	token0, token1, err := sortTokens(tokenA, tokenB)
 	if err != nil {
-		return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "sortTokens")
+		return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), utils.AppendErrorInfo(err, "sortTokens")
 	}
 
 	isTokenZeroSat := token0 == TokenSatTag
@@ -1175,37 +1174,37 @@ func calcAddLiquidity(tokenA string, tokenB string, amountADesired string, amoun
 	// amount0Desired
 	_amount0Desired, success := new(big.Int).SetString(amount0Desired, 10)
 	if !success {
-		return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("amount0Desired SetString(" + amount0Desired + ") " + strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("amount0Desired SetString(" + amount0Desired + ") " + strconv.FormatBool(success))
 	}
 
 	// amount1Desired
 	_amount1Desired, success := new(big.Int).SetString(amount1Desired, 10)
 	if !success {
-		return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("amount1Desired SetString(" + amount1Desired + ") " + strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("amount1Desired SetString(" + amount1Desired + ") " + strconv.FormatBool(success))
 	}
 
 	// amount0Min
 	_amount0Min, success := new(big.Int).SetString(amount0Min, 10)
 	if !success {
-		return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("amount0Min SetString(" + amount0Min + ") " + strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("amount0Min SetString(" + amount0Min + ") " + strconv.FormatBool(success))
 	}
 	if _amount0Min.Sign() < 0 {
-		return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("amount0Min(" + _amount0Min.String() + ") is negative")
+		return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("amount0Min(" + _amount0Min.String() + ") is negative")
 	}
 	if _amount0Min.Cmp(_amount0Desired) > 0 {
-		return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("amount0Min(" + _amount0Min.String() + ") is greater than amount0Desired(" + _amount0Desired.String() + ")")
+		return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("amount0Min(" + _amount0Min.String() + ") is greater than amount0Desired(" + _amount0Desired.String() + ")")
 	}
 
 	// amount1Min
 	_amount1Min, success := new(big.Int).SetString(amount1Min, 10)
 	if !success {
-		return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("amount1Min SetString(" + amount1Min + ") " + strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("amount1Min SetString(" + amount1Min + ") " + strconv.FormatBool(success))
 	}
 	if _amount1Min.Sign() < 0 {
-		return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("amount1Min(" + _amount1Min.String() + ") is negative")
+		return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("amount1Min(" + _amount1Min.String() + ") is negative")
 	}
 	if _amount1Min.Cmp(_amount1Desired) > 0 {
-		return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("amount1Min(" + _amount1Min.String() + ") is greater than amount1Desired(" + _amount1Desired.String() + ")")
+		return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("amount1Min(" + _amount1Min.String() + ") is greater than amount1Desired(" + _amount1Desired.String() + ")")
 	}
 
 	tx := middleware.DB.Begin()
@@ -1216,9 +1215,9 @@ func calcAddLiquidity(tokenA string, tokenB string, amountADesired string, amoun
 	var _amount0, _amount1 = new(big.Int), new(big.Int)
 	var _reserve0, _reserve1 *big.Int
 	// @dev: get pair
-	var _pair Pair
+	var _pair PoolPair
 	var pairId uint
-	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
 	// @dev: pair does not exist
 	if err != nil {
 		*_amount0, *_amount1 = *_amount0Desired, *_amount1Desired
@@ -1229,7 +1228,7 @@ func calcAddLiquidity(tokenA string, tokenB string, amountADesired string, amoun
 		var _liquidity *big.Int
 		_liquidity, err = _mintBig(_amount0, _amount1, big.NewInt(0), big.NewInt(0), big.NewInt(0), isTokenZeroSat)
 		if err != nil {
-			return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "_mintBig")
+			return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), utils.AppendErrorInfo(err, "_mintBig")
 		}
 
 		shareRecord, err = calcShareRecord(0, username, _liquidity, _reserve0.String(), _reserve1.String(), _amount0.String(), _amount1.String(), ZeroValue, ZeroValue, true, AddLiquidityShareMint)
@@ -1244,26 +1243,26 @@ func calcAddLiquidity(tokenA string, tokenB string, amountADesired string, amoun
 		// reserve0
 		_reserve0, success = new(big.Int).SetString(_pair.Reserve0, 10)
 		if !success {
-			return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
+			return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
 		}
 		// reserve1
 		_reserve1, success = new(big.Int).SetString(_pair.Reserve1, 10)
 		if !success {
-			return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
+			return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
 		}
 		// No fee for adding liquidity
 		_amount0, _amount1, err = _addLiquidity(_amount0Desired, _amount1Desired, _amount0Min, _amount1Min, _reserve0, _reserve1)
 		if err != nil {
-			return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "_addLiquidity")
+			return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), utils.AppendErrorInfo(err, "_addLiquidity")
 		}
 		// update pair
 		_newReserve0 := new(big.Int).Add(_reserve0, _amount0)
 		if _newReserve0.Cmp(_reserve0) < 0 {
-			return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("invalid _newReserve0(" + _newReserve0.String() + ")")
+			return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("invalid _newReserve0(" + _newReserve0.String() + ")")
 		}
 		_newReserve1 := new(big.Int).Add(_reserve1, _amount1)
 		if _newReserve1.Cmp(_reserve1) < 0 {
-			return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("invalid _newReserve1(" + _newReserve1.String() + ")")
+			return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("invalid _newReserve1(" + _newReserve1.String() + ")")
 		}
 
 		// @dev: update pairId
@@ -1271,24 +1270,24 @@ func calcAddLiquidity(tokenA string, tokenB string, amountADesired string, amoun
 	}
 
 	// get share
-	var share Share
+	var share PoolShare
 	var shareId uint
 	var _liquidity *big.Int
-	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).First(&share).Error
+	err = tx.Model(&PoolShare{}).Where("pair_id = ?", pairId).First(&share).Error
 	if err != nil {
 		// @dev: no share
-		return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "share does not exist")
+		return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), utils.AppendErrorInfo(err, "share does not exist")
 
 	} else {
 		shareId = share.ID
 
 		_totalSupply, success := new(big.Int).SetString(share.TotalSupply, 10)
 		if !success {
-			return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), errors.New("TotalSupply SetString(" + share.TotalSupply + ") " + strconv.FormatBool(success))
+			return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("TotalSupply SetString(" + share.TotalSupply + ") " + strconv.FormatBool(success))
 		}
 		_liquidity, err = _mintBig(_amount0, _amount1, _reserve0, _reserve1, _totalSupply, isTokenZeroSat)
 		if err != nil {
-			return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "_mintBig")
+			return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), utils.AppendErrorInfo(err, "_mintBig")
 		}
 		// @dev: update share, shareBalance, shareRecord
 		newSupply := new(big.Int).Add(_totalSupply, _liquidity)
@@ -1298,7 +1297,7 @@ func calcAddLiquidity(tokenA string, tokenB string, amountADesired string, amoun
 
 		shareRecord, err = calcUpdateShareBalanceAndRecordMint(tx, shareId, username, _liquidity, _reserve0.String(), _reserve1.String(), _amount0.String(), _amount1.String(), _totalSupply.String(), false)
 		if err != nil {
-			return ZeroValue, ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "updateShareBalanceAndRecordMint")
+			return ZeroValue, ZeroValue, ZeroValue, new(PoolShareRecord), utils.AppendErrorInfo(err, "updateShareBalanceAndRecordMint")
 		}
 		// record liquidity
 		liquidity = _liquidity.String()
@@ -1312,10 +1311,10 @@ func calcAddLiquidity(tokenA string, tokenB string, amountADesired string, amoun
 	return amountA, amountB, liquidity, shareRecord, err
 }
 
-func calcRemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin string, amountBMin string, username string, feeK uint16) (amountA string, amountB string, shareRecord *ShareRecord, err error) {
+func calcRemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin string, amountBMin string, username string, feeK uint16) (amountA string, amountB string, shareRecord *PoolShareRecord, err error) {
 	token0, token1, err := sortTokens(tokenA, tokenB)
 	if err != nil {
-		return ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "sortTokens")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), utils.AppendErrorInfo(err, "sortTokens")
 	}
 
 	isTokenZeroSat := token0 == TokenSatTag
@@ -1330,26 +1329,26 @@ func calcRemoveLiquidity(tokenA string, tokenB string, liquidity string, amountA
 	// amount0Min
 	_amount0Min, success := new(big.Int).SetString(amount0Min, 10)
 	if !success {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("amount0Min SetString(" + amount0Min + ") " + strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("amount0Min SetString(" + amount0Min + ") " + strconv.FormatBool(success))
 	}
 	if _amount0Min.Sign() < 0 {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("amount0Min(" + _amount0Min.String() + ") is negative")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("amount0Min(" + _amount0Min.String() + ") is negative")
 	}
 
 	if isTokenZeroSat {
 		_minRemoveLiquiditySat := new(big.Int).SetUint64(uint64(MinRemoveLiquiditySat))
 		if _amount0Min.Cmp(_minRemoveLiquiditySat) < 0 {
-			return ZeroValue, ZeroValue, new(ShareRecord), errors.New("insufficient _amount0Min(" + _amount0Min.String() + "), need " + _minRemoveLiquiditySat.String())
+			return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("insufficient _amount0Min(" + _amount0Min.String() + "), need " + _minRemoveLiquiditySat.String())
 		}
 	}
 
 	// amount1Min
 	_amount1Min, success := new(big.Int).SetString(amount1Min, 10)
 	if !success {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("amount1Min SetString(" + amount1Min + ") " + strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("amount1Min SetString(" + amount1Min + ") " + strconv.FormatBool(success))
 	}
 	if _amount1Min.Sign() < 0 {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("amount1Min(" + _amount1Min.String() + ") is negative")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("amount1Min(" + _amount1Min.String() + ") is negative")
 	}
 
 	tx := middleware.DB.Begin()
@@ -1358,77 +1357,77 @@ func calcRemoveLiquidity(tokenA string, tokenB string, liquidity string, amountA
 	}()
 
 	// @dev: get pair
-	var _pair Pair
-	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	var _pair PoolPair
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
 	if err != nil {
 		//@dev: pair does not exist
-		return ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "pair does not exist")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), utils.AppendErrorInfo(err, "pair does not exist")
 	}
 	pairId := _pair.ID
 	if pairId <= 0 {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
 	}
 
 	var _reserve0, _reserve1 *big.Int
 	// reserve0
 	_reserve0, success = new(big.Int).SetString(_pair.Reserve0, 10)
 	if !success {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
 	}
 	// reserve1
 	_reserve1, success = new(big.Int).SetString(_pair.Reserve1, 10)
 	if !success {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
 	}
 	// liquidity
 	_liquidity, success := new(big.Int).SetString(liquidity, 10)
 	if !success {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("liquidity SetString(" + liquidity + ") " + strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("liquidity SetString(" + liquidity + ") " + strconv.FormatBool(success))
 	}
 
 	// get share
-	var share Share
-	err = tx.Model(&Share{}).Where("pair_id = ?", pairId).First(&share).Error
+	var share PoolShare
+	err = tx.Model(&PoolShare{}).Where("pair_id = ?", pairId).First(&share).Error
 	if err != nil {
-		return ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "share does not exist")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), utils.AppendErrorInfo(err, "share does not exist")
 	}
 	shareId := share.ID
 	if shareId <= 0 {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 
 	// @dev: check liquidity
 	var shareBalance string
-	err = tx.Model(&ShareBalance{}).Select("balance").
+	err = tx.Model(&PoolShareBalance{}).Select("balance").
 		Where("share_id = ? AND username = ?", shareId, username).
 		Scan(&shareBalance).Error
 	if err != nil {
-		return ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "get shareBalance")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), utils.AppendErrorInfo(err, "get shareBalance")
 	}
 	_shareBalance, success := new(big.Int).SetString(shareBalance, 10)
 	if !success {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("shareBalance SetString(" + shareBalance + ") " + strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("shareBalance SetString(" + shareBalance + ") " + strconv.FormatBool(success))
 	}
 	if _shareBalance.Cmp(_liquidity) < 0 {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("insufficientShareBalance(" + _shareBalance.String() + ")")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("insufficientShareBalance(" + _shareBalance.String() + ")")
 	}
 
 	_totalSupply, success := new(big.Int).SetString(share.TotalSupply, 10)
 	if !success {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("TotalSupply SetString(" + share.TotalSupply + ") " + strconv.FormatBool(success))
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("TotalSupply SetString(" + share.TotalSupply + ") " + strconv.FormatBool(success))
 	}
 
 	_amount0, _amount1, err := _burnBig(_reserve0, _reserve1, _totalSupply, _liquidity, feeK)
 	if err != nil {
-		return ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "_burnBig")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), utils.AppendErrorInfo(err, "_burnBig")
 	}
 
 	if !(_amount0.Cmp(_amount0Min) >= 0) {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("insufficientAmount0(" + _amount0.String() + "), need amount0Min(" + _amount0Min.String() + ")")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("insufficientAmount0(" + _amount0.String() + "), need amount0Min(" + _amount0Min.String() + ")")
 	}
 
 	if !(_amount1.Cmp(_amount1Min) >= 0) {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("insufficientAmount1(" + _amount1.String() + "), need amount1Min(" + _amount1Min.String() + ")")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("insufficientAmount1(" + _amount1.String() + "), need amount1Min(" + _amount1Min.String() + ")")
 	}
 
 	// @dev: update pair, share, shareBalance, shareRecord
@@ -1436,11 +1435,11 @@ func calcRemoveLiquidity(tokenA string, tokenB string, liquidity string, amountA
 	// update pair
 	_newReserve0 := new(big.Int).Sub(_reserve0, _amount0)
 	if _newReserve0.Sign() <= 0 {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("invalid _newReserve0(" + _newReserve0.String() + ")")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("invalid _newReserve0(" + _newReserve0.String() + ")")
 	}
 	_newReserve1 := new(big.Int).Sub(_reserve1, _amount1)
 	if _newReserve1.Sign() <= 0 {
-		return ZeroValue, ZeroValue, new(ShareRecord), errors.New("invalid _newReserve1(" + _newReserve1.String() + ")")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), errors.New("invalid _newReserve1(" + _newReserve1.String() + ")")
 	}
 
 	// update share
@@ -1451,7 +1450,7 @@ func calcRemoveLiquidity(tokenA string, tokenB string, liquidity string, amountA
 	// update shareBalance and shareRecord
 	shareRecord, err = calcUpdateShareBalanceAndRecordBurn(tx, shareId, username, _liquidity, _reserve0.String(), _reserve1.String(), _amount0.String(), _amount1.String(), _totalSupply.String())
 	if err != nil {
-		return ZeroValue, ZeroValue, new(ShareRecord), utils.AppendErrorInfo(err, "updateShareBalanceAndRecordBurn")
+		return ZeroValue, ZeroValue, new(PoolShareRecord), utils.AppendErrorInfo(err, "updateShareBalanceAndRecordBurn")
 	}
 
 	if token0 == tokenB {
@@ -1464,12 +1463,12 @@ func calcRemoveLiquidity(tokenA string, tokenB string, liquidity string, amountA
 	return amountA, amountB, shareRecord, err
 }
 
-func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn string, amountOutMin string, username string, projectPartyFeeK uint16, lpAwardFeeK uint16) (amountOut string, swapRecord *SwapRecord, err error) {
+func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn string, amountOutMin string, username string, projectPartyFeeK uint16, lpAwardFeeK uint16) (amountOut string, swapRecord *PoolSwapRecord, err error) {
 	feeK := projectPartyFeeK + lpAwardFeeK
 
 	token0, token1, err := sortTokens(tokenIn, tokenOut)
 	if err != nil {
-		return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "sortTokens")
+		return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "sortTokens")
 	}
 
 	isTokenZeroSat := token0 == TokenSatTag
@@ -1477,23 +1476,23 @@ func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 	// amountIn
 	_amountIn, success := new(big.Int).SetString(amountIn, 10)
 	if !success {
-		return ZeroValue, new(SwapRecord), errors.New("amountIn SetString(" + amountIn + ") " + strconv.FormatBool(success))
+		return ZeroValue, new(PoolSwapRecord), errors.New("amountIn SetString(" + amountIn + ") " + strconv.FormatBool(success))
 	}
 	// amountOutMin
 	_amountOutMin, success := new(big.Int).SetString(amountOutMin, 10)
 	if !success {
-		return ZeroValue, new(SwapRecord), errors.New("amountOutMin SetString(" + amountOutMin + ") " + strconv.FormatBool(success))
+		return ZeroValue, new(PoolSwapRecord), errors.New("amountOutMin SetString(" + amountOutMin + ") " + strconv.FormatBool(success))
 	}
 
 	if isTokenZeroSat {
 		_minSwapSat := new(big.Int).SetUint64(uint64(MinSwapSatFee))
 		if tokenIn == TokenSatTag {
 			if _amountIn.Cmp(_minSwapSat) <= 0 {
-				return ZeroValue, new(SwapRecord), errors.New("insufficient _amountIn(" + _amountIn.String() + "), need " + _minSwapSat.String())
+				return ZeroValue, new(PoolSwapRecord), errors.New("insufficient _amountIn(" + _amountIn.String() + "), need " + _minSwapSat.String())
 			}
 		} else if tokenOut == TokenSatTag {
 			if _amountOutMin.Cmp(_minSwapSat) <= 0 {
-				return ZeroValue, new(SwapRecord), errors.New("insufficient _amountOutMin(" + _amountOutMin.String() + "), need gt " + _minSwapSat.String())
+				return ZeroValue, new(PoolSwapRecord), errors.New("insufficient _amountOutMin(" + _amountOutMin.String() + "), need gt " + _minSwapSat.String())
 			}
 		}
 	}
@@ -1504,11 +1503,11 @@ func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 	}()
 
 	// get pair
-	var _pair Pair
-	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	var _pair PoolPair
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
 	if err != nil {
 		//@dev: pair does not exist
-		return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "pair does not exist")
+		return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "pair does not exist")
 	}
 	pairId := _pair.ID
 
@@ -1516,12 +1515,12 @@ func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 	// reserve0
 	_reserve0, success = new(big.Int).SetString(_pair.Reserve0, 10)
 	if !success {
-		return ZeroValue, new(SwapRecord), errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
+		return ZeroValue, new(PoolSwapRecord), errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
 	}
 	// reserve1
 	_reserve1, success = new(big.Int).SetString(_pair.Reserve1, 10)
 	if !success {
-		return ZeroValue, new(SwapRecord), errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
+		return ZeroValue, new(PoolSwapRecord), errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
 	}
 
 	var _reserveIn, _reserveOut = new(big.Int), new(big.Int)
@@ -1544,18 +1543,18 @@ func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 
 			_amountOutWithFee, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountOutBig")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountOutBig")
 			}
 			if _amountOutWithFee.Cmp(_amountOutMin) < 0 {
-				return ZeroValue, new(SwapRecord), errors.New("insufficientAmountOutWithFee(" + _amountOutWithFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
+				return ZeroValue, new(PoolSwapRecord), errors.New("insufficientAmountOutWithFee(" + _amountOutWithFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
 			}
 
 			_amountOutWithoutFee, err = getAmountOutBigWithoutFee(_amountIn, _reserveIn, _reserveOut)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountOutBigWithoutFee")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountOutBigWithoutFee")
 			}
 			if _amountOutWithoutFee.Cmp(_amountOutMin) < 0 {
-				return ZeroValue, new(SwapRecord), errors.New("insufficientAmountOutWithoutFee(" + _amountOutWithoutFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
+				return ZeroValue, new(PoolSwapRecord), errors.New("insufficientAmountOutWithoutFee(" + _amountOutWithoutFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
 			}
 
 			_minSwapSat := new(big.Int).SetUint64(uint64(MinSwapSatFee))
@@ -1579,7 +1578,7 @@ func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 		} else {
 			_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountOutBig")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountOutBig")
 			}
 
 			swapFeeType = SwapFee6ThousandsNotSat
@@ -1598,18 +1597,18 @@ func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 
 			_amountOutWithFee, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountOutBig")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountOutBig")
 			}
 			if _amountOutWithFee.Cmp(_amountOutMin) < 0 {
-				return ZeroValue, new(SwapRecord), errors.New("insufficientAmountOutWithFee(" + _amountOutWithFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
+				return ZeroValue, new(PoolSwapRecord), errors.New("insufficientAmountOutWithFee(" + _amountOutWithFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
 			}
 
 			_amountOutWithoutFee, err = getAmountOutBigWithoutFee(_amountIn, _reserveIn, _reserveOut)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountOutBigWithoutFee")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountOutBigWithoutFee")
 			}
 			if _amountOutWithoutFee.Cmp(_amountOutMin) < 0 {
-				return ZeroValue, new(SwapRecord), errors.New("insufficientAmountOutWithoutFee(" + _amountOutWithoutFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
+				return ZeroValue, new(PoolSwapRecord), errors.New("insufficientAmountOutWithoutFee(" + _amountOutWithoutFee.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
 			}
 			_swapFeeToken1 := new(big.Int).Sub(_amountOutWithoutFee, _amountOutWithFee)
 			_swapFeeToken1Float := new(big.Float).SetInt(_swapFeeToken1)
@@ -1617,7 +1616,7 @@ func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 			var _price *big.Float
 			_price, err = getToken1PriceBig(_reserve0, _reserve1)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getToken1PriceBig")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getToken1PriceBig")
 			}
 
 			_swapFeeToken1ValueFloat := new(big.Float).Mul(_swapFeeToken1Float, _price)
@@ -1630,7 +1629,7 @@ func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 
 				_amountOut, err = getAmountOutBigWithoutFee(new(big.Int).Sub(_amountIn, _minSwapSatFee), _reserveIn, _reserveOut)
 				if err != nil {
-					return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountOutBigWithoutFee")
+					return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountOutBigWithoutFee")
 				}
 
 				swapFeeType = SwapFee20Sat
@@ -1642,7 +1641,7 @@ func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 
 				_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
 				if err != nil {
-					return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountOutBig")
+					return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountOutBig")
 				}
 
 				swapFeeType = SwapFee6Thousands
@@ -1657,7 +1656,7 @@ func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 		} else {
 			_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountOutBig")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountOutBig")
 			}
 			swapFeeType = SwapFee6ThousandsNotSat
 			//fmt.Printf("_swapFee: %v\n", _swapFee)
@@ -1666,13 +1665,13 @@ func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 	}
 
 	if _amountOut.Cmp(_amountOutMin) < 0 {
-		return ZeroValue, new(SwapRecord), errors.New("insufficientAmountOut(" + _amountOut.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
+		return ZeroValue, new(PoolSwapRecord), errors.New("insufficientAmountOut(" + _amountOut.String() + "), need amountOutMin(" + _amountOutMin.String() + ")")
 	}
 
 	// @dev: swapRecord
 	swapRecord, err = calcSwapRecord(pairId, username, tokenIn, tokenOut, amountIn, _amountOut.String(), _reserveIn.String(), _reserveOut.String(), _swapFeeFloat.String(), swapFeeType, SwapExactTokenNoPath)
 	if err != nil {
-		return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "calcSwapRecord")
+		return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "calcSwapRecord")
 	}
 
 	amountOut = _amountOut.String()
@@ -1680,12 +1679,12 @@ func calcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 	return amountOut, swapRecord, err
 }
 
-func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut string, amountInMax string, username string, projectPartyFeeK uint16, lpAwardFeeK uint16) (amountIn string, swapRecord *SwapRecord, err error) {
+func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut string, amountInMax string, username string, projectPartyFeeK uint16, lpAwardFeeK uint16) (amountIn string, swapRecord *PoolSwapRecord, err error) {
 	feeK := projectPartyFeeK + lpAwardFeeK
 
 	token0, token1, err := sortTokens(tokenIn, tokenOut)
 	if err != nil {
-		return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "sortTokens")
+		return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "sortTokens")
 	}
 
 	isTokenZeroSat := token0 == TokenSatTag
@@ -1693,23 +1692,23 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 	// amountOut
 	_amountOut, success := new(big.Int).SetString(amountOut, 10)
 	if !success {
-		return ZeroValue, new(SwapRecord), errors.New("amountOut SetString(" + amountOut + ") " + strconv.FormatBool(success))
+		return ZeroValue, new(PoolSwapRecord), errors.New("amountOut SetString(" + amountOut + ") " + strconv.FormatBool(success))
 	}
 	// amountInMax
 	_amountInMax, success := new(big.Int).SetString(amountInMax, 10)
 	if !success {
-		return ZeroValue, new(SwapRecord), errors.New("amountInMax SetString(" + amountInMax + ") " + strconv.FormatBool(success))
+		return ZeroValue, new(PoolSwapRecord), errors.New("amountInMax SetString(" + amountInMax + ") " + strconv.FormatBool(success))
 	}
 
 	if isTokenZeroSat {
 		_minSwapSat := new(big.Int).SetUint64(uint64(MinSwapSatFee))
 		if tokenOut == TokenSatTag {
 			if _amountOut.Cmp(_minSwapSat) <= 0 {
-				return ZeroValue, new(SwapRecord), errors.New("insufficient _amountOut(" + _amountOut.String() + "), need " + _minSwapSat.String())
+				return ZeroValue, new(PoolSwapRecord), errors.New("insufficient _amountOut(" + _amountOut.String() + "), need " + _minSwapSat.String())
 			}
 		} else if tokenIn == TokenSatTag {
 			if _amountInMax.Cmp(_minSwapSat) <= 0 {
-				return ZeroValue, new(SwapRecord), errors.New("insufficient _amountInMax(" + _amountInMax.String() + "), need gt " + _minSwapSat.String())
+				return ZeroValue, new(PoolSwapRecord), errors.New("insufficient _amountInMax(" + _amountInMax.String() + "), need gt " + _minSwapSat.String())
 			}
 		}
 	}
@@ -1720,11 +1719,11 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 	}()
 
 	// get pair
-	var _pair Pair
-	err = tx.Model(&Pair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	var _pair PoolPair
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
 	if err != nil {
 		//@dev: pair does not exist
-		return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "pair does not exist")
+		return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "pair does not exist")
 	}
 	pairId := _pair.ID
 
@@ -1732,12 +1731,12 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 	// reserve0
 	_reserve0, success = new(big.Int).SetString(_pair.Reserve0, 10)
 	if !success {
-		return ZeroValue, new(SwapRecord), errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
+		return ZeroValue, new(PoolSwapRecord), errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
 	}
 	// reserve1
 	_reserve1, success = new(big.Int).SetString(_pair.Reserve1, 10)
 	if !success {
-		return ZeroValue, new(SwapRecord), errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
+		return ZeroValue, new(PoolSwapRecord), errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
 	}
 
 	var _reserveIn, _reserveOut = new(big.Int), new(big.Int)
@@ -1754,7 +1753,7 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 		*_reserveIn, *_reserveOut = *_reserve1, *_reserve0
 
 		if _amountOut.Cmp(_reserveOut) >= 0 {
-			return ZeroValue, new(SwapRecord), errors.New("excessive _amountOut(" + _amountOut.String() + "), need lt reserveOut(" + _reserveOut.String() + ")")
+			return ZeroValue, new(PoolSwapRecord), errors.New("excessive _amountOut(" + _amountOut.String() + "), need lt reserveOut(" + _reserveOut.String() + ")")
 		}
 
 		if isTokenZeroSat {
@@ -1764,18 +1763,18 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 			_minSwapSatFee := new(big.Int).SetUint64(uint64(MinSwapSatFee))
 			_amountInWithFee, err = getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountInBig")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountInBig")
 			}
 			if _amountInWithFee.Cmp(_amountInMax) > 0 {
-				return ZeroValue, new(SwapRecord), errors.New("excessive _amountInWithFee(" + _amountInWithFee.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
+				return ZeroValue, new(PoolSwapRecord), errors.New("excessive _amountInWithFee(" + _amountInWithFee.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
 			}
 
 			_amountInWithoutFee, err = getAmountInBigWithoutFee(_amountOut, _reserveIn, _reserveOut)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountInBigWithoutFee")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountInBigWithoutFee")
 			}
 			if _amountInWithoutFee.Cmp(_amountInMax) > 0 {
-				return ZeroValue, new(SwapRecord), errors.New("excessive _amountInWithoutFee(" + _amountInWithoutFee.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
+				return ZeroValue, new(PoolSwapRecord), errors.New("excessive _amountInWithoutFee(" + _amountInWithoutFee.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
 			}
 
 			_amountInFee := new(big.Int).Sub(_amountInWithFee, _amountInWithoutFee)
@@ -1785,7 +1784,7 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 
 			_price, err = getToken1PriceBig(_reserve0, _reserve1)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getToken1PriceBig")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getToken1PriceBig")
 			}
 			_minSwapSatFeeFloat := new(big.Float).SetUint64(uint64(MinSwapSatFee))
 			_feeValueFloat := new(big.Float).Mul(_amountInFeeFloat, _price)
@@ -1794,7 +1793,7 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 				// @dev: fee 20 sat
 				_amountIn, err = getAmountInBigWithoutFee(new(big.Int).Add(_amountOut, _minSwapSatFee), _reserveIn, _reserveOut)
 				if err != nil {
-					return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountInBigWithoutFee")
+					return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountInBigWithoutFee")
 				}
 				swapFeeType = SwapFee20Sat
 
@@ -1818,7 +1817,7 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 		} else {
 			_amountIn, err = getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountInBig")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountInBig")
 			}
 			swapFeeType = SwapFee6ThousandsNotSat
 			//fmt.Printf("_swapFee: %v\n", _swapFee)
@@ -1829,7 +1828,7 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 		*_reserveIn, *_reserveOut = *_reserve0, *_reserve1
 
 		if _amountOut.Cmp(_reserveOut) >= 0 {
-			return ZeroValue, new(SwapRecord), errors.New("excessive _amountOut(" + _amountOut.String() + "), need lt reserveOut(" + _reserveOut.String() + ")")
+			return ZeroValue, new(PoolSwapRecord), errors.New("excessive _amountOut(" + _amountOut.String() + "), need lt reserveOut(" + _reserveOut.String() + ")")
 		}
 
 		if isTokenZeroSat {
@@ -1841,18 +1840,18 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 
 			_amountInWithFee, err = getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountInBig")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountInBig")
 			}
 			if _amountInWithFee.Cmp(_amountInMax) > 0 {
-				return ZeroValue, new(SwapRecord), errors.New("excessive _amountInWithFee(" + _amountInWithFee.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
+				return ZeroValue, new(PoolSwapRecord), errors.New("excessive _amountInWithFee(" + _amountInWithFee.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
 			}
 
 			_amountInWithoutFee, err = getAmountInBigWithoutFee(_amountOut, _reserveIn, _reserveOut)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountInBigWithoutFee")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountInBigWithoutFee")
 			}
 			if _amountInWithoutFee.Cmp(_amountInMax) > 0 {
-				return ZeroValue, new(SwapRecord), errors.New("excessive _amountInWithoutFee(" + _amountInWithoutFee.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
+				return ZeroValue, new(PoolSwapRecord), errors.New("excessive _amountInWithoutFee(" + _amountInWithoutFee.String() + "), need le amountInMax(" + _amountInMax.String() + ")")
 			}
 
 			if new(big.Int).Sub(_amountInWithFee, _amountInWithoutFee).Cmp(_minSwapSatFee) < 0 {
@@ -1880,24 +1879,24 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 		} else {
 			_amountIn, err = getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
 			if err != nil {
-				return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "getAmountInBig")
+				return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "getAmountInBig")
 			}
 			swapFeeType = SwapFee6ThousandsNotSat
 		}
 	}
 
 	if _amountIn.Cmp(_amountInMax) > 0 {
-		return ZeroValue, new(SwapRecord), errors.New("excessiveAmountIn(" + _amountIn.String() + "), need amountInMax(" + _amountInMax.String() + ")")
+		return ZeroValue, new(PoolSwapRecord), errors.New("excessiveAmountIn(" + _amountIn.String() + "), need amountInMax(" + _amountInMax.String() + ")")
 	}
 
 	if _amountIn.Sign() <= 0 {
-		return ZeroValue, new(SwapRecord), errors.New("invalid _amountIn(" + _amountIn.String() + ")")
+		return ZeroValue, new(PoolSwapRecord), errors.New("invalid _amountIn(" + _amountIn.String() + ")")
 	}
 
 	// @dev: swapRecord
 	swapRecord, err = calcSwapRecord(pairId, username, tokenIn, tokenOut, _amountIn.String(), amountOut, _reserveIn.String(), _reserveOut.String(), _swapFeeFloat.String(), swapFeeType, SwapForExactTokenNoPath)
 	if err != nil {
-		return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "calcSwapRecord")
+		return ZeroValue, new(PoolSwapRecord), utils.AppendErrorInfo(err, "calcSwapRecord")
 	}
 
 	amountIn = _amountIn.String()
@@ -2095,10 +2094,10 @@ type WithdrawAwardRecordInfo struct {
 	AwardBalance string `json:"award_balance"`
 }
 
-func QueryWithdrawAwardRecords(limit int, offset int) (withdrawAwardRecords *[]WithdrawAwardRecord, err error) {
+func QueryWithdrawAwardRecords(limit int, offset int) (withdrawAwardRecords *[]PoolWithdrawAwardRecord, err error) {
 	tx := middleware.DB.Begin()
 
-	var _withdrawAwardRecords []WithdrawAwardRecord
+	var _withdrawAwardRecords []PoolWithdrawAwardRecord
 
 	err = tx.Table("withdraw_award_records").
 		Select("id,username,amount,award_balance").
@@ -2108,7 +2107,7 @@ func QueryWithdrawAwardRecords(limit int, offset int) (withdrawAwardRecords *[]W
 		Scan(&_withdrawAwardRecords).
 		Error
 	if err != nil {
-		return new([]WithdrawAwardRecord), utils.AppendErrorInfo(err, "select WithdrawAwardRecord")
+		return new([]PoolWithdrawAwardRecord), utils.AppendErrorInfo(err, "select PoolWithdrawAwardRecord")
 	}
 
 	tx.Rollback()
@@ -2116,10 +2115,10 @@ func QueryWithdrawAwardRecords(limit int, offset int) (withdrawAwardRecords *[]W
 	return withdrawAwardRecords, nil
 }
 
-func QueryUserWithdrawAwardRecords(username string, limit int, offset int) (withdrawAwardRecords *[]WithdrawAwardRecord, err error) {
+func QueryUserWithdrawAwardRecords(username string, limit int, offset int) (withdrawAwardRecords *[]PoolWithdrawAwardRecord, err error) {
 	tx := middleware.DB.Begin()
 
-	var _withdrawAwardRecords []WithdrawAwardRecord
+	var _withdrawAwardRecords []PoolWithdrawAwardRecord
 
 	err = tx.Table("withdraw_award_records").
 		Select("id,username,amount,award_balance").
@@ -2130,7 +2129,7 @@ func QueryUserWithdrawAwardRecords(username string, limit int, offset int) (with
 		Scan(&_withdrawAwardRecords).
 		Error
 	if err != nil {
-		return new([]WithdrawAwardRecord), utils.AppendErrorInfo(err, "select WithdrawAwardRecord")
+		return new([]PoolWithdrawAwardRecord), utils.AppendErrorInfo(err, "select PoolWithdrawAwardRecord")
 	}
 
 	tx.Rollback()

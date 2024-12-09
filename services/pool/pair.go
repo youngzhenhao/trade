@@ -9,7 +9,7 @@ import (
 	"trade/utils"
 )
 
-type Pair struct {
+type PoolPair struct {
 	gorm.Model
 	IsTokenZeroSat bool   `json:"is_token_zero_sat" gorm:"index"`
 	Token0         string `json:"token0" gorm:"type:varchar(255);uniqueIndex:idx_token_0_token_1"`
@@ -18,12 +18,12 @@ type Pair struct {
 	Reserve1       string `json:"reserve1" gorm:"type:varchar(255)"`
 }
 
-func getPair(token0 string, token1 string) (pair *Pair, err error) {
+func getPair(token0 string, token1 string) (pair *PoolPair, err error) {
 	_token0, _token1, err := sortTokens(token0, token1)
 	if err != nil {
-		return new(Pair), utils.AppendErrorInfo(err, "sortTokens")
+		return new(PoolPair), utils.AppendErrorInfo(err, "sortTokens")
 	}
-	var _pair Pair
+	var _pair PoolPair
 	err = middleware.DB.Where("token0 = ? AND token1 = ?", _token0, _token1).First(&_pair).Error
 	return &_pair, err
 }
@@ -67,7 +67,7 @@ func createPair(token0 string, token1 string, reserve0 string, reserve1 string) 
 	tokenMapReserve := make(map[string]string)
 	tokenMapReserve[token0] = reserve0
 	tokenMapReserve[token1] = reserve1
-	pair := Pair{
+	pair := PoolPair{
 		Model:          gorm.Model{},
 		IsTokenZeroSat: _token0 == TokenSatTag,
 		Token0:         _token0,
@@ -124,7 +124,7 @@ func updatePair(token0 string, token1 string, reserve0 string, reserve1 string) 
 	pair.Reserve1 = tokenMapReserve[_token1]
 
 	return middleware.DB.
-		Model(&Pair{}).
+		Model(&PoolPair{}).
 		Where("token0 = ? AND token1 = ?", _token0, _token1).
 		Updates(map[string]any{
 			"reserve0": tokenMapReserve[_token0],
@@ -133,31 +133,31 @@ func updatePair(token0 string, token1 string, reserve0 string, reserve1 string) 
 		Error
 }
 
-func _newPair(token0 string, token1 string, reserve0 string, reserve1 string) (pair *Pair, err error) {
+func _newPair(token0 string, token1 string, reserve0 string, reserve1 string) (pair *PoolPair, err error) {
 	// sort token
 	_token0, _token1, err := sortTokens(token0, token1)
 	if err != nil {
-		return new(Pair), utils.AppendErrorInfo(err, "sortTokens")
+		return new(PoolPair), utils.AppendErrorInfo(err, "sortTokens")
 	}
 	// check reserves
 	_reserve0, success := new(big.Int).SetString(reserve0, 10)
 	if !success {
-		return new(Pair), errors.New("reserve0 SetString(" + reserve0 + ") " + strconv.FormatBool(success))
+		return new(PoolPair), errors.New("reserve0 SetString(" + reserve0 + ") " + strconv.FormatBool(success))
 	}
 	_reserve1, success := new(big.Int).SetString(reserve1, 10)
 	if !success {
-		return new(Pair), errors.New("reserve1 SetString(" + reserve1 + ") " + strconv.FormatBool(success))
+		return new(PoolPair), errors.New("reserve1 SetString(" + reserve1 + ") " + strconv.FormatBool(success))
 	}
 	if !((_reserve0.Sign() > 0) && (_reserve1.Sign() > 0)) {
 		err = errors.New("insufficientLiquidity(" + _reserve0.String() + "," + _reserve1.String() + ")")
-		return new(Pair), err
+		return new(PoolPair), err
 	}
 	// cmp with minimum liquidity sat
 	if _token0 == TokenSatTag {
 		_minLiquiditySat := new(big.Int).SetUint64(uint64(MinAddLiquiditySat))
 		if _reserve0.Cmp(_minLiquiditySat) < 0 {
 			err = errors.New("insufficientLiquidity Sat(" + _reserve0.String() + "), need " + _minLiquiditySat.String())
-			return new(Pair), err
+			return new(PoolPair), err
 		}
 	} else {
 		// _token0 != TokenSatTag
@@ -166,13 +166,13 @@ func _newPair(token0 string, token1 string, reserve0 string, reserve1 string) (p
 		_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
 		if _liquidity.Cmp(_minLiquidity) < 0 {
 			err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
-			return new(Pair), err
+			return new(PoolPair), err
 		}
 	}
 	tokenMapReserve := make(map[string]string)
 	tokenMapReserve[token0] = reserve0
 	tokenMapReserve[token1] = reserve1
-	pair = &Pair{
+	pair = &PoolPair{
 		IsTokenZeroSat: _token0 == TokenSatTag,
 		Token0:         _token0,
 		Token1:         _token1,
@@ -182,23 +182,23 @@ func _newPair(token0 string, token1 string, reserve0 string, reserve1 string) (p
 	return pair, nil
 }
 
-func newPairBig(token0 string, token1 string, _reserve0 *big.Int, _reserve1 *big.Int) (pair *Pair, err error) {
+func newPairBig(token0 string, token1 string, _reserve0 *big.Int, _reserve1 *big.Int) (pair *PoolPair, err error) {
 	// sort token
 	_token0, _token1, err := sortTokens(token0, token1)
 	if err != nil {
-		return new(Pair), utils.AppendErrorInfo(err, "sortTokens")
+		return new(PoolPair), utils.AppendErrorInfo(err, "sortTokens")
 	}
 	// check reserves
 	if !((_reserve0.Sign() > 0) && (_reserve1.Sign() > 0)) {
 		err = errors.New("insufficientLiquidity(" + _reserve0.String() + "," + _reserve1.String() + ")")
-		return new(Pair), err
+		return new(PoolPair), err
 	}
 	// cmp with minimum liquidity sat
 	if _token0 == TokenSatTag {
 		_minLiquiditySat := new(big.Int).SetUint64(uint64(MinAddLiquiditySat))
 		if _reserve0.Cmp(_minLiquiditySat) < 0 {
 			err = errors.New("insufficientLiquidity Sat(" + _reserve0.String() + "), need " + _minLiquiditySat.String())
-			return new(Pair), err
+			return new(PoolPair), err
 		}
 	} else {
 		// _token0 != TokenSatTag
@@ -207,13 +207,13 @@ func newPairBig(token0 string, token1 string, _reserve0 *big.Int, _reserve1 *big
 		_minLiquidity := new(big.Int).SetUint64(uint64(MinLiquidity))
 		if _liquidity.Cmp(_minLiquidity) < 0 {
 			err = errors.New("insufficientLiquidity k_sqrt(" + _liquidity.String() + "), need " + _minLiquidity.String())
-			return new(Pair), err
+			return new(PoolPair), err
 		}
 	}
 	tokenMapReserve := make(map[string]string)
 	tokenMapReserve[token0] = _reserve0.String()
 	tokenMapReserve[token1] = _reserve1.String()
-	pair = &Pair{
+	pair = &PoolPair{
 		IsTokenZeroSat: _token0 == TokenSatTag,
 		Token0:         _token0,
 		Token1:         _token1,
