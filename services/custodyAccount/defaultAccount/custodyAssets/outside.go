@@ -11,17 +11,24 @@ import (
 	rpc "trade/services/servicesrpc"
 )
 
+var isAble = true
+
 func GoOutsideMission() {
 	ticker := time.NewTicker(1 * time.Minute) // 每10秒触发一次
 	go func() {
 		for {
+
+			if isAble {
+				isAble = !isAble
+				startOutsideMission()
+				isAble = !isAble
+			}
 			<-ticker.C // 等待下一次触发
-			StartOutsideMission()
 		}
 	}()
 }
 
-func StartOutsideMission() {
+func startOutsideMission() {
 	var results []struct {
 		AssetID      string    `gorm:"column:asset_id"`
 		MinCreatedAt time.Time `gorm:"column:min_created_at"`
@@ -52,22 +59,25 @@ func StartOutsideMission() {
 			continue
 		}
 		var outsideMissions []custodyModels.PayOutside
-		db.Where("asset_id =?", result.AssetID).Limit(8).Find(&outsideMissions)
+		db.Where("asset_id =? and status =?", result.AssetID, custodyModels.PayOutsideStatusPending).Limit(8).Find(&outsideMissions)
 		if outsideMissions == nil || len(outsideMissions) == 0 {
 			continue
 		}
 		//去重,筛选
 		missions := removeDuplicates(outsideMissions, list)
+		if len(missions) == 0 {
+			continue
+		}
 
 		balance, err := rpc.GetBalance()
 		if err != nil || balance.AccountBalance["default"].ConfirmedBalance < int64(len(missions)*1000) {
 			continue
 		}
 		//todo 支付
-		PayToOutside(&missions)
+		payToOutside(&missions)
 	}
 }
-func PayToOutside(missions *[]custodyModels.PayOutside) {
+func payToOutside(missions *[]custodyModels.PayOutside) {
 	tx, back := middleware.GetTx()
 
 	defer back()
@@ -75,16 +85,16 @@ func PayToOutside(missions *[]custodyModels.PayOutside) {
 
 	var addr []string
 	var balances []*models.Balance
-	for _, a := range *missions {
+	for index := range *missions {
 		//a.TxHash = txId
-		a.Status = custodyModels.PayOutsideStatusPaid
-		err = btldb.UpdatePayOutside(tx, &a)
+		(*missions)[index].Status = custodyModels.PayOutsideStatusPaid
+		err = btldb.UpdatePayOutside(tx, &(*missions)[index])
 		if err != nil {
 			btlLog.CUST.Error("btldb.UpdatePayOutside error:%w", err)
 			return
 		}
 		//更新Balance表
-		balance, err := btldb.ReadBalance(a.BalanceId)
+		balance, err := btldb.ReadBalance((*missions)[index].BalanceId)
 		if err != nil {
 			return
 		}
@@ -96,7 +106,7 @@ func PayToOutside(missions *[]custodyModels.PayOutside) {
 			btlLog.CUST.Error("payToOutside db error")
 			return
 		}
-		addr = append(addr, a.Address)
+		addr = append(addr, (*missions)[index].Address)
 	}
 	response, err := rpc.SendAssets(addr)
 	if err != nil {
@@ -126,16 +136,16 @@ func PayToOutside(missions *[]custodyModels.PayOutside) {
 		btlLog.CUST.Error("btldb.CreatePayOutsideTx error:%w", err)
 	}
 	db := middleware.DB
-	for _, a := range *missions {
-		a.TxHash = txId
-		err = btldb.UpdatePayOutside(db, &a)
+	for index := range *missions {
+		(*missions)[index].TxHash = txId
+		err = btldb.UpdatePayOutside(db, &(*missions)[index])
 		if err != nil {
 			btlLog.CUST.Error("btldb.UpdatePayOutside error:%w", err)
 		}
 	}
-	for _, balance := range balances {
-		balance.PaymentHash = &txId
-		err = btldb.UpdateBalance(db, balance)
+	for index := range balances {
+		balances[index].PaymentHash = &txId
+		err = btldb.UpdateBalance(db, balances[index])
 		if err != nil {
 			btlLog.CUST.Error("payToOutside db error")
 		}
@@ -148,12 +158,12 @@ func removeDuplicates(outsideMissions []custodyModels.PayOutside, list map[strin
 	amount := uint64(0)
 
 	for _, outsideMission := range outsideMissions {
-		if _, exist := unique[outsideMission.AssetId]; !exist {
+		if _, exist := unique[outsideMission.Address]; !exist {
 			amount += uint64(outsideMission.Amount)
 			if amount > list[outsideMission.AssetId] {
 				break
 			}
-			unique[outsideMission.AssetId] = outsideMission
+			unique[outsideMission.Address] = outsideMission
 		}
 	}
 
