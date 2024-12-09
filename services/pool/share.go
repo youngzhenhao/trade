@@ -433,13 +433,26 @@ func updateShareBalanceAndRecordBurn(tx *gorm.DB, shareId uint, username string,
 
 // calc
 
+func calcNewShareRecord(shareId uint, username string, liquidity string, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (shareRecord *ShareRecord, err error) {
+	return &ShareRecord{
+		ShareId:     shareId,
+		Username:    username,
+		Liquidity:   liquidity,
+		Reserve0:    reserve0,
+		Reserve1:    reserve1,
+		Amount0:     amount0,
+		Amount1:     amount1,
+		ShareSupply: shareSupply,
+		ShareAmt:    shareAmt,
+		IsFirstMint: isFirstMint,
+		RecordType:  recordType,
+	}, nil
+}
+
 func calcShareRecord(shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (shareRecord *ShareRecord, err error) {
-	if shareId <= 0 {
-		return new(ShareRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
-	}
-	shareRecord, err = newShareRecord(shareId, username, _liquidity.String(), reserve0, reserve1, amount0, amount1, shareSupply, shareAmt, isFirstMint, recordType)
+	shareRecord, err = calcNewShareRecord(shareId, username, _liquidity.String(), reserve0, reserve1, amount0, amount1, shareSupply, shareAmt, isFirstMint, recordType)
 	if err != nil {
-		return new(ShareRecord), utils.AppendErrorInfo(err, "newShareRecord")
+		return new(ShareRecord), utils.AppendErrorInfo(err, "calcNewShareRecord")
 	}
 	return shareRecord, nil
 }
@@ -483,9 +496,6 @@ func calcUpdateShareBalanceBurn(tx *gorm.DB, shareId uint, username string, _liq
 }
 
 func calcUpdateShareBalanceAndRecordMint(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, isFirstMint bool) (shareRecord *ShareRecord, err error) {
-	if shareId <= 0 {
-		return new(ShareRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
-	}
 	var previousShare string
 	previousShare, err = calcCreateOrUpdateShareBalance(tx, shareId, username, _liquidity)
 	if err != nil {

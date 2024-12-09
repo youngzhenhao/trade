@@ -421,8 +421,6 @@ func removeLiquidity(tokenA string, tokenB string, liquidity string, amountAMin 
 	return amountA, amountB, err
 }
 
-// TODO: Swap Exact Tokens For Tokens
-// TODO: Test
 func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn string, amountOutMin string, username string, projectPartyFeeK uint16, lpAwardFeeK uint16) (amountOut string, err error) {
 	feeK := projectPartyFeeK + lpAwardFeeK
 
@@ -760,8 +758,6 @@ func swapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn stri
 	return amountOut, err
 }
 
-// TODO: Swap Tokens For Exact Tokens
-// TODO: Test
 func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut string, amountInMax string, username string, projectPartyFeeK uint16, lpAwardFeeK uint16) (amountIn string, err error) {
 	feeK := projectPartyFeeK + lpAwardFeeK
 
@@ -1159,8 +1155,6 @@ func withdrawAward(username string, amount string) (newBalance string, err error
 
 // calc
 
-// TODO: test
-// TODO: Only Calc Api
 func calcAddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDesired string, amountAMin string, amountBMin string, username string) (amountA string, amountB string, liquidity string, shareRecord *ShareRecord, err error) {
 	token0, token1, err := sortTokens(tokenA, tokenB)
 	if err != nil {
@@ -1901,7 +1895,7 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 	}
 
 	// @dev: swapRecord
-	swapRecord, err = calcSwapRecord(pairId, username, tokenIn, tokenOut, amountIn, _amountOut.String(), _reserveIn.String(), _reserveOut.String(), _swapFeeFloat.String(), swapFeeType, SwapExactTokenNoPath)
+	swapRecord, err = calcSwapRecord(pairId, username, tokenIn, tokenOut, _amountIn.String(), amountOut, _reserveIn.String(), _reserveOut.String(), _swapFeeFloat.String(), swapFeeType, SwapForExactTokenNoPath)
 	if err != nil {
 		return ZeroValue, new(SwapRecord), utils.AppendErrorInfo(err, "calcSwapRecord")
 	}
@@ -1911,9 +1905,239 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 	return amountIn, swapRecord, err
 }
 
-// TODO: Pair Reserves and Liquidity Query
+// Query
 
-// TODO: All Records Query
+type PoolInfo struct {
+	PairId         uint   `json:"pair_id"`
+	ShareId        uint   `json:"share_id"`
+	IsTokenZeroSat bool   `json:"is_token_zero_sat"`
+	Token0         string `json:"token0"`
+	Token1         string `json:"token1"`
+	Reserve0       string `json:"reserve0"`
+	Reserve1       string `json:"reserve1"`
+	Liquidity      string `json:"liquidity"`
+}
+
+func queryPoolInfo(tokenA string, tokenB string) (poolInfo *PoolInfo, err error) {
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return new(PoolInfo), utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	tx := middleware.DB.Begin()
+
+	var _poolInfo PoolInfo
+	err = tx.Table("pairs").
+		Joins("join shares on pairs.id = shares.pair_id").
+		Select("pairs.id as pair_id,shares.id as share_id,pairs.is_token_zero_sat,pairs.token0,pairs.token1,pairs.reserve0,pairs.reserve1,shares.total_supply as liquidity").
+		Where("pairs.token0 = ? AND pairs.token1 = ?", token0, token1).
+		Scan(&_poolInfo).
+		Error
+	if err != nil {
+		return new(PoolInfo), utils.AppendErrorInfo(err, "pair info not found")
+	}
+
+	tx.Rollback()
+	poolInfo = &_poolInfo
+	return poolInfo, nil
+}
+
+type ShareRecordInfo struct {
+	ID          uint            `gorm:"primarykey"`
+	ShareId     uint            `json:"share_id"`
+	Username    string          `json:"username"`
+	Liquidity   string          `json:"liquidity"`
+	Reserve0    string          `json:"reserve0"`
+	Reserve1    string          `json:"reserve1"`
+	Amount0     string          `json:"amount0"`
+	Amount1     string          `json:"amount1"`
+	ShareSupply string          `json:"share_supply"`
+	ShareAmt    string          `json:"share_amt"`
+	IsFirstMint bool            `json:"is_first_mint"`
+	RecordType  ShareRecordType `json:"record_type"`
+}
+
+func QueryShareRecords(tokenA string, tokenB string, limit int, offset int) (shareRecordInfos *[]ShareRecordInfo, err error) {
+
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return new([]ShareRecordInfo), utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	tx := middleware.DB.Begin()
+
+	var _shareRecordInfos []ShareRecordInfo
+
+	err = tx.Table("pairs").
+		Select("share_records.id,share_records.share_id,share_records.username,share_records.liquidity,share_records.reserve0,share_records.reserve1,share_records.amount0,share_records.amount1,share_records.share_supply,share_records.share_amt,share_records.is_first_mint,share_records.record_type").
+		Joins("join shares on pairs.id = shares.pair_id").
+		Joins("join share_records on shares.id = share_records.share_id").
+		Where("pairs.token0 = ? AND pairs.token1 = ?", token0, token1).
+		Order("share_records.id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&_shareRecordInfos).
+		Error
+	if err != nil {
+		return new([]ShareRecordInfo), utils.AppendErrorInfo(err, "select ShareRecordInfo")
+	}
+
+	tx.Rollback()
+	shareRecordInfos = &_shareRecordInfos
+	return shareRecordInfos, nil
+}
+
+func QueryUserShareRecords(tokenA string, tokenB string, username string, limit int, offset int) (shareRecordInfos *[]ShareRecordInfo, err error) {
+
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return new([]ShareRecordInfo), utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	tx := middleware.DB.Begin()
+
+	var _shareRecordInfos []ShareRecordInfo
+
+	err = tx.Table("pairs").
+		Select("share_records.id,share_records.share_id,share_records.username,share_records.liquidity,share_records.reserve0,share_records.reserve1,share_records.amount0,share_records.amount1,share_records.share_supply,share_records.share_amt,share_records.is_first_mint,share_records.record_type").
+		Joins("join shares on pairs.id = shares.pair_id").
+		Joins("join share_records on shares.id = share_records.share_id").
+		Where("pairs.token0 = ? and pairs.token1 = ? and share_records.username = ?", token0, token1, username).
+		Order("share_records.id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&_shareRecordInfos).
+		Error
+	if err != nil {
+		return new([]ShareRecordInfo), utils.AppendErrorInfo(err, "select ShareRecordInfo")
+	}
+
+	tx.Rollback()
+	shareRecordInfos = &_shareRecordInfos
+	return shareRecordInfos, nil
+}
+
+type SwapRecordInfo struct {
+	ID             uint           `gorm:"primarykey"`
+	PairId         uint           `json:"pair_id"`
+	Username       string         `json:"username"`
+	TokenIn        string         `json:"token_in"`
+	TokenOut       string         `json:"token_out"`
+	AmountIn       string         `json:"amount_in"`
+	AmountOut      string         `json:"amount_out"`
+	ReserveIn      string         `json:"reserve_in"`
+	ReserveOut     string         `json:"reserve_out"`
+	SwapFee        string         `json:"swap_fee"`
+	SwapFeeType    SwapFeeType    `json:"swap_fee_type"`
+	SwapRecordType SwapRecordType `json:"swap_record_type"`
+}
+
+func QuerySwapRecords(tokenA string, tokenB string, limit int, offset int) (swapRecordInfos *[]SwapRecordInfo, err error) {
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return new([]SwapRecordInfo), utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	tx := middleware.DB.Begin()
+
+	var _swapRecordInfos []SwapRecordInfo
+
+	err = tx.Table("pairs").
+		Select("swap_records.id,swap_records.pair_id,swap_records.username,swap_records.token_in,swap_records.token_out,swap_records.amount_in,swap_records.amount_out,swap_records.reserve_in,swap_records.reserve_out,swap_records.swap_fee,swap_records.swap_fee_type,swap_records.swap_record_type").
+		Joins("join swap_records on pairs.id = swap_records.pair_id").
+		Where("pairs.token0 = ? AND pairs.token1 = ?", token0, token1).
+		Order("swap_records.id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&_swapRecordInfos).
+		Error
+	if err != nil {
+		return new([]SwapRecordInfo), utils.AppendErrorInfo(err, "select SwapRecordInfo")
+	}
+
+	tx.Rollback()
+	swapRecordInfos = &_swapRecordInfos
+	return swapRecordInfos, nil
+}
+
+func QueryUserSwapRecords(tokenA string, tokenB string, username string, limit int, offset int) (swapRecordInfos *[]SwapRecordInfo, err error) {
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return new([]SwapRecordInfo), utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	tx := middleware.DB.Begin()
+
+	var _swapRecordInfos []SwapRecordInfo
+
+	err = tx.Table("pairs").
+		Select("swap_records.id,swap_records.pair_id,swap_records.username,swap_records.token_in,swap_records.token_out,swap_records.amount_in,swap_records.amount_out,swap_records.reserve_in,swap_records.reserve_out,swap_records.swap_fee,swap_records.swap_fee_type,swap_records.swap_record_type").
+		Joins("join swap_records on pairs.id = swap_records.pair_id").
+		Where("pairs.token0 = ? and pairs.token1 = ? and swap_records.username = ?", token0, token1, username).
+		Order("swap_records.id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&_swapRecordInfos).
+		Error
+	if err != nil {
+		return new([]SwapRecordInfo), utils.AppendErrorInfo(err, "select SwapRecordInfo")
+	}
+
+	tx.Rollback()
+	swapRecordInfos = &_swapRecordInfos
+	return swapRecordInfos, nil
+}
+
+type WithdrawAwardRecordInfo struct {
+	ID           uint   `gorm:"primarykey"`
+	Username     string `json:"username"`
+	Amount       string `json:"amount"`
+	AwardBalance string `json:"award_balance"`
+}
+
+func QueryWithdrawAwardRecords(limit int, offset int) (withdrawAwardRecords *[]WithdrawAwardRecord, err error) {
+	tx := middleware.DB.Begin()
+
+	var _withdrawAwardRecords []WithdrawAwardRecord
+
+	err = tx.Table("withdraw_award_records").
+		Select("id,username,amount,award_balance").
+		Order("id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&_withdrawAwardRecords).
+		Error
+	if err != nil {
+		return new([]WithdrawAwardRecord), utils.AppendErrorInfo(err, "select WithdrawAwardRecord")
+	}
+
+	tx.Rollback()
+	withdrawAwardRecords = &_withdrawAwardRecords
+	return withdrawAwardRecords, nil
+}
+
+func QueryUserWithdrawAwardRecords(username string, limit int, offset int) (withdrawAwardRecords *[]WithdrawAwardRecord, err error) {
+	tx := middleware.DB.Begin()
+
+	var _withdrawAwardRecords []WithdrawAwardRecord
+
+	err = tx.Table("withdraw_award_records").
+		Select("id,username,amount,award_balance").
+		Where("username = ?", username).
+		Order("id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&_withdrawAwardRecords).
+		Error
+	if err != nil {
+		return new([]WithdrawAwardRecord), utils.AppendErrorInfo(err, "select WithdrawAwardRecord")
+	}
+
+	tx.Rollback()
+	withdrawAwardRecords = &_withdrawAwardRecords
+	return withdrawAwardRecords, nil
+}
 
 // TODO: Tolerance
+
 // TODO: Encapsulate API
