@@ -17,6 +17,7 @@ type GetBalanceResponse struct {
 	TotalBalance    float64 `json:"totalBalance"`
 	UnlockedBalance float64 `json:"unlockedBalance"`
 	LockedBalance   float64 `json:"lockedBalance"`
+	Tag1Balance     float64 `json:"tag1Balance"`
 }
 
 func GetBalance(c *gin.Context) {
@@ -28,7 +29,7 @@ func GetBalance(c *gin.Context) {
 		return
 	}
 	userName := c.MustGet("username").(string)
-	err, unlockedBalance, lockedBalance := lockPayment.GetBalance(userName, creds.AssetId)
+	err, unlockedBalance, lockedBalance, tag1 := lockPayment.GetBalance(userName, creds.AssetId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, res)
 		return
@@ -36,6 +37,7 @@ func GetBalance(c *gin.Context) {
 	res.UnlockedBalance = unlockedBalance
 	res.LockedBalance = lockedBalance
 	res.TotalBalance = unlockedBalance + lockedBalance
+	res.Tag1Balance = tag1
 	c.JSON(http.StatusOK, res)
 }
 

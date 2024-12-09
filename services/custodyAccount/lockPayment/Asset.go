@@ -13,23 +13,24 @@ import (
 )
 
 // GetAssetBalance 获取用户资产余额
-func GetAssetBalance(usr *caccount.UserInfo, assetId string) (err error, unlock float64, locked float64) {
+func GetAssetBalance(usr *caccount.UserInfo, assetId string) (err error, unlock float64, locked float64, tag1 float64) {
 	tx := middleware.DB.Begin()
 	defer tx.Rollback()
 	lockedBalance := cModels.LockBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, assetId).First(&lockedBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return ServiceError, 0, 0
+			return ServiceError, 0, 0, 0
 		}
 		locked = 0
 		err = nil
 	}
 	locked = lockedBalance.Amount
+	tag1 = lockedBalance.Tag1
 
 	assetBalance := cModels.AccountBalance{}
 	if err = tx.Where("account_id =? AND asset_id =?", usr.Account.ID, assetId).First(&assetBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return ServiceError, 0, 0
+			return ServiceError, 0, 0, 0
 		}
 		unlock = 0
 		err = nil

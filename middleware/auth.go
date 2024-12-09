@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"net/http"
@@ -196,7 +197,10 @@ func RecodeDateIpLogin(username string, date string, ip string) {
 			}
 		}(d)
 	}(&dateIpLogin); err != nil {
-		btlLog.DateIpLogin.Error("%v", err)
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1062 {
+		} else {
+			btlLog.DateIpLogin.Error("%v", err)
+		}
 	}
 }
 
@@ -217,6 +221,9 @@ func RecodeDateLogin(username string, date string) {
 			}
 		}(d)
 	}(&dateIpLogin); err != nil {
-		btlLog.DateIpLogin.Error("[DateLogin]%v", err)
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1062 {
+		} else {
+			btlLog.DateIpLogin.Error("%v", err)
+		}
 	}
 }

@@ -14,7 +14,7 @@ func GetAssetBalanceList(userName string) (*[]cBase.Balance, error) {
 	if err != nil {
 		return nil, err
 	}
-	err, unlockedBalance, lockedBalance := lockPayment.GetBalance(e.UserInfo.User.Username, "00")
+	err, unlockedBalance, lockedBalance, _ := lockPayment.GetBalance(e.UserInfo.User.Username, "00")
 	if err != nil {
 		return nil, err
 	}

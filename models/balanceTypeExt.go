@@ -12,39 +12,45 @@ func (BalanceTypeExt) TableName() string {
 type BalanceTypeExtList uint
 
 const (
-	BTExtUnknown        BalanceTypeExtList = 0
-	BTExtFirLaunch      BalanceTypeExtList = 6
-	BTExtLocal          BalanceTypeExtList = 100
-	BTExtBackFee        BalanceTypeExtList = 104
-	BTExtOnChannel      BalanceTypeExtList = 200
-	BTExtAward          BalanceTypeExtList = 300
-	BTExtLocked         BalanceTypeExtList = 400
-	BTExtLockedTransfer BalanceTypeExtList = 500
+	BTExtUnknown            BalanceTypeExtList = 0
+	BTExtFirLaunch          BalanceTypeExtList = 6
+	BTExtLocal              BalanceTypeExtList = 100
+	BTExtBackFee            BalanceTypeExtList = 104
+	BTExtOnChannel          BalanceTypeExtList = 200
+	BTExtAward              BalanceTypeExtList = 300
+	BTExtLocked             BalanceTypeExtList = 400
+	BTExtLockedTransfer     BalanceTypeExtList = 500
+	BTExtPayToPoolAccount   BalanceTypeExtList = 600
+	BTExtReceivePoolAccount BalanceTypeExtList = 601
 )
 
 func (b BalanceTypeExtList) ToString() string {
 	balanceTypeExtString := map[BalanceTypeExtList]string{
-		BTExtUnknown:        "Unknown",
-		BTExtFirLaunch:      "FirLaunch",
-		BTExtLocal:          "Local",
-		BTExtBackFee:        "BackFee",
-		BTExtOnChannel:      "OnChannel",
-		BTExtAward:          "Award",
-		BTExtLocked:         "Locked",
-		BTExtLockedTransfer: "LockedTransfer",
+		BTExtUnknown:            "Unknown",
+		BTExtFirLaunch:          "FirLaunch",
+		BTExtLocal:              "Local",
+		BTExtBackFee:            "BackFee",
+		BTExtOnChannel:          "OnChannel",
+		BTExtAward:              "Award",
+		BTExtLocked:             "Locked",
+		BTExtLockedTransfer:     "LockedTransfer",
+		BTExtPayToPoolAccount:   "PayToPoolAccount",
+		BTExtReceivePoolAccount: "ReceivePoolAccount",
 	}
 	return balanceTypeExtString[b]
 }
 func ToBalanceTypeExtList(s string) BalanceTypeExtList {
 	balanceTypeExtList := map[string]BalanceTypeExtList{
-		"Unknown":        BTExtUnknown,
-		"FirLaunch":      BTExtFirLaunch,
-		"Local":          BTExtLocal,
-		"BackFee":        BTExtBackFee,
-		"OnChannel":      BTExtOnChannel,
-		"Award":          BTExtAward,
-		"Locked":         BTExtLocked,
-		"LockedTransfer": BTExtLockedTransfer,
+		"Unknown":            BTExtUnknown,
+		"FirLaunch":          BTExtFirLaunch,
+		"Local":              BTExtLocal,
+		"BackFee":            BTExtBackFee,
+		"OnChannel":          BTExtOnChannel,
+		"Award":              BTExtAward,
+		"Locked":             BTExtLocked,
+		"LockedTransfer":     BTExtLockedTransfer,
+		"PayToPoolAccount":   BTExtPayToPoolAccount,
+		"ReceivePoolAccount": BTExtReceivePoolAccount,
 	}
 	return balanceTypeExtList[s]
 }

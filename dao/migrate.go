@@ -4,6 +4,7 @@ import (
 	"trade/middleware"
 	"trade/models"
 	"trade/models/custodyModels"
+	"trade/models/custodyModels/pAccount"
 	"trade/services/pool"
 	"trade/services/satBackQueue"
 )
@@ -21,6 +22,9 @@ func Migrate() error {
 			return err
 		}
 		if err = custodyBTCMigrate(err); err != nil {
+			return err
+		}
+		if err = custodyPAccountMigrate(err); err != nil {
 			return err
 		}
 	}
@@ -304,6 +308,24 @@ func custodyBTCMigrate(err error) error {
 		return err
 	}
 	if err = middleware.DB.AutoMigrate(&custodyModels.AccountBtcBalance{}); err != nil {
+		return err
+	}
+	return err
+}
+func custodyPAccountMigrate(err error) error {
+	if err = middleware.DB.AutoMigrate(&pAccount.PoolAccount{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pAccount.PAccountAssetId{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pAccount.PAccountBalance{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pAccount.PAccountBill{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pAccount.PAccountBalanceChange{}); err != nil {
 		return err
 	}
 	return err

@@ -59,23 +59,23 @@ func GetErrorCode(err error) int {
 	}
 }
 
-func GetBalance(npubkey, assetId string) (err error, unlockedBalance float64, lockedBalance float64) {
+func GetBalance(npubkey, assetId string) (err error, unlockedBalance float64, lockedBalance, tag1 float64) {
 	if npubkey == FeeNpubkey {
 		npubkey = "admin"
 	}
 	usr, err := caccount.GetUserInfo(npubkey)
 	if err != nil {
-		return GetAccountError, 0, 0
+		return GetAccountError, 0, 0, 0
 	}
 	if assetId != btcId {
-		err, unlockedBalance, lockedBalance = GetAssetBalance(usr, assetId)
+		err, unlockedBalance, lockedBalance, tag1 = GetAssetBalance(usr, assetId)
 		if err != nil {
-			return err, 0, 0
+			return err, 0, 0, 0
 		}
 	} else {
-		err, unlockedBalance, lockedBalance = GetBtcBalance(usr)
+		err, unlockedBalance, lockedBalance, tag1 = GetBtcBalance(usr)
 		if err != nil {
-			return err, 0, 0
+			return err, 0, 0, 0
 		}
 	}
 	return

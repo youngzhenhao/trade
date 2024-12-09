@@ -37,6 +37,9 @@ const (
 	ChangeTypeBackFee           = "back_fee"
 	ChangeTypeAward             = "award"
 
+	ChangeTypePayToPoolAccount       = "pay_to_pool_account"
+	ChangeTypeReceiveFromPoolAccount = "receive_from_pool_account"
+
 	ChangeTypeAssetPayOutside    = "pay_outside_asset"
 	ChangTypeAssetReceiveOutside = "receive_outside_asset"
 

@@ -12,20 +12,21 @@ import (
 	"trade/services/custodyAccount/defaultAccount/custodyBtc"
 )
 
-func GetBtcBalance(usr *caccount.UserInfo) (err error, unlock float64, locked float64) {
+func GetBtcBalance(usr *caccount.UserInfo) (err error, unlock float64, locked, tag1 float64) {
 	db := middleware.DB
 	lockedBalance := cModels.LockBalance{}
 	if err = db.Where("account_id =? AND asset_id =?", usr.LockAccount.ID, btcId).First(&lockedBalance).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return ServiceError, 0, 0
+			return ServiceError, 0, 0, 0
 		}
 		locked = 0
 	}
 	locked = lockedBalance.Amount
+	tag1 = lockedBalance.Tag1
 	e, _ := custodyBtc.NewBtcChannelEvent(usr.User.Username)
 	balance, err := e.GetBalance()
 	if err != nil {
-		return err, 0, 0
+		return err, 0, 0, 0
 	}
 	unlock = float64(balance[0].Amount)
 	return
