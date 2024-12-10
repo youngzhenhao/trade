@@ -1926,10 +1926,10 @@ func queryPoolInfo(tokenA string, tokenB string) (poolInfo *PoolInfo, err error)
 	tx := middleware.DB.Begin()
 
 	var _poolInfo PoolInfo
-	err = tx.Table("pairs").
-		Joins("join shares on pairs.id = shares.pair_id").
-		Select("pairs.id as pair_id,shares.id as share_id,pairs.is_token_zero_sat,pairs.token0,pairs.token1,pairs.reserve0,pairs.reserve1,shares.total_supply as liquidity").
-		Where("pairs.token0 = ? AND pairs.token1 = ?", token0, token1).
+	err = tx.Table("pool_pairs").
+		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
+		Select("pool_pairs.id as pair_id,pool_shares.id as share_id,pool_pairs.is_token_zero_sat,pool_pairs.token0,pool_pairs.token1,pool_pairs.reserve0,pool_pairs.reserve1,pool_shares.total_supply as liquidity").
+		Where("pool_pairs.token0 = ? AND pool_pairs.token1 = ?", token0, token1).
 		Scan(&_poolInfo).
 		Error
 	if err != nil {
@@ -1939,6 +1939,10 @@ func queryPoolInfo(tokenA string, tokenB string) (poolInfo *PoolInfo, err error)
 	tx.Rollback()
 	poolInfo = &_poolInfo
 	return poolInfo, nil
+}
+
+func QueryPoolInfo(tokenA string, tokenB string) (poolInfo *PoolInfo, err error) {
+	return queryPoolInfo(tokenA, tokenB)
 }
 
 type ShareRecordInfo struct {
@@ -1967,12 +1971,12 @@ func QueryShareRecords(tokenA string, tokenB string, limit int, offset int) (sha
 
 	var _shareRecordInfos []ShareRecordInfo
 
-	err = tx.Table("pairs").
-		Select("share_records.id,share_records.share_id,share_records.username,share_records.liquidity,share_records.reserve0,share_records.reserve1,share_records.amount0,share_records.amount1,share_records.share_supply,share_records.share_amt,share_records.is_first_mint,share_records.record_type").
-		Joins("join shares on pairs.id = shares.pair_id").
-		Joins("join share_records on shares.id = share_records.share_id").
-		Where("pairs.token0 = ? AND pairs.token1 = ?", token0, token1).
-		Order("share_records.id desc").
+	err = tx.Table("pool_pairs").
+		Select("pool_share_records.id,pool_share_records.share_id,pool_share_records.username,pool_share_records.liquidity,pool_share_records.reserve0,pool_share_records.reserve1,pool_share_records.amount0,pool_share_records.amount1,pool_share_records.share_supply,pool_share_records.share_amt,pool_share_records.is_first_mint,pool_share_records.record_type").
+		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
+		Joins("join pool_share_records on pool_shares.id = pool_share_records.share_id").
+		Where("pool_pairs.token0 = ? AND pool_pairs.token1 = ?", token0, token1).
+		Order("pool_share_records.id desc").
 		Limit(limit).
 		Offset(offset).
 		Scan(&_shareRecordInfos).
@@ -1997,12 +2001,12 @@ func QueryUserShareRecords(tokenA string, tokenB string, username string, limit 
 
 	var _shareRecordInfos []ShareRecordInfo
 
-	err = tx.Table("pairs").
-		Select("share_records.id,share_records.share_id,share_records.username,share_records.liquidity,share_records.reserve0,share_records.reserve1,share_records.amount0,share_records.amount1,share_records.share_supply,share_records.share_amt,share_records.is_first_mint,share_records.record_type").
-		Joins("join shares on pairs.id = shares.pair_id").
-		Joins("join share_records on shares.id = share_records.share_id").
-		Where("pairs.token0 = ? and pairs.token1 = ? and share_records.username = ?", token0, token1, username).
-		Order("share_records.id desc").
+	err = tx.Table("pool_pairs").
+		Select("pool_share_records.id,pool_share_records.share_id,pool_share_records.username,pool_share_records.liquidity,pool_share_records.reserve0,pool_share_records.reserve1,pool_share_records.amount0,pool_share_records.amount1,pool_share_records.share_supply,pool_share_records.share_amt,pool_share_records.is_first_mint,pool_share_records.record_type").
+		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
+		Joins("join pool_share_records on pool_shares.id = pool_share_records.share_id").
+		Where("pool_pairs.token0 = ? and pool_pairs.token1 = ? and pool_share_records.username = ?", token0, token1, username).
+		Order("pool_share_records.id desc").
 		Limit(limit).
 		Offset(offset).
 		Scan(&_shareRecordInfos).
@@ -2041,11 +2045,11 @@ func QuerySwapRecords(tokenA string, tokenB string, limit int, offset int) (swap
 
 	var _swapRecordInfos []SwapRecordInfo
 
-	err = tx.Table("pairs").
-		Select("swap_records.id,swap_records.pair_id,swap_records.username,swap_records.token_in,swap_records.token_out,swap_records.amount_in,swap_records.amount_out,swap_records.reserve_in,swap_records.reserve_out,swap_records.swap_fee,swap_records.swap_fee_type,swap_records.swap_record_type").
-		Joins("join swap_records on pairs.id = swap_records.pair_id").
-		Where("pairs.token0 = ? AND pairs.token1 = ?", token0, token1).
-		Order("swap_records.id desc").
+	err = tx.Table("pool_pairs").
+		Select("pool_swap_records.id,pool_swap_records.pair_id,pool_swap_records.username,pool_swap_records.token_in,pool_swap_records.token_out,pool_swap_records.amount_in,pool_swap_records.amount_out,pool_swap_records.reserve_in,pool_swap_records.reserve_out,pool_swap_records.swap_fee,pool_swap_records.swap_fee_type,pool_swap_records.swap_record_type").
+		Joins("join pool_swap_records on pool_pairs.id = pool_swap_records.pair_id").
+		Where("pool_pairs.token0 = ? AND pool_pairs.token1 = ?", token0, token1).
+		Order("pool_swap_records.id desc").
 		Limit(limit).
 		Offset(offset).
 		Scan(&_swapRecordInfos).
@@ -2069,11 +2073,11 @@ func QueryUserSwapRecords(tokenA string, tokenB string, username string, limit i
 
 	var _swapRecordInfos []SwapRecordInfo
 
-	err = tx.Table("pairs").
-		Select("swap_records.id,swap_records.pair_id,swap_records.username,swap_records.token_in,swap_records.token_out,swap_records.amount_in,swap_records.amount_out,swap_records.reserve_in,swap_records.reserve_out,swap_records.swap_fee,swap_records.swap_fee_type,swap_records.swap_record_type").
-		Joins("join swap_records on pairs.id = swap_records.pair_id").
-		Where("pairs.token0 = ? and pairs.token1 = ? and swap_records.username = ?", token0, token1, username).
-		Order("swap_records.id desc").
+	err = tx.Table("pool_pairs").
+		Select("pool_swap_records.id,pool_swap_records.pair_id,pool_swap_records.username,pool_swap_records.token_in,pool_swap_records.token_out,pool_swap_records.amount_in,pool_swap_records.amount_out,pool_swap_records.reserve_in,pool_swap_records.reserve_out,pool_swap_records.swap_fee,pool_swap_records.swap_fee_type,pool_swap_records.swap_record_type").
+		Joins("join pool_swap_records on pool_pairs.id = pool_swap_records.pair_id").
+		Where("pool_pairs.token0 = ? and pool_pairs.token1 = ? and pool_swap_records.username = ?", token0, token1, username).
+		Order("pool_swap_records.id desc").
 		Limit(limit).
 		Offset(offset).
 		Scan(&_swapRecordInfos).
@@ -2099,7 +2103,7 @@ func QueryWithdrawAwardRecords(limit int, offset int) (withdrawAwardRecords *[]P
 
 	var _withdrawAwardRecords []PoolWithdrawAwardRecord
 
-	err = tx.Table("withdraw_award_records").
+	err = tx.Table("pool_withdraw_award_records").
 		Select("id,username,amount,award_balance").
 		Order("id desc").
 		Limit(limit).
@@ -2120,7 +2124,7 @@ func QueryUserWithdrawAwardRecords(username string, limit int, offset int) (with
 
 	var _withdrawAwardRecords []PoolWithdrawAwardRecord
 
-	err = tx.Table("withdraw_award_records").
+	err = tx.Table("pool_withdraw_award_records").
 		Select("id,username,amount,award_balance").
 		Where("username = ?", username).
 		Order("id desc").
@@ -2135,6 +2139,127 @@ func QueryUserWithdrawAwardRecords(username string, limit int, offset int) (with
 	tx.Rollback()
 	withdrawAwardRecords = &_withdrawAwardRecords
 	return withdrawAwardRecords, nil
+}
+
+// count
+
+func QueryShareRecordsCount(tokenA string, tokenB string) (count int64, err error) {
+
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_pairs").
+		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
+		Joins("join pool_share_records on pool_shares.id = pool_share_records.share_id").
+		Where("pool_pairs.token0 = ? AND pool_pairs.token1 = ?", token0, token1).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select ShareRecordInfo")
+	}
+
+	tx.Rollback()
+	return count, nil
+}
+
+func QueryUserShareRecordsCount(tokenA string, tokenB string, username string) (count int64, err error) {
+
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_pairs").
+		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
+		Joins("join pool_share_records on pool_shares.id = pool_share_records.share_id").
+		Where("pool_pairs.token0 = ? and pool_pairs.token1 = ? and pool_share_records.username = ?", token0, token1, username).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select ShareRecordInfo")
+	}
+
+	tx.Rollback()
+	return count, nil
+}
+
+// TODO: Test
+
+func QuerySwapRecordsCount(tokenA string, tokenB string) (count int64, err error) {
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_pairs").
+		Joins("join pool_swap_records on pool_pairs.id = pool_swap_records.pair_id").
+		Where("pool_pairs.token0 = ? AND pool_pairs.token1 = ?", token0, token1).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select SwapRecordInfo")
+	}
+
+	tx.Rollback()
+	return count, nil
+}
+
+func QueryUserSwapRecordsCount(tokenA string, tokenB string, username string) (count int64, err error) {
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_pairs").
+		Joins("join pool_swap_records on pool_pairs.id = pool_swap_records.pair_id").
+		Where("pool_pairs.token0 = ? and pool_pairs.token1 = ? and pool_swap_records.username = ?", token0, token1, username).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select SwapRecordInfo")
+	}
+
+	tx.Rollback()
+	return count, nil
+}
+
+func QueryWithdrawAwardRecordsCount() (count int64, err error) {
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_withdraw_award_records").
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select PoolWithdrawAwardRecord")
+	}
+
+	tx.Rollback()
+	return count, nil
+}
+
+func QueryUserWithdrawAwardRecordsCount(username string) (count int64, err error) {
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_withdraw_award_records").
+		Where("username = ?", username).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select PoolWithdrawAwardRecord")
+	}
+
+	tx.Rollback()
+	return count, nil
 }
 
 // TODO: Tolerance

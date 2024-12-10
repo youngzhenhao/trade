@@ -127,6 +127,9 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.AssetMeta {
 		SetupAssetMetaRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.Pool {
+		SetupPoolRouter(r)
+	}
 	SetupWsRouter(r)
 	return r
 }

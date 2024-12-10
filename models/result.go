@@ -247,6 +247,11 @@ const (
 	GetLatestAssetBalanceHistoriesErr
 	CreateAssetBalanceHistoriesErr
 	GetGroupFirstImageDataErr
+	ProcessPoolAddLiquidityBatchRequestErr
+	PoolCreateErr
+	ProcessPoolRemoveLiquidityBatchRequestErr
+	ProcessPoolSwapExactTokenForTokenNoPathBatchRequestErr
+	QueryPoolInfoErr
 )
 
 // Err type:CustodyAccount
