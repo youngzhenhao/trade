@@ -354,7 +354,7 @@ func _addLiquidity(_amount0Desired *big.Int, _amount1Desired *big.Int, _amount0M
 	}
 	if _amount1Optimal.Cmp(_amount1Desired) <= 0 {
 		if !(_amount1Optimal.Cmp(_amount1Min) >= 0) {
-			return new(big.Int), new(big.Int), errors.New("insufficientAmount1(" + _amount1Optimal.String() + ")")
+			return new(big.Int), new(big.Int), errors.New("insufficientAmount1(" + _amount1Optimal.String() + "), need ge " + _amount1Min.String())
 		}
 		_amount0, _amount1 = _amount0Desired, _amount1Optimal
 	} else {
@@ -366,7 +366,7 @@ func _addLiquidity(_amount0Desired *big.Int, _amount1Desired *big.Int, _amount0M
 			return new(big.Int), new(big.Int), errors.New("amount0Optimal(" + _amount0Optimal.String() + ") is greater than amount0Desired(" + _amount0Desired.String() + ")")
 		}
 		if !(_amount0Optimal.Cmp(_amount0Min) >= 0) {
-			return new(big.Int), new(big.Int), errors.New("insufficientAmount0(" + _amount0Optimal.String() + ")")
+			return new(big.Int), new(big.Int), errors.New("insufficientAmount0(" + _amount0Optimal.String() + "), need ge " + _amount0Min.String())
 		}
 		_amount0, _amount1 = _amount0Optimal, _amount1Desired
 	}

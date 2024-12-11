@@ -1906,11 +1906,51 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 
 // public calc
 
+func (p *PoolShareRecord) ToShareRecordInfo() *ShareRecordInfo {
+	if p == nil {
+		return nil
+	}
+	return &ShareRecordInfo{
+		ID:          p.ID,
+		ShareId:     p.ShareId,
+		Username:    p.Username,
+		Liquidity:   p.Liquidity,
+		Reserve0:    p.Reserve0,
+		Reserve1:    p.Reserve1,
+		Amount0:     p.Amount0,
+		Amount1:     p.Amount1,
+		ShareSupply: p.ShareSupply,
+		ShareAmt:    p.ShareAmt,
+		IsFirstMint: p.IsFirstMint,
+		RecordType:  p.RecordType,
+	}
+}
+
+func (p *PoolSwapRecord) ToSwapRecordInfo() *SwapRecordInfo {
+	if p == nil {
+		return nil
+	}
+	return &SwapRecordInfo{
+		ID:             p.ID,
+		PairId:         p.PairId,
+		Username:       p.Username,
+		TokenIn:        p.TokenIn,
+		TokenOut:       p.TokenOut,
+		AmountIn:       p.AmountIn,
+		AmountOut:      p.AmountOut,
+		ReserveIn:      p.ReserveIn,
+		ReserveOut:     p.ReserveOut,
+		SwapFee:        p.SwapFee,
+		SwapFeeType:    p.SwapFeeType,
+		SwapRecordType: p.SwapRecordType,
+	}
+}
+
 type CalcAddLiquidityResponse struct {
-	AmountA     string
-	AmountB     string
-	Liquidity   string
-	ShareRecord *PoolShareRecord
+	AmountA     string           `json:"amount_a"`
+	AmountB     string           `json:"amount_b"`
+	Liquidity   string           `json:"liquidity"`
+	ShareRecord *ShareRecordInfo `json:"share_record"`
 }
 
 func CalcAddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDesired string, amountAMin string, amountBMin string, username string) (amountA string, amountB string, liquidity string, shareRecord *PoolShareRecord, err error) {
@@ -1918,9 +1958,9 @@ func CalcAddLiquidity(tokenA string, tokenB string, amountADesired string, amoun
 }
 
 type CalcRemoveLiquidityResponse struct {
-	AmountA     string
-	AmountB     string
-	ShareRecord *PoolShareRecord
+	AmountA     string           `json:"amount_a"`
+	AmountB     string           `json:"amount_b"`
+	ShareRecord *ShareRecordInfo `json:"share_record"`
 }
 
 func CalcRemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin string, amountBMin string, username string, feeK uint16) (amountA string, amountB string, shareRecord *PoolShareRecord, err error) {
@@ -1928,8 +1968,8 @@ func CalcRemoveLiquidity(tokenA string, tokenB string, liquidity string, amountA
 }
 
 type CalcSwapExactTokenForTokenNoPathResponse struct {
-	AmountOut  string
-	SwapRecord *PoolSwapRecord
+	AmountOut  string          `json:"amount_out"`
+	SwapRecord *SwapRecordInfo `json:"swap_record"`
 }
 
 func CalcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn string, amountOutMin string, username string, projectPartyFeeK uint16, lpAwardFeeK uint16) (amountOut string, swapRecord *PoolSwapRecord, err error) {
@@ -1937,8 +1977,8 @@ func CalcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn 
 }
 
 type CalcSwapTokenForExactTokenNoPathResponse struct {
-	AmountIn   string
-	SwapRecord *PoolSwapRecord
+	AmountIn   string          `json:"amount_in"`
+	SwapRecord *SwapRecordInfo `json:"swap_record"`
 }
 
 func CalcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut string, amountInMax string, username string, projectPartyFeeK uint16, lpAwardFeeK uint16) (amountIn string, swapRecord *PoolSwapRecord, err error) {

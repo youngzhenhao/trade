@@ -490,7 +490,7 @@ func CalcAddLiquidity(c *gin.Context) {
 		AmountA:     amountA,
 		AmountB:     amountB,
 		Liquidity:   liquidity,
-		ShareRecord: shareRecord,
+		ShareRecord: shareRecord.ToShareRecordInfo(),
 	}
 
 	c.JSON(http.StatusOK, Result2{
@@ -561,7 +561,7 @@ func CalcRemoveLiquidity(c *gin.Context) {
 	calcRemoveLiquidityResponse = pool.CalcRemoveLiquidityResponse{
 		AmountA:     amountA,
 		AmountB:     amountB,
-		ShareRecord: shareRecord,
+		ShareRecord: shareRecord.ToShareRecordInfo(),
 	}
 
 	c.JSON(http.StatusOK, Result2{
@@ -630,7 +630,7 @@ func CalcSwapExactTokenForTokenNoPath(c *gin.Context) {
 
 	calcSwapExactTokenForTokenNoPathResponse = pool.CalcSwapExactTokenForTokenNoPathResponse{
 		AmountOut:  amountOut,
-		SwapRecord: swapRecord,
+		SwapRecord: swapRecord.ToSwapRecordInfo(),
 	}
 
 	c.JSON(http.StatusOK, Result2{
@@ -699,7 +699,7 @@ func CalcSwapTokenForExactTokenNoPath(c *gin.Context) {
 
 	calcSwapTokenForExactTokenNoPathResponse = pool.CalcSwapTokenForExactTokenNoPathResponse{
 		AmountIn:   amountIn,
-		SwapRecord: swapRecord,
+		SwapRecord: swapRecord.ToSwapRecordInfo(),
 	}
 
 	c.JSON(http.StatusOK, Result2{
@@ -895,4 +895,46 @@ func WithdrawAward(c *gin.Context) {
 		ErrMsg: models.SUCCESS.Error(),
 		Data:   nil,
 	})
+}
+
+// batch
+// TODO
+func QueryAddLiquidityBatchCount(c *gin.Context) {
+
+}
+
+func QueryAddLiquidityBatch(c *gin.Context) {
+
+}
+
+func QueryRemoveLiquidityBatchCount(c *gin.Context) {
+
+}
+
+func QueryRemoveLiquidityBatch(c *gin.Context) {
+
+}
+
+func QuerySwapExactTokenForTokenNoPathBatchCount(c *gin.Context) {
+
+}
+
+func QuerySwapExactTokenForTokenNoPathBatch(c *gin.Context) {
+
+}
+
+func QuerySwapTokenForExactTokenNoPathBatchCount(c *gin.Context) {
+
+}
+
+func QuerySwapTokenForExactTokenNoPathBatch(c *gin.Context) {
+
+}
+
+func QueryWithdrawAwardBatchCount(c *gin.Context) {
+
+}
+
+func QueryWithdrawAwardBatch(c *gin.Context) {
+
 }
