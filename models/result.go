@@ -252,6 +252,23 @@ const (
 	ProcessPoolRemoveLiquidityBatchRequestErr
 	ProcessPoolSwapExactTokenForTokenNoPathBatchRequestErr
 	QueryPoolInfoErr
+	AtoiErr
+	QueryShareRecordsErr
+	QueryUserShareRecordsErr
+	QueryShareRecordsCountErr
+	QueryUserShareRecordsCountErr
+	QuerySwapRecordsCountErr
+	QueryUserSwapRecordsCountErr
+	QuerySwapRecordsErr
+	QueryUserSwapRecordsErr
+	UsernameEmptyErr
+	QueryUserLpAwardBalanceErr
+	QueryUserWithdrawAwardRecordsCountErr
+	QueryUserWithdrawAwardRecordsErr
+	LimitEmptyErr
+	OffsetEmptyErr
+	LimitLessThanZeroErr
+	OffsetLessThanZeroErr
 )
 
 // Err type:CustodyAccount

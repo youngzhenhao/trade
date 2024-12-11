@@ -1937,16 +1937,34 @@ func queryPoolInfo(tokenA string, tokenB string) (poolInfo *PoolInfo, err error)
 	}
 
 	tx.Rollback()
+	if _poolInfo.PairId == 0 {
+		_poolInfo.Token0 = token0
+		_poolInfo.Token1 = token1
+		_poolInfo.Reserve0 = ZeroValue
+		_poolInfo.Reserve1 = ZeroValue
+		_poolInfo.Liquidity = ZeroValue
+	}
+
 	poolInfo = &_poolInfo
 	return poolInfo, nil
 }
 
 func QueryPoolInfo(tokenA string, tokenB string) (poolInfo *PoolInfo, err error) {
-	return queryPoolInfo(tokenA, tokenB)
+	poolInfo, err = queryPoolInfo(tokenA, tokenB)
+	if err != nil {
+		return new(PoolInfo), utils.AppendErrorInfo(err, "queryPoolInfo")
+	} else {
+		if poolInfo == nil {
+			return new(PoolInfo), errors.New("pool does not exist")
+		} else if poolInfo.PairId == 0 {
+			return poolInfo, errors.New("pool does not exist")
+		}
+		return poolInfo, nil
+	}
 }
 
 type ShareRecordInfo struct {
-	ID          uint            `gorm:"primarykey"`
+	ID          uint            `json:"id"`
 	ShareId     uint            `json:"share_id"`
 	Username    string          `json:"username"`
 	Liquidity   string          `json:"liquidity"`
@@ -1986,6 +2004,11 @@ func QueryShareRecords(tokenA string, tokenB string, limit int, offset int) (sha
 	}
 
 	tx.Rollback()
+
+	if _shareRecordInfos == nil {
+		_shareRecordInfos = make([]ShareRecordInfo, 0)
+	}
+
 	shareRecordInfos = &_shareRecordInfos
 	return shareRecordInfos, nil
 }
@@ -2016,12 +2039,18 @@ func QueryUserShareRecords(tokenA string, tokenB string, username string, limit 
 	}
 
 	tx.Rollback()
+
+	if _shareRecordInfos == nil {
+		_shareRecordInfos = make([]ShareRecordInfo, 0)
+	}
+
 	shareRecordInfos = &_shareRecordInfos
+
 	return shareRecordInfos, nil
 }
 
 type SwapRecordInfo struct {
-	ID             uint           `gorm:"primarykey"`
+	ID             uint           `json:"id"`
 	PairId         uint           `json:"pair_id"`
 	Username       string         `json:"username"`
 	TokenIn        string         `json:"token_in"`
@@ -2059,6 +2088,11 @@ func QuerySwapRecords(tokenA string, tokenB string, limit int, offset int) (swap
 	}
 
 	tx.Rollback()
+
+	if _swapRecordInfos == nil {
+		_swapRecordInfos = make([]SwapRecordInfo, 0)
+	}
+
 	swapRecordInfos = &_swapRecordInfos
 	return swapRecordInfos, nil
 }
@@ -2087,17 +2121,53 @@ func QueryUserSwapRecords(tokenA string, tokenB string, username string, limit i
 	}
 
 	tx.Rollback()
+
+	if _swapRecordInfos == nil {
+		_swapRecordInfos = make([]SwapRecordInfo, 0)
+	}
+
 	swapRecordInfos = &_swapRecordInfos
 	return swapRecordInfos, nil
 }
 
+type LpAwardBalanceInfo struct {
+	ID      uint   `json:"id"`
+	Balance string `json:"balance"`
+}
+
+func QueryUserLpAwardBalance(username string) (lpAwardBalanceInfo *LpAwardBalanceInfo, err error) {
+
+	tx := middleware.DB.Begin()
+
+	var _lpAwardBalanceInfo LpAwardBalanceInfo
+
+	err = tx.Table("pool_lp_award_balances").
+		Select("id,balance").
+		Where("username = ?", username).
+		Scan(&_lpAwardBalanceInfo).
+		Error
+	if err != nil {
+		return new(LpAwardBalanceInfo), utils.AppendErrorInfo(err, "select LpAwardBalanceInfo")
+	}
+
+	tx.Rollback()
+
+	if _lpAwardBalanceInfo.ID == 0 {
+		_lpAwardBalanceInfo.Balance = ZeroValue
+	}
+
+	lpAwardBalanceInfo = &_lpAwardBalanceInfo
+	return lpAwardBalanceInfo, nil
+}
+
 type WithdrawAwardRecordInfo struct {
-	ID           uint   `gorm:"primarykey"`
+	ID           uint   `json:"id"`
 	Username     string `json:"username"`
 	Amount       string `json:"amount"`
 	AwardBalance string `json:"award_balance"`
 }
 
+// not used
 func QueryWithdrawAwardRecords(limit int, offset int) (withdrawAwardRecords *[]PoolWithdrawAwardRecord, err error) {
 	tx := middleware.DB.Begin()
 
@@ -2119,10 +2189,10 @@ func QueryWithdrawAwardRecords(limit int, offset int) (withdrawAwardRecords *[]P
 	return withdrawAwardRecords, nil
 }
 
-func QueryUserWithdrawAwardRecords(username string, limit int, offset int) (withdrawAwardRecords *[]PoolWithdrawAwardRecord, err error) {
+func QueryUserWithdrawAwardRecords(username string, limit int, offset int) (withdrawAwardRecords *[]WithdrawAwardRecordInfo, err error) {
 	tx := middleware.DB.Begin()
 
-	var _withdrawAwardRecords []PoolWithdrawAwardRecord
+	var _withdrawAwardRecords []WithdrawAwardRecordInfo
 
 	err = tx.Table("pool_withdraw_award_records").
 		Select("id,username,amount,award_balance").
@@ -2133,10 +2203,15 @@ func QueryUserWithdrawAwardRecords(username string, limit int, offset int) (with
 		Scan(&_withdrawAwardRecords).
 		Error
 	if err != nil {
-		return new([]PoolWithdrawAwardRecord), utils.AppendErrorInfo(err, "select PoolWithdrawAwardRecord")
+		return new([]WithdrawAwardRecordInfo), utils.AppendErrorInfo(err, "select PoolWithdrawAwardRecord")
 	}
 
 	tx.Rollback()
+
+	if _withdrawAwardRecords == nil {
+		_withdrawAwardRecords = make([]WithdrawAwardRecordInfo, 0)
+	}
+
 	withdrawAwardRecords = &_withdrawAwardRecords
 	return withdrawAwardRecords, nil
 }
@@ -2189,8 +2264,6 @@ func QueryUserShareRecordsCount(tokenA string, tokenB string, username string) (
 	return count, nil
 }
 
-// TODO: Test
-
 func QuerySwapRecordsCount(tokenA string, tokenB string) (count int64, err error) {
 	token0, token1, err := sortTokens(tokenA, tokenB)
 	if err != nil {
@@ -2233,6 +2306,7 @@ func QueryUserSwapRecordsCount(tokenA string, tokenB string, username string) (c
 	return count, nil
 }
 
+// not used
 func QueryWithdrawAwardRecordsCount() (count int64, err error) {
 	tx := middleware.DB.Begin()
 
