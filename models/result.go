@@ -251,6 +251,7 @@ const (
 	PoolCreateErr
 	ProcessPoolRemoveLiquidityBatchRequestErr
 	ProcessPoolSwapExactTokenForTokenNoPathBatchRequestErr
+	ProcessPoolSwapTokenForExactTokenNoPathBatchRequestErr
 	QueryPoolInfoErr
 	AtoiErr
 	QueryShareRecordsErr
@@ -269,6 +270,11 @@ const (
 	OffsetEmptyErr
 	LimitLessThanZeroErr
 	OffsetLessThanZeroErr
+	UsernameNotMatchErr
+	CalcAddLiquidityErr
+	CalcRemoveLiquidityErr
+	CalcSwapExactTokenForTokenNoPathErr
+	CalcSwapTokenForExactTokenNoPathErr
 )
 
 // Err type:CustodyAccount

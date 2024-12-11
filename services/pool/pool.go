@@ -1904,6 +1904,47 @@ func calcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut
 	return amountIn, swapRecord, err
 }
 
+// public calc
+
+type CalcAddLiquidityResponse struct {
+	AmountA     string
+	AmountB     string
+	Liquidity   string
+	ShareRecord *PoolShareRecord
+}
+
+func CalcAddLiquidity(tokenA string, tokenB string, amountADesired string, amountBDesired string, amountAMin string, amountBMin string, username string) (amountA string, amountB string, liquidity string, shareRecord *PoolShareRecord, err error) {
+	return calcAddLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin, username)
+}
+
+type CalcRemoveLiquidityResponse struct {
+	AmountA     string
+	AmountB     string
+	ShareRecord *PoolShareRecord
+}
+
+func CalcRemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin string, amountBMin string, username string, feeK uint16) (amountA string, amountB string, shareRecord *PoolShareRecord, err error) {
+	return calcRemoveLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, username, feeK)
+}
+
+type CalcSwapExactTokenForTokenNoPathResponse struct {
+	AmountOut  string
+	SwapRecord *PoolSwapRecord
+}
+
+func CalcSwapExactTokenForTokenNoPath(tokenIn string, tokenOut string, amountIn string, amountOutMin string, username string, projectPartyFeeK uint16, lpAwardFeeK uint16) (amountOut string, swapRecord *PoolSwapRecord, err error) {
+	return calcSwapExactTokenForTokenNoPath(tokenIn, tokenOut, amountIn, amountOutMin, username, projectPartyFeeK, lpAwardFeeK)
+}
+
+type CalcSwapTokenForExactTokenNoPathResponse struct {
+	AmountIn   string
+	SwapRecord *PoolSwapRecord
+}
+
+func CalcSwapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut string, amountInMax string, username string, projectPartyFeeK uint16, lpAwardFeeK uint16) (amountIn string, swapRecord *PoolSwapRecord, err error) {
+	return calcSwapTokenForExactTokenNoPath(tokenIn, tokenOut, amountOut, amountInMax, username, projectPartyFeeK, lpAwardFeeK)
+}
+
 // Query
 
 type PoolInfo struct {

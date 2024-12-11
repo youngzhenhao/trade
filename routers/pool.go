@@ -26,7 +26,6 @@ func SetupPoolRouter(router *gin.Engine) *gin.Engine {
 		calc.POST("/remove_liquidity", handlers.CalcRemoveLiquidity)
 		calc.POST("/swap_exact_token_for_token_no_path", handlers.CalcSwapExactTokenForTokenNoPath)
 		calc.POST("/swap_token_for_exact_token_no_path", handlers.CalcSwapTokenForExactTokenNoPath)
-		calc.POST("/withdraw_award", handlers.CalcWithdrawAward)
 	}
 	request := pool.Group("/request")
 	{

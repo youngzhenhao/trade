@@ -429,23 +429,284 @@ func QueryWithdrawAwardRecords(c *gin.Context) {
 // calc
 
 func CalcAddLiquidity(c *gin.Context) {
+	requestUser := c.MustGet("username").(string)
+	var poolAddLiquidityBatchRequest pool.PoolAddLiquidityBatchRequest
+	err := c.ShouldBindJSON(&poolAddLiquidityBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ShouldBindJsonErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.CalcAddLiquidityResponse),
+		})
+		return
+	}
 
+	_, err = pool.ProcessPoolAddLiquidityBatchRequest(&poolAddLiquidityBatchRequest, requestUser)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ProcessPoolAddLiquidityBatchRequestErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.CalcAddLiquidityResponse),
+		})
+		return
+	}
+
+	if requestUser != poolAddLiquidityBatchRequest.Username {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UsernameNotMatchErr.Code(),
+			ErrMsg: "username not match",
+			Data:   new(pool.CalcAddLiquidityResponse),
+		})
+		return
+	}
+
+	var calcAddLiquidityResponse pool.CalcAddLiquidityResponse
+
+	var (
+		amountA     string
+		amountB     string
+		liquidity   string
+		shareRecord *pool.PoolShareRecord
+	)
+	tokenA := poolAddLiquidityBatchRequest.TokenA
+	tokenB := poolAddLiquidityBatchRequest.TokenB
+	amountADesired := poolAddLiquidityBatchRequest.AmountADesired
+	amountBDesired := poolAddLiquidityBatchRequest.AmountBDesired
+	amountAMin := poolAddLiquidityBatchRequest.AmountAMin
+	amountBMin := poolAddLiquidityBatchRequest.AmountBMin
+	username := poolAddLiquidityBatchRequest.Username
+
+	amountA, amountB, liquidity, shareRecord, err = pool.CalcAddLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin, username)
+
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.CalcAddLiquidityErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.CalcAddLiquidityResponse),
+		})
+		return
+	}
+	calcAddLiquidityResponse = pool.CalcAddLiquidityResponse{
+		AmountA:     amountA,
+		AmountB:     amountB,
+		Liquidity:   liquidity,
+		ShareRecord: shareRecord,
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   &calcAddLiquidityResponse,
+	})
 }
 
 func CalcRemoveLiquidity(c *gin.Context) {
+	requestUser := c.MustGet("username").(string)
+	var poolRemoveLiquidityBatchRequest pool.PoolRemoveLiquidityBatchRequest
+	err := c.ShouldBindJSON(&poolRemoveLiquidityBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ShouldBindJsonErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.CalcRemoveLiquidityResponse),
+		})
+		return
+	}
 
+	_, err = pool.ProcessPoolRemoveLiquidityBatchRequest(&poolRemoveLiquidityBatchRequest, requestUser)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ProcessPoolRemoveLiquidityBatchRequestErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.CalcRemoveLiquidityResponse),
+		})
+		return
+	}
+
+	if requestUser != poolRemoveLiquidityBatchRequest.Username {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UsernameNotMatchErr.Code(),
+			ErrMsg: "username not match",
+			Data:   new(pool.CalcRemoveLiquidityResponse),
+		})
+		return
+	}
+
+	var calcRemoveLiquidityResponse pool.CalcRemoveLiquidityResponse
+
+	var (
+		amountA     string
+		amountB     string
+		shareRecord *pool.PoolShareRecord
+	)
+
+	tokenA := poolRemoveLiquidityBatchRequest.TokenA
+	tokenB := poolRemoveLiquidityBatchRequest.TokenB
+	liquidity := poolRemoveLiquidityBatchRequest.Liquidity
+	amountAMin := poolRemoveLiquidityBatchRequest.AmountAMin
+	amountBMin := poolRemoveLiquidityBatchRequest.AmountBMin
+	username := poolRemoveLiquidityBatchRequest.Username
+	feeK := poolRemoveLiquidityBatchRequest.FeeK
+
+	amountA, amountB, shareRecord, err = pool.CalcRemoveLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, username, feeK)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.CalcRemoveLiquidityErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.CalcRemoveLiquidityResponse),
+		})
+		return
+	}
+
+	calcRemoveLiquidityResponse = pool.CalcRemoveLiquidityResponse{
+		AmountA:     amountA,
+		AmountB:     amountB,
+		ShareRecord: shareRecord,
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   &calcRemoveLiquidityResponse,
+	})
 }
 
 func CalcSwapExactTokenForTokenNoPath(c *gin.Context) {
+	requestUser := c.MustGet("username").(string)
+	var poolSwapExactTokenForTokenNoPathBatchRequest pool.PoolSwapExactTokenForTokenNoPathBatchRequest
+	err := c.ShouldBindJSON(&poolSwapExactTokenForTokenNoPathBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ShouldBindJsonErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.CalcSwapExactTokenForTokenNoPathResponse),
+		})
+		return
+	}
 
+	_, err = pool.ProcessPoolSwapExactTokenForTokenNoPathBatchRequest(&poolSwapExactTokenForTokenNoPathBatchRequest, requestUser)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ProcessPoolSwapExactTokenForTokenNoPathBatchRequestErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.CalcSwapExactTokenForTokenNoPathResponse),
+		})
+		return
+	}
+
+	if requestUser != poolSwapExactTokenForTokenNoPathBatchRequest.Username {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UsernameNotMatchErr.Code(),
+			ErrMsg: "username not match",
+			Data:   new(pool.CalcSwapExactTokenForTokenNoPathResponse),
+		})
+		return
+	}
+
+	var calcSwapExactTokenForTokenNoPathResponse pool.CalcSwapExactTokenForTokenNoPathResponse
+
+	var (
+		amountOut  string
+		swapRecord *pool.PoolSwapRecord
+	)
+
+	tokenIn := poolSwapExactTokenForTokenNoPathBatchRequest.TokenIn
+	tokenOut := poolSwapExactTokenForTokenNoPathBatchRequest.TokenOut
+	amountIn := poolSwapExactTokenForTokenNoPathBatchRequest.AmountIn
+	amountOutMin := poolSwapExactTokenForTokenNoPathBatchRequest.AmountOutMin
+	username := poolSwapExactTokenForTokenNoPathBatchRequest.Username
+	projectPartyFeeK := poolSwapExactTokenForTokenNoPathBatchRequest.ProjectPartyFeeK
+	lpAwardFeeK := poolSwapExactTokenForTokenNoPathBatchRequest.LpAwardFeeK
+
+	amountOut, swapRecord, err = pool.CalcSwapExactTokenForTokenNoPath(tokenIn, tokenOut, amountIn, amountOutMin, username, projectPartyFeeK, lpAwardFeeK)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.CalcSwapExactTokenForTokenNoPathErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.CalcSwapExactTokenForTokenNoPathResponse),
+		})
+		return
+	}
+
+	calcSwapExactTokenForTokenNoPathResponse = pool.CalcSwapExactTokenForTokenNoPathResponse{
+		AmountOut:  amountOut,
+		SwapRecord: swapRecord,
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   &calcSwapExactTokenForTokenNoPathResponse,
+	})
 }
 
 func CalcSwapTokenForExactTokenNoPath(c *gin.Context) {
+	requestUser := c.MustGet("username").(string)
+	var poolSwapTokenForExactTokenNoPathBatchRequest pool.PoolSwapTokenForExactTokenNoPathBatchRequest
+	err := c.ShouldBindJSON(&poolSwapTokenForExactTokenNoPathBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ShouldBindJsonErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.CalcSwapTokenForExactTokenNoPathResponse),
+		})
+		return
+	}
 
-}
+	_, err = pool.ProcessPoolSwapTokenForExactTokenNoPathBatchRequest(&poolSwapTokenForExactTokenNoPathBatchRequest, requestUser)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ProcessPoolSwapTokenForExactTokenNoPathBatchRequestErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.CalcSwapTokenForExactTokenNoPathResponse),
+		})
+		return
+	}
 
-func CalcWithdrawAward(c *gin.Context) {
+	if requestUser != poolSwapTokenForExactTokenNoPathBatchRequest.Username {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UsernameNotMatchErr.Code(),
+			ErrMsg: "username not match",
+			Data:   new(pool.CalcSwapTokenForExactTokenNoPathResponse),
+		})
+		return
+	}
 
+	var calcSwapTokenForExactTokenNoPathResponse pool.CalcSwapTokenForExactTokenNoPathResponse
+
+	var (
+		amountIn   string
+		swapRecord *pool.PoolSwapRecord
+	)
+
+	tokenIn := poolSwapTokenForExactTokenNoPathBatchRequest.TokenIn
+	tokenOut := poolSwapTokenForExactTokenNoPathBatchRequest.TokenOut
+	amountOut := poolSwapTokenForExactTokenNoPathBatchRequest.AmountOut
+	amountInMax := poolSwapTokenForExactTokenNoPathBatchRequest.AmountInMax
+	username := poolSwapTokenForExactTokenNoPathBatchRequest.Username
+	projectPartyFeeK := poolSwapTokenForExactTokenNoPathBatchRequest.ProjectPartyFeeK
+	lpAwardFeeK := poolSwapTokenForExactTokenNoPathBatchRequest.LpAwardFeeK
+
+	amountIn, swapRecord, err = pool.CalcSwapTokenForExactTokenNoPath(tokenIn, tokenOut, amountOut, amountInMax, username, projectPartyFeeK, lpAwardFeeK)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.CalcSwapTokenForExactTokenNoPathErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.CalcSwapTokenForExactTokenNoPathResponse),
+		})
+		return
+	}
+
+	calcSwapTokenForExactTokenNoPathResponse = pool.CalcSwapTokenForExactTokenNoPathResponse{
+		AmountIn:   amountIn,
+		SwapRecord: swapRecord,
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   &calcSwapTokenForExactTokenNoPathResponse,
+	})
 }
 
 // request
@@ -577,7 +838,7 @@ func SwapTokenForExactTokenNoPath(c *gin.Context) {
 	poolSwapTokenForExactTokenNoPathBatch, err := pool.ProcessPoolSwapTokenForExactTokenNoPathBatchRequest(&poolSwapTokenForExactTokenNoPathBatchRequest, requestUser)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
-			Errno:  models.ProcessPoolSwapExactTokenForTokenNoPathBatchRequestErr.Code(),
+			Errno:  models.ProcessPoolSwapTokenForExactTokenNoPathBatchRequestErr.Code(),
 			ErrMsg: err.Error(),
 			Data:   nil,
 		})
