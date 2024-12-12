@@ -19,6 +19,7 @@ func SetupPoolRouter(router *gin.Engine) *gin.Engine {
 		query.GET("lp_award_balance", handlers.QueryUserLpAwardBalance)
 		query.GET("/withdraw_award_records/count", handlers.QueryWithdrawAwardRecordsCount)
 		query.GET("/withdraw_award_records", handlers.QueryWithdrawAwardRecords)
+		query.GET("/quote", handlers.QueryQuote)
 	}
 	calc := pool.Group("/calc")
 	{

@@ -2417,6 +2417,69 @@ func QueryUserWithdrawAwardRecordsCount(username string) (count int64, err error
 	return count, nil
 }
 
+func QueryQuote(tokenA string, tokenB string, amountA string) (amountB string, err error) {
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	// amountA
+	_amountA, success := new(big.Int).SetString(amountA, 10)
+	if !success {
+		return ZeroValue, errors.New("amountA SetString(" + amountA + ") " + strconv.FormatBool(success))
+	}
+	if _amountA.Sign() < 0 {
+		return ZeroValue, errors.New("amountA(" + _amountA.String() + ") is negative")
+	}
+
+	tx := middleware.DB.Begin()
+	defer func() {
+		tx.Rollback()
+	}()
+
+	// @dev: get pair
+	var _pair PoolPair
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	if err != nil {
+		//@dev: pair does not exist
+		return ZeroValue, utils.AppendErrorInfo(err, "pair does not exist")
+	}
+	pairId := _pair.ID
+	if pairId <= 0 {
+		return ZeroValue, errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
+	}
+
+	var _reserve0, _reserve1 *big.Int
+	// reserve0
+	_reserve0, success = new(big.Int).SetString(_pair.Reserve0, 10)
+	if !success {
+		return ZeroValue, errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
+	}
+	// reserve1
+	_reserve1, success = new(big.Int).SetString(_pair.Reserve1, 10)
+	if !success {
+		return ZeroValue, errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
+	}
+
+	var _reserveA, _reserveB = new(big.Int), new(big.Int)
+	if token0 == tokenB {
+		*_reserveA, *_reserveB = *_reserve1, *_reserve0
+	} else {
+		*_reserveA, *_reserveB = *_reserve0, *_reserve1
+	}
+
+	var _amountB *big.Int
+
+	_amountB, err = quoteBig(_amountA, _reserveA, _reserveB)
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "quoteBig")
+	}
+
+	return _amountB.String(), nil
+}
+
 // TODO: Tolerance
 
 // TODO: Encapsulate API
+
+// TODO: Scheduled Task Process

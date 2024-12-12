@@ -353,7 +353,6 @@ type PoolAddLiquidityBatchInfo struct {
 
 type PoolRemoveLiquidityBatchInfo struct {
 	ID            uint          `json:"id"`
-	RequestUser   string        `json:"request_user"`
 	TokenA        string        `json:"token_a"`
 	TokenB        string        `json:"token_b"`
 	Liquidity     string        `json:"liquidity"`
@@ -364,11 +363,8 @@ type PoolRemoveLiquidityBatchInfo struct {
 	ResultAmountA string        `json:"result_amount_a"`
 	ResultAmountB string        `json:"result_amount_b"`
 	ResultErr     string        `json:"result_err"`
-	ProcessTimes  uint64        `json:"process_times"`
 	State         PoolBatchType `json:"state"`
 }
-
-// TODO
 
 type PoolSwapExactTokenForTokenNoPathBatchInfo struct {
 	ID               uint          `json:"id"`

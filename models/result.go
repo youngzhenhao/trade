@@ -285,6 +285,8 @@ const (
 	QuerySwapTokenForExactTokenNoPathBatchErr
 	QueryWithdrawAwardBatchCountErr
 	QueryWithdrawAwardBatchErr
+	QueryQuoteErr
+	QueryParamEmptyErr
 )
 
 // Err type:CustodyAccount
