@@ -105,6 +105,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
 func ValidateMiniUser(username, password string) error {
 	// Check if the username and password are correct
 	var user models.User
@@ -131,11 +132,13 @@ func ValidateMiniUser(username, password string) error {
 	}
 	return nil
 }
+
 func CheckPassword(hashedPassword, password string) bool {
 	// bcrypt.CompareHashAndPassword Compare the hashed password with the password entered by the user. If there is a match, nil is returned.
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	return err == nil
 }
+
 func hashPassword(password string) (string, error) {
 	// Passwords are encrypted using the bcrypt algorithm
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)

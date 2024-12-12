@@ -37,16 +37,16 @@ func SetupPoolRouter(router *gin.Engine) *gin.Engine {
 	}
 	batch := pool.Group("/batch")
 	{
-		batch.POST("/add_liquidity/count", handlers.QueryAddLiquidityBatchCount)
-		batch.POST("/add_liquidity", handlers.QueryAddLiquidityBatch)
-		batch.POST("/remove_liquidity/count", handlers.QueryRemoveLiquidityBatchCount)
-		batch.POST("/remove_liquidity", handlers.QueryRemoveLiquidityBatch)
-		batch.POST("/swap_exact_token_for_token_no_path/count", handlers.QuerySwapExactTokenForTokenNoPathBatchCount)
-		batch.POST("/swap_exact_token_for_token_no_path", handlers.QuerySwapExactTokenForTokenNoPathBatch)
-		batch.POST("/swap_token_for_exact_token_no_path/count", handlers.QuerySwapTokenForExactTokenNoPathBatchCount)
-		batch.POST("/swap_token_for_exact_token_no_path", handlers.QuerySwapTokenForExactTokenNoPathBatch)
-		batch.POST("/withdraw_award/count", handlers.QueryWithdrawAwardBatchCount)
-		batch.POST("/withdraw_award", handlers.QueryWithdrawAwardBatch)
+		batch.GET("/add_liquidity/count", handlers.QueryAddLiquidityBatchCount)
+		batch.GET("/add_liquidity", handlers.QueryAddLiquidityBatch)
+		batch.GET("/remove_liquidity/count", handlers.QueryRemoveLiquidityBatchCount)
+		batch.GET("/remove_liquidity", handlers.QueryRemoveLiquidityBatch)
+		batch.GET("/swap_exact_token_for_token_no_path/count", handlers.QuerySwapExactTokenForTokenNoPathBatchCount)
+		batch.GET("/swap_exact_token_for_token_no_path", handlers.QuerySwapExactTokenForTokenNoPathBatch)
+		batch.GET("/swap_token_for_exact_token_no_path/count", handlers.QuerySwapTokenForExactTokenNoPathBatchCount)
+		batch.GET("/swap_token_for_exact_token_no_path", handlers.QuerySwapTokenForExactTokenNoPathBatch)
+		batch.GET("/withdraw_award/count", handlers.QueryWithdrawAwardBatchCount)
+		batch.GET("/withdraw_award", handlers.QueryWithdrawAwardBatch)
 	}
 	return router
 }

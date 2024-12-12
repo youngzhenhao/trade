@@ -275,6 +275,16 @@ const (
 	CalcRemoveLiquidityErr
 	CalcSwapExactTokenForTokenNoPathErr
 	CalcSwapTokenForExactTokenNoPathErr
+	QueryAddLiquidityBatchCountErr
+	QueryAddLiquidityBatchErr
+	QueryRemoveLiquidityBatchCountErr
+	QueryRemoveLiquidityBatchErr
+	QuerySwapExactTokenForTokenNoPathBatchCountErr
+	QuerySwapExactTokenForTokenNoPathBatchErr
+	QuerySwapTokenForExactTokenNoPathBatchCountErr
+	QuerySwapTokenForExactTokenNoPathBatchErr
+	QueryWithdrawAwardBatchCountErr
+	QueryWithdrawAwardBatchErr
 )
 
 // Err type:CustodyAccount

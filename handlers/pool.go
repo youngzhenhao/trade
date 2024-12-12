@@ -898,43 +898,503 @@ func WithdrawAward(c *gin.Context) {
 }
 
 // batch
-// TODO
-func QueryAddLiquidityBatchCount(c *gin.Context) {
 
+func QueryAddLiquidityBatchCount(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	var count int64
+	var err error
+
+	count, err = pool.QueryAddLiquidityBatchCount(username)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryAddLiquidityBatchCountErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   count,
+	})
 }
 
 func QueryAddLiquidityBatch(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	limit := c.Query("limit")
+	offset := c.Query("offset")
 
+	if limit == "" {
+		err := errors.New("limit is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolAddLiquidityBatchInfo{},
+		})
+		return
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolAddLiquidityBatchInfo{},
+		})
+		return
+	}
+	if limitInt < 0 {
+		err := errors.New("limit is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolAddLiquidityBatchInfo{},
+		})
+		return
+	}
+	if offset == "" {
+		err := errors.New("offset is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolAddLiquidityBatchInfo{},
+		})
+		return
+	}
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolAddLiquidityBatchInfo{},
+		})
+		return
+	}
+	if offsetInt < 0 {
+		err := errors.New("offset is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolAddLiquidityBatchInfo{},
+		})
+		return
+	}
+	var records *[]pool.PoolAddLiquidityBatchInfo
+
+	records, err = pool.QueryAddLiquidityBatch(username, limitInt, offsetInt)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryAddLiquidityBatchErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolAddLiquidityBatchInfo{},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   records,
+	})
 }
 
 func QueryRemoveLiquidityBatchCount(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	var count int64
+	var err error
 
+	count, err = pool.QueryRemoveLiquidityBatchCount(username)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryRemoveLiquidityBatchCountErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   count,
+	})
 }
 
 func QueryRemoveLiquidityBatch(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	limit := c.Query("limit")
+	offset := c.Query("offset")
 
+	if limit == "" {
+		err := errors.New("limit is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolRemoveLiquidityBatchInfo{},
+		})
+		return
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolRemoveLiquidityBatchInfo{},
+		})
+		return
+	}
+	if limitInt < 0 {
+		err := errors.New("limit is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolRemoveLiquidityBatchInfo{},
+		})
+		return
+	}
+	if offset == "" {
+		err := errors.New("offset is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolRemoveLiquidityBatchInfo{},
+		})
+		return
+	}
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolRemoveLiquidityBatchInfo{},
+		})
+		return
+	}
+	if offsetInt < 0 {
+		err := errors.New("offset is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolRemoveLiquidityBatchInfo{},
+		})
+		return
+	}
+	var records *[]pool.PoolRemoveLiquidityBatchInfo
+
+	records, err = pool.QueryRemoveLiquidityBatch(username, limitInt, offsetInt)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryRemoveLiquidityBatchErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolRemoveLiquidityBatchInfo{},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   records,
+	})
 }
 
 func QuerySwapExactTokenForTokenNoPathBatchCount(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	var count int64
+	var err error
 
+	count, err = pool.QuerySwapExactTokenForTokenNoPathBatchCount(username)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QuerySwapExactTokenForTokenNoPathBatchCountErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   count,
+	})
 }
 
 func QuerySwapExactTokenForTokenNoPathBatch(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	limit := c.Query("limit")
+	offset := c.Query("offset")
 
+	if limit == "" {
+		err := errors.New("limit is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapExactTokenForTokenNoPathBatchInfo{},
+		})
+		return
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapExactTokenForTokenNoPathBatchInfo{},
+		})
+		return
+	}
+	if limitInt < 0 {
+		err := errors.New("limit is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapExactTokenForTokenNoPathBatchInfo{},
+		})
+		return
+	}
+	if offset == "" {
+		err := errors.New("offset is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapExactTokenForTokenNoPathBatchInfo{},
+		})
+		return
+	}
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapExactTokenForTokenNoPathBatchInfo{},
+		})
+		return
+	}
+	if offsetInt < 0 {
+		err := errors.New("offset is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapExactTokenForTokenNoPathBatchInfo{},
+		})
+		return
+	}
+	var records *[]pool.PoolSwapExactTokenForTokenNoPathBatchInfo
+
+	records, err = pool.QuerySwapExactTokenForTokenNoPathBatch(username, limitInt, offsetInt)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QuerySwapExactTokenForTokenNoPathBatchErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapExactTokenForTokenNoPathBatchInfo{},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   records,
+	})
 }
 
 func QuerySwapTokenForExactTokenNoPathBatchCount(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	var count int64
+	var err error
 
+	count, err = pool.QuerySwapTokenForExactTokenNoPathBatchCount(username)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QuerySwapTokenForExactTokenNoPathBatchCountErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   count,
+	})
 }
 
 func QuerySwapTokenForExactTokenNoPathBatch(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	limit := c.Query("limit")
+	offset := c.Query("offset")
 
+	if limit == "" {
+		err := errors.New("limit is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapTokenForExactTokenNoPathBatchInfo{},
+		})
+		return
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapTokenForExactTokenNoPathBatchInfo{},
+		})
+		return
+	}
+	if limitInt < 0 {
+		err := errors.New("limit is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapTokenForExactTokenNoPathBatchInfo{},
+		})
+		return
+	}
+	if offset == "" {
+		err := errors.New("offset is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapTokenForExactTokenNoPathBatchInfo{},
+		})
+		return
+	}
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapTokenForExactTokenNoPathBatchInfo{},
+		})
+		return
+	}
+	if offsetInt < 0 {
+		err := errors.New("offset is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapTokenForExactTokenNoPathBatchInfo{},
+		})
+		return
+	}
+	var records *[]pool.PoolSwapTokenForExactTokenNoPathBatchInfo
+
+	records, err = pool.QuerySwapTokenForExactTokenNoPathBatch(username, limitInt, offsetInt)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QuerySwapTokenForExactTokenNoPathBatchErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolSwapTokenForExactTokenNoPathBatchInfo{},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   records,
+	})
 }
 
 func QueryWithdrawAwardBatchCount(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	var count int64
+	var err error
 
+	count, err = pool.QueryWithdrawAwardBatchCount(username)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryWithdrawAwardBatchCountErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   count,
+	})
 }
 
 func QueryWithdrawAwardBatch(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	limit := c.Query("limit")
+	offset := c.Query("offset")
 
+	if limit == "" {
+		err := errors.New("limit is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolWithdrawAwardBatchInfo{},
+		})
+		return
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolWithdrawAwardBatchInfo{},
+		})
+		return
+	}
+	if limitInt < 0 {
+		err := errors.New("limit is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolWithdrawAwardBatchInfo{},
+		})
+		return
+	}
+	if offset == "" {
+		err := errors.New("offset is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolWithdrawAwardBatchInfo{},
+		})
+		return
+	}
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolWithdrawAwardBatchInfo{},
+		})
+		return
+	}
+	if offsetInt < 0 {
+		err := errors.New("offset is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolWithdrawAwardBatchInfo{},
+		})
+		return
+	}
+	var records *[]pool.PoolWithdrawAwardBatchInfo
+
+	records, err = pool.QueryWithdrawAwardBatch(username, limitInt, offsetInt)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryWithdrawAwardBatchErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.PoolWithdrawAwardBatchInfo{},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   records,
+	})
 }

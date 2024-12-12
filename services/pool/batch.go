@@ -337,7 +337,6 @@ func ProcessPoolWithdrawAwardBatchRequest(request *PoolWithdrawAwardBatchRequest
 
 type PoolAddLiquidityBatchInfo struct {
 	ID              uint          `json:"id"`
-	RequestUser     string        `json:"request_user"`
 	TokenA          string        `json:"token_a"`
 	TokenB          string        `json:"token_b"`
 	AmountADesired  string        `json:"amount_a_desired"`
@@ -349,32 +348,7 @@ type PoolAddLiquidityBatchInfo struct {
 	ResultAmountB   string        `json:"result_amount_b"`
 	ResultLiquidity string        `json:"result_liquidity"`
 	ResultErr       string        `json:"result_err"`
-	ProcessTimes    uint64        `json:"process_times"`
 	State           PoolBatchType `json:"state"`
-}
-
-// not used
-func (p *PoolAddLiquidityBatch) ToPoolAddLiquidityBatchInfo() *PoolAddLiquidityBatchInfo {
-	if p == nil {
-		return nil
-	}
-	return &PoolAddLiquidityBatchInfo{
-		ID:              p.ID,
-		RequestUser:     p.RequestUser,
-		TokenA:          p.TokenA,
-		TokenB:          p.TokenB,
-		AmountADesired:  p.AmountADesired,
-		AmountBDesired:  p.AmountBDesired,
-		AmountAMin:      p.AmountAMin,
-		AmountBMin:      p.AmountBMin,
-		Username:        p.Username,
-		ResultAmountA:   p.ResultAmountA,
-		ResultAmountB:   p.ResultAmountB,
-		ResultLiquidity: p.ResultLiquidity,
-		ResultErr:       p.ResultErr,
-		ProcessTimes:    p.ProcessTimes,
-		State:           p.State,
-	}
 }
 
 type PoolRemoveLiquidityBatchInfo struct {
@@ -398,7 +372,6 @@ type PoolRemoveLiquidityBatchInfo struct {
 
 type PoolSwapExactTokenForTokenNoPathBatchInfo struct {
 	ID               uint          `json:"id"`
-	RequestUser      string        `json:"request_user"`
 	TokenIn          string        `json:"token_in"`
 	TokenOut         string        `json:"token_out"`
 	AmountIn         string        `json:"amount_in"`
@@ -408,13 +381,11 @@ type PoolSwapExactTokenForTokenNoPathBatchInfo struct {
 	LpAwardFeeK      uint16        `json:"lp_award_fee_k"`
 	ResultAmountOut  string        `json:"result_amount_out"`
 	ResultErr        string        `json:"result_err"`
-	ProcessTimes     uint64        `json:"process_times"`
 	State            PoolBatchType `json:"state"`
 }
 
 type PoolSwapTokenForExactTokenNoPathBatchInfo struct {
 	ID               uint          `json:"id"`
-	RequestUser      string        `json:"request_user"`
 	TokenIn          string        `json:"token_in"`
 	TokenOut         string        `json:"token_out"`
 	AmountOut        string        `json:"amount_out"`
@@ -424,39 +395,51 @@ type PoolSwapTokenForExactTokenNoPathBatchInfo struct {
 	LpAwardFeeK      uint16        `json:"lp_award_fee_k"`
 	ResultAmountIn   string        `json:"result_amount_in"`
 	ResultErr        string        `json:"result_err"`
-	ProcessTimes     uint64        `json:"process_times"`
 	State            PoolBatchType `json:"state"`
 }
 
 type PoolWithdrawAwardBatchInfo struct {
 	ID               uint          `json:"id"`
-	RequestUser      string        `json:"request_user"`
 	Username         string        `json:"username"`
 	Amount           string        `json:"amount"`
 	ResultNewBalance string        `json:"result_new_balance"`
 	ResultErr        string        `json:"result_err"`
-	ProcessTimes     uint64        `json:"process_times"`
 	State            PoolBatchType `json:"state"`
 }
 
 // query
 
-// TODO
-func QueryPoolAddLiquidityBatch(username string, limit int, offset int) (records *[]PoolAddLiquidityBatchInfo, err error) {
+func QueryAddLiquidityBatchCount(username string) (count int64, err error) {
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_add_liquidity_batches").
+		Where("request_user = ?", username).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select PoolAddLiquidityBatchInfo count")
+	}
+
+	tx.Rollback()
+
+	return count, nil
+}
+
+func QueryAddLiquidityBatch(username string, limit int, offset int) (records *[]PoolAddLiquidityBatchInfo, err error) {
 	tx := middleware.DB.Begin()
 
 	var poolAddLiquidityBatchInfos []PoolAddLiquidityBatchInfo
 
-	err = tx.Table("").
-		Select("").
-		Where("", username).
-		Order("").
+	err = tx.Table("pool_add_liquidity_batches").
+		Select("id,token_a,token_b,amount_a_desired,amount_b_desired,amount_a_min,amount_b_min,username,result_amount_a,result_amount_b,result_liquidity,result_err,state").
+		Where("request_user = ?", username).
+		Order("id desc").
 		Limit(limit).
 		Offset(offset).
 		Scan(&poolAddLiquidityBatchInfos).
 		Error
 	if err != nil {
-		return new([]PoolAddLiquidityBatchInfo), utils.AppendErrorInfo(err, "select ShareRecordInfo")
+		return new([]PoolAddLiquidityBatchInfo), utils.AppendErrorInfo(err, "select PoolAddLiquidityBatchInfo")
 	}
 
 	tx.Rollback()
@@ -466,5 +449,177 @@ func QueryPoolAddLiquidityBatch(username string, limit int, offset int) (records
 	}
 
 	records = &poolAddLiquidityBatchInfos
+	return records, nil
+}
+
+func QueryRemoveLiquidityBatchCount(username string) (count int64, err error) {
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_remove_liquidity_batches").
+		Where("request_user = ?", username).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select PoolRemoveLiquidityBatchInfo count")
+	}
+
+	tx.Rollback()
+
+	return count, nil
+}
+
+func QueryRemoveLiquidityBatch(username string, limit int, offset int) (records *[]PoolRemoveLiquidityBatchInfo, err error) {
+	tx := middleware.DB.Begin()
+
+	var poolRemoveLiquidityBatchInfos []PoolRemoveLiquidityBatchInfo
+
+	err = tx.Table("pool_remove_liquidity_batches").
+		Select("id,token_a,token_b,liquidity,amount_a_min,amount_b_min,username,fee_k,result_amount_a,result_amount_b,result_err,state").
+		Where("request_user = ?", username).
+		Order("id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&poolRemoveLiquidityBatchInfos).
+		Error
+	if err != nil {
+		return new([]PoolRemoveLiquidityBatchInfo), utils.AppendErrorInfo(err, "select PoolRemoveLiquidityBatchInfo")
+	}
+
+	tx.Rollback()
+
+	if poolRemoveLiquidityBatchInfos == nil {
+		poolRemoveLiquidityBatchInfos = make([]PoolRemoveLiquidityBatchInfo, 0)
+	}
+
+	records = &poolRemoveLiquidityBatchInfos
+	return records, nil
+}
+
+func QuerySwapExactTokenForTokenNoPathBatchCount(username string) (count int64, err error) {
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_swap_exact_token_for_token_no_path_batches").
+		Where("request_user = ?", username).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select PoolSwapExactTokenForTokenNoPathBatchInfo count")
+	}
+
+	tx.Rollback()
+
+	return count, nil
+}
+
+func QuerySwapExactTokenForTokenNoPathBatch(username string, limit int, offset int) (records *[]PoolSwapExactTokenForTokenNoPathBatchInfo, err error) {
+	tx := middleware.DB.Begin()
+
+	var poolSwapExactTokenForTokenNoPathBatchInfos []PoolSwapExactTokenForTokenNoPathBatchInfo
+
+	err = tx.Table("pool_swap_exact_token_for_token_no_path_batches").
+		Select("id,token_in,token_out,amount_in,amount_out_min,username,project_party_fee_k,lp_award_fee_k,result_amount_out,result_err,state").
+		Where("request_user = ?", username).
+		Order("id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&poolSwapExactTokenForTokenNoPathBatchInfos).
+		Error
+	if err != nil {
+		return new([]PoolSwapExactTokenForTokenNoPathBatchInfo), utils.AppendErrorInfo(err, "select PoolSwapExactTokenForTokenNoPathBatchInfo")
+	}
+
+	tx.Rollback()
+
+	if poolSwapExactTokenForTokenNoPathBatchInfos == nil {
+		poolSwapExactTokenForTokenNoPathBatchInfos = make([]PoolSwapExactTokenForTokenNoPathBatchInfo, 0)
+	}
+
+	records = &poolSwapExactTokenForTokenNoPathBatchInfos
+	return records, nil
+}
+
+func QuerySwapTokenForExactTokenNoPathBatchCount(username string) (count int64, err error) {
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_swap_token_for_exact_token_no_path_batches").
+		Where("request_user = ?", username).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select PoolSwapTokenForExactTokenNoPathBatchInfo count")
+	}
+
+	tx.Rollback()
+
+	return count, nil
+}
+
+func QuerySwapTokenForExactTokenNoPathBatch(username string, limit int, offset int) (records *[]PoolSwapTokenForExactTokenNoPathBatchInfo, err error) {
+	tx := middleware.DB.Begin()
+
+	var poolSwapTokenForExactTokenNoPathBatchInfos []PoolSwapTokenForExactTokenNoPathBatchInfo
+
+	err = tx.Table("pool_swap_token_for_exact_token_no_path_batches").
+		Select("id,token_in,token_out,amount_out,amount_in_max,username,project_party_fee_k,lp_award_fee_k,result_amount_in,result_err,state").
+		Where("request_user = ?", username).
+		Order("id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&poolSwapTokenForExactTokenNoPathBatchInfos).
+		Error
+	if err != nil {
+		return new([]PoolSwapTokenForExactTokenNoPathBatchInfo), utils.AppendErrorInfo(err, "select PoolSwapTokenForExactTokenNoPathBatchInfo")
+	}
+
+	tx.Rollback()
+
+	if poolSwapTokenForExactTokenNoPathBatchInfos == nil {
+		poolSwapTokenForExactTokenNoPathBatchInfos = make([]PoolSwapTokenForExactTokenNoPathBatchInfo, 0)
+	}
+
+	records = &poolSwapTokenForExactTokenNoPathBatchInfos
+	return records, nil
+}
+
+func QueryWithdrawAwardBatchCount(username string) (count int64, err error) {
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_withdraw_award_batches").
+		Where("request_user = ?", username).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select PoolWithdrawAwardBatchInfo count")
+	}
+
+	tx.Rollback()
+
+	return count, nil
+}
+
+func QueryWithdrawAwardBatch(username string, limit int, offset int) (records *[]PoolWithdrawAwardBatchInfo, err error) {
+	tx := middleware.DB.Begin()
+
+	var poolWithdrawAwardBatchInfos []PoolWithdrawAwardBatchInfo
+
+	err = tx.Table("pool_withdraw_award_batches").
+		Select("id,username,amount,result_new_balance,result_err,state").
+		Where("request_user = ?", username).
+		Order("id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&poolWithdrawAwardBatchInfos).
+		Error
+	if err != nil {
+		return new([]PoolWithdrawAwardBatchInfo), utils.AppendErrorInfo(err, "select PoolWithdrawAwardBatchInfo")
+	}
+
+	tx.Rollback()
+
+	if poolWithdrawAwardBatchInfos == nil {
+		poolWithdrawAwardBatchInfos = make([]PoolWithdrawAwardBatchInfo, 0)
+	}
+
+	records = &poolWithdrawAwardBatchInfos
 	return records, nil
 }

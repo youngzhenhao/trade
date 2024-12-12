@@ -2315,7 +2315,7 @@ func QueryShareRecordsCount(tokenA string, tokenB string) (count int64, err erro
 		Count(&count).
 		Error
 	if err != nil {
-		return 0, utils.AppendErrorInfo(err, "select ShareRecordInfo")
+		return 0, utils.AppendErrorInfo(err, "select ShareRecordInfo count")
 	}
 
 	tx.Rollback()
@@ -2338,7 +2338,7 @@ func QueryUserShareRecordsCount(tokenA string, tokenB string, username string) (
 		Count(&count).
 		Error
 	if err != nil {
-		return 0, utils.AppendErrorInfo(err, "select ShareRecordInfo")
+		return 0, utils.AppendErrorInfo(err, "select ShareRecordInfo count")
 	}
 
 	tx.Rollback()
@@ -2359,7 +2359,7 @@ func QuerySwapRecordsCount(tokenA string, tokenB string) (count int64, err error
 		Count(&count).
 		Error
 	if err != nil {
-		return 0, utils.AppendErrorInfo(err, "select SwapRecordInfo")
+		return 0, utils.AppendErrorInfo(err, "select SwapRecordInfo count")
 	}
 
 	tx.Rollback()
@@ -2380,7 +2380,7 @@ func QueryUserSwapRecordsCount(tokenA string, tokenB string, username string) (c
 		Count(&count).
 		Error
 	if err != nil {
-		return 0, utils.AppendErrorInfo(err, "select SwapRecordInfo")
+		return 0, utils.AppendErrorInfo(err, "select SwapRecordInfo count")
 	}
 
 	tx.Rollback()
@@ -2395,7 +2395,7 @@ func QueryWithdrawAwardRecordsCount() (count int64, err error) {
 		Count(&count).
 		Error
 	if err != nil {
-		return 0, utils.AppendErrorInfo(err, "select PoolWithdrawAwardRecord")
+		return 0, utils.AppendErrorInfo(err, "select PoolWithdrawAwardRecord count")
 	}
 
 	tx.Rollback()
@@ -2410,7 +2410,7 @@ func QueryUserWithdrawAwardRecordsCount(username string) (count int64, err error
 		Count(&count).
 		Error
 	if err != nil {
-		return 0, utils.AppendErrorInfo(err, "select PoolWithdrawAwardRecord")
+		return 0, utils.AppendErrorInfo(err, "select PoolWithdrawAwardRecord count")
 	}
 
 	tx.Rollback()
