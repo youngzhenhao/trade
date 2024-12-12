@@ -17,6 +17,16 @@ func QueryPoolInfo(c *gin.Context) {
 	tokenB := c.Query("token_b")
 	poolInfo, err := pool.QueryPoolInfo(tokenA, tokenB)
 	if err != nil {
+
+		if errors.Is(err, pool.PoolDoesNotExistErr) {
+			c.JSON(http.StatusOK, Result2{
+				Errno:  models.PoolDoesNotExistErr.Code(),
+				ErrMsg: err.Error(),
+				Data:   poolInfo,
+			})
+			return
+		}
+
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.QueryPoolInfoErr.Code(),
 			ErrMsg: err.Error(),
@@ -430,7 +440,7 @@ func QueryWithdrawAwardRecords(c *gin.Context) {
 
 func CalcAddLiquidity(c *gin.Context) {
 	requestUser := c.MustGet("username").(string)
-	var poolAddLiquidityBatchRequest pool.PoolAddLiquidityBatchRequest
+	var poolAddLiquidityBatchRequest pool.PoolAddLiquidityRequest
 	err := c.ShouldBindJSON(&poolAddLiquidityBatchRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
@@ -502,7 +512,7 @@ func CalcAddLiquidity(c *gin.Context) {
 
 func CalcRemoveLiquidity(c *gin.Context) {
 	requestUser := c.MustGet("username").(string)
-	var poolRemoveLiquidityBatchRequest pool.PoolRemoveLiquidityBatchRequest
+	var poolRemoveLiquidityBatchRequest pool.PoolRemoveLiquidityRequest
 	err := c.ShouldBindJSON(&poolRemoveLiquidityBatchRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
@@ -573,7 +583,7 @@ func CalcRemoveLiquidity(c *gin.Context) {
 
 func CalcSwapExactTokenForTokenNoPath(c *gin.Context) {
 	requestUser := c.MustGet("username").(string)
-	var poolSwapExactTokenForTokenNoPathBatchRequest pool.PoolSwapExactTokenForTokenNoPathBatchRequest
+	var poolSwapExactTokenForTokenNoPathBatchRequest pool.PoolSwapExactTokenForTokenNoPathRequest
 	err := c.ShouldBindJSON(&poolSwapExactTokenForTokenNoPathBatchRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
@@ -642,7 +652,7 @@ func CalcSwapExactTokenForTokenNoPath(c *gin.Context) {
 
 func CalcSwapTokenForExactTokenNoPath(c *gin.Context) {
 	requestUser := c.MustGet("username").(string)
-	var poolSwapTokenForExactTokenNoPathBatchRequest pool.PoolSwapTokenForExactTokenNoPathBatchRequest
+	var poolSwapTokenForExactTokenNoPathBatchRequest pool.PoolSwapTokenForExactTokenNoPathRequest
 	err := c.ShouldBindJSON(&poolSwapTokenForExactTokenNoPathBatchRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
@@ -742,9 +752,9 @@ func CalcQuote(c *gin.Context) {
 
 // request
 
-func AddLiquidity(c *gin.Context) {
+func RequestAddLiquidity(c *gin.Context) {
 	requestUser := c.MustGet("username").(string)
-	var poolAddLiquidityBatchRequest pool.PoolAddLiquidityBatchRequest
+	var poolAddLiquidityBatchRequest pool.PoolAddLiquidityRequest
 	err := c.ShouldBindJSON(&poolAddLiquidityBatchRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
@@ -780,9 +790,9 @@ func AddLiquidity(c *gin.Context) {
 	})
 }
 
-func RemoveLiquidity(c *gin.Context) {
+func RequestRemoveLiquidity(c *gin.Context) {
 	requestUser := c.MustGet("username").(string)
-	var poolRemoveLiquidityBatchRequest pool.PoolRemoveLiquidityBatchRequest
+	var poolRemoveLiquidityBatchRequest pool.PoolRemoveLiquidityRequest
 	err := c.ShouldBindJSON(&poolRemoveLiquidityBatchRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
@@ -817,9 +827,9 @@ func RemoveLiquidity(c *gin.Context) {
 	})
 }
 
-func SwapExactTokenForTokenNoPath(c *gin.Context) {
+func RequestSwapExactTokenForTokenNoPath(c *gin.Context) {
 	requestUser := c.MustGet("username").(string)
-	var poolSwapExactTokenForTokenNoPathBatchRequest pool.PoolSwapExactTokenForTokenNoPathBatchRequest
+	var poolSwapExactTokenForTokenNoPathBatchRequest pool.PoolSwapExactTokenForTokenNoPathRequest
 	err := c.ShouldBindJSON(&poolSwapExactTokenForTokenNoPathBatchRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
@@ -854,9 +864,9 @@ func SwapExactTokenForTokenNoPath(c *gin.Context) {
 	})
 }
 
-func SwapTokenForExactTokenNoPath(c *gin.Context) {
+func RequestSwapTokenForExactTokenNoPath(c *gin.Context) {
 	requestUser := c.MustGet("username").(string)
-	var poolSwapTokenForExactTokenNoPathBatchRequest pool.PoolSwapTokenForExactTokenNoPathBatchRequest
+	var poolSwapTokenForExactTokenNoPathBatchRequest pool.PoolSwapTokenForExactTokenNoPathRequest
 	err := c.ShouldBindJSON(&poolSwapTokenForExactTokenNoPathBatchRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
@@ -891,9 +901,9 @@ func SwapTokenForExactTokenNoPath(c *gin.Context) {
 	})
 }
 
-func WithdrawAward(c *gin.Context) {
+func RequestWithdrawAward(c *gin.Context) {
 	requestUser := c.MustGet("username").(string)
-	var poolWithdrawAwardBatchRequest pool.PoolWithdrawAwardBatchRequest
+	var poolWithdrawAwardBatchRequest pool.PoolWithdrawAwardRequest
 	err := c.ShouldBindJSON(&poolWithdrawAwardBatchRequest)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
@@ -1427,5 +1437,202 @@ func QueryWithdrawAwardBatch(c *gin.Context) {
 		Errno:  0,
 		ErrMsg: models.SUCCESS.Error(),
 		Data:   records,
+	})
+}
+
+// Sync
+
+func AddLiquidity(c *gin.Context) {
+	requestUser := c.MustGet("username").(string)
+	var poolAddLiquidityBatchRequest pool.PoolAddLiquidityRequest
+	err := c.ShouldBindJSON(&poolAddLiquidityBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ShouldBindJsonErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.AddLiquidityResult),
+		})
+		return
+	}
+
+	if requestUser != poolAddLiquidityBatchRequest.Username {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UsernameNotMatchErr.Code(),
+			ErrMsg: "username not match",
+			Data:   new(pool.AddLiquidityResult),
+		})
+		return
+	}
+
+	result, err := pool.AddLiquidity(&poolAddLiquidityBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AddLiquidityErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.AddLiquidityResult),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   result,
+	})
+}
+
+func RemoveLiquidity(c *gin.Context) {
+	requestUser := c.MustGet("username").(string)
+	var poolRemoveLiquidityBatchRequest pool.PoolRemoveLiquidityRequest
+	err := c.ShouldBindJSON(&poolRemoveLiquidityBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ShouldBindJsonErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.RemoveLiquidityResult),
+		})
+		return
+	}
+
+	if requestUser != poolRemoveLiquidityBatchRequest.Username {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UsernameNotMatchErr.Code(),
+			ErrMsg: "username not match",
+			Data:   new(pool.RemoveLiquidityResult),
+		})
+		return
+	}
+
+	result, err := pool.RemoveLiquidity(&poolRemoveLiquidityBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.RemoveLiquidityErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.RemoveLiquidityResult),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   result,
+	})
+}
+
+func SwapExactTokenForTokenNoPath(c *gin.Context) {
+	requestUser := c.MustGet("username").(string)
+	var poolSwapExactTokenForTokenNoPathBatchRequest pool.PoolSwapExactTokenForTokenNoPathRequest
+	err := c.ShouldBindJSON(&poolSwapExactTokenForTokenNoPathBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ShouldBindJsonErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.SwapExactTokenForTokenNoPathResult),
+		})
+		return
+	}
+
+	if requestUser != poolSwapExactTokenForTokenNoPathBatchRequest.Username {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UsernameNotMatchErr.Code(),
+			ErrMsg: "username not match",
+			Data:   new(pool.SwapExactTokenForTokenNoPathResult),
+		})
+		return
+	}
+
+	result, err := pool.SwapExactTokenForTokenNoPath(&poolSwapExactTokenForTokenNoPathBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.SwapExactTokenForTokenNoPathErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.SwapExactTokenForTokenNoPathResult),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   result,
+	})
+}
+
+func SwapTokenForExactTokenNoPath(c *gin.Context) {
+	requestUser := c.MustGet("username").(string)
+	var poolSwapTokenForExactTokenNoPathBatchRequest pool.PoolSwapTokenForExactTokenNoPathRequest
+	err := c.ShouldBindJSON(&poolSwapTokenForExactTokenNoPathBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ShouldBindJsonErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.SwapTokenForExactTokenNoPathResult),
+		})
+		return
+	}
+
+	if requestUser != poolSwapTokenForExactTokenNoPathBatchRequest.Username {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UsernameNotMatchErr.Code(),
+			ErrMsg: "username not match",
+			Data:   new(pool.SwapTokenForExactTokenNoPathResult),
+		})
+		return
+	}
+
+	result, err := pool.SwapTokenForExactTokenNoPath(&poolSwapTokenForExactTokenNoPathBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.SwapTokenForExactTokenNoPathErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.SwapTokenForExactTokenNoPathResult),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   result,
+	})
+}
+
+func WithdrawAward(c *gin.Context) {
+	requestUser := c.MustGet("username").(string)
+	var poolWithdrawAwardBatchRequest pool.PoolWithdrawAwardRequest
+	err := c.ShouldBindJSON(&poolWithdrawAwardBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ShouldBindJsonErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.WithdrawAwardResult),
+		})
+		return
+	}
+
+	if requestUser != poolWithdrawAwardBatchRequest.Username {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UsernameNotMatchErr.Code(),
+			ErrMsg: "username not match",
+			Data:   new(pool.WithdrawAwardResult),
+		})
+		return
+	}
+
+	result, err := pool.WithdrawAward(&poolWithdrawAwardBatchRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.WithdrawAwardErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new(pool.WithdrawAwardResult),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   result,
 	})
 }

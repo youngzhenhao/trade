@@ -332,17 +332,19 @@ const (
 // TODO: record token transfer Id
 type PoolShareRecord struct {
 	gorm.Model
-	ShareId     uint            `json:"share_id" gorm:"index"`
-	Username    string          `json:"username" gorm:"type:varchar(255);index"`
-	Liquidity   string          `json:"liquidity" gorm:"type:varchar(255);index"`
-	Reserve0    string          `json:"reserve0" gorm:"type:varchar(255);index"`
-	Reserve1    string          `json:"reserve1" gorm:"type:varchar(255);index"`
-	Amount0     string          `json:"amount0" gorm:"type:varchar(255);index"`
-	Amount1     string          `json:"amount1" gorm:"type:varchar(255);index"`
-	ShareSupply string          `json:"share_supply" gorm:"type:varchar(255);index"`
-	ShareAmt    string          `json:"share_amt" gorm:"type:varchar(255);index"`
-	IsFirstMint bool            `json:"is_first_mint" gorm:"index"`
-	RecordType  ShareRecordType `json:"record_type" gorm:"index"`
+	ShareId                uint            `json:"share_id" gorm:"index"`
+	Username               string          `json:"username" gorm:"type:varchar(255);index"`
+	Liquidity              string          `json:"liquidity" gorm:"type:varchar(255);index"`
+	Token0TransferRecordId uint            `json:"token0_transfer_record_id" gorm:"index"`
+	Token1TransferRecordId uint            `json:"token1_transfer_record_id" gorm:"index"`
+	Reserve0               string          `json:"reserve0" gorm:"type:varchar(255);index"`
+	Reserve1               string          `json:"reserve1" gorm:"type:varchar(255);index"`
+	Amount0                string          `json:"amount0" gorm:"type:varchar(255);index"`
+	Amount1                string          `json:"amount1" gorm:"type:varchar(255);index"`
+	ShareSupply            string          `json:"share_supply" gorm:"type:varchar(255);index"`
+	ShareAmt               string          `json:"share_amt" gorm:"type:varchar(255);index"`
+	IsFirstMint            bool            `json:"is_first_mint" gorm:"index"`
+	RecordType             ShareRecordType `json:"record_type" gorm:"index"`
 }
 
 func _createShareRecord(shareId uint, username string, liquidity string, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (err error) {
@@ -364,31 +366,33 @@ func _createShareRecord(shareId uint, username string, liquidity string, reserve
 	}).Error
 }
 
-func newShareRecord(shareId uint, username string, liquidity string, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (shareRecord *PoolShareRecord, err error) {
+func newShareRecord(shareId uint, username string, liquidity string, token0TransferRecordId uint, token1TransferRecordId uint, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (shareRecord *PoolShareRecord, err error) {
 	if shareId <= 0 {
 		return new(PoolShareRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	return &PoolShareRecord{
-		ShareId:     shareId,
-		Username:    username,
-		Liquidity:   liquidity,
-		Reserve0:    reserve0,
-		Reserve1:    reserve1,
-		Amount0:     amount0,
-		Amount1:     amount1,
-		ShareSupply: shareSupply,
-		ShareAmt:    shareAmt,
-		IsFirstMint: isFirstMint,
-		RecordType:  recordType,
+		ShareId:                shareId,
+		Username:               username,
+		Liquidity:              liquidity,
+		Token0TransferRecordId: token0TransferRecordId,
+		Token1TransferRecordId: token1TransferRecordId,
+		Reserve0:               reserve0,
+		Reserve1:               reserve1,
+		Amount0:                amount0,
+		Amount1:                amount1,
+		ShareSupply:            shareSupply,
+		ShareAmt:               shareAmt,
+		IsFirstMint:            isFirstMint,
+		RecordType:             recordType,
 	}, nil
 }
 
-func createShareRecord(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (err error) {
+func createShareRecord(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, token0TransferRecordId uint, token1TransferRecordId uint, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, shareAmt string, isFirstMint bool, recordType ShareRecordType) (err error) {
 	if shareId <= 0 {
 		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
 	var shareRecord *PoolShareRecord
-	shareRecord, err = newShareRecord(shareId, username, _liquidity.String(), reserve0, reserve1, amount0, amount1, shareSupply, shareAmt, isFirstMint, recordType)
+	shareRecord, err = newShareRecord(shareId, username, _liquidity.String(), token0TransferRecordId, token1TransferRecordId, reserve0, reserve1, amount0, amount1, shareSupply, shareAmt, isFirstMint, recordType)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "newShareRecord")
 	}
@@ -399,7 +403,7 @@ func createShareRecord(tx *gorm.DB, shareId uint, username string, _liquidity *b
 	return nil
 }
 
-func updateShareBalanceAndRecordMint(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, isFirstMint bool) (err error) {
+func updateShareBalanceAndRecordMint(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, token0TransferRecordId uint, token1TransferRecordId uint, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string, isFirstMint bool) (err error) {
 	if shareId <= 0 {
 		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
@@ -408,14 +412,14 @@ func updateShareBalanceAndRecordMint(tx *gorm.DB, shareId uint, username string,
 	if err != nil {
 		return utils.AppendErrorInfo(err, "createOrUpdateShareBalance")
 	}
-	err = createShareRecord(tx, shareId, username, _liquidity, reserve0, reserve1, amount0, amount1, shareSupply, previousShare, isFirstMint, AddLiquidityShareMint)
+	err = createShareRecord(tx, shareId, username, _liquidity, token0TransferRecordId, token1TransferRecordId, reserve0, reserve1, amount0, amount1, shareSupply, previousShare, isFirstMint, AddLiquidityShareMint)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "createShareRecord")
 	}
 	return nil
 }
 
-func updateShareBalanceAndRecordBurn(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string) (err error) {
+func updateShareBalanceAndRecordBurn(tx *gorm.DB, shareId uint, username string, _liquidity *big.Int, token0TransferRecordId uint, token1TransferRecordId uint, reserve0 string, reserve1 string, amount0 string, amount1 string, shareSupply string) (err error) {
 	if shareId <= 0 {
 		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
@@ -424,7 +428,7 @@ func updateShareBalanceAndRecordBurn(tx *gorm.DB, shareId uint, username string,
 	if err != nil {
 		return utils.AppendErrorInfo(err, "updateShareBalanceBurn")
 	}
-	err = createShareRecord(tx, shareId, username, _liquidity, reserve0, reserve1, amount0, amount1, shareSupply, previousShare, false, RemoveLiquidityShareBurn)
+	err = createShareRecord(tx, shareId, username, _liquidity, token0TransferRecordId, token1TransferRecordId, reserve0, reserve1, amount0, amount1, shareSupply, previousShare, false, RemoveLiquidityShareBurn)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "createShareRecord")
 	}

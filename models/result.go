@@ -253,6 +253,7 @@ const (
 	ProcessPoolSwapExactTokenForTokenNoPathBatchRequestErr
 	ProcessPoolSwapTokenForExactTokenNoPathBatchRequestErr
 	QueryPoolInfoErr
+	PoolDoesNotExistErr
 	AtoiErr
 	QueryShareRecordsErr
 	QueryUserShareRecordsErr
@@ -287,6 +288,11 @@ const (
 	QueryWithdrawAwardBatchErr
 	CalcQuoteErr
 	QueryParamEmptyErr
+	AddLiquidityErr
+	RemoveLiquidityErr
+	SwapExactTokenForTokenNoPathErr
+	SwapTokenForExactTokenNoPathErr
+	WithdrawAwardErr
 )
 
 // Err type:CustodyAccount

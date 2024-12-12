@@ -12,12 +12,12 @@ func CreatePoolAccount(tx *gorm.DB, pairId uint, allowTokens []string) (err erro
 }
 
 // @Description: token is the asset_id or the "sat"
-func PoolAccountTransfer(tx *gorm.DB, pairId uint, username string, token string, _amount *big.Int, transferDesc string) (recordId uint, err error) {
-	return poolAccount.PAccountToUserPay(tx, username, pairId, token, _amount, transferDesc)
+func PoolAccountTransfer(tx *gorm.DB, pairId uint, username string, token string, _amount *big.Int, transferDescription string) (recordId uint, err error) {
+	return poolAccount.PAccountToUserPay(tx, username, pairId, token, _amount, transferDescription)
 }
 
-func TransferToPoolAccount(tx *gorm.DB, username string, pairId uint, token string, _amount *big.Int, transferDesc string) (recordId uint, err error) {
-	return poolAccount.UserPayToPAccount(tx, pairId, username, token, _amount, transferDesc)
+func TransferToPoolAccount(tx *gorm.DB, username string, pairId uint, token string, _amount *big.Int, transferDescription string) (recordId uint, err error) {
+	return poolAccount.UserPayToPAccount(tx, pairId, username, token, _amount, transferDescription)
 }
 
 func GetPoolAccountRecords(pairId uint, limit int, offset int) (records *[]pAccount.PAccountBill, err error) {

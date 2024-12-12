@@ -132,22 +132,24 @@ func updateLpAwardBalanceAndRecordSwap(tx *gorm.DB, shareId uint, username strin
 
 type PoolWithdrawAwardRecord struct {
 	gorm.Model
-	Username     string `json:"username" gorm:"type:varchar(255);index"`
-	Amount       string `json:"amount" gorm:"type:varchar(255);index"`
-	AwardBalance string `json:"award_balance" gorm:"type:varchar(255);index"`
+	Username                 string `json:"username" gorm:"type:varchar(255);index"`
+	Amount                   string `json:"amount" gorm:"type:varchar(255);index"`
+	WithdrawTransferRecordId uint   `json:"withdraw_transfer_record_id" gorm:"index"`
+	AwardBalance             string `json:"award_balance" gorm:"type:varchar(255);index"`
 }
 
-func newWithdrawAwardRecord(username string, amount string, awardBalance string) (withdrawAwardRecord *PoolWithdrawAwardRecord, err error) {
+func newWithdrawAwardRecord(username string, amount string, withdrawTransferRecordId uint, awardBalance string) (withdrawAwardRecord *PoolWithdrawAwardRecord, err error) {
 	return &PoolWithdrawAwardRecord{
-		Username:     username,
-		Amount:       amount,
-		AwardBalance: awardBalance,
+		Username:                 username,
+		Amount:                   amount,
+		WithdrawTransferRecordId: withdrawTransferRecordId,
+		AwardBalance:             awardBalance,
 	}, nil
 }
 
-func createWithdrawAwardRecord(tx *gorm.DB, username string, amount *big.Int, awardBalance string) (err error) {
+func createWithdrawAwardRecord(tx *gorm.DB, username string, amount *big.Int, withdrawTransferRecordId uint, awardBalance string) (err error) {
 	var withdrawAwardRecord *PoolWithdrawAwardRecord
-	withdrawAwardRecord, err = newWithdrawAwardRecord(username, amount.String(), awardBalance)
+	withdrawAwardRecord, err = newWithdrawAwardRecord(username, amount.String(), withdrawTransferRecordId, awardBalance)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "newWithdrawAwardRecord")
 	}

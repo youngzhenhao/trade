@@ -10,7 +10,7 @@ import (
 
 type PoolBatchType int64
 
-// TODO
+// TODO: Reserve
 const (
 	BatchCreated PoolBatchType = iota
 	BatchPending
@@ -98,7 +98,7 @@ type PoolWithdrawAwardBatch struct {
 
 // Request
 
-type PoolAddLiquidityBatchRequest struct {
+type PoolAddLiquidityRequest struct {
 	TokenA         string `json:"token_a" gorm:"type:varchar(255);index"`
 	TokenB         string `json:"token_b" gorm:"type:varchar(255);index"`
 	AmountADesired string `json:"amount_a_desired" gorm:"type:varchar(255);index"`
@@ -108,7 +108,7 @@ type PoolAddLiquidityBatchRequest struct {
 	Username       string `json:"username" gorm:"type:varchar(255);index"`
 }
 
-type PoolRemoveLiquidityBatchRequest struct {
+type PoolRemoveLiquidityRequest struct {
 	TokenA     string `json:"token_a" gorm:"type:varchar(255);index"`
 	TokenB     string `json:"token_b" gorm:"type:varchar(255);index"`
 	Liquidity  string `json:"liquidity" gorm:"type:varchar(255);index"`
@@ -118,7 +118,7 @@ type PoolRemoveLiquidityBatchRequest struct {
 	FeeK       uint16 `json:"fee_k" gorm:"index"`
 }
 
-type PoolSwapExactTokenForTokenNoPathBatchRequest struct {
+type PoolSwapExactTokenForTokenNoPathRequest struct {
 	TokenIn          string `json:"token_in" gorm:"type:varchar(255);index"`
 	TokenOut         string `json:"token_out" gorm:"type:varchar(255);index"`
 	AmountIn         string `json:"amount_in" gorm:"type:varchar(255);index"`
@@ -128,7 +128,7 @@ type PoolSwapExactTokenForTokenNoPathBatchRequest struct {
 	LpAwardFeeK      uint16 `json:"lp_award_fee_k" gorm:"index"`
 }
 
-type PoolSwapTokenForExactTokenNoPathBatchRequest struct {
+type PoolSwapTokenForExactTokenNoPathRequest struct {
 	TokenIn          string `json:"token_in" gorm:"type:varchar(255);index"`
 	TokenOut         string `json:"token_out" gorm:"type:varchar(255);index"`
 	AmountOut        string `json:"amount_out" gorm:"type:varchar(255);index"`
@@ -138,7 +138,7 @@ type PoolSwapTokenForExactTokenNoPathBatchRequest struct {
 	LpAwardFeeK      uint16 `json:"lp_award_fee_k" gorm:"index"`
 }
 
-type PoolWithdrawAwardBatchRequest struct {
+type PoolWithdrawAwardRequest struct {
 	Username string `json:"username" gorm:"type:varchar(255);index"`
 	Amount   string `json:"amount" gorm:"type:varchar(255);index"`
 }
@@ -149,7 +149,7 @@ func Create(data any) (err error) {
 
 // process
 
-func ProcessPoolAddLiquidityBatchRequest(request *PoolAddLiquidityBatchRequest, requestUser string) (poolAddLiquidityBatch *PoolAddLiquidityBatch, err error) {
+func ProcessPoolAddLiquidityBatchRequest(request *PoolAddLiquidityRequest, requestUser string) (poolAddLiquidityBatch *PoolAddLiquidityBatch, err error) {
 	if request == nil {
 		err = errors.New("request is nil")
 		return new(PoolAddLiquidityBatch), err
@@ -190,7 +190,7 @@ func ProcessPoolAddLiquidityBatchRequest(request *PoolAddLiquidityBatchRequest, 
 	}, nil
 }
 
-func ProcessPoolRemoveLiquidityBatchRequest(request *PoolRemoveLiquidityBatchRequest, requestUser string) (poolRemoveLiquidityBatch *PoolRemoveLiquidityBatch, err error) {
+func ProcessPoolRemoveLiquidityBatchRequest(request *PoolRemoveLiquidityRequest, requestUser string) (poolRemoveLiquidityBatch *PoolRemoveLiquidityBatch, err error) {
 	if request == nil {
 		err = errors.New("request is nil")
 		return new(PoolRemoveLiquidityBatch), err
@@ -231,7 +231,7 @@ func ProcessPoolRemoveLiquidityBatchRequest(request *PoolRemoveLiquidityBatchReq
 	}, nil
 }
 
-func ProcessPoolSwapExactTokenForTokenNoPathBatchRequest(request *PoolSwapExactTokenForTokenNoPathBatchRequest, requestUser string) (poolSwapExactTokenForTokenNoPathBatch *PoolSwapExactTokenForTokenNoPathBatch, err error) {
+func ProcessPoolSwapExactTokenForTokenNoPathBatchRequest(request *PoolSwapExactTokenForTokenNoPathRequest, requestUser string) (poolSwapExactTokenForTokenNoPathBatch *PoolSwapExactTokenForTokenNoPathBatch, err error) {
 	if request == nil {
 		err = errors.New("request is nil")
 		return new(PoolSwapExactTokenForTokenNoPathBatch), err
@@ -272,7 +272,7 @@ func ProcessPoolSwapExactTokenForTokenNoPathBatchRequest(request *PoolSwapExactT
 	}, nil
 }
 
-func ProcessPoolSwapTokenForExactTokenNoPathBatchRequest(request *PoolSwapTokenForExactTokenNoPathBatchRequest, requestUser string) (poolSwapTokenForExactTokenNoPathBatch *PoolSwapTokenForExactTokenNoPathBatch, err error) {
+func ProcessPoolSwapTokenForExactTokenNoPathBatchRequest(request *PoolSwapTokenForExactTokenNoPathRequest, requestUser string) (poolSwapTokenForExactTokenNoPathBatch *PoolSwapTokenForExactTokenNoPathBatch, err error) {
 	if request == nil {
 		err = errors.New("request is nil")
 		return new(PoolSwapTokenForExactTokenNoPathBatch), err
@@ -313,7 +313,7 @@ func ProcessPoolSwapTokenForExactTokenNoPathBatchRequest(request *PoolSwapTokenF
 	}, nil
 }
 
-func ProcessPoolWithdrawAwardBatchRequest(request *PoolWithdrawAwardBatchRequest, requestUser string) (poolWithdrawAwardBatch *PoolWithdrawAwardBatch, err error) {
+func ProcessPoolWithdrawAwardBatchRequest(request *PoolWithdrawAwardRequest, requestUser string) (poolWithdrawAwardBatch *PoolWithdrawAwardBatch, err error) {
 	if request == nil {
 		err = errors.New("request is nil")
 		return new(PoolWithdrawAwardBatch), err
