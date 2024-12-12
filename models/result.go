@@ -293,6 +293,8 @@ const (
 	SwapExactTokenForTokenNoPathErr
 	SwapTokenForExactTokenNoPathErr
 	WithdrawAwardErr
+	CalcAmountOutErr
+	CalcAmountInErr
 )
 
 // Err type:CustodyAccount

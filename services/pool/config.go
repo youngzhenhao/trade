@@ -26,8 +26,8 @@ const (
 )
 
 const (
-	ProjectPartyFeeK = 3
-	LpAwardFeeK      = 3
+	ProjectPartyFeeK uint16 = 3
+	LpAwardFeeK      uint16 = 3
 )
 
 const (

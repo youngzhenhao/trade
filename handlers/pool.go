@@ -750,6 +750,68 @@ func CalcQuote(c *gin.Context) {
 	})
 }
 
+func CalcAmountOut(c *gin.Context) {
+	_ = c.MustGet("username").(string)
+	tokenIn := c.Query("token_in")
+	tokenOut := c.Query("token_out")
+	amountIn := c.Query("amount_in")
+	if amountIn == "" {
+		err := errors.New("amount_in is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryParamEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   pool.ZeroValue,
+		})
+		return
+	}
+
+	amountOut, err := pool.CalcAmountOut(tokenIn, tokenOut, amountIn)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.CalcAmountOutErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   pool.ZeroValue,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   amountOut,
+	})
+}
+
+func CalcAmountIn(c *gin.Context) {
+	_ = c.MustGet("username").(string)
+	tokenIn := c.Query("token_in")
+	tokenOut := c.Query("token_out")
+	amountOut := c.Query("amount_out")
+	if amountOut == "" {
+		err := errors.New("amount_out is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryParamEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   pool.ZeroValue,
+		})
+		return
+	}
+
+	amountIn, err := pool.CalcAmountIn(tokenIn, tokenOut, amountOut)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.CalcAmountInErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   pool.ZeroValue,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   amountIn,
+	})
+}
+
 // request
 
 func RequestAddLiquidity(c *gin.Context) {

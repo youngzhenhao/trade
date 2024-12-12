@@ -25,6 +25,8 @@ func SetupPoolRouter(router *gin.Engine) *gin.Engine {
 		calc.GET("/quote", handlers.CalcQuote)
 		calc.POST("/add_liquidity", handlers.CalcAddLiquidity)
 		calc.POST("/remove_liquidity", handlers.CalcRemoveLiquidity)
+		calc.GET("/amount_out", handlers.CalcAmountOut)
+		calc.GET("/amount_in", handlers.CalcAmountIn)
 		calc.POST("/swap_exact_token_for_token_no_path", handlers.CalcSwapExactTokenForTokenNoPath)
 		calc.POST("/swap_token_for_exact_token_no_path", handlers.CalcSwapTokenForExactTokenNoPath)
 	}

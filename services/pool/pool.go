@@ -2223,6 +2223,130 @@ func CalcQuote(tokenA string, tokenB string, amountA string) (amountB string, er
 	return _amountB.String(), nil
 }
 
+func CalcAmountOut(tokenIn string, tokenOut string, amountIn string) (amountOut string, err error) {
+	token0, token1, err := sortTokens(tokenIn, tokenOut)
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	// amountIn
+	_amountIn, success := new(big.Int).SetString(amountIn, 10)
+	if !success {
+		return ZeroValue, errors.New("amountIn SetString(" + amountIn + ") " + strconv.FormatBool(success))
+	}
+	if _amountIn.Sign() < 0 {
+		return ZeroValue, errors.New("amountIn(" + _amountIn.String() + ") is negative")
+	}
+
+	tx := middleware.DB.Begin()
+	defer func() {
+		tx.Rollback()
+	}()
+
+	// @dev: get pair
+	var _pair PoolPair
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	if err != nil {
+		//@dev: pair does not exist
+		return ZeroValue, utils.AppendErrorInfo(err, "pair does not exist")
+	}
+	pairId := _pair.ID
+	if pairId <= 0 {
+		return ZeroValue, errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
+	}
+
+	var _reserve0, _reserve1 *big.Int
+	// reserve0
+	_reserve0, success = new(big.Int).SetString(_pair.Reserve0, 10)
+	if !success {
+		return ZeroValue, errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
+	}
+	// reserve1
+	_reserve1, success = new(big.Int).SetString(_pair.Reserve1, 10)
+	if !success {
+		return ZeroValue, errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
+	}
+
+	var _reserveIn, _reserveOut = new(big.Int), new(big.Int)
+	if token0 == tokenOut {
+		*_reserveIn, *_reserveOut = *_reserve1, *_reserve0
+	} else {
+		*_reserveIn, *_reserveOut = *_reserve0, *_reserve1
+	}
+
+	var _amountOut *big.Int
+
+	feeK := ProjectPartyFeeK + LpAwardFeeK
+
+	_amountOut, err = getAmountOutBig(_amountIn, _reserveIn, _reserveOut, feeK)
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "getAmountOutBig")
+	}
+	return _amountOut.String(), nil
+}
+
+func CalcAmountIn(tokenIn string, tokenOut string, amountOut string) (amountIn string, err error) {
+	token0, token1, err := sortTokens(tokenIn, tokenOut)
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	// amountOut
+	_amountOut, success := new(big.Int).SetString(amountOut, 10)
+	if !success {
+		return ZeroValue, errors.New("amountOut SetString(" + amountOut + ") " + strconv.FormatBool(success))
+	}
+	if _amountOut.Sign() < 0 {
+		return ZeroValue, errors.New("amountOut(" + _amountOut.String() + ") is negative")
+	}
+
+	tx := middleware.DB.Begin()
+	defer func() {
+		tx.Rollback()
+	}()
+
+	// @dev: get pair
+	var _pair PoolPair
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	if err != nil {
+		//@dev: pair does not exist
+		return ZeroValue, utils.AppendErrorInfo(err, "pair does not exist")
+	}
+	pairId := _pair.ID
+	if pairId <= 0 {
+		return ZeroValue, errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
+	}
+
+	var _reserve0, _reserve1 *big.Int
+	// reserve0
+	_reserve0, success = new(big.Int).SetString(_pair.Reserve0, 10)
+	if !success {
+		return ZeroValue, errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
+	}
+	// reserve1
+	_reserve1, success = new(big.Int).SetString(_pair.Reserve1, 10)
+	if !success {
+		return ZeroValue, errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
+	}
+
+	var _reserveIn, _reserveOut = new(big.Int), new(big.Int)
+	if token0 == tokenOut {
+		*_reserveIn, *_reserveOut = *_reserve1, *_reserve0
+	} else {
+		*_reserveIn, *_reserveOut = *_reserve0, *_reserve1
+	}
+
+	var _amountIn *big.Int
+
+	feeK := ProjectPartyFeeK + LpAwardFeeK
+
+	_amountIn, err = getAmountInBig(_amountOut, _reserveIn, _reserveOut, feeK)
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "getAmountInBig")
+	}
+	return _amountIn.String(), nil
+}
+
 func (p *PoolShareRecord) ToShareRecordInfo() *ShareRecordInfo {
 	if p == nil {
 		return nil
@@ -2283,6 +2407,10 @@ type CalcRemoveLiquidityResponse struct {
 func CalcRemoveLiquidity(tokenA string, tokenB string, liquidity string, amountAMin string, amountBMin string, username string, feeK uint16) (amountA string, amountB string, shareRecord *PoolShareRecord, err error) {
 	return calcRemoveLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, username, feeK)
 }
+
+// get amount
+
+// TODO
 
 type CalcSwapExactTokenForTokenNoPathResponse struct {
 	AmountOut  string          `json:"amount_out"`
