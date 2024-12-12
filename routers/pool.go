@@ -19,10 +19,10 @@ func SetupPoolRouter(router *gin.Engine) *gin.Engine {
 		query.GET("lp_award_balance", handlers.QueryUserLpAwardBalance)
 		query.GET("/withdraw_award_records/count", handlers.QueryWithdrawAwardRecordsCount)
 		query.GET("/withdraw_award_records", handlers.QueryWithdrawAwardRecords)
-		query.GET("/quote", handlers.QueryQuote)
 	}
 	calc := pool.Group("/calc")
 	{
+		calc.GET("/quote", handlers.CalcQuote)
 		calc.POST("/add_liquidity", handlers.CalcAddLiquidity)
 		calc.POST("/remove_liquidity", handlers.CalcRemoveLiquidity)
 		calc.POST("/swap_exact_token_for_token_no_path", handlers.CalcSwapExactTokenForTokenNoPath)

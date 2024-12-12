@@ -285,7 +285,7 @@ const (
 	QuerySwapTokenForExactTokenNoPathBatchErr
 	QueryWithdrawAwardBatchCountErr
 	QueryWithdrawAwardBatchErr
-	QueryQuoteErr
+	CalcQuoteErr
 	QueryParamEmptyErr
 )
 

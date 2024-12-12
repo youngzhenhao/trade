@@ -426,37 +426,6 @@ func QueryWithdrawAwardRecords(c *gin.Context) {
 	})
 }
 
-func QueryQuote(c *gin.Context) {
-	_ = c.MustGet("username").(string)
-	tokenA := c.Query("token_a")
-	tokenB := c.Query("token_b")
-	amountA := c.Query("amount_a")
-	if amountA == "" {
-		err := errors.New("amount_a is empty")
-		c.JSON(http.StatusOK, Result2{
-			Errno:  models.QueryParamEmptyErr.Code(),
-			ErrMsg: err.Error(),
-			Data:   pool.ZeroValue,
-		})
-		return
-	}
-
-	amountB, err := pool.QueryQuote(tokenA, tokenB, amountA)
-	if err != nil {
-		c.JSON(http.StatusOK, Result2{
-			Errno:  models.QueryQuoteErr.Code(),
-			ErrMsg: err.Error(),
-			Data:   pool.ZeroValue,
-		})
-		return
-	}
-	c.JSON(http.StatusOK, Result2{
-		Errno:  0,
-		ErrMsg: models.SUCCESS.Error(),
-		Data:   amountB,
-	})
-}
-
 // calc
 
 func CalcAddLiquidity(c *gin.Context) {
@@ -737,6 +706,37 @@ func CalcSwapTokenForExactTokenNoPath(c *gin.Context) {
 		Errno:  0,
 		ErrMsg: models.SUCCESS.Error(),
 		Data:   &calcSwapTokenForExactTokenNoPathResponse,
+	})
+}
+
+func CalcQuote(c *gin.Context) {
+	_ = c.MustGet("username").(string)
+	tokenA := c.Query("token_a")
+	tokenB := c.Query("token_b")
+	amountA := c.Query("amount_a")
+	if amountA == "" {
+		err := errors.New("amount_a is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryParamEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   pool.ZeroValue,
+		})
+		return
+	}
+
+	amountB, err := pool.CalcQuote(tokenA, tokenB, amountA)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.CalcQuoteErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   pool.ZeroValue,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   amountB,
 	})
 }
 
