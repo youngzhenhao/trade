@@ -16,6 +16,7 @@ import (
 	cBase "trade/services/custodyAccount/custodyBase"
 	"trade/services/custodyAccount/defaultAccount/custodyAssets"
 	"trade/services/custodyAccount/defaultAccount/custodyBtc"
+	"trade/services/custodyAccount/defaultAccount/other"
 	"trade/services/custodyAccount/lockPayment"
 	"trade/services/servicesrpc"
 )
@@ -123,7 +124,7 @@ func PayAmountToAdmin(payUserId uint, gasFee uint64) (uint, error) {
 		btlLog.CUST.Error("PayAmountToAdmin failed:%s", err)
 		return 0, err
 	}
-	id, err := custodyBtc.PayFirLunchFee(e, gasFee)
+	id, err := other.PayFirLunchFee(e, gasFee)
 	if err != nil {
 		btlLog.CUST.Error("PayAmountToAdmin failed:%s", err)
 		return 0, err
@@ -134,11 +135,11 @@ func PayAmountToAdmin(payUserId uint, gasFee uint64) (uint, error) {
 // CheckPayInsideStatus
 // 检查内部转账任务状态是否成功
 func CheckPayInsideStatus(id uint) (bool, error) {
-	return custodyBtc.CheckFirLunchFee(id)
+	return other.CheckFirLunchFee(id)
 }
 
 func BackAmount(payInsideId uint) (uint, error) {
-	return 0, fmt.Errorf("not support")
+	return other.BackFirLunchFee(payInsideId)
 }
 
 func CheckBackFeeMission(missionId uint) bool {
