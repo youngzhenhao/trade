@@ -257,6 +257,21 @@ func finalizeBatch(shortResponse bool, feeRate int) (*mintrpc.FinalizeBatchRespo
 	return response, nil
 }
 
+func cancelBatch() (*mintrpc.CancelBatchResponse, error) {
+	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
+	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath
+	macaroonPath := config.GetLoadConfig().ApiConfig.Tapd.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+	client := mintrpc.NewMintClient(conn)
+	request := &mintrpc.CancelBatchRequest{}
+	response, err := client.CancelBatch(context.Background(), request)
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "CancelBatch")
+	}
+	return response, nil
+}
+
 func fetchAssetMeta(isHash bool, data string) (*taprpc.AssetMeta, error) {
 	grpcHost := config.GetLoadConfig().ApiConfig.Tapd.Host + ":" + strconv.Itoa(config.GetLoadConfig().ApiConfig.Tapd.Port)
 	tlsCertPath := config.GetLoadConfig().ApiConfig.Tapd.TlsCertPath

@@ -87,6 +87,10 @@ func FinalizeBatchAndGetResponse(feeRate int) (*mintrpc.FinalizeBatchResponse, e
 	return finalizeBatch(false, feeRate)
 }
 
+func CancelBatchAndGetResponse() (*mintrpc.CancelBatchResponse, error) {
+	return cancelBatch()
+}
+
 func GetListAssetsResponse(withWitness bool, includeSpent bool, includeLeased bool) (*taprpc.ListAssetResponse, error) {
 	return listAssets(withWitness, includeSpent, includeLeased)
 }

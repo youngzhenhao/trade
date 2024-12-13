@@ -83,6 +83,7 @@ var (
 	defaultLogFile      *os.File
 	defaultErrorLogFile *os.File
 	presaleLogFile      *os.File
+	mintNftFile         *os.File
 	userDataLogFile     *os.File
 	userStatsLogFile    *os.File
 	cpAmmLogFile        *os.File
@@ -114,6 +115,10 @@ func openLogFile() error {
 		return err
 	}
 	presaleLogFile, err = utils.GetLogFile("./logs/trade.presale.log")
+	if err != nil {
+		return err
+	}
+	mintNftFile, err = utils.GetLogFile("./logs/trade.mint_nft.log")
 	if err != nil {
 		return err
 	}
@@ -160,6 +165,7 @@ var (
 	FEE                   *ServicesLogger
 	ScheduledTask         *ServicesLogger
 	PreSale               *ServicesLogger
+	MintNft               *ServicesLogger
 	UserData              *ServicesLogger
 	UserStats             *ServicesLogger
 	CPAmm                 *ServicesLogger
@@ -174,6 +180,7 @@ func loadDefaultLog() {
 	FEE = NewLogger("FEE", Level, defaultLogFile)
 	ScheduledTask = NewLogger("CRON", Level, defaultLogFile)
 	PreSale = NewLogger("PRSL", Level, defaultLogFile, presaleLogFile)
+	MintNft = NewLogger("MINT", Level, mintNftFile)
 	UserData = NewLogger("URDT", Level, defaultLogFile, userDataLogFile)
 	UserStats = NewLogger("USTS", Level, defaultLogFile, userStatsLogFile)
 	CPAmm = NewLogger("CPAM", Level, defaultLogFile, cpAmmLogFile)

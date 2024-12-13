@@ -11,13 +11,42 @@ import (
 	"trade/utils"
 )
 
+type Attribute struct {
+	TraitType string `json:"trait_type"`
+	Value     string `json:"value"`
+}
+
 type Meta struct {
-	Acronym     string `json:"acronym,omitempty"`
-	Description string `json:"description,omitempty"`
-	ImageData   string `json:"image_data,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Email       string `json:"email,omitempty"`
-	GroupName   string `json:"groupName,omitempty"`
+	Acronym     string      `json:"acronym,omitempty"`
+	Description string      `json:"description,omitempty"`
+	ImageData   string      `json:"image_data,omitempty"`
+	Name        string      `json:"name,omitempty"`
+	Email       string      `json:"email,omitempty"`
+	GroupName   string      `json:"groupName,omitempty"`
+	Attributes  []Attribute `json:"attributes"`
+}
+
+func NewMetaWithAttributes(description string, groupName string, attributes []Attribute) *Meta {
+	meta := Meta{
+		Description: description,
+		GroupName:   groupName,
+		Attributes:  attributes,
+	}
+	return &meta
+}
+
+func NewMetaAttributesStr(description string, groupName string, attributesStr string) (*Meta, error) {
+	var attributes []Attribute
+	err := json.Unmarshal([]byte(attributesStr), &attributes)
+	if err != nil {
+		return new(Meta), err
+	}
+	meta := Meta{
+		Description: description,
+		GroupName:   groupName,
+		Attributes:  attributes,
+	}
+	return &meta, nil
 }
 
 func NewMeta(description string) *Meta {
