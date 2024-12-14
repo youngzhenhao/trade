@@ -73,11 +73,6 @@ func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 		// 加载pending mission
 		custodyAssets.LoadAIMMission()
 	}
-
-	err := lockPayment.RunDealUser()
-	if err != nil {
-		return false
-	}
 	return true
 }
 
