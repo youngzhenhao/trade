@@ -46,7 +46,7 @@ func RunDealUser() error {
 				continue
 			}
 		} else if user.Type == "asset" {
-			assetId := "14be6a705e4891d2829e87e45b0e9376a3cbd36f9b566cffff2ddc831ffb7e62"
+			assetId := "47ed120d4b173eb79ba46cd1959bb9c881cb69332cf8a21336110bda05402308"
 			err, _, f2, f3 := GetBalance(user.NpubKey, assetId)
 			if err != nil {
 				btlLog.CUST.Error("GetBalance error,%s,%s", err, user.NpubKey)
