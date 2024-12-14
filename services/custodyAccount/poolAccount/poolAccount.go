@@ -109,6 +109,7 @@ func UserPayToPAccount(tx *gorm.DB, pairId uint, username string, token string, 
 				return 0, ErrorNotEnoughBalance
 			}
 			btlLog.CUST.Error("LessAssetBalance error:%s", err)
+			//todo 处理余额不足的情况
 			return 0, ErrorDbError
 		}
 	}
