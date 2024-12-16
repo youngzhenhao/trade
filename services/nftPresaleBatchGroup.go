@@ -1,7 +1,9 @@
 package services
 
 import (
+	"encoding/hex"
 	"errors"
+	"math"
 	"strconv"
 	"trade/api"
 	"trade/btlLog"
@@ -86,21 +88,31 @@ func ProcessLaunchRequestNftPresale(nftPresaleSetRequest *models.NftPresaleSetRe
 	var groupKey string
 	var amount int
 	var meta string
-	assetInfo, err := api.GetAssetInfoApi(assetId)
+	_asset, err := api.GetIncludeListAssetById(assetId)
 	if err != nil {
-		// @dev: Do not return
-		btlLog.PreSale.Error("api GetAssetInfoApi err:%v", err)
+		btlLog.PreSale.Error("api GetIncludeListAssetById err:%v", err)
+		return nil, err
 	} else {
-		name = assetInfo.Name
-		assetType = assetInfo.AssetType
-		if assetInfo.GroupKey != nil {
-			groupKey = *assetInfo.GroupKey
+		if _asset.Amount > math.MaxInt {
+			return nil, errors.New("amount(" + strconv.FormatUint(_asset.Amount, 10) + ") is too large")
 		}
-		amount = int(assetInfo.Amount)
-		if assetInfo.Meta != nil {
-			meta = *assetInfo.Meta
+		amount = int(_asset.Amount)
+		if _asset.AssetGenesis != nil {
+			name = _asset.AssetGenesis.Name
+			assetType = _asset.AssetGenesis.AssetType.String()
+
+		}
+		if _asset.AssetGroup != nil {
+			tweakedGroupKey := _asset.AssetGroup.TweakedGroupKey
+			groupKey = hex.EncodeToString(tweakedGroupKey)
 		}
 	}
+	assetMeta, err := api.FetchAssetMetaByAssetId(assetId)
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "FetchAssetMetaByAssetId")
+	}
+	meta = assetMeta.Data
+
 	groupKeyByAssetId, err := api.GetGroupKeyByAssetId(assetId)
 	if err != nil {
 		btlLog.PreSale.Error("api GetGroupKeyByAssetId err:%v", err)

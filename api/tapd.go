@@ -95,6 +95,25 @@ func GetListAssetsResponse(withWitness bool, includeSpent bool, includeLeased bo
 	return listAssets(withWitness, includeSpent, includeLeased)
 }
 
+func GetIncludeListAssetById(assetId string) (asset *taprpc.Asset, err error) {
+	response, err := GetListAssetsResponse(false, false, true)
+	if err != nil {
+		return new(taprpc.Asset), utils.AppendErrorInfo(err, "GetListAssetsResponse")
+	}
+	for _, _asset := range response.Assets {
+		if _asset.AssetGenesis != nil {
+			assetIdBytes := _asset.AssetGenesis.AssetId
+			assetIdStr := hex.EncodeToString(assetIdBytes)
+			if assetIdStr == assetId {
+				return _asset, nil
+			}
+			continue
+		}
+		continue
+	}
+	return new(taprpc.Asset), errors.New("no asset found")
+}
+
 func TransactionAndIndexToOutpoint(transaction string, index int) (outpoint string) {
 	return transaction + ":" + strconv.Itoa(index)
 }
