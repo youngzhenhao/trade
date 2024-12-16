@@ -10,7 +10,7 @@ import (
 func CreatePoolAccount(tx *gorm.DB, pairId uint, allowTokens []string) (err error) {
 	transTokens := make([]string, 0)
 	for _, token := range allowTokens {
-		if token == "sat" {
+		if token == TokenSatTag {
 			transTokens = append(transTokens, "00")
 		} else {
 			transTokens = append(transTokens, token)
