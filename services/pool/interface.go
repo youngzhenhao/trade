@@ -3,7 +3,6 @@ package pool
 import (
 	"gorm.io/gorm"
 	"math/big"
-	"trade/btlLog"
 	"trade/models/custodyModels/pAccount"
 	"trade/services/custodyAccount/poolAccount"
 )
@@ -18,7 +17,6 @@ func PoolAccountTransfer(tx *gorm.DB, pairId uint, username string, token string
 }
 
 func TransferToPoolAccount(tx *gorm.DB, username string, pairId uint, token string, _amount *big.Int, transferDescription string) (recordId uint, err error) {
-	btlLog.CUST.Error("%v", _amount)
 	return poolAccount.UserPayToPAccount(tx, pairId, username, token, _amount, transferDescription)
 }
 

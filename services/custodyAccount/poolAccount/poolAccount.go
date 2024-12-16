@@ -106,7 +106,7 @@ func UserPayToPAccount(tx *gorm.DB, pairId uint, username string, token string, 
 		_, err = custodyAssets.LessAssetBalance(tx, usr, amount, b.ID, token, custodyModels.ChangeTypePayToPoolAccount)
 		if err != nil {
 			if errors.Is(err, custodyAssets.NotEnoughAssetBalance) {
-				btlLog.CUST.Error("NotEnoughAssetBalance:%s, amount:%f", err, amount)
+				btlLog.CUST.Error("NotEnoughAssetBalance:%s,assetId:%, amount:%f", err, token, amount)
 				return 0, ErrorNotEnoughBalance
 			}
 			btlLog.CUST.Error("LessAssetBalance error:%s", err)
