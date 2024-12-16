@@ -86,5 +86,10 @@ func SetupRouter() *gin.Engine {
 	nftPresale := r.Group("/nft_presale")
 	nftPresale.GET("/get/purchased", handlers.GetPurchasedNftPresaleInfo)
 
+	// btcBalance
+	btcBalance := r.Group("/btc_balance")
+	btcBalance.GET("/get/rank/count", handlers.GetBtcBalanceCount)
+	btcBalance.GET("/get/rank", handlers.GetBtcBalanceOrderLimitOffset)
+
 	return r
 }

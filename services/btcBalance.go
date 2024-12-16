@@ -1,8 +1,10 @@
 package services
 
 import (
+	"trade/middleware"
 	"trade/models"
 	"trade/services/btldb"
+	"trade/utils"
 )
 
 func CreateOrUpdateBtcBalance(btcBalance *models.BtcBalance) (err error) {
@@ -41,4 +43,47 @@ func GetBtcBalanceByUsername(username string) (btcBalance *models.BtcBalance, er
 		return btcBalance, nil
 	}
 	return btcBalance, nil
+}
+
+type BtcBalanceInfo struct {
+	ID                 uint   `json:"id"`
+	Username           string `json:"username" gorm:"type:varchar(255)"`
+	TotalBalance       int    `json:"total_balance"`
+	ConfirmedBalance   int    `json:"confirmed_balance"`
+	UnconfirmedBalance int    `json:"unconfirmed_balance"`
+	LockedBalance      int    `json:"locked_balance"`
+}
+
+func GetBtcBalanceCount() (count int64, err error) {
+
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("btc_balances").
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "btc_balances count")
+	}
+
+	tx.Rollback()
+	return count, nil
+}
+
+func GetBtcBalanceOrderLimitOffset(limit int, offset int) (btcBalanceInfos *[]BtcBalanceInfo, err error) {
+
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("btc_balances").
+		Select("id, username, total_balance, confirmed_balance, unconfirmed_balance, locked_balance").
+		Order("total_balance desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&btcBalanceInfos).
+		Error
+	if err != nil {
+		return new([]BtcBalanceInfo), utils.AppendErrorInfo(err, "select btc_balances")
+	}
+
+	tx.Rollback()
+	return btcBalanceInfos, nil
 }

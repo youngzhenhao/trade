@@ -296,6 +296,8 @@ const (
 	CalcAmountOutErr
 	CalcAmountInErr
 	GetPurchasedNftPresaleInfoErr
+	GetBtcBalanceCountErr
+	GetBtcBalanceOrderLimitOffsetErr
 )
 
 // Err type:CustodyAccount
