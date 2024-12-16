@@ -149,6 +149,107 @@ func SetUserTodayLimit(userName, limitType string, amount int, count int) error 
 	return db.Save(&bill).Error
 }
 
+type LimitTypes struct {
+	AssetId      string `json:"assetId"`
+	TransferType int    `json:"transferType"`
+	LimitName    string `json:"limitName"`
+}
+
+func GetLimitTypes(page, pageSize int) (*[]LimitTypes, error) {
+	db := middleware.DB
+	var limitTypes []custodyModels.LimitType
+	err := db.Table("user_limit_type").Offset((page - 1) * pageSize).Limit(pageSize).Find(&limitTypes).Error
+	if err != nil {
+		return nil, err
+	}
+	var limitTypesArr []LimitTypes
+	for _, limitType := range limitTypes {
+		limitTypesArr = append(limitTypesArr, LimitTypes{
+			AssetId:      limitType.AssetId,
+			TransferType: int(limitType.TransferType),
+			LimitName:    limitType.Memo,
+		})
+	}
+	return &limitTypesArr, nil
+}
+
+func CreateOrUpdateLimitType(assetId string, transferType int, limitName string) error {
+	if limitName == "" {
+		return fmt.Errorf("限额名称不能为空")
+	}
+	db := middleware.DB
+	limitType := custodyModels.LimitType{}
+	err := db.FirstOrCreate(&limitType, custodyModels.LimitType{
+		AssetId:      assetId,
+		TransferType: custodyModels.LimitTransferType(transferType),
+	}).Error
+	if err != nil {
+		return err
+	}
+	if limitType.Memo != limitName {
+		limitType.Memo = limitName
+		return db.Save(&limitType).Error
+	}
+	return nil
+}
+
+type LimitLevel struct {
+	Level  uint    `json:"level"`
+	Amount float64 `json:"amount"`
+	Count  uint    `json:"count"`
+}
+
+func GetLimitTypeLevels(limitName string, page, pageSize int) (*[]LimitLevel, error) {
+	db := middleware.DB
+	var limitTypes custodyModels.LimitType
+	err := db.Table("user_limit_type").Where("memo =?", limitName).First(&limitTypes).Error
+	if err != nil {
+		return nil, fmt.Errorf("限额类型不存在: %s", limitName)
+	}
+	var limitLevels []custodyModels.LimitLevel
+	err = db.Table("user_limit_type_level").Where("limit_type_id =?", limitTypes.ID).Offset((page - 1) * pageSize).Limit(pageSize).Find(&limitLevels).Error
+	if err != nil {
+		return nil, err
+	}
+	var limitLevelArr []LimitLevel
+	for _, limitLevel := range limitLevels {
+		limitLevelArr = append(limitLevelArr, LimitLevel{
+			Level:  limitLevel.Level,
+			Amount: limitLevel.Amount,
+			Count:  limitLevel.Count,
+		})
+	}
+	return &limitLevelArr, nil
+}
+
+func CreateOrUpdateLimitTypeLevel(limitName string, level int, amount int, count int) error {
+	if level <= 0 || amount < 0 || count < 0 {
+		return fmt.Errorf("金额或次数不能为负数")
+	}
+	db := middleware.DB
+	var limitTypes custodyModels.LimitType
+	err := db.Table("user_limit_type").Where("memo =?", limitName).First(&limitTypes).Error
+	if err != nil {
+		return fmt.Errorf("限额类型不存在: %s", limitName)
+	}
+
+	limitLevel := custodyModels.LimitLevel{}
+	err = db.FirstOrCreate(&limitLevel, custodyModels.LimitLevel{
+		LimitTypeId: limitTypes.ID,
+		Level:       uint(level),
+	}).Error
+	if err != nil {
+		return err
+	}
+	if limitLevel.Amount != float64(amount) || limitLevel.Count != uint(count) {
+		limitLevel.Amount = float64(amount)
+		limitLevel.Count = uint(count)
+		db.Save(&limitLevel)
+	}
+	return err
+
+}
+
 // func GetLimitLevel(userName, limitType string) (int, error) {
 //
 // }

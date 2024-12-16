@@ -79,3 +79,83 @@ func SetUserTodayLimitHandler(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: nil})
 }
+
+func GetLimitTypeHandler(c *gin.Context) {
+	var creds = struct {
+		PageNum  int `json:"pageNum"`
+		PageSize int `json:"pageSize"`
+	}{}
+	if err := c.ShouldBindJSON(&creds); err != nil {
+		btlLog.CUST.Error("%v", err)
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+
+	types, err := custodyLimit.GetLimitTypes(creds.PageNum, creds.PageSize)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: types})
+}
+
+func CreateOrUpdateLimitTypeHandle(c *gin.Context) {
+	var creds = struct {
+		AssetId      string `json:"assetId"`
+		TransferType int    `json:"transferType"`
+		LimitName    string `json:"limitName"`
+	}{}
+	if err := c.ShouldBindJSON(&creds); err != nil {
+		btlLog.CUST.Error("%v", err)
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+
+	err := custodyLimit.CreateOrUpdateLimitType(creds.AssetId, creds.TransferType, creds.LimitName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: nil})
+}
+
+func GetLimitTypeLevelsHandle(c *gin.Context) {
+	var creds = struct {
+		LimitName string `json:"limitName"`
+		PageNum   int    `json:"pageNum"`
+		PageSize  int    `json:"pageSize"`
+	}{}
+	if err := c.ShouldBindJSON(&creds); err != nil {
+		btlLog.CUST.Error("%v", err)
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+
+	levels, err := custodyLimit.GetLimitTypeLevels(creds.LimitName, creds.PageNum, creds.PageSize)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: levels})
+}
+
+func CreateOrUpdateLimitTypeLevelHandle(c *gin.Context) {
+	var creds = struct {
+		LimitName string `json:"limitName"`
+		Level     int    `json:"level"`
+		Amount    int    `json:"amount"`
+		Count     int    `json:"count"`
+	}{}
+	if err := c.ShouldBindJSON(&creds); err != nil {
+		btlLog.CUST.Error("%v", err)
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+
+	err := custodyLimit.CreateOrUpdateLimitTypeLevel(creds.LimitName, creds.Level, creds.Amount, creds.Count)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: nil})
+}
