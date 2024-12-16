@@ -295,6 +295,7 @@ const (
 	WithdrawAwardErr
 	CalcAmountOutErr
 	CalcAmountInErr
+	GetPurchasedNftPresaleInfoErr
 )
 
 // Err type:CustodyAccount

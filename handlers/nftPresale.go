@@ -520,3 +520,22 @@ func QueryNftPresaleBatchGroup(c *gin.Context) {
 		Data:    result,
 	})
 }
+
+// router second
+
+func GetPurchasedNftPresaleInfo(c *gin.Context) {
+	nftPresaleInfos, err := services.GetPurchasedNftPresaleInfo()
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.GetPurchasedNftPresaleInfoErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   nftPresaleInfos,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   nftPresaleInfos,
+	})
+}

@@ -51,6 +51,9 @@ func SetupNftPresaleRouter(router *gin.Engine) *gin.Engine {
 			//authorized.POST("/set/batch", handlers.SetNftPresales)
 			//authorized.POST("/reset", handlers.ReSetFailOrCanceledNftPresale)}
 		}
+
+		authorized.GET("/get/purchased", handlers.GetPurchasedNftPresaleInfo)
+
 	}
 	return router
 }

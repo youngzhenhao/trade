@@ -82,5 +82,9 @@ func SetupRouter() *gin.Engine {
 	assetMeta := r.Group("/asset_meta")
 	assetMeta.POST("/image/query", handlers.GetAssetMetaImage)
 
+	// nftPresale
+	nftPresale := r.Group("/nft_presale")
+	nftPresale.GET("/get/purchased", handlers.GetPurchasedNftPresaleInfo)
+
 	return r
 }
