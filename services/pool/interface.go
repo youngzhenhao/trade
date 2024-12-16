@@ -8,7 +8,16 @@ import (
 )
 
 func CreatePoolAccount(tx *gorm.DB, pairId uint, allowTokens []string) (err error) {
-	return poolAccount.CreatePoolAccount(tx, pairId, allowTokens)
+	transTokens := make([]string, 0)
+	for _, token := range allowTokens {
+		if token == "sat" {
+			transTokens = append(transTokens, "00")
+		} else {
+			transTokens = append(transTokens, token)
+		}
+	}
+
+	return poolAccount.CreatePoolAccount(tx, pairId, transTokens)
 }
 
 // @Description: token is the asset_id or the "sat"
