@@ -88,6 +88,7 @@ func LessAssetBalance(Db *gorm.DB, usr *account.UserInfo, amount float64, balanc
 		return 0, err
 	}
 	if balance.Amount < amount {
+		btlLog.CUST.Error("usr:%v,balanceId:%v,assetId:%v", usr.Account.UserName, balanceId, assetId)
 		btlLog.CUST.Error("LessBtcBalance error: "+"not enough asset balance,need %v,but only have %v", amount, balance.Amount)
 		return 0, NotEnoughAssetBalance
 	}
