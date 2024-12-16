@@ -432,7 +432,7 @@ func GetAssetInfoApi(id string) (*AssetInfoApi, error) {
 		AssetType:    assetType,
 		GroupName:    &newMeta.GroupName,
 		Amount:       amount,
-		Meta:         &newMeta.Description,
+		Meta:         &m,
 		CreateHeight: int64(createHeight),
 		CreateTime:   createTime.Unix(),
 		Universe:     "localhost",
