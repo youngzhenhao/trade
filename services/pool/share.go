@@ -319,6 +319,52 @@ func updateShareBalanceBurn(tx *gorm.DB, shareId uint, username string, _liquidi
 	return previousShare, nil
 }
 
+type PoolShareBalanceInfo struct {
+	ID       uint   `json:"id"`
+	ShareId  uint   `json:"share_id"`
+	Username string `json:"username"`
+	Balance  string `json:"balance"`
+}
+
+func QueryUserShareBalance(tokenA string, tokenB string, username string) (poolShareBalanceInfo *PoolShareBalanceInfo, err error) {
+	var poolInfo *PoolInfo
+	poolInfo, err = queryPoolInfo(tokenA, tokenB)
+	if err != nil {
+		return new(PoolShareBalanceInfo), utils.AppendErrorInfo(err, "queryPoolInfo")
+	}
+	if poolInfo == nil {
+		return new(PoolShareBalanceInfo), errors.New("pool info nil")
+	}
+	if poolInfo.PairId == 0 {
+		return new(PoolShareBalanceInfo), PoolDoesNotExistErr
+	}
+
+	tx := middleware.DB.Begin()
+
+	var _poolShareBalanceInfo PoolShareBalanceInfo
+
+	err = tx.Table("pool_share_balances").
+		Select("id,share_id,username,balance").
+		Where("username = ? and share_id = ?", username, poolInfo.ShareId).
+		Scan(&_poolShareBalanceInfo).
+		Error
+	if err != nil {
+		return new(PoolShareBalanceInfo), utils.AppendErrorInfo(err, "select PoolShareBalanceInfo")
+	}
+
+	tx.Rollback()
+
+	if _poolShareBalanceInfo.ID == 0 {
+		_poolShareBalanceInfo.Balance = ZeroValue
+	}
+	if _poolShareBalanceInfo.Username == "" {
+		_poolShareBalanceInfo.Username = username
+	}
+
+	poolShareBalanceInfo = &_poolShareBalanceInfo
+	return poolShareBalanceInfo, nil
+}
+
 // PoolShareRecord
 
 type ShareRecordType int64

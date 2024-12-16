@@ -166,6 +166,35 @@ func QueryShareRecords(c *gin.Context) {
 	})
 }
 
+func QueryUserShareBalance(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	tokenA := c.Query("token_a")
+	tokenB := c.Query("token_b")
+	if username == "" {
+		err := errors.New("username is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UsernameEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &pool.PoolShareBalanceInfo{},
+		})
+		return
+	}
+	shareBalanceInfo, err := pool.QueryUserShareBalance(tokenA, tokenB, username)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryUserShareBalanceErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &pool.PoolShareBalanceInfo{},
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   shareBalanceInfo,
+	})
+}
+
 func QuerySwapRecordsCount(c *gin.Context) {
 	tokenA := c.Query("token_a")
 	tokenB := c.Query("token_b")
