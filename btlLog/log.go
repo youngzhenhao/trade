@@ -34,9 +34,11 @@ type ServicesLogger struct {
 	level       LogLevel
 }
 
-func NewLogger(logName string, level LogLevel, Writer ...io.Writer) *ServicesLogger {
+func NewLogger(logName string, level LogLevel, hasStdout bool, Writer ...io.Writer) *ServicesLogger {
 	var multiWriter io.Writer
-	multiWriter = io.MultiWriter(os.Stdout)
+	if hasStdout {
+		multiWriter = io.MultiWriter(os.Stdout)
+	}
 	for i := range Writer {
 		multiWriter = io.MultiWriter(multiWriter, Writer[i])
 	}
@@ -175,15 +177,15 @@ var (
 
 func loadDefaultLog() {
 	Level := INFO
-	CUST = NewLogger("CUST", Level, defaultLogFile)
-	FairLaunchDebugLogger = NewLogger("FLDL", Level, defaultLogFile)
-	FEE = NewLogger("FEE", Level, defaultLogFile)
-	ScheduledTask = NewLogger("CRON", Level, defaultLogFile)
-	PreSale = NewLogger("PRSL", Level, defaultLogFile, presaleLogFile)
-	MintNft = NewLogger("MINT", Level, mintNftFile)
-	UserData = NewLogger("URDT", Level, defaultLogFile, userDataLogFile)
-	UserStats = NewLogger("USTS", Level, defaultLogFile, userStatsLogFile)
-	CPAmm = NewLogger("CPAM", Level, defaultLogFile, cpAmmLogFile)
-	DateIpLogin = NewLogger("DILR", Level, defaultLogFile, dateIpLoginLogFile)
-	PushQueue = NewLogger("PUSH", Level, defaultLogFile, pushQueueLogFile)
+	CUST = NewLogger("CUST", Level, true, defaultLogFile)
+	FairLaunchDebugLogger = NewLogger("FLDL", Level, true, defaultLogFile)
+	FEE = NewLogger("FEE", Level, true, defaultLogFile)
+	ScheduledTask = NewLogger("CRON", Level, true, defaultLogFile)
+	PreSale = NewLogger("PRSL", Level, true, defaultLogFile, presaleLogFile)
+	MintNft = NewLogger("MINT", Level, false, mintNftFile)
+	UserData = NewLogger("URDT", Level, true, defaultLogFile, userDataLogFile)
+	UserStats = NewLogger("USTS", Level, true, defaultLogFile, userStatsLogFile)
+	CPAmm = NewLogger("CPAM", Level, true, defaultLogFile, cpAmmLogFile)
+	DateIpLogin = NewLogger("DILR", Level, true, defaultLogFile, dateIpLoginLogFile)
+	PushQueue = NewLogger("PUSH", Level, true, defaultLogFile, pushQueueLogFile)
 }

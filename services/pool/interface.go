@@ -1,7 +1,6 @@
 package pool
 
 import (
-	"errors"
 	"gorm.io/gorm"
 	"math/big"
 	"trade/models/custodyModels/pAccount"
@@ -43,10 +42,6 @@ func UnLockPoolAccount(tx *gorm.DB, pairId uint) (err error) {
 }
 
 // @Note: Transfer Sats only
-func TransferWithdrawReward(tx *gorm.DB, username string, _amount *big.Int, transferDescription string) (recordId uint, err error) {
-
-	// TODO
-	err = errors.New("interface not implemented")
-
-	return recordId, err
+func TransferWithdrawReward(username string, _amount *big.Int, transferDescription string) (recordId uint, err error) {
+	return poolAccount.AwardSat(username, _amount, transferDescription)
 }

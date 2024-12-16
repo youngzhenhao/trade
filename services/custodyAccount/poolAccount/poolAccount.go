@@ -197,6 +197,20 @@ func UnlockPoolAccount(tx *gorm.DB, pairId uint) error {
 	return tx.Table("custody_pool_accounts").Where("pair_id = ?", pairId).Update("status", 1).Error
 }
 
+func AwardSat(username string, _amount *big.Int, transferDesc string) (uint, error) {
+	amount := bigIntToFloat64(_amount)
+	usr, err := account.GetUserInfo(username)
+	if err != nil {
+		return 0, err
+	}
+	awardType := "swapLP"
+	award, err := custodyBtc.PutInAward(usr, "", int(amount), &awardType, transferDesc)
+	if err != nil {
+		return 0, err
+	}
+	return award.ID, nil
+}
+
 type PAccountInfo struct {
 	Status   uint
 	Balances *[]pAccount.PAccountBalance

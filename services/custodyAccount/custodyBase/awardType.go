@@ -13,6 +13,7 @@ func init() {
 	AwardTypes["tip21"] = "领取资产（推广）"
 	AwardTypes["tip32"] = "购买预售NFT奖励(直推)"
 	AwardTypes["tip31"] = "购买预售NFT奖励(推广)"
+	AwardTypes["swapLP"] = "LP奖励提现"
 }
 
 func GetAwardType(award string) string {
