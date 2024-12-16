@@ -1170,7 +1170,7 @@ func withdrawAward(username string, amount string) (newBalance string, err error
 	var withdrawTransferRecordId uint
 
 	// TODO: Transfer _amount of tokenSat from pool to user
-	withdrawTransferRecordId, err = TransferWithdrawReward(tx, username, _amount, "withdrawAward")
+	withdrawTransferRecordId, err = TransferWithdrawReward(username, _amount, "withdrawAward")
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "TransferWithdrawReward")
 	}
