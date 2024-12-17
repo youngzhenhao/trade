@@ -911,10 +911,7 @@ func ProcessNftPresaleBoughtNotPay() {
 		return
 	}
 	// @dev: Do not use PrintProcessionResult
-	err = utils.WriteToLogFile("./trade.presale.log", "[PRESALE.BNP]", "\n"+utils.ValueJsonString(processionResult))
-	if err != nil {
-		utils.LogError("WriteToLogFile ./logs/trade.presale.log", err)
-	}
+	btlLog.PreSale.Error("[PRESALE.BNP]%v", "\n"+utils.ValueJsonString(processionResult))
 }
 
 func ProcessNftPresalePaidPending() {
@@ -926,10 +923,7 @@ func ProcessNftPresalePaidPending() {
 		return
 	}
 	// @dev: Do not use PrintProcessionResult
-	err = utils.WriteToLogFile("./trade.presale.log", "[PRESALE.PPD]", "\n"+utils.ValueJsonString(processionResult))
-	if err != nil {
-		utils.LogError("WriteToLogFile ./logs/trade.presale.log", err)
-	}
+	btlLog.PreSale.Error("[PRESALE.PPD]%v", "\n"+utils.ValueJsonString(processionResult))
 }
 
 func ProcessNftPresalePaidNotSend() {
@@ -941,10 +935,7 @@ func ProcessNftPresalePaidNotSend() {
 		return
 	}
 	// @dev: Do not use PrintProcessionResult
-	err = utils.WriteToLogFile("./trade.presale.log", "[PRESALE.PNS]", "\n"+utils.ValueJsonString(processionResult))
-	if err != nil {
-		utils.LogError("WriteToLogFile ./logs/trade.presale.log", err)
-	}
+	btlLog.PreSale.Error("[PRESALE.PNS]%v", "\n"+utils.ValueJsonString(processionResult))
 }
 
 func ProcessNftPresaleSentPending() {
@@ -956,10 +947,7 @@ func ProcessNftPresaleSentPending() {
 		return
 	}
 	// @dev: Do not use PrintProcessionResult
-	err = utils.WriteToLogFile("./trade.presale.log", "[PRESALE.SPD]", "\n"+utils.ValueJsonString(processionResult))
-	if err != nil {
-		utils.LogError("WriteToLogFile ./logs/trade.presale.log", err)
-	}
+	btlLog.PreSale.Error("[PRESALE.SPD]%v", "\n"+utils.ValueJsonString(processionResult))
 }
 
 // @dev: Other Operations
