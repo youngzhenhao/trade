@@ -913,7 +913,7 @@ func ProcessNftPresaleBoughtNotPay() {
 	// @dev: Do not use PrintProcessionResult
 	err = utils.WriteToLogFile("./trade.presale.log", "[PRESALE.BNP]", "\n"+utils.ValueJsonString(processionResult))
 	if err != nil {
-		utils.LogError("WriteToLogFile ./trade.presale.log", err)
+		utils.LogError("WriteToLogFile ./logs/trade.presale.log", err)
 	}
 }
 
@@ -928,7 +928,7 @@ func ProcessNftPresalePaidPending() {
 	// @dev: Do not use PrintProcessionResult
 	err = utils.WriteToLogFile("./trade.presale.log", "[PRESALE.PPD]", "\n"+utils.ValueJsonString(processionResult))
 	if err != nil {
-		utils.LogError("WriteToLogFile ./trade.presale.log", err)
+		utils.LogError("WriteToLogFile ./logs/trade.presale.log", err)
 	}
 }
 
@@ -943,7 +943,7 @@ func ProcessNftPresalePaidNotSend() {
 	// @dev: Do not use PrintProcessionResult
 	err = utils.WriteToLogFile("./trade.presale.log", "[PRESALE.PNS]", "\n"+utils.ValueJsonString(processionResult))
 	if err != nil {
-		utils.LogError("WriteToLogFile ./trade.presale.log", err)
+		utils.LogError("WriteToLogFile ./logs/trade.presale.log", err)
 	}
 }
 
@@ -958,7 +958,7 @@ func ProcessNftPresaleSentPending() {
 	// @dev: Do not use PrintProcessionResult
 	err = utils.WriteToLogFile("./trade.presale.log", "[PRESALE.SPD]", "\n"+utils.ValueJsonString(processionResult))
 	if err != nil {
-		utils.LogError("WriteToLogFile ./trade.presale.log", err)
+		utils.LogError("WriteToLogFile ./logs/trade.presale.log", err)
 	}
 }
 

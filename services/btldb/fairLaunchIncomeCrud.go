@@ -1,12 +1,13 @@
 package btldb
 
 import (
+	"gorm.io/gorm"
 	"trade/middleware"
 	"trade/models"
 )
 
-func CreateFairLaunchIncome(fairLaunchIncome *models.FairLaunchIncome) error {
-	return middleware.DB.Create(fairLaunchIncome).Error
+func CreateFairLaunchIncome(tx *gorm.DB, fairLaunchIncome *models.FairLaunchIncome) error {
+	return tx.Create(fairLaunchIncome).Error
 }
 
 func CreateFairLaunchIncomes(fairLaunchIncomes *[]models.FairLaunchIncome) error {

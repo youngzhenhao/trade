@@ -125,11 +125,14 @@ func TaskCountRecordByRedis(name string) error {
 }
 
 func (cs *CronService) FairLaunchIssuance() {
-	FairLaunchIssuance()
+	tx := middleware.DB.Begin()
+	FairLaunchIssuance(tx)
 	err := TaskCountRecordByRedis("FairLaunchIssuance")
 	if err != nil {
+		tx.Rollback()
 		return
 	}
+	tx.Commit()
 }
 
 func (cs *CronService) SnapshotToZipLast() {
@@ -141,59 +144,80 @@ func (cs *CronService) SnapshotToZipLast() {
 }
 
 func (cs *CronService) ProcessFairLaunchNoPay() {
-	ProcessFairLaunchNoPay()
+	tx := middleware.DB.Begin()
+	ProcessFairLaunchNoPay(tx)
 	err := TaskCountRecordByRedis("ProcessFairLaunchNoPay")
 	if err != nil {
+		tx.Rollback()
 		return
 	}
+	tx.Commit()
 }
 
 func (cs *CronService) ProcessFairLaunchPaidPending() {
-	ProcessFairLaunchPaidPending()
+	tx := middleware.DB.Begin()
+	ProcessFairLaunchPaidPending(tx)
 	err := TaskCountRecordByRedis("ProcessFairLaunchPaidPending")
 	if err != nil {
+		tx.Rollback()
 		return
 	}
+	tx.Commit()
 }
 
 func (cs *CronService) ProcessFairLaunchPaidNoIssue() {
-	ProcessFairLaunchPaidNoIssue()
+	tx := middleware.DB.Begin()
+	ProcessFairLaunchPaidNoIssue(tx)
 	err := TaskCountRecordByRedis("ProcessFairLaunchPaidNoIssue")
 	if err != nil {
+		tx.Rollback()
 		return
 	}
+	tx.Commit()
 }
 
 func (cs *CronService) ProcessFairLaunchIssuedPending() {
-	ProcessFairLaunchIssuedPending()
+	tx := middleware.DB.Begin()
+	ProcessFairLaunchIssuedPending(tx)
 	err := TaskCountRecordByRedis("ProcessFairLaunchIssuedPending")
 	if err != nil {
+		tx.Rollback()
 		return
 	}
+	tx.Commit()
 }
 
 func (cs *CronService) ProcessFairLaunchReservedSentPending() {
-	ProcessFairLaunchReservedSentPending()
+	tx := middleware.DB.Begin()
+	ProcessFairLaunchReservedSentPending(tx)
 	err := TaskCountRecordByRedis("ProcessFairLaunchReservedSentPending")
 	if err != nil {
+		tx.Rollback()
 		return
 	}
+	tx.Commit()
 }
 
 func (cs *CronService) FairLaunchMint() {
-	FairLaunchMint()
+	tx := middleware.DB.Begin()
+	FairLaunchMint(tx)
 	err := TaskCountRecordByRedis("FairLaunchMint")
 	if err != nil {
+		tx.Rollback()
 		return
 	}
+	tx.Commit()
 }
 
 func (cs *CronService) SendFairLaunchAsset() {
-	SendFairLaunchAsset()
+	tx := middleware.DB.Begin()
+	SendFairLaunchAsset(tx)
 	err := TaskCountRecordByRedis("SendFairLaunchAsset")
 	if err != nil {
+		tx.Rollback()
 		return
 	}
+	tx.Commit()
 }
 
 func (cs *CronService) RemoveMintedInventories() {

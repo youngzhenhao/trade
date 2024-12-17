@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lightninglabs/taproot-assets/taprpc"
+	"gorm.io/gorm"
 	"math"
 	"reflect"
 	"sort"
@@ -29,8 +30,8 @@ func PrintProcessionResult(processionResult *[]ProcessionResult) {
 
 // FairLaunchIssuance
 // @Description: Scheduled Task
-func FairLaunchIssuance() {
-	processionResult, err := ProcessAllFairLaunchInfos()
+func FairLaunchIssuance(tx *gorm.DB) {
+	processionResult, err := ProcessAllFairLaunchInfos(tx)
 	if err != nil {
 		return
 	}
@@ -44,8 +45,8 @@ func FairLaunchIssuance() {
 
 // ProcessFairLaunchNoPay
 // @Description: Scheduled Task
-func ProcessFairLaunchNoPay() {
-	processionResult, err := ProcessAllFairLaunchStateNoPayInfoService()
+func ProcessFairLaunchNoPay(tx *gorm.DB) {
+	processionResult, err := ProcessAllFairLaunchStateNoPayInfoService(tx)
 	if err != nil {
 		return
 	}
@@ -57,8 +58,8 @@ func ProcessFairLaunchNoPay() {
 
 // ProcessFairLaunchPaidPending
 // @Description: Scheduled Task
-func ProcessFairLaunchPaidPending() {
-	processionResult, err := ProcessAllFairLaunchStatePaidPendingInfoService()
+func ProcessFairLaunchPaidPending(tx *gorm.DB) {
+	processionResult, err := ProcessAllFairLaunchStatePaidPendingInfoService(tx)
 	if err != nil {
 		return
 	}
@@ -70,8 +71,8 @@ func ProcessFairLaunchPaidPending() {
 
 // ProcessFairLaunchPaidNoIssue
 // @Description: Scheduled Task
-func ProcessFairLaunchPaidNoIssue() {
-	processionResult, err := ProcessAllFairLaunchStatePaidNoIssueInfoService()
+func ProcessFairLaunchPaidNoIssue(tx *gorm.DB) {
+	processionResult, err := ProcessAllFairLaunchStatePaidNoIssueInfoService(tx)
 	if err != nil {
 		return
 	}
@@ -83,8 +84,8 @@ func ProcessFairLaunchPaidNoIssue() {
 
 // ProcessFairLaunchIssuedPending
 // @Description: Scheduled Task
-func ProcessFairLaunchIssuedPending() {
-	processionResult, err := ProcessAllFairLaunchStateIssuedPendingInfoService()
+func ProcessFairLaunchIssuedPending(tx *gorm.DB) {
+	processionResult, err := ProcessAllFairLaunchStateIssuedPendingInfoService(tx)
 	if err != nil {
 		return
 	}
@@ -96,8 +97,8 @@ func ProcessFairLaunchIssuedPending() {
 
 // ProcessFairLaunchReservedSentPending
 // @Description: Scheduled Task
-func ProcessFairLaunchReservedSentPending() {
-	processionResult, err := ProcessAllFairLaunchStateReservedSentPending()
+func ProcessFairLaunchReservedSentPending(tx *gorm.DB) {
+	processionResult, err := ProcessAllFairLaunchStateReservedSentPending(tx)
 	if err != nil {
 		return
 	}
@@ -109,8 +110,8 @@ func ProcessFairLaunchReservedSentPending() {
 
 // FairLaunchMint
 // @Description: Scheduled Task
-func FairLaunchMint() {
-	processionResult, err := ProcessAllFairLaunchMintedInfos()
+func FairLaunchMint(tx *gorm.DB) {
+	processionResult, err := ProcessAllFairLaunchMintedInfos(tx)
 	if err != nil {
 		return
 	}
@@ -122,8 +123,8 @@ func FairLaunchMint() {
 
 // SendFairLaunchAsset
 // @Description: Scheduled Task
-func SendFairLaunchAsset() {
-	err := SendFairLaunchMintedAssetLocked()
+func SendFairLaunchAsset(tx *gorm.DB) {
+	err := SendFairLaunchMintedAssetLocked(tx)
 	if err != nil {
 		err = utils.WriteToLogFile("./trade.SendFairLaunchAsset.log", "[TRADE.SFLA]", utils.ValueJsonString(err))
 		if err != nil {
@@ -468,7 +469,7 @@ func CalculationExpressionBySeparateAmount(calculateSeparateAmount *CalculateSep
 
 // CreateInventoryInfoByFairLaunchInfo
 // @Description: Create Inventory Info By FairLaunchInfo
-func CreateInventoryInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
+func CreateInventoryInfoByFairLaunchInfo(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) error {
 	var FairLaunchInventoryInfos []models.FairLaunchInventoryInfo
 	items := fairLaunchInfo.MintNumber - 1
 	for ; items > 0; items -= 1 {
@@ -482,12 +483,12 @@ func CreateInventoryInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) 
 		FairLaunchInfoID: int(fairLaunchInfo.ID),
 		Quantity:         fairLaunchInfo.FinalQuantity,
 	})
-	return CreateFairLaunchInventoryInfosBatchProcess(&FairLaunchInventoryInfos)
+	return CreateFairLaunchInventoryInfosBatchProcess(tx, &FairLaunchInventoryInfos)
 }
 
 // CreateAssetIssuanceInfoByFairLaunchInfo
 // @Description: Create Asset Issuance Info By FairLaunchInfo
-func CreateAssetIssuanceInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
+func CreateAssetIssuanceInfoByFairLaunchInfo(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) error {
 	assetIssuance := models.AssetIssuance{
 		AssetName:      fairLaunchInfo.Name,
 		AssetId:        fairLaunchInfo.AssetID,
@@ -499,7 +500,7 @@ func CreateAssetIssuanceInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchIn
 		State:          models.AssetIssuanceStatePending,
 	}
 	a := btldb.AssetIssuanceStore{DB: middleware.DB}
-	return a.CreateAssetIssuance(&assetIssuance)
+	return a.CreateAssetIssuance(tx, &assetIssuance)
 }
 
 // GetAllInventoryInfoByFairLaunchInfoId
@@ -675,12 +676,12 @@ func AmountAndQuantityToNumber(amount int, quantity int) int {
 
 // CreateInventoryAndAssetIssuanceInfoByFairLaunchInfo
 // @Description: Update inventory and asset issuance
-func CreateInventoryAndAssetIssuanceInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) (err error) {
-	err = CreateInventoryInfoByFairLaunchInfo(fairLaunchInfo)
+func CreateInventoryAndAssetIssuanceInfoByFairLaunchInfo(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
+	err = CreateInventoryInfoByFairLaunchInfo(tx, fairLaunchInfo)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "CreateInventoryInfoByFairLaunchInfo")
 	}
-	err = CreateAssetIssuanceInfoByFairLaunchInfo(fairLaunchInfo)
+	err = CreateAssetIssuanceInfoByFairLaunchInfo(tx, fairLaunchInfo)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "CreateAssetIssuanceInfoByFairLaunchInfo")
 	}
@@ -742,7 +743,7 @@ type ProcessionResult struct {
 	models.JsonResult
 }
 
-func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
+func ProcessAllFairLaunchInfos(tx *gorm.DB) (*[]ProcessionResult, error) {
 	var processionResults []ProcessionResult
 	allFairLaunchInfos, err := GetAllValidFairLaunchInfos()
 	if err != nil {
@@ -750,7 +751,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 	}
 	for _, fairLaunchInfo := range *allFairLaunchInfos {
 		if fairLaunchInfo.State == models.FairLaunchStateNoPay {
-			err = ProcessFairLaunchStateNoPayInfoService(&fairLaunchInfo)
+			err = ProcessFairLaunchStateNoPayInfoService(tx, &fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchInfo.ID),
@@ -772,7 +773,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 				})
 			}
 		} else if fairLaunchInfo.State == models.FairLaunchStatePaidPending {
-			err = ProcessFairLaunchStatePaidPendingInfoService(&fairLaunchInfo)
+			err = ProcessFairLaunchStatePaidPendingInfoService(tx, &fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchInfo.ID),
@@ -794,7 +795,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 				})
 			}
 		} else if fairLaunchInfo.State == models.FairLaunchStatePaidNoIssue {
-			err = ProcessFairLaunchStatePaidNoIssueInfoService(&fairLaunchInfo)
+			err = ProcessFairLaunchStatePaidNoIssueInfoService(tx, &fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchInfo.ID),
@@ -816,7 +817,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 				})
 			}
 		} else if fairLaunchInfo.State == models.FairLaunchStateIssuedPending {
-			err = ProcessFairLaunchStateIssuedPendingInfoService(&fairLaunchInfo)
+			err = ProcessFairLaunchStateIssuedPendingInfoService(tx, &fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchInfo.ID),
@@ -838,7 +839,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 				})
 			}
 		} else if fairLaunchInfo.State == models.FairLaunchStateReservedSentPending {
-			err = ProcessFairLaunchStateReservedSentPending(&fairLaunchInfo)
+			err = ProcessFairLaunchStateReservedSentPending(tx, &fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchInfo.ID),
@@ -872,7 +873,7 @@ func ProcessAllFairLaunchInfos() (*[]ProcessionResult, error) {
 
 // ProcessAllFairLaunchStateNoPayInfoService
 // @dev: Short time intervals
-func ProcessAllFairLaunchStateNoPayInfoService() (*[]ProcessionResult, error) {
+func ProcessAllFairLaunchStateNoPayInfoService(tx *gorm.DB) (*[]ProcessionResult, error) {
 	var processionResults []ProcessionResult
 	fairLaunchInfos, err := GetAllFairLaunchStateNoPayInfos()
 	if err != nil {
@@ -880,11 +881,11 @@ func ProcessAllFairLaunchStateNoPayInfoService() (*[]ProcessionResult, error) {
 	}
 	for _, fairLaunchInfo := range *fairLaunchInfos {
 		{
-			err = IncreaseFairLaunchInfoProcessNumber(&fairLaunchInfo)
+			err = IncreaseFairLaunchInfoProcessNumber(tx, &fairLaunchInfo)
 			if err != nil {
 				// @dev: Do nothing
 			}
-			err = ProcessFairLaunchStateNoPayInfoService(&fairLaunchInfo)
+			err = ProcessFairLaunchStateNoPayInfoService(tx, &fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchInfo.ID),
@@ -916,7 +917,7 @@ func ProcessAllFairLaunchStateNoPayInfoService() (*[]ProcessionResult, error) {
 
 // ProcessAllFairLaunchStatePaidPendingInfoService
 // @dev: Short time intervals
-func ProcessAllFairLaunchStatePaidPendingInfoService() (*[]ProcessionResult, error) {
+func ProcessAllFairLaunchStatePaidPendingInfoService(tx *gorm.DB) (*[]ProcessionResult, error) {
 	var processionResults []ProcessionResult
 	fairLaunchInfos, err := GetAllFairLaunchStatePaidPendingInfos()
 	if err != nil {
@@ -924,11 +925,11 @@ func ProcessAllFairLaunchStatePaidPendingInfoService() (*[]ProcessionResult, err
 	}
 	for _, fairLaunchInfo := range *fairLaunchInfos {
 		{
-			err = IncreaseFairLaunchInfoProcessNumber(&fairLaunchInfo)
+			err = IncreaseFairLaunchInfoProcessNumber(tx, &fairLaunchInfo)
 			if err != nil {
 				// @dev: Do nothing
 			}
-			err = ProcessFairLaunchStatePaidPendingInfoService(&fairLaunchInfo)
+			err = ProcessFairLaunchStatePaidPendingInfoService(tx, &fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchInfo.ID),
@@ -960,7 +961,7 @@ func ProcessAllFairLaunchStatePaidPendingInfoService() (*[]ProcessionResult, err
 
 // ProcessAllFairLaunchStatePaidNoIssueInfoService
 // @notice: This spends utxos，need to update
-func ProcessAllFairLaunchStatePaidNoIssueInfoService() (*[]ProcessionResult, error) {
+func ProcessAllFairLaunchStatePaidNoIssueInfoService(tx *gorm.DB) (*[]ProcessionResult, error) {
 	var processionResults []ProcessionResult
 	fairLaunchInfos, err := GetAllFairLaunchStatePaidNoIssueInfos()
 	if err != nil {
@@ -968,11 +969,11 @@ func ProcessAllFairLaunchStatePaidNoIssueInfoService() (*[]ProcessionResult, err
 	}
 	for _, fairLaunchInfo := range *fairLaunchInfos {
 		{
-			err = IncreaseFairLaunchInfoProcessNumber(&fairLaunchInfo)
+			err = IncreaseFairLaunchInfoProcessNumber(tx, &fairLaunchInfo)
 			if err != nil {
 				// @dev: Do nothing
 			}
-			err = ProcessFairLaunchStatePaidNoIssueInfoService(&fairLaunchInfo)
+			err = ProcessFairLaunchStatePaidNoIssueInfoService(tx, &fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchInfo.ID),
@@ -1004,7 +1005,7 @@ func ProcessAllFairLaunchStatePaidNoIssueInfoService() (*[]ProcessionResult, err
 
 // ProcessAllFairLaunchStateIssuedPendingInfoService
 // @dev: Short time intervals
-func ProcessAllFairLaunchStateIssuedPendingInfoService() (*[]ProcessionResult, error) {
+func ProcessAllFairLaunchStateIssuedPendingInfoService(tx *gorm.DB) (*[]ProcessionResult, error) {
 	var processionResults []ProcessionResult
 	fairLaunchInfos, err := GetAllFairLaunchStateIssuedPendingInfos()
 	if err != nil {
@@ -1012,11 +1013,11 @@ func ProcessAllFairLaunchStateIssuedPendingInfoService() (*[]ProcessionResult, e
 	}
 	for _, fairLaunchInfo := range *fairLaunchInfos {
 		{
-			err = IncreaseFairLaunchInfoProcessNumber(&fairLaunchInfo)
+			err = IncreaseFairLaunchInfoProcessNumber(tx, &fairLaunchInfo)
 			if err != nil {
 				// @dev: Do nothing
 			}
-			err = ProcessFairLaunchStateIssuedPendingInfoService(&fairLaunchInfo)
+			err = ProcessFairLaunchStateIssuedPendingInfoService(tx, &fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchInfo.ID),
@@ -1048,7 +1049,7 @@ func ProcessAllFairLaunchStateIssuedPendingInfoService() (*[]ProcessionResult, e
 
 // ProcessAllFairLaunchStateReservedSentPending
 // @dev: Short time intervals
-func ProcessAllFairLaunchStateReservedSentPending() (*[]ProcessionResult, error) {
+func ProcessAllFairLaunchStateReservedSentPending(tx *gorm.DB) (*[]ProcessionResult, error) {
 	var processionResults []ProcessionResult
 	fairLaunchInfos, err := GetAllFairLaunchStateReservedSentPending()
 	if err != nil {
@@ -1056,11 +1057,11 @@ func ProcessAllFairLaunchStateReservedSentPending() (*[]ProcessionResult, error)
 	}
 	for _, fairLaunchInfo := range *fairLaunchInfos {
 		{
-			err = IncreaseFairLaunchInfoProcessNumber(&fairLaunchInfo)
+			err = IncreaseFairLaunchInfoProcessNumber(tx, &fairLaunchInfo)
 			if err != nil {
 				// @dev: Do nothing
 			}
-			err = ProcessFairLaunchStateReservedSentPending(&fairLaunchInfo)
+			err = ProcessFairLaunchStateReservedSentPending(tx, &fairLaunchInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchInfo.ID),
@@ -1090,54 +1091,54 @@ func ProcessAllFairLaunchStateReservedSentPending() (*[]ProcessionResult, error)
 	return &processionResults, nil
 }
 
-func UpdateFairLaunchInfoPaidId(fairLaunchInfo *models.FairLaunchInfo, paidId int) (err error) {
+func UpdateFairLaunchInfoPaidId(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo, paidId int) (err error) {
 	fairLaunchInfo.IssuanceFeePaidID = paidId
 	fairLaunchInfo.PayMethod = models.FeePaymentMethodCustodyAccount
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchInfo(fairLaunchInfo)
+	return f.UpdateFairLaunchInfo(tx, fairLaunchInfo)
 }
 
-func ChangeFairLaunchInfoState(fairLaunchInfo *models.FairLaunchInfo, state models.FairLaunchState) (err error) {
+func ChangeFairLaunchInfoState(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo, state models.FairLaunchState) (err error) {
 	fairLaunchInfo.State = state
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchInfo(fairLaunchInfo)
+	return f.UpdateFairLaunchInfo(tx, fairLaunchInfo)
 }
 
-func ClearFairLaunchInfoProcessNumber(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func ClearFairLaunchInfoProcessNumber(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	fairLaunchInfo.ProcessNumber = 0
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchInfo(fairLaunchInfo)
+	return f.UpdateFairLaunchInfo(tx, fairLaunchInfo)
 }
 
-func IncreaseFairLaunchInfoProcessNumber(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func IncreaseFairLaunchInfoProcessNumber(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	fairLaunchInfo.ProcessNumber += 1
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchInfo(fairLaunchInfo)
+	return f.UpdateFairLaunchInfo(tx, fairLaunchInfo)
 }
 
-func ChangeFairLaunchInfoStateAndUpdatePaidSuccessTime(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func ChangeFairLaunchInfoStateAndUpdatePaidSuccessTime(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	fairLaunchInfo.State = models.FairLaunchStatePaidNoIssue
 	fairLaunchInfo.PaidSuccessTime = utils.GetTimestamp()
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchInfo(fairLaunchInfo)
+	return f.UpdateFairLaunchInfo(tx, fairLaunchInfo)
 }
 
-func UpdateFairLaunchInfoBatchKeyAndBatchState(fairLaunchInfo *models.FairLaunchInfo, batchKey string, batchState string) (err error) {
+func UpdateFairLaunchInfoBatchKeyAndBatchState(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo, batchKey string, batchState string) (err error) {
 	fairLaunchInfo.BatchKey = batchKey
 	fairLaunchInfo.BatchState = batchState
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchInfo(fairLaunchInfo)
+	return f.UpdateFairLaunchInfo(tx, fairLaunchInfo)
 }
 
-func UpdateFairLaunchInfoBatchTxidAndAssetId(fairLaunchInfo *models.FairLaunchInfo, batchTxidAnchor string, batchState string, assetId string) (err error) {
+func UpdateFairLaunchInfoBatchTxidAndAssetId(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo, batchTxidAnchor string, batchState string, assetId string) (err error) {
 	fairLaunchInfo.BatchTxidAnchor = batchTxidAnchor
 	fairLaunchInfo.BatchState = batchState
 	fairLaunchInfo.AssetID = assetId
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchInfo(fairLaunchInfo)
+	return f.UpdateFairLaunchInfo(tx, fairLaunchInfo)
 }
 
-func FairLaunchTapdMint(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func FairLaunchTapdMint(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	// @dev: 1.taprpc MintAsset
 	var isCollectible bool
 	if fairLaunchInfo.AssetType == taprpc.AssetType_COLLECTIBLE {
@@ -1151,14 +1152,14 @@ func FairLaunchTapdMint(fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	// @dev: 2.update batchKey and batchState
 	batchKey := hex.EncodeToString(mintResponse.GetPendingBatch().GetBatchKey())
 	batchState := mintResponse.GetPendingBatch().GetState().String()
-	err = UpdateFairLaunchInfoBatchKeyAndBatchState(fairLaunchInfo, batchKey, batchState)
+	err = UpdateFairLaunchInfoBatchKeyAndBatchState(tx, fairLaunchInfo, batchKey, batchState)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoBatchKeyAndBatchState")
 	}
 	return nil
 }
 
-func FairLaunchTapdMintFinalize(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func FairLaunchTapdMintFinalize(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	// @dev: FeeRate maybe need to choose
 	finalizeResponse, err := api.FinalizeBatchAndGetResponse(fairLaunchInfo.FeeRate)
 	if err != nil {
@@ -1175,11 +1176,11 @@ func FairLaunchTapdMintFinalize(fairLaunchInfo *models.FairLaunchInfo) (err erro
 		return utils.AppendErrorInfo(err, "BatchTxidAnchorToAssetId")
 	}
 	// @dev: Record paid fee
-	err = CreateFairLaunchIncomeOfServerPayIssuanceFinalizeFee(int(fairLaunchInfo.ID), batchTxidAnchor)
+	err = CreateFairLaunchIncomeOfServerPayIssuanceFinalizeFee(tx, int(fairLaunchInfo.ID), batchTxidAnchor)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfServerPayIssuanceFinalizeFee")
 	}
-	err = UpdateFairLaunchInfoBatchTxidAndAssetId(fairLaunchInfo, batchTxidAnchor, batchState, assetId)
+	err = UpdateFairLaunchInfoBatchTxidAndAssetId(tx, fairLaunchInfo, batchTxidAnchor, batchState, assetId)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoBatchTxidAndAssetId")
 	}
@@ -1212,11 +1213,11 @@ func IsTransactionConfirmed(txid string) bool {
 	return mumConfirmations > 0
 }
 
-func UpdateFairLaunchInfoReservedCouldMintAndState(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func UpdateFairLaunchInfoReservedCouldMintAndState(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	fairLaunchInfo.ReservedCouldMint = true
 	fairLaunchInfo.State = models.FairLaunchStateIssued
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchInfo(fairLaunchInfo)
+	return f.UpdateFairLaunchInfo(tx, fairLaunchInfo)
 }
 
 func GetFairLaunchInfoState(fairLaunchId int) (fairLaunchState models.FairLaunchState, err error) {
@@ -1236,11 +1237,11 @@ func IsFairLaunchIssued(fairLaunchId int) bool {
 	return state >= models.FairLaunchStateIssued
 }
 
-func UpdateFairLaunchInfoStateAndIssuanceTime(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func UpdateFairLaunchInfoStateAndIssuanceTime(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	fairLaunchInfo.State = models.FairLaunchStateIssuedPending
 	fairLaunchInfo.IssuanceTime = utils.GetTimestamp()
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchInfo(fairLaunchInfo)
+	return f.UpdateFairLaunchInfo(tx, fairLaunchInfo)
 }
 
 func IsWalletBalanceEnough(value int) bool {
@@ -1310,41 +1311,41 @@ func ProcessIssuedFairLaunchInfos(fairLaunchInfos *[]models.FairLaunchInfo) *[]m
 
 // FairLaunchInfos Procession
 
-func ProcessFairLaunchStateNoPayInfoService(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func ProcessFairLaunchStateNoPayInfoService(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	// @dev: 1.pay fee
 	payIssuanceFeeResult, err := PayIssuanceFee(fairLaunchInfo.UserID, fairLaunchInfo.FeeRate)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "PayIssuanceFee")
 	}
 	// @dev: Record paid fee
-	err = CreateFairLaunchIncomeOfUserPayIssuanceFee(int(fairLaunchInfo.ID), payIssuanceFeeResult.PaidId, payIssuanceFeeResult.Fee, fairLaunchInfo.UserID, fairLaunchInfo.Username)
+	err = CreateFairLaunchIncomeOfUserPayIssuanceFee(tx, int(fairLaunchInfo.ID), payIssuanceFeeResult.PaidId, payIssuanceFeeResult.Fee, fairLaunchInfo.UserID, fairLaunchInfo.Username)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfUserPayIssuanceFee")
 	}
 	// @dev: 2.Store paidId
-	err = UpdateFairLaunchInfoPaidId(fairLaunchInfo, payIssuanceFeeResult.PaidId)
+	err = UpdateFairLaunchInfoPaidId(tx, fairLaunchInfo, payIssuanceFeeResult.PaidId)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoPaidId")
 	}
 	// @dev: 3.Change state
-	err = ChangeFairLaunchInfoState(fairLaunchInfo, models.FairLaunchStatePaidPending)
+	err = ChangeFairLaunchInfoState(tx, fairLaunchInfo, models.FairLaunchStatePaidPending)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "ChangeFairLaunchInfoState")
 	}
-	err = ClearFairLaunchInfoProcessNumber(fairLaunchInfo)
+	err = ClearFairLaunchInfoProcessNumber(tx, fairLaunchInfo)
 	if err != nil {
 		// @dev: Do nothing
 	}
 	return nil
 }
 
-func ProcessFairLaunchStatePaidPendingInfoService(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func ProcessFairLaunchStatePaidPendingInfoService(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	// @dev: 1.fee paid
 	var issuanceFeePaid bool
 	issuanceFeePaid, err = IsIssuanceFeePaid(fairLaunchInfo.IssuanceFeePaidID)
 	if err != nil {
 		if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
-			err = SetFairLaunchInfoFail(fairLaunchInfo)
+			err = SetFairLaunchInfoFail(tx, fairLaunchInfo)
 			if err != nil {
 				return utils.AppendErrorInfo(err, "SetFairLaunchInfoFail")
 			}
@@ -1352,64 +1353,64 @@ func ProcessFairLaunchStatePaidPendingInfoService(fairLaunchInfo *models.FairLau
 	}
 	if issuanceFeePaid {
 		// @dev: Change state
-		err = ChangeFairLaunchInfoStateAndUpdatePaidSuccessTime(fairLaunchInfo)
+		err = ChangeFairLaunchInfoStateAndUpdatePaidSuccessTime(tx, fairLaunchInfo)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "ChangeFairLaunchInfoStateAndUpdatePaidSuccessTime")
 		}
 		return nil
 	}
 	// @dev: fee has not been paid
-	err = ClearFairLaunchInfoProcessNumber(fairLaunchInfo)
+	err = ClearFairLaunchInfoProcessNumber(tx, fairLaunchInfo)
 	if err != nil {
 		// @dev: Do nothing
 	}
 	return nil
 }
 
-func ProcessFairLaunchStatePaidNoIssueInfoService(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func ProcessFairLaunchStatePaidNoIssueInfoService(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	// @dev: Check if confirmed balance enough
 	if !IsWalletBalanceEnough(fairLaunchInfo.SetGasFee) {
 		err = errors.New("lnd wallet balance is not enough")
 		return err
 	}
 	// @dev: 1.tapd mint, add to batch, finalize
-	err = FairLaunchTapdMint(fairLaunchInfo)
+	err = FairLaunchTapdMint(tx, fairLaunchInfo)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "FairLaunchTapdMint")
 	}
 	// @dev: Consider whether to use scheduled task to finalize
 	// @dev: Do not mint assets in one batch, which will anchor all assets to one utxo
-	err = FairLaunchTapdMintFinalize(fairLaunchInfo)
+	err = FairLaunchTapdMintFinalize(tx, fairLaunchInfo)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "FairLaunchTapdMintFinalize")
 	}
 	// @dev: 2.Update asset issuance table
-	err = CreateAssetIssuanceInfoByFairLaunchInfo(fairLaunchInfo)
+	err = CreateAssetIssuanceInfoByFairLaunchInfo(tx, fairLaunchInfo)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "CreateAssetIssuanceInfoByFairLaunchInfo")
 	}
 	// @dev: 3.update MintedAndAvailableInfo
-	err = CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo(fairLaunchInfo)
+	err = CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo(tx, fairLaunchInfo)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo")
 	}
 	// @dev: Update state and issuance time
-	err = UpdateFairLaunchInfoStateAndIssuanceTime(fairLaunchInfo)
+	err = UpdateFairLaunchInfoStateAndIssuanceTime(tx, fairLaunchInfo)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoStateAndIssuanceTime")
 	}
-	err = ClearFairLaunchInfoProcessNumber(fairLaunchInfo)
+	err = ClearFairLaunchInfoProcessNumber(tx, fairLaunchInfo)
 	if err != nil {
 		// @dev: Do nothing
 	}
 	return nil
 }
 
-func ProcessFairLaunchStateIssuedPendingInfoService(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func ProcessFairLaunchStateIssuedPendingInfoService(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	// @dev: 1.Is Transaction Confirmed
 	if IsTransactionConfirmed(fairLaunchInfo.BatchTxidAnchor) {
 		// @dev: Update FairLaunchInfo ReservedCouldMint And Change State
-		err = UpdateFairLaunchInfoReservedCouldMintAndState(fairLaunchInfo)
+		err = UpdateFairLaunchInfoReservedCouldMintAndState(tx, fairLaunchInfo)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "UpdateFairLaunchInfoReservedCouldMintAndState")
 		}
@@ -1421,7 +1422,7 @@ func ProcessFairLaunchStateIssuedPendingInfoService(fairLaunchInfo *models.FairL
 			return utils.AppendErrorInfo(err, "ReadAssetIssuanceByFairLaunchId")
 		}
 		assetIssuance.State = models.AssetIssuanceStateIssued
-		err = a.UpdateAssetIssuance(assetIssuance)
+		err = a.UpdateAssetIssuance(tx, assetIssuance)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "UpdateAssetIssuance")
 		}
@@ -1461,25 +1462,25 @@ func ProcessFairLaunchStateIssuedPendingInfoService(fairLaunchInfo *models.FairL
 	//}
 
 	//@dev: Transaction has not been Confirmed
-	err = ClearFairLaunchInfoProcessNumber(fairLaunchInfo)
+	err = ClearFairLaunchInfoProcessNumber(tx, fairLaunchInfo)
 	if err != nil {
 		// @dev: Do nothing
 	}
 	return nil
 }
 
-func ProcessFairLaunchStateReservedSentPending(fairLaunchInfo *models.FairLaunchInfo) (err error) {
+func ProcessFairLaunchStateReservedSentPending(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) (err error) {
 	// @dev: 1.Is Transaction Confirmed
 	if IsTransactionConfirmed(fairLaunchInfo.ReservedSentAnchorOutpointTxid) {
 		// @dev: Change FairLaunchInfo State
-		err = ChangeFairLaunchInfoState(fairLaunchInfo, models.FairLaunchStateReservedSent)
+		err = ChangeFairLaunchInfoState(tx, fairLaunchInfo, models.FairLaunchStateReservedSent)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "ChangeFairLaunchInfoState")
 		}
 		return nil
 	}
 	// @dev: Transaction has not been Confirmed
-	err = ClearFairLaunchInfoProcessNumber(fairLaunchInfo)
+	err = ClearFairLaunchInfoProcessNumber(tx, fairLaunchInfo)
 	if err != nil {
 		// @dev: Do nothing
 	}
@@ -1528,7 +1529,7 @@ func GetAllValidFairLaunchMintedInfos() (fairLaunchMintedInfos *[]models.FairLau
 	return fairLaunchMintedInfos, nil
 }
 
-func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
+func ProcessAllFairLaunchMintedInfos(tx *gorm.DB) (*[]ProcessionResult, error) {
 	var processionResults []ProcessionResult
 	allFairLaunchMintedInfos, err := GetAllValidFairLaunchMintedInfos()
 	if err != nil {
@@ -1536,11 +1537,11 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 	}
 	for _, fairLaunchMintedInfo := range *allFairLaunchMintedInfos {
 		if fairLaunchMintedInfo.State == models.FairLaunchMintedStateNoPay {
-			err = IncreaseFairLaunchMintedInfoProcessNumber(&fairLaunchMintedInfo)
+			err = IncreaseFairLaunchMintedInfoProcessNumber(tx, &fairLaunchMintedInfo)
 			if err != nil {
 				// @dev: Do nothing
 			}
-			err = ProcessFairLaunchMintedStateNoPayInfo(&fairLaunchMintedInfo)
+			err = ProcessFairLaunchMintedStateNoPayInfo(tx, &fairLaunchMintedInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchMintedInfo.ID),
@@ -1562,11 +1563,11 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 				})
 			}
 		} else if fairLaunchMintedInfo.State == models.FairLaunchMintedStatePaidPending {
-			err = IncreaseFairLaunchMintedInfoProcessNumber(&fairLaunchMintedInfo)
+			err = IncreaseFairLaunchMintedInfoProcessNumber(tx, &fairLaunchMintedInfo)
 			if err != nil {
 				// @dev: Do nothing
 			}
-			err = ProcessFairLaunchMintedStatePaidPendingInfo(&fairLaunchMintedInfo)
+			err = ProcessFairLaunchMintedStatePaidPendingInfo(tx, &fairLaunchMintedInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchMintedInfo.ID),
@@ -1588,11 +1589,11 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 				})
 			}
 		} else if fairLaunchMintedInfo.State == models.FairLaunchMintedStatePaidNoSend {
-			err = IncreaseFairLaunchMintedInfoProcessNumber(&fairLaunchMintedInfo)
+			err = IncreaseFairLaunchMintedInfoProcessNumber(tx, &fairLaunchMintedInfo)
 			if err != nil {
 				// @dev: Do nothing
 			}
-			err = ProcessFairLaunchMintedStatePaidNoSendInfo(&fairLaunchMintedInfo)
+			err = ProcessFairLaunchMintedStatePaidNoSendInfo(tx, &fairLaunchMintedInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchMintedInfo.ID),
@@ -1614,11 +1615,11 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 				})
 			}
 		} else if fairLaunchMintedInfo.State == models.FairLaunchMintedStateSentPending {
-			err = IncreaseFairLaunchMintedInfoProcessNumber(&fairLaunchMintedInfo)
+			err = IncreaseFairLaunchMintedInfoProcessNumber(tx, &fairLaunchMintedInfo)
 			if err != nil {
 				// @dev: Do nothing
 			}
-			err = ProcessFairLaunchMintedStateSentPendingInfo(&fairLaunchMintedInfo)
+			err = ProcessFairLaunchMintedStateSentPendingInfo(tx, &fairLaunchMintedInfo)
 			if err != nil {
 				processionResults = append(processionResults, ProcessionResult{
 					Id: int(fairLaunchMintedInfo.ID),
@@ -1648,24 +1649,24 @@ func ProcessAllFairLaunchMintedInfos() (*[]ProcessionResult, error) {
 	return &processionResults, nil
 }
 
-func UpdateFairLaunchMintedInfoPaidId(fairLaunchMintedInfo *models.FairLaunchMintedInfo, paidId int) (err error) {
+func UpdateFairLaunchMintedInfoPaidId(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo, paidId int) (err error) {
 	fairLaunchMintedInfo.MintFeePaidID = paidId
 	fairLaunchMintedInfo.PayMethod = models.FeePaymentMethodCustodyAccount
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
+	return f.UpdateFairLaunchMintedInfo(tx, fairLaunchMintedInfo)
 }
 
-func ChangeFairLaunchMintedInfoState(fairLaunchMintedInfo *models.FairLaunchMintedInfo, state models.FairLaunchMintedState) (err error) {
+func ChangeFairLaunchMintedInfoState(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo, state models.FairLaunchMintedState) (err error) {
 	fairLaunchMintedInfo.State = state
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
+	return f.UpdateFairLaunchMintedInfo(tx, fairLaunchMintedInfo)
 }
 
-func ChangeFairLaunchMintedInfoStateAndUpdatePaidSuccessTime(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+func ChangeFairLaunchMintedInfoStateAndUpdatePaidSuccessTime(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	fairLaunchMintedInfo.State = models.FairLaunchMintedStatePaidNoSend
 	fairLaunchMintedInfo.PaidSuccessTime = utils.GetTimestamp()
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
+	return f.UpdateFairLaunchMintedInfo(tx, fairLaunchMintedInfo)
 }
 
 func LockInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (lockedInventory *[]models.FairLaunchInventoryInfo, err error) {
@@ -1706,7 +1707,7 @@ func SendAssetResponseScriptKeyAndInternalKeyToOutpoint(sendAssetResponse *taprp
 
 // UpdateFairLaunchMintedInfosBySendAssetResponse
 // @dev: Updated outpoint and is_addr_sent
-func UpdateFairLaunchMintedInfosBySendAssetResponse(fairLaunchMintedInfos *[]models.FairLaunchMintedInfo, sendAssetResponse *taprpc.SendAssetResponse) (err error) {
+func UpdateFairLaunchMintedInfosBySendAssetResponse(tx *gorm.DB, fairLaunchMintedInfos *[]models.FairLaunchMintedInfo, sendAssetResponse *taprpc.SendAssetResponse) (err error) {
 	var fairLaunchMintedInfosUpdated []models.FairLaunchMintedInfo
 	// @dev: Deprecate anchor tx hash
 	_ = hex.EncodeToString(sendAssetResponse.Transfer.AnchorTxHash)
@@ -1731,7 +1732,7 @@ func UpdateFairLaunchMintedInfosBySendAssetResponse(fairLaunchMintedInfos *[]mod
 		fairLaunchMintedInfo.SendAssetTime = utils.GetTimestamp()
 		fairLaunchMintedInfosUpdated = append(fairLaunchMintedInfosUpdated, fairLaunchMintedInfo)
 	}
-	return middleware.DB.Save(&fairLaunchMintedInfosUpdated).Error
+	return tx.Save(&fairLaunchMintedInfosUpdated).Error
 }
 
 func FairLaunchMintedInfosIdToString(fairLaunchMintedInfos *[]models.FairLaunchMintedInfo) string {
@@ -1747,7 +1748,7 @@ func FairLaunchMintedInfosIdToString(fairLaunchMintedInfos *[]models.FairLaunchM
 
 // SendFairLaunchMintedAssetLocked
 // @dev: Trigger after ProcessFairLaunchMintedStatePaidNoSendInfo
-func SendFairLaunchMintedAssetLocked() error {
+func SendFairLaunchMintedAssetLocked(tx *gorm.DB) error {
 	// @dev: all unsent
 	unsentFairLaunchMintedInfos, err := GetAllUnsentFairLaunchMintedInfos()
 	ids := "(id:" + FairLaunchMintedInfosIdToString(unsentFairLaunchMintedInfos) + ")"
@@ -1820,12 +1821,12 @@ func SendFairLaunchMintedAssetLocked() error {
 		outpoint := response.Transfer.Outputs[0].Anchor.Outpoint
 		txid, _ := utils.OutpointToTransactionAndIndex(outpoint)
 		addrsStr := AddrsToString(addrs)
-		err = CreateFairLaunchIncomeOfServerPaySendAssetFee(assetId, assetIdToFairLaunchInfoId[assetId], txid, addrsStr)
+		err = CreateFairLaunchIncomeOfServerPaySendAssetFee(tx, assetId, assetIdToFairLaunchInfoId[assetId], txid, addrsStr)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfServerPaySendAssetFee"+ids)
 		}
 		// @dev: Update minted info
-		err = UpdateFairLaunchMintedInfosBySendAssetResponse(unsentFairLaunchMintedInfos, response)
+		err = UpdateFairLaunchMintedInfosBySendAssetResponse(tx, unsentFairLaunchMintedInfos, response)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "UpdateFairLaunchMintedInfosBySendAssetResponse"+ids)
 		}
@@ -1867,7 +1868,7 @@ func UpdateLockedInventoryByFairLaunchMintedInfo(fairLaunchMintedInfo *models.Fa
 	return nil
 }
 
-func UpdateMintedNumberAndIsMintAllOfFairLaunchInfoByFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+func UpdateMintedNumberAndIsMintAllOfFairLaunchInfoByFairLaunchMintedInfo(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	fairLaunchInfoId := fairLaunchMintedInfo.FairLaunchInfoID
 	fairLaunchInfo, err := GetFairLaunchInfo(fairLaunchInfoId)
 	if err != nil {
@@ -1879,24 +1880,24 @@ func UpdateMintedNumberAndIsMintAllOfFairLaunchInfoByFairLaunchMintedInfo(fairLa
 	}
 	fairLaunchInfo.MintedNumber += fairLaunchMintedInfo.MintedNumber
 	fairLaunchInfo.IsMintAll = isMintAll
-	return middleware.DB.Save(fairLaunchInfo).Error
+	return tx.Save(fairLaunchInfo).Error
 }
 
-func ClearFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+func ClearFairLaunchMintedInfoProcessNumber(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	fairLaunchMintedInfo.ProcessNumber = 0
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
+	return f.UpdateFairLaunchMintedInfo(tx, fairLaunchMintedInfo)
 }
 
-func IncreaseFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+func IncreaseFairLaunchMintedInfoProcessNumber(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	fairLaunchMintedInfo.ProcessNumber += 1
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
+	return f.UpdateFairLaunchMintedInfo(tx, fairLaunchMintedInfo)
 }
 
 // ProcessSentButNotUpdatedMintedInfo
 // @Description: If procession was interrupted, attempt to continue processing
-func ProcessSentButNotUpdatedMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+func ProcessSentButNotUpdatedMintedInfo(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	var transfer *taprpc.AssetTransfer
 	scriptKey := fairLaunchMintedInfo.ScriptKey
 	if scriptKey == "" {
@@ -1926,47 +1927,47 @@ func ProcessSentButNotUpdatedMintedInfo(fairLaunchMintedInfo *models.FairLaunchM
 	fairLaunchMintedInfo.IsAddrSent = true
 	fairLaunchMintedInfo.Address = address
 	fairLaunchMintedInfo.SendAssetTime = int(transfer.TransferTimestamp)
-	return middleware.DB.Save(&fairLaunchMintedInfo).Error
+	return tx.Save(&fairLaunchMintedInfo).Error
 }
 
 // FairLaunchMintedInfos Procession
 
-func ProcessFairLaunchMintedStateNoPayInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+func ProcessFairLaunchMintedStateNoPayInfo(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	// @dev: 1.pay fee
 	payMintedFeeResult, err := PayMintFee(fairLaunchMintedInfo.UserID, fairLaunchMintedInfo.MintedFeeRateSatPerKw)
 	if err != nil {
 		return nil
 	}
 	// @dev: Record paid fee
-	err = CreateFairLaunchIncomeOfUserPayMintedFee(fairLaunchMintedInfo.AssetID, fairLaunchMintedInfo.FairLaunchInfoID, int(fairLaunchMintedInfo.ID), payMintedFeeResult.PaidId, payMintedFeeResult.Fee, fairLaunchMintedInfo.UserID, fairLaunchMintedInfo.Username)
+	err = CreateFairLaunchIncomeOfUserPayMintedFee(tx, fairLaunchMintedInfo.AssetID, fairLaunchMintedInfo.FairLaunchInfoID, int(fairLaunchMintedInfo.ID), payMintedFeeResult.PaidId, payMintedFeeResult.Fee, fairLaunchMintedInfo.UserID, fairLaunchMintedInfo.Username)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "CreateFairLaunchIncomeOfUserPayMintedFee")
 	}
 	// @dev: 2.Store paidId
-	err = UpdateFairLaunchMintedInfoPaidId(fairLaunchMintedInfo, payMintedFeeResult.PaidId)
+	err = UpdateFairLaunchMintedInfoPaidId(tx, fairLaunchMintedInfo, payMintedFeeResult.PaidId)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchMintedInfoPaidId")
 	}
 	// @dev: 3.Change state
-	err = ChangeFairLaunchMintedInfoState(fairLaunchMintedInfo, models.FairLaunchMintedStatePaidPending)
+	err = ChangeFairLaunchMintedInfoState(tx, fairLaunchMintedInfo, models.FairLaunchMintedStatePaidPending)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "ChangeFairLaunchMintedInfoState")
 	}
-	err = ClearFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo)
+	err = ClearFairLaunchMintedInfoProcessNumber(tx, fairLaunchMintedInfo)
 	if err != nil {
 		// @dev: Do nothing
 	}
 	return nil
 }
 
-func ProcessFairLaunchMintedStatePaidPendingInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+func ProcessFairLaunchMintedStatePaidPendingInfo(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	// @dev: 1.fee paid
 	var isMintFeePaid bool
 	isMintFeePaid, err = IsMintFeePaid(fairLaunchMintedInfo.MintFeePaidID)
 	if err != nil {
 		if errors.Is(err, models.CustodyAccountPayInsideMissionFaild) {
 			// test
-			err = SetFairLaunchMintedInfoFail(fairLaunchMintedInfo)
+			err = SetFairLaunchMintedInfoFail(tx, fairLaunchMintedInfo)
 			if err != nil {
 				return utils.AppendErrorInfo(err, "SetFairLaunchMintedInfoFail")
 			}
@@ -1974,41 +1975,41 @@ func ProcessFairLaunchMintedStatePaidPendingInfo(fairLaunchMintedInfo *models.Fa
 	}
 	if isMintFeePaid {
 		// @dev: Change state
-		err = ChangeFairLaunchMintedInfoStateAndUpdatePaidSuccessTime(fairLaunchMintedInfo)
+		err = ChangeFairLaunchMintedInfoStateAndUpdatePaidSuccessTime(tx, fairLaunchMintedInfo)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "ChangeFairLaunchMintedInfoStateAndUpdatePaidSuccessTime")
 		}
 		return nil
 	}
 	// @dev: fee has not been paid
-	err = ClearFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo)
+	err = ClearFairLaunchMintedInfoProcessNumber(tx, fairLaunchMintedInfo)
 	if err != nil {
 		// @dev: Do nothing
 	}
 	return nil
 }
 
-func ProcessFairLaunchMintedStatePaidNoSendInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+func ProcessFairLaunchMintedStatePaidNoSendInfo(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	// @dev: 1. Update MintedAndAvailableInfo
-	err = UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(fairLaunchMintedInfo)
+	err = UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(tx, fairLaunchMintedInfo)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo")
 	}
 	// @dev: Change state
-	err = ChangeFairLaunchMintedInfoState(fairLaunchMintedInfo, models.FairLaunchMintedStateSentPending)
+	err = ChangeFairLaunchMintedInfoState(tx, fairLaunchMintedInfo, models.FairLaunchMintedStateSentPending)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "ChangeFairLaunchMintedInfoState")
 	}
-	err = ClearFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo)
+	err = ClearFairLaunchMintedInfoProcessNumber(tx, fairLaunchMintedInfo)
 	if err != nil {
 		// @dev: Do nothing
 	}
 	return nil
 }
 
-func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
+func ProcessFairLaunchMintedStateSentPendingInfo(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) (err error) {
 	//@ dev: Process sent but not updated
-	err = ProcessSentButNotUpdatedMintedInfo(fairLaunchMintedInfo)
+	err = ProcessSentButNotUpdatedMintedInfo(tx, fairLaunchMintedInfo)
 	if err != nil {
 		// @dev: Do not return
 	}
@@ -2019,19 +2020,19 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 	// @dev: 1.Is Transaction Confirmed
 	if IsTransactionConfirmed(fairLaunchMintedInfo.OutpointTxHash) {
 		// @dev: Change state
-		err = ChangeFairLaunchMintedInfoState(fairLaunchMintedInfo, models.FairLaunchMintedStateSent)
+		err = ChangeFairLaunchMintedInfoState(tx, fairLaunchMintedInfo, models.FairLaunchMintedStateSent)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "ChangeFairLaunchMintedInfoState")
 		}
 		// @dev: Update MintedNumber and IsMintAll
-		err = UpdateMintedNumberAndIsMintAllOfFairLaunchInfoByFairLaunchMintedInfo(fairLaunchMintedInfo)
+		err = UpdateMintedNumberAndIsMintAllOfFairLaunchInfoByFairLaunchMintedInfo(tx, fairLaunchMintedInfo)
 		if err != nil {
 			return utils.AppendErrorInfo(err, "UpdateMintedNumberAndIsMintAllOfFairLaunchInfoByFairLaunchMintedInfo")
 		}
 		// @dev: Do not update fairLaunchMintedInfo here
 		// @dev: Update minted user
 		f := btldb.FairLaunchStore{DB: middleware.DB}
-		err = f.CreateFairLaunchMintedUserInfo(&models.FairLaunchMintedUserInfo{
+		err = f.CreateFairLaunchMintedUserInfo(tx, &models.FairLaunchMintedUserInfo{
 			UserID:                 fairLaunchMintedInfo.UserID,
 			FairLaunchMintedInfoID: int(fairLaunchMintedInfo.ID),
 			FairLaunchInfoID:       fairLaunchMintedInfo.FairLaunchInfoID,
@@ -2060,7 +2061,7 @@ func ProcessFairLaunchMintedStateSentPendingInfo(fairLaunchMintedInfo *models.Fa
 		return nil
 	}
 	// @dev: Transaction has not been Confirmed
-	err = ClearFairLaunchMintedInfoProcessNumber(fairLaunchMintedInfo)
+	err = ClearFairLaunchMintedInfoProcessNumber(tx, fairLaunchMintedInfo)
 	if err != nil {
 		// @dev: Do nothing
 	}
@@ -2204,14 +2205,14 @@ func ProcessSendFairLaunchReservedResponse(response *taprpc.SendAssetResponse) s
 	return op
 }
 
-func UpdateFairLaunchInfoIsReservedSent(fairLaunchInfo *models.FairLaunchInfo, outpoint string) (err error) {
+func UpdateFairLaunchInfoIsReservedSent(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo, outpoint string) (err error) {
 	fairLaunchInfo.IsReservedSent = true
 	txid, _ := utils.OutpointToTransactionAndIndex(outpoint)
 	fairLaunchInfo.ReservedSentAnchorOutpointTxid = txid
 	fairLaunchInfo.ReservedSentAnchorOutpoint = outpoint
 	fairLaunchInfo.State = models.FairLaunchStateReservedSentPending
 	f := btldb.FairLaunchStore{DB: middleware.DB}
-	return f.UpdateFairLaunchInfo(fairLaunchInfo)
+	return f.UpdateFairLaunchInfo(tx, fairLaunchInfo)
 }
 
 func GetFairLaunchInfoByAssetId(assetId string) (*models.FairLaunchInfo, error) {
@@ -2434,15 +2435,15 @@ func SplitFairLaunchInventoryInfos(fairLaunchInventoryInfos *[]models.FairLaunch
 	return &fairLaunchInventoryInfoSlilces
 }
 
-func SetFairLaunchInventoryInfos(fairLaunchInventoryInfos *[]models.FairLaunchInventoryInfo) error {
-	return btldb.CreateFairLaunchInventoryInfos(fairLaunchInventoryInfos)
+func SetFairLaunchInventoryInfos(tx *gorm.DB, fairLaunchInventoryInfos *[]models.FairLaunchInventoryInfo) error {
+	return btldb.CreateFairLaunchInventoryInfos(tx, fairLaunchInventoryInfos)
 }
 
-func CreateFairLaunchInventoryInfosBatchProcess(fairLaunchInventoryInfos *[]models.FairLaunchInventoryInfo) error {
+func CreateFairLaunchInventoryInfosBatchProcess(tx *gorm.DB, fairLaunchInventoryInfos *[]models.FairLaunchInventoryInfo) error {
 	splitFairLaunchInventoryInfos := SplitFairLaunchInventoryInfos(fairLaunchInventoryInfos)
 	var err error
 	for _, inventories := range *splitFairLaunchInventoryInfos {
-		err = SetFairLaunchInventoryInfos(&inventories)
+		err = SetFairLaunchInventoryInfos(tx, &inventories)
 		if err != nil {
 			return err
 		}
@@ -2507,16 +2508,16 @@ func CheckIsFairLaunchIssuanceAndMintProcessing() error {
 	return nil
 }
 
-func CreateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo) error {
-	return btldb.CreateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo)
+func CreateFairLaunchMintedAndAvailableInfo(tx *gorm.DB, fairLaunchMintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo) error {
+	return btldb.CreateFairLaunchMintedAndAvailableInfo(tx, fairLaunchMintedAndAvailableInfo)
 }
 
-func UpdateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo) error {
-	return btldb.UpdateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo)
+func UpdateFairLaunchMintedAndAvailableInfo(tx *gorm.DB, fairLaunchMintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo) error {
+	return btldb.UpdateFairLaunchMintedAndAvailableInfo(tx, fairLaunchMintedAndAvailableInfo)
 }
 
-func CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
-	return CreateFairLaunchMintedAndAvailableInfo(&models.FairLaunchMintedAndAvailableInfo{
+func CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) error {
+	return CreateFairLaunchMintedAndAvailableInfo(tx, &models.FairLaunchMintedAndAvailableInfo{
 		FairLaunchInfoID:      int(fairLaunchInfo.ID),
 		MintedNumber:          0,
 		MintedAmount:          0,
@@ -2535,7 +2536,7 @@ func GetFairLaunchMintedAndAvailableInfoByFairLaunchInfoId(fairLaunchInfoId int)
 	return btldb.ReadFairLaunchMintedAndAvailableInfoByFairLaunchInfoId(fairLaunchInfoId)
 }
 
-func UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
+func UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
 	if fairLaunchMintedInfo == nil || fairLaunchMintedInfo.MintedNumber == 0 {
 		return errors.New("invalid fair launch minted info or minted number is zero")
 	}
@@ -2577,7 +2578,7 @@ func UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(fairLaunchMint
 	}
 	// TODO: only for test
 	fmt.Println(utils.ValueJsonString(mintedAndAvailableInfo))
-	return btldb.UpdateFairLaunchMintedAndAvailableInfo(mintedAndAvailableInfo)
+	return btldb.UpdateFairLaunchMintedAndAvailableInfo(tx, mintedAndAvailableInfo)
 }
 
 func GetAmountCouldBeMintByMintedNumber(fairLaunchInfoID int, mintedNumber int) (int, error) {
@@ -2625,7 +2626,7 @@ func GetAllFairLaunchInventoryInfo() (*[]models.FairLaunchInventoryInfo, error) 
 }
 
 // TODO: Fix
-func FairLaunchInventoryToMintedAndAvailableInfo() (*[]models.FairLaunchMintedAndAvailableInfo, error) {
+func FairLaunchInventoryToMintedAndAvailableInfo(tx *gorm.DB) (*[]models.FairLaunchMintedAndAvailableInfo, error) {
 	inventory, err := GetAllFairLaunchInventoryInfo()
 	if err != nil {
 		return nil, utils.AppendErrorInfo(err, "GetAllFairLaunchInventoryInfo")
@@ -2643,7 +2644,7 @@ func FairLaunchInventoryToMintedAndAvailableInfo() (*[]models.FairLaunchMintedAn
 			if err != nil {
 				return nil, utils.AppendErrorInfo(err, "GetFairLaunchInfo")
 			}
-			err = CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo(fairLaunchInfo)
+			err = CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo(tx, fairLaunchInfo)
 			if err != nil {
 				return nil, utils.AppendErrorInfo(err, "CreateFairLaunchMintedAndAvailableInfoByFairLaunchInfo")
 			}
@@ -2657,7 +2658,7 @@ func FairLaunchInventoryToMintedAndAvailableInfo() (*[]models.FairLaunchMintedAn
 		fmt.Println(item.State, item.FairLaunchMintedInfoID)
 		var fairLaunchMintedInfo *models.FairLaunchMintedInfo
 		fairLaunchMintedInfo, err = GetFairLaunchMintedInfo(item.FairLaunchMintedInfoID)
-		err = UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(fairLaunchMintedInfo)
+		err = UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo(tx, fairLaunchMintedInfo)
 		if err != nil {
 			return nil, utils.AppendErrorInfo(err, "UpdateFairLaunchMintedAndAvailableInfoByFairLaunchMintedInfo")
 		}
@@ -2678,13 +2679,13 @@ func DeleteFairLaunchInfo(fairLaunchInfoId uint) error {
 	return btldb.DeleteFairLaunchInfo(fairLaunchInfoId)
 }
 
-func UpdateFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
-	return btldb.UpdateFairLaunchInfo(fairLaunchInfo)
+func UpdateFairLaunchInfo(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) error {
+	return btldb.UpdateFairLaunchInfo(tx, fairLaunchInfo)
 }
 
-func SetFairLaunchInfoFail(fairLaunchInfo *models.FairLaunchInfo) error {
+func SetFairLaunchInfoFail(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) error {
 	fairLaunchInfo.State = models.FairLaunchStateFail
-	return UpdateFairLaunchInfo(fairLaunchInfo)
+	return UpdateFairLaunchInfo(tx, fairLaunchInfo)
 }
 
 func RemoveFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
@@ -2699,22 +2700,22 @@ func RemoveFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInf
 	return DeleteFairLaunchMintedInfo(fairLaunchMintedInfo.ID)
 }
 
-func UpdateFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
-	return btldb.UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
+func UpdateFairLaunchMintedInfo(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
+	return btldb.UpdateFairLaunchMintedInfo(tx, fairLaunchMintedInfo)
 }
 
-func SetFairLaunchMintedInfoFail(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
+func SetFairLaunchMintedInfoFail(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
 	fairLaunchMintedInfo.State = models.FairLaunchMintedStateFail
-	return UpdateFairLaunchMintedInfo(fairLaunchMintedInfo)
+	return UpdateFairLaunchMintedInfo(tx, fairLaunchMintedInfo)
 }
 
-func CancelAndRefundFairLaunchMintedInfo(fairLaunchMintedInfoId int) (BackAmountMissionId int, err error) {
+func CancelAndRefundFairLaunchMintedInfo(tx *gorm.DB, fairLaunchMintedInfoId int) (BackAmountMissionId int, err error) {
 	var fairLaunchMintedInfo *models.FairLaunchMintedInfo
 	fairLaunchMintedInfo, err = GetFairLaunchMintedInfo(fairLaunchMintedInfoId)
 	if err != nil {
 		return 0, utils.AppendErrorInfo(err, "GetFairLaunchMintedInfo")
 	}
-	err = SetFairLaunchMintedInfoFail(fairLaunchMintedInfo)
+	err = SetFairLaunchMintedInfoFail(tx, fairLaunchMintedInfo)
 	if err != nil {
 		return 0, utils.AppendErrorInfo(err, "SetFairLaunchMintedInfoFail")
 	}
@@ -2731,7 +2732,7 @@ func CancelAndRefundFairLaunchMintedInfo(fairLaunchMintedInfoId int) (BackAmount
 //	Consider if use scheduled task
 
 // Depreciated
-func RefundBlockFairLaunchMintedInfos() (missionIds []int, err error) {
+func RefundBlockFairLaunchMintedInfos(tx *gorm.DB) (missionIds []int, err error) {
 	fairLaunchMintedInfos, err := GetFairLaunchMintedInfoWhoseProcessNumberIsMoreThanTenThousand()
 	if err != nil {
 		return
@@ -2741,7 +2742,7 @@ func RefundBlockFairLaunchMintedInfos() (missionIds []int, err error) {
 	}
 	var missionId int
 	for _, fairLaunchMintedInfo := range *fairLaunchMintedInfos {
-		missionId, err = CancelAndRefundFairLaunchMintedInfo(int(fairLaunchMintedInfo.ID))
+		missionId, err = CancelAndRefundFairLaunchMintedInfo(tx, int(fairLaunchMintedInfo.ID))
 		if err != nil {
 			return
 		}

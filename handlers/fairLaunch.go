@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"net/http"
 	"strconv"
+	"trade/middleware"
 	"trade/models"
 	"trade/services"
 	"trade/utils"
@@ -412,7 +413,8 @@ func MintFairLaunchReserved(c *gin.Context) {
 		return
 	}
 	outpoint := services.ProcessSendFairLaunchReservedResponse(response)
-	err = services.UpdateFairLaunchInfoIsReservedSent(fairLaunch, outpoint)
+	tx := middleware.DB.Begin()
+	err = services.UpdateFairLaunchInfoIsReservedSent(tx, fairLaunch, outpoint)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -420,11 +422,12 @@ func MintFairLaunchReserved(c *gin.Context) {
 			Code:    models.UpdateFairLaunchInfoIsReservedSentErr,
 			Data:    nil,
 		})
+		tx.Rollback()
 		return
 	}
 	// @dev: Record paid fee
 	txid, _ := utils.OutpointToTransactionAndIndex(outpoint)
-	err = services.CreateFairLaunchIncomeOfServerPaySendReservedFee(fairLaunchInfo.AssetID, int(fairLaunchInfo.ID), txid)
+	err = services.CreateFairLaunchIncomeOfServerPaySendReservedFee(tx, fairLaunchInfo.AssetID, int(fairLaunchInfo.ID), txid)
 	if err != nil {
 		c.JSON(http.StatusOK, models.JsonResult{
 			Success: false,
@@ -432,8 +435,10 @@ func MintFairLaunchReserved(c *gin.Context) {
 			Code:    models.CreateFairLaunchIncomeOfServerPaySendReservedFeeErr,
 			Data:    nil,
 		})
+		tx.Rollback()
 		return
 	}
+	tx.Commit()
 	c.JSON(http.StatusOK, models.JsonResult{
 		Success: true,
 		Error:   models.SuccessErr,

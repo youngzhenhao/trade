@@ -1,20 +1,21 @@
 package services
 
 import (
+	"gorm.io/gorm"
 	"trade/api"
 	"trade/models"
 	"trade/services/btldb"
 	"trade/utils"
 )
 
-func CreateFairLaunchIncome(fairLaunchIncome *models.FairLaunchIncome) error {
-	return btldb.CreateFairLaunchIncome(fairLaunchIncome)
+func CreateFairLaunchIncome(tx *gorm.DB, fairLaunchIncome *models.FairLaunchIncome) error {
+	return btldb.CreateFairLaunchIncome(tx, fairLaunchIncome)
 }
 
 // @dev: Create FairLaunch Income Records By these functions
 
-func CreateFairLaunchIncomeOfUserPayIssuanceFee(fairLaunchInfoId int, feePaidId int, satAmount int, userId int, username string) error {
-	return CreateFairLaunchIncome(&models.FairLaunchIncome{
+func CreateFairLaunchIncomeOfUserPayIssuanceFee(tx *gorm.DB, fairLaunchInfoId int, feePaidId int, satAmount int, userId int, username string) error {
+	return CreateFairLaunchIncome(tx, &models.FairLaunchIncome{
 		AssetId:                "",
 		FairLaunchInfoId:       fairLaunchInfoId,
 		FairLaunchMintedInfoId: 0,
@@ -29,8 +30,8 @@ func CreateFairLaunchIncomeOfUserPayIssuanceFee(fairLaunchInfoId int, feePaidId 
 	})
 }
 
-func CreateFairLaunchIncomeOfServerPayIssuanceFinalizeFee(fairLaunchInfoId int, txid string) error {
-	return CreateFairLaunchIncome(&models.FairLaunchIncome{
+func CreateFairLaunchIncomeOfServerPayIssuanceFinalizeFee(tx *gorm.DB, fairLaunchInfoId int, txid string) error {
+	return CreateFairLaunchIncome(tx, &models.FairLaunchIncome{
 		AssetId:                "",
 		FairLaunchInfoId:       fairLaunchInfoId,
 		FairLaunchMintedInfoId: 0,
@@ -45,8 +46,8 @@ func CreateFairLaunchIncomeOfServerPayIssuanceFinalizeFee(fairLaunchInfoId int, 
 	})
 }
 
-func CreateFairLaunchIncomeOfServerPaySendReservedFee(assetId string, fairLaunchInfoId int, txid string) error {
-	return CreateFairLaunchIncome(&models.FairLaunchIncome{
+func CreateFairLaunchIncomeOfServerPaySendReservedFee(tx *gorm.DB, assetId string, fairLaunchInfoId int, txid string) error {
+	return CreateFairLaunchIncome(tx, &models.FairLaunchIncome{
 		AssetId:                assetId,
 		FairLaunchInfoId:       fairLaunchInfoId,
 		FairLaunchMintedInfoId: 0,
@@ -61,8 +62,8 @@ func CreateFairLaunchIncomeOfServerPaySendReservedFee(assetId string, fairLaunch
 	})
 }
 
-func CreateFairLaunchIncomeOfUserPayMintedFee(assetId string, fairLaunchInfoId int, fairLaunchMintedInfoId int, feePaidId int, satAmount int, userId int, username string) error {
-	return CreateFairLaunchIncome(&models.FairLaunchIncome{
+func CreateFairLaunchIncomeOfUserPayMintedFee(tx *gorm.DB, assetId string, fairLaunchInfoId int, fairLaunchMintedInfoId int, feePaidId int, satAmount int, userId int, username string) error {
+	return CreateFairLaunchIncome(tx, &models.FairLaunchIncome{
 		AssetId:                assetId,
 		FairLaunchInfoId:       fairLaunchInfoId,
 		FairLaunchMintedInfoId: fairLaunchMintedInfoId,
@@ -77,8 +78,8 @@ func CreateFairLaunchIncomeOfUserPayMintedFee(assetId string, fairLaunchInfoId i
 	})
 }
 
-func CreateFairLaunchIncomeOfServerPaySendAssetFee(assetId string, fairLaunchInfoId int, txid string, addrs string) error {
-	return CreateFairLaunchIncome(&models.FairLaunchIncome{
+func CreateFairLaunchIncomeOfServerPaySendAssetFee(tx *gorm.DB, assetId string, fairLaunchInfoId int, txid string, addrs string) error {
+	return CreateFairLaunchIncome(tx, &models.FairLaunchIncome{
 		AssetId:                assetId,
 		FairLaunchInfoId:       fairLaunchInfoId,
 		FairLaunchMintedInfoId: 0,

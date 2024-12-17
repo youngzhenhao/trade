@@ -69,12 +69,12 @@ func ReadIssuedAndTimeValidFairLaunchInfos() (*[]models.FairLaunchInfo, error) {
 	return &fairLaunchInfos, nil
 }
 
-func (f *FairLaunchStore) UpdateFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
-	return f.DB.Save(fairLaunchInfo).Error
+func (f *FairLaunchStore) UpdateFairLaunchInfo(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) error {
+	return tx.Save(fairLaunchInfo).Error
 }
 
-func UpdateFairLaunchInfo(fairLaunchInfo *models.FairLaunchInfo) error {
-	return middleware.DB.Save(fairLaunchInfo).Error
+func UpdateFairLaunchInfo(tx *gorm.DB, fairLaunchInfo *models.FairLaunchInfo) error {
+	return tx.Save(fairLaunchInfo).Error
 }
 
 func (f *FairLaunchStore) DeleteFairLaunchInfo(id uint) error {
@@ -99,12 +99,12 @@ func (f *FairLaunchStore) ReadFairLaunchMintedInfo(id uint) (*models.FairLaunchM
 	return &fairLaunchMintedInfo, err
 }
 
-func (f *FairLaunchStore) UpdateFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
-	return f.DB.Save(fairLaunchMintedInfo).Error
+func (f *FairLaunchStore) UpdateFairLaunchMintedInfo(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
+	return tx.Save(fairLaunchMintedInfo).Error
 }
 
-func UpdateFairLaunchMintedInfo(fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
-	return middleware.DB.Save(fairLaunchMintedInfo).Error
+func UpdateFairLaunchMintedInfo(tx *gorm.DB, fairLaunchMintedInfo *models.FairLaunchMintedInfo) error {
+	return tx.Save(fairLaunchMintedInfo).Error
 }
 
 func UpdateFairLaunchMintedInfos(fairLaunchMintedInfos *[]models.FairLaunchMintedInfo) error {
@@ -185,8 +185,8 @@ func (f *FairLaunchStore) CreateFairLaunchInventoryInfos(fairLaunchInventoryInfo
 	return f.DB.Create(fairLaunchInventoryInfos).Error
 }
 
-func CreateFairLaunchInventoryInfos(fairLaunchInventoryInfos *[]models.FairLaunchInventoryInfo) error {
-	return middleware.DB.Create(fairLaunchInventoryInfos).Error
+func CreateFairLaunchInventoryInfos(tx *gorm.DB, fairLaunchInventoryInfos *[]models.FairLaunchInventoryInfo) error {
+	return tx.Create(fairLaunchInventoryInfos).Error
 }
 
 func (f *FairLaunchStore) ReadFairLaunchInventoryInfo(id uint) (*models.FairLaunchInventoryInfo, error) {
@@ -206,8 +206,8 @@ func (f *FairLaunchStore) DeleteFairLaunchInventoryInfo(id uint) error {
 
 // FairLaunchMintedUserInfo
 
-func (f *FairLaunchStore) CreateFairLaunchMintedUserInfo(fairLaunchMintedUserInfo *models.FairLaunchMintedUserInfo) error {
-	return f.DB.Create(fairLaunchMintedUserInfo).Error
+func (f *FairLaunchStore) CreateFairLaunchMintedUserInfo(tx *gorm.DB, fairLaunchMintedUserInfo *models.FairLaunchMintedUserInfo) error {
+	return tx.Create(fairLaunchMintedUserInfo).Error
 }
 
 func (f *FairLaunchStore) ReadFairLaunchMintedUserInfo(id uint) (*models.FairLaunchMintedUserInfo, error) {
@@ -233,8 +233,8 @@ func GetFairLaunchInfosByIds(fairLaunchInfoIds *[]int) (*[]models.FairLaunchInfo
 
 // FairLaunchMintedAndAvailableInfo
 
-func CreateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo) error {
-	return middleware.DB.Create(fairLaunchMintedAndAvailableInfo).Error
+func CreateFairLaunchMintedAndAvailableInfo(tx *gorm.DB, fairLaunchMintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo) error {
+	return tx.Create(fairLaunchMintedAndAvailableInfo).Error
 }
 
 func CreateFairLaunchMintedAndAvailableInfos(fairLaunchMintedAndAvailableInfos *[]models.FairLaunchMintedAndAvailableInfo) error {
@@ -253,8 +253,8 @@ func ReadFairLaunchMintedAndAvailableInfoByFairLaunchInfoId(fairLaunchInfoId int
 	return &fairLaunchMintedAndAvailableInfo, err
 }
 
-func UpdateFairLaunchMintedAndAvailableInfo(fairLaunchMintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo) error {
-	return middleware.DB.Save(fairLaunchMintedAndAvailableInfo).Error
+func UpdateFairLaunchMintedAndAvailableInfo(tx *gorm.DB, fairLaunchMintedAndAvailableInfo *models.FairLaunchMintedAndAvailableInfo) error {
+	return tx.Save(fairLaunchMintedAndAvailableInfo).Error
 }
 
 func DeleteFairLaunchMintedAndAvailableInfo(id uint) error {

@@ -11,8 +11,8 @@ type AssetIssuanceStore struct {
 
 // AssetIssuance
 
-func (a *AssetIssuanceStore) CreateAssetIssuance(assetIssuance *models.AssetIssuance) error {
-	return a.DB.Create(assetIssuance).Error
+func (a *AssetIssuanceStore) CreateAssetIssuance(tx *gorm.DB, assetIssuance *models.AssetIssuance) error {
+	return tx.Create(assetIssuance).Error
 }
 
 func (a *AssetIssuanceStore) ReadAssetIssuance(id uint) (*models.AssetIssuance, error) {
@@ -27,8 +27,8 @@ func (a *AssetIssuanceStore) ReadAssetIssuanceByFairLaunchId(fairLaunchId uint) 
 	return &assetIssuance, err
 }
 
-func (a *AssetIssuanceStore) UpdateAssetIssuance(assetIssuance *models.AssetIssuance) error {
-	return a.DB.Save(assetIssuance).Error
+func (a *AssetIssuanceStore) UpdateAssetIssuance(tx *gorm.DB, assetIssuance *models.AssetIssuance) error {
+	return tx.Save(assetIssuance).Error
 }
 
 func (a *AssetIssuanceStore) DeleteAssetIssuance(id uint) error {
