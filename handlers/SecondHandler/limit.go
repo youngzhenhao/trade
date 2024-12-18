@@ -91,12 +91,20 @@ func GetLimitTypeHandler(c *gin.Context) {
 		return
 	}
 
-	types, err := custodyLimit.GetLimitTypes(creds.PageNum, creds.PageSize)
+	types, count, err := custodyLimit.GetLimitTypes(creds.PageNum, creds.PageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
 		return
 	}
-	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: types})
+	typesResults := struct {
+		Count int64                      `json:"count"`
+		Types *[]custodyLimit.LimitTypes `json:"types"`
+	}{
+		Count: count,
+		Types: types,
+	}
+
+	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: typesResults})
 }
 
 func CreateOrUpdateLimitTypeHandle(c *gin.Context) {

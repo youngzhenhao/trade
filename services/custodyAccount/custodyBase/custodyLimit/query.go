@@ -155,12 +155,19 @@ type LimitTypes struct {
 	LimitName    string `json:"limitName"`
 }
 
-func GetLimitTypes(page, pageSize int) (*[]LimitTypes, error) {
+func GetLimitTypes(page, pageSize int) (*[]LimitTypes, int64, error) {
 	db := middleware.DB
-	var limitTypes []custodyModels.LimitType
-	err := db.Table("user_limit_type").Offset((page - 1) * pageSize).Limit(pageSize).Find(&limitTypes).Error
+
+	var total int64
+	err := db.Table("user_limit_type").Count(&total).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+
+	var limitTypes []custodyModels.LimitType
+	err = db.Table("user_limit_type").Offset((page - 1) * pageSize).Limit(pageSize).Find(&limitTypes).Error
+	if err != nil {
+		return nil, 0, err
 	}
 	var limitTypesArr []LimitTypes
 	for _, limitType := range limitTypes {
@@ -170,7 +177,7 @@ func GetLimitTypes(page, pageSize int) (*[]LimitTypes, error) {
 			LimitName:    limitType.Memo,
 		})
 	}
-	return &limitTypesArr, nil
+	return &limitTypesArr, total, nil
 }
 
 func CreateOrUpdateLimitType(assetId string, transferType int, limitName string) error {
