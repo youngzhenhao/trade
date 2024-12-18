@@ -40,7 +40,7 @@ func addBalance(tx *gorm.DB, poolAccountId uint, AssetId string, amount float64,
 	change := pAccount.PAccountBalanceChange{
 		PoolAccountId: poolAccountId,
 		AssetId:       AssetId,
-		BillId:        balance.Id,
+		BillId:        bill.ID,
 		Amount:        amount,
 		FinalBalance:  balance.Balance,
 	}
