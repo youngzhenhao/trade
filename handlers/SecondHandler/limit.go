@@ -139,12 +139,20 @@ func GetLimitTypeLevelsHandle(c *gin.Context) {
 		return
 	}
 
-	levels, err := custodyLimit.GetLimitTypeLevels(creds.LimitName, creds.PageNum, creds.PageSize)
+	levels, count, err := custodyLimit.GetLimitTypeLevels(creds.LimitName, creds.PageNum, creds.PageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
 		return
 	}
-	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: levels})
+	levelsResults := struct {
+		Count  int64                      `json:"count"`
+		Levels *[]custodyLimit.LimitLevel `json:"levels"`
+	}{
+		Count:  count,
+		Levels: levels,
+	}
+
+	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: levelsResults})
 }
 
 func CreateOrUpdateLimitTypeLevelHandle(c *gin.Context) {

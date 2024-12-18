@@ -206,17 +206,23 @@ type LimitLevel struct {
 	Count  uint    `json:"count"`
 }
 
-func GetLimitTypeLevels(limitName string, page, pageSize int) (*[]LimitLevel, error) {
+func GetLimitTypeLevels(limitName string, page, pageSize int) (*[]LimitLevel, int64, error) {
 	db := middleware.DB
 	var limitTypes custodyModels.LimitType
 	err := db.Table("user_limit_type").Where("memo =?", limitName).First(&limitTypes).Error
 	if err != nil {
-		return nil, fmt.Errorf("限额类型不存在: %s", limitName)
+		return nil, 0, fmt.Errorf("限额类型不存在: %s", limitName)
 	}
+	var total int64
+	err = db.Table("user_limit_type_level").Where("limit_type_id =?", limitTypes.ID).Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
 	var limitLevels []custodyModels.LimitLevel
 	err = db.Table("user_limit_type_level").Where("limit_type_id =?", limitTypes.ID).Offset((page - 1) * pageSize).Limit(pageSize).Find(&limitLevels).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	var limitLevelArr []LimitLevel
 	for _, limitLevel := range limitLevels {
@@ -226,7 +232,7 @@ func GetLimitTypeLevels(limitName string, page, pageSize int) (*[]LimitLevel, er
 			Count:  limitLevel.Count,
 		})
 	}
-	return &limitLevelArr, nil
+	return &limitLevelArr, total, nil
 }
 
 func CreateOrUpdateLimitTypeLevel(limitName string, level int, amount int, count int) error {
