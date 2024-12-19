@@ -95,7 +95,7 @@ func GetListAssetsResponse(withWitness bool, includeSpent bool, includeLeased bo
 	return listAssets(withWitness, includeSpent, includeLeased)
 }
 
-func GetIncludeListAssetById(assetId string) (asset *taprpc.Asset, err error) {
+func GetIncludeLeasedAssetById(assetId string) (asset *taprpc.Asset, err error) {
 	response, err := GetListAssetsResponse(false, false, true)
 	if err != nil {
 		return new(taprpc.Asset), utils.AppendErrorInfo(err, "GetListAssetsResponse")

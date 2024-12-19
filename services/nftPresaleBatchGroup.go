@@ -88,9 +88,9 @@ func ProcessLaunchRequestNftPresale(nftPresaleSetRequest *models.NftPresaleSetRe
 	var groupKey string
 	var amount int
 	var meta string
-	_asset, err := api.GetIncludeListAssetById(assetId)
+	_asset, err := api.GetIncludeLeasedAssetById(assetId)
 	if err != nil {
-		btlLog.PreSale.Error("api GetIncludeListAssetById err:%v", err)
+		btlLog.PreSale.Error("api GetIncludeLeasedAssetById err:%v", err)
 		return nil, err
 	} else {
 		if _asset.Amount > math.MaxInt {

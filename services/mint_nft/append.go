@@ -52,6 +52,7 @@ func MintAppend(groupKey string, groupName string, description string, imgPathPr
 		if _err != nil {
 			fmt.Printf("%v\n", fmt.Errorf("\nMint %s CancelBatchAndGetResponse\n%v", fmt.Sprintf("%d-%d", start, end), err))
 		}
+		fmt.Println("Batch canceled.")
 
 		return fmt.Errorf("\nMint %s FinalizeBatchAndGetResponse\n%v", fmt.Sprintf("%d-%d", start, end), err)
 	}

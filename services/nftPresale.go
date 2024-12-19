@@ -86,6 +86,7 @@ func DeleteNftPresale(id uint) error {
 	return btldb.DeleteNftPresale(id)
 }
 
+// Deprecated
 func ProcessNftPresale(nftPresaleSetRequest *models.NftPresaleSetRequest) *models.NftPresale {
 	var assetId string
 	assetId = nftPresaleSetRequest.AssetId
@@ -98,20 +99,24 @@ func ProcessNftPresale(nftPresaleSetRequest *models.NftPresaleSetRequest) *model
 	var groupKey string
 	var amount int
 	var meta string
-	assetInfo, err := api.GetAssetInfoApi(assetId)
+	_asset, err := api.GetIncludeLeasedAssetById(assetId)
+	//assetInfo, err := api.GetAssetInfoApi(assetId)
 	if err != nil {
 		// @dev: Do not return
-		btlLog.PreSale.Error("api GetAssetInfoApi err:%v", err)
+		btlLog.PreSale.Error("api GetIncludeLeasedAssetById err:%v", err)
 	} else {
-		name = assetInfo.Name
-		assetType = assetInfo.AssetType
-		if assetInfo.GroupKey != nil {
-			groupKey = *assetInfo.GroupKey
+		name = _asset.AssetGenesis.Name
+		assetType = _asset.AssetGenesis.AssetType.String()
+		if _asset.AssetGroup != nil {
+			groupKey = hex.EncodeToString(_asset.AssetGroup.TweakedGroupKey)
 		}
-		amount = int(assetInfo.Amount)
-		if assetInfo.Meta != nil {
-			meta = *assetInfo.Meta
+		amount = int(_asset.Amount)
+
+		assetMeta, err := api.FetchAssetMetaByAssetId(assetId)
+		if err != nil {
+			btlLog.PreSale.Error("api FetchAssetMetaByAssetId err:%v", err)
 		}
+		meta = assetMeta.Data
 	}
 	groupKeyByAssetId, err := api.GetGroupKeyByAssetId(assetId)
 	if err != nil {
