@@ -36,10 +36,15 @@ type ServicesLogger struct {
 
 func NewLogger(logName string, level LogLevel, hasStdout bool, Writer ...io.Writer) *ServicesLogger {
 	var multiWriter io.Writer
+
 	if hasStdout {
 		multiWriter = io.MultiWriter(os.Stdout)
 	}
 	for i := range Writer {
+		if multiWriter == nil {
+			multiWriter = io.MultiWriter(Writer[i])
+			continue
+		}
 		multiWriter = io.MultiWriter(multiWriter, Writer[i])
 	}
 	return &ServicesLogger{
