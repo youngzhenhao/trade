@@ -17,7 +17,16 @@ type NftPresaleOfflinePurchaseData struct {
 	AssetName      string `json:"asset_name"`
 }
 
-func GetNftPresaleOfflinePurchaseData(nftNo string, npubKey string, invitationCode string, assetId string) (*[]NftPresaleOfflinePurchaseData, error) {
+type NftPresaleOfflinePurchaseDataInfo struct {
+	ID             uint   `json:"id"`
+	NftNo          string `json:"nft_no"`
+	NpubKey        string `json:"npub_key"`
+	InvitationCode string `json:"invitation_code"`
+	AssetId        string `json:"asset_id"`
+	AssetName      string `json:"asset_name"`
+}
+
+func GetNftPresaleOfflinePurchaseData(nftNo string, npubKey string, invitationCode string, assetId string) (*[]NftPresaleOfflinePurchaseDataInfo, error) {
 	var err error
 	var where string
 	if nftNo != "" {
@@ -57,18 +66,19 @@ func GetNftPresaleOfflinePurchaseData(nftNo string, npubKey string, invitationCo
 	}
 	if where == "" {
 		err = errors.New("no query condition")
-		return nil, err
+		return new([]NftPresaleOfflinePurchaseDataInfo), err
 	}
-	var nftPresaleOfflinePurchaseDatas []NftPresaleOfflinePurchaseData
+	var nftPresaleOfflinePurchaseDataInfos []NftPresaleOfflinePurchaseDataInfo
 	err = middleware.DB.
-		Model(&NftPresaleOfflinePurchaseData{}).
+		Table("nft_presale_offline_purchase_data").
+		Select("id, nft_no, npub_key, invitation_code, asset_id, asset_name").
 		Where(where).
-		Find(&nftPresaleOfflinePurchaseDatas).
+		Scan(&nftPresaleOfflinePurchaseDataInfos).
 		Error
 
 	if err != nil {
-		return nil, utils.AppendErrorInfo(err, "select NftPresaleOfflinePurchaseData")
+		return new([]NftPresaleOfflinePurchaseDataInfo), utils.AppendErrorInfo(err, "select NftPresaleOfflinePurchaseData")
 	}
 
-	return &nftPresaleOfflinePurchaseDatas, nil
+	return &nftPresaleOfflinePurchaseDataInfos, nil
 }
