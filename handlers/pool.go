@@ -779,6 +779,40 @@ func CalcQuote(c *gin.Context) {
 	})
 }
 
+func CalcBurnLiquidity(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	tokenA := c.Query("token_a")
+	tokenB := c.Query("token_b")
+	liquidity := c.Query("liquidity")
+	if liquidity == "" {
+		err := errors.New("liquidity is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryParamEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   pool.CalcBurnLiquidityResponse{},
+		})
+		return
+	}
+
+	amountA, amountB, err := pool.CalcBurnLiquidity(tokenA, tokenB, liquidity, username, pool.RemoveLiquidityFeeK)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.CalcBurnLiquidityErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   pool.CalcBurnLiquidityResponse{},
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data: pool.CalcBurnLiquidityResponse{
+			AmountA: amountA,
+			AmountB: amountB,
+		},
+	})
+}
+
 func CalcAmountOut(c *gin.Context) {
 	_ = c.MustGet("username").(string)
 	tokenIn := c.Query("token_in")

@@ -24,6 +24,7 @@ func SetupPoolRouter(router *gin.Engine) *gin.Engine {
 	calc := pool.Group("/calc")
 	{
 		calc.GET("/quote", handlers.CalcQuote)
+		calc.GET("/burn_liquidity", handlers.CalcBurnLiquidity)
 		calc.POST("/add_liquidity", handlers.CalcAddLiquidity)
 		calc.POST("/remove_liquidity", handlers.CalcRemoveLiquidity)
 		calc.GET("/amount_out", handlers.CalcAmountOut)

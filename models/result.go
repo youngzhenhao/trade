@@ -301,6 +301,7 @@ const (
 	QueryUserShareBalanceErr
 	GetNftPresaleOfflinePurchaseDataErr
 	UpdateNftPresaleOfflinePurchaseDataErr
+	CalcBurnLiquidityErr
 )
 
 // Err type:CustodyAccount

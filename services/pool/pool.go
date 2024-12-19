@@ -2226,6 +2226,100 @@ func CalcQuote(tokenA string, tokenB string, amountA string) (amountB string, er
 	return _amountB.String(), nil
 }
 
+type CalcBurnLiquidityResponse struct {
+	AmountA string `json:"amount_a"`
+	AmountB string `json:"amount_b"`
+}
+
+func CalcBurnLiquidity(tokenA string, tokenB string, liquidity string, username string, feeK uint16) (amountA string, amountB string, err error) {
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	tx := middleware.DB.Begin()
+	// @dev: defer firstly commit
+	defer func() {
+		tx.Rollback()
+	}()
+
+	// @dev: get pair
+	var _pair PoolPair
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	if err != nil {
+		//@dev: pair does not exist
+		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "pair does not exist")
+	}
+	pairId := _pair.ID
+	if pairId <= 0 {
+		return ZeroValue, ZeroValue, errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
+	}
+
+	var success bool
+	var _reserve0, _reserve1 *big.Int
+	// reserve0
+	_reserve0, success = new(big.Int).SetString(_pair.Reserve0, 10)
+	if !success {
+		return ZeroValue, ZeroValue, errors.New("Reserve0 SetString(" + _pair.Reserve0 + ") " + strconv.FormatBool(success))
+	}
+	// reserve1
+	_reserve1, success = new(big.Int).SetString(_pair.Reserve1, 10)
+	if !success {
+		return ZeroValue, ZeroValue, errors.New("Reserve1 SetString(" + _pair.Reserve1 + ") " + strconv.FormatBool(success))
+	}
+	// liquidity
+	_liquidity, success := new(big.Int).SetString(liquidity, 10)
+	if !success {
+		return ZeroValue, ZeroValue, errors.New("liquidity SetString(" + liquidity + ") " + strconv.FormatBool(success))
+	}
+
+	// get share
+	var share PoolShare
+	err = tx.Model(&PoolShare{}).Where("pair_id = ?", pairId).First(&share).Error
+	if err != nil {
+		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "share does not exist")
+	}
+	shareId := share.ID
+	if shareId <= 0 {
+		return ZeroValue, ZeroValue, errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
+	}
+
+	// @dev: check liquidity
+	var shareBalance string
+	err = tx.Model(&PoolShareBalance{}).Select("balance").
+		Where("share_id = ? AND username = ?", shareId, username).
+		Scan(&shareBalance).Error
+	if err != nil {
+		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "get shareBalance")
+	}
+	_shareBalance, success := new(big.Int).SetString(shareBalance, 10)
+	if !success {
+		return ZeroValue, ZeroValue, errors.New("shareBalance SetString(" + shareBalance + ") " + strconv.FormatBool(success))
+	}
+	if _shareBalance.Cmp(_liquidity) < 0 {
+		return ZeroValue, ZeroValue, errors.New("insufficientShareBalance(" + _shareBalance.String() + ")")
+	}
+
+	_totalSupply, success := new(big.Int).SetString(share.TotalSupply, 10)
+	if !success {
+		return ZeroValue, ZeroValue, errors.New("TotalSupply SetString(" + share.TotalSupply + ") " + strconv.FormatBool(success))
+	}
+
+	_amount0, _amount1, err := _burnBig(_reserve0, _reserve1, _totalSupply, _liquidity, feeK)
+	if err != nil {
+		return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "_burnBig")
+	}
+
+	if token0 == tokenB {
+		amountA, amountB = _amount1.String(), _amount0.String()
+	} else {
+		amountA, amountB = _amount0.String(), _amount1.String()
+	}
+
+	err = nil
+	return amountA, amountB, err
+}
+
 func CalcAmountOut(tokenIn string, tokenOut string, amountIn string) (amountOut string, err error) {
 	token0, token1, err := sortTokens(tokenIn, tokenOut)
 	if err != nil {
