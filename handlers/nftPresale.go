@@ -562,3 +562,30 @@ func GetNftPresaleOfflinePurchaseData(c *gin.Context) {
 		Data:   nftPresaleOfflinePurchaseDataInfos,
 	})
 }
+
+func UpdateNftPresaleOfflinePurchaseData(c *gin.Context) {
+	var request services.UpdateNftPresaleOfflinePurchaseDataRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.ShouldBindJsonErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   nil,
+		})
+		return
+	}
+	err = services.UpdateNftPresaleOfflinePurchaseData(request.NftNo, request.NpubKey, request.InvitationCode, request.Name)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UpdateNftPresaleOfflinePurchaseDataErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   nil,
+	})
+}

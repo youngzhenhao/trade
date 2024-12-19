@@ -300,6 +300,7 @@ const (
 	GetBtcBalanceOrderLimitOffsetErr
 	QueryUserShareBalanceErr
 	GetNftPresaleOfflinePurchaseDataErr
+	UpdateNftPresaleOfflinePurchaseDataErr
 )
 
 // Err type:CustodyAccount

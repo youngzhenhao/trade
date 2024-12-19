@@ -82,3 +82,22 @@ func GetNftPresaleOfflinePurchaseData(nftNo string, npubKey string, invitationCo
 
 	return &nftPresaleOfflinePurchaseDataInfos, nil
 }
+
+func UpdateNftPresaleOfflinePurchaseData(nftNo string, npubKey string, invitationCode string, name string) (err error) {
+	return middleware.DB.
+		Table("nft_presale_offline_purchase_data").
+		Where("nft_no = ?", nftNo).
+		Updates(map[string]any{
+			"npub_key":        npubKey,
+			"invitation_code": invitationCode,
+			"name":            name,
+		}).
+		Error
+}
+
+type UpdateNftPresaleOfflinePurchaseDataRequest struct {
+	NftNo          string `json:"nft_no"`
+	NpubKey        string `json:"npub_key"`
+	InvitationCode string `json:"invitation_code"`
+	Name           string `json:"name"`
+}
