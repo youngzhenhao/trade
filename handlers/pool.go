@@ -166,6 +166,106 @@ func QueryShareRecords(c *gin.Context) {
 	})
 }
 
+func QueryUserAllShareRecordsCount(c *gin.Context) {
+	username := c.MustGet("username").(string)
+
+	var count int64
+	var err error
+	count, err = pool.QueryUserAllShareRecordsCount(username)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryUserAllShareRecordsCountErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   count,
+	})
+}
+
+func QueryUserAllShareRecords(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	limit := c.Query("limit")
+	offset := c.Query("offset")
+
+	if limit == "" {
+		err := errors.New("limit is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.ShareRecordInfoIncludeToken{},
+		})
+		return
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.ShareRecordInfoIncludeToken{},
+		})
+		return
+	}
+	if limitInt < 0 {
+		err := errors.New("limit is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.ShareRecordInfoIncludeToken{},
+		})
+		return
+	}
+	if offset == "" {
+		err := errors.New("offset is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.ShareRecordInfoIncludeToken{},
+		})
+		return
+	}
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.ShareRecordInfoIncludeToken{},
+		})
+		return
+	}
+	if offsetInt < 0 {
+		err := errors.New("offset is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.ShareRecordInfoIncludeToken{},
+		})
+		return
+	}
+	var shareRecords *[]pool.ShareRecordInfoIncludeToken
+
+	shareRecords, err = pool.QueryUserAllShareRecords(username, limitInt, offsetInt)
+
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryShareRecordsErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.ShareRecordInfoIncludeToken{},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   shareRecords,
+	})
+}
+
 func QueryUserShareBalance(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	tokenA := c.Query("token_a")

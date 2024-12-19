@@ -2674,6 +2674,73 @@ func QueryUserShareRecords(tokenA string, tokenB string, username string, limit 
 	return shareRecordInfos, nil
 }
 
+type ShareRecordInfoIncludeToken struct {
+	ID          uint            `json:"id"`
+	Token0      string          `json:"token0"`
+	Token1      string          `json:"token1"`
+	ShareId     uint            `json:"share_id"`
+	Username    string          `json:"username"`
+	Liquidity   string          `json:"liquidity"`
+	Reserve0    string          `json:"reserve0"`
+	Reserve1    string          `json:"reserve1"`
+	Amount0     string          `json:"amount0"`
+	Amount1     string          `json:"amount1"`
+	ShareSupply string          `json:"share_supply"`
+	ShareAmt    string          `json:"share_amt"`
+	IsFirstMint bool            `json:"is_first_mint"`
+	RecordType  ShareRecordType `json:"record_type"`
+}
+
+func QueryUserAllShareRecordsCount(username string) (count int64, err error) {
+
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_pairs").
+		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
+		Joins("join pool_share_records on pool_shares.id = pool_share_records.share_id").
+		Where("pool_share_records.username = ?", username).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select ShareRecordInfo")
+	}
+
+	tx.Rollback()
+
+	return count, nil
+}
+
+func QueryUserAllShareRecords(username string, limit int, offset int) (shareRecordInfos *[]ShareRecordInfoIncludeToken, err error) {
+
+	tx := middleware.DB.Begin()
+
+	var _shareRecordInfos []ShareRecordInfoIncludeToken
+
+	err = tx.Table("pool_pairs").
+		Select("pool_share_records.id,pool_pairs.token0,pool_pairs.token1,pool_share_records.share_id,pool_share_records.username,pool_share_records.liquidity,pool_share_records.reserve0,pool_share_records.reserve1,pool_share_records.amount0,pool_share_records.amount1,pool_share_records.share_supply,pool_share_records.share_amt,pool_share_records.is_first_mint,pool_share_records.record_type").
+		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
+		Joins("join pool_share_records on pool_shares.id = pool_share_records.share_id").
+		Where("pool_share_records.username = ?", username).
+		Order("pool_share_records.id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&_shareRecordInfos).
+		Error
+	if err != nil {
+		return new([]ShareRecordInfoIncludeToken), utils.AppendErrorInfo(err, "select ShareRecordInfo")
+	}
+
+	tx.Rollback()
+
+	if _shareRecordInfos == nil {
+		_shareRecordInfos = make([]ShareRecordInfoIncludeToken, 0)
+	}
+
+	shareRecordInfos = &_shareRecordInfos
+
+	return shareRecordInfos, nil
+}
+
 type SwapRecordInfo struct {
 	ID             uint           `json:"id"`
 	PairId         uint           `json:"pair_id"`

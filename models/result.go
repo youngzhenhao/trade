@@ -302,6 +302,7 @@ const (
 	GetNftPresaleOfflinePurchaseDataErr
 	UpdateNftPresaleOfflinePurchaseDataErr
 	CalcBurnLiquidityErr
+	QueryUserAllShareRecordsCountErr
 )
 
 // Err type:CustodyAccount
