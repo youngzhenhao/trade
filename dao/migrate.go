@@ -5,6 +5,7 @@ import (
 	"trade/models"
 	"trade/models/custodyModels"
 	"trade/models/custodyModels/pAccount"
+	"trade/services"
 	"trade/services/pool"
 	"trade/services/satBackQueue"
 )
@@ -195,6 +196,9 @@ func Migrate() error {
 		return err
 	}
 	if err = poolMigrate(); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&services.NftPresaleOfflinePurchaseData{}); err != nil {
 		return err
 	}
 

@@ -299,6 +299,7 @@ const (
 	GetBtcBalanceCountErr
 	GetBtcBalanceOrderLimitOffsetErr
 	QueryUserShareBalanceErr
+	GetNftPresaleOfflinePurchaseDataErr
 )
 
 // Err type:CustodyAccount

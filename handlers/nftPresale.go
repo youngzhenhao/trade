@@ -539,3 +539,26 @@ func GetPurchasedNftPresaleInfo(c *gin.Context) {
 		Data:   nftPresaleInfos,
 	})
 }
+
+// Offline purchase data
+
+func GetNftPresaleOfflinePurchaseData(c *gin.Context) {
+	nftNo := c.Query("nft_no")
+	npubKey := c.Query("npub_key")
+	invitationCode := c.Query("invitation_code")
+	assetId := c.Query("asset_id")
+	nftPresaleOfflinePurchaseDatas, err := services.GetNftPresaleOfflinePurchaseData(nftNo, npubKey, invitationCode, assetId)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.GetNftPresaleOfflinePurchaseDataErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   new([]services.NftPresaleOfflinePurchaseData),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   nftPresaleOfflinePurchaseDatas,
+	})
+}
