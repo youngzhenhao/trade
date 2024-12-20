@@ -2905,7 +2905,7 @@ func QueryUserAllSwapRecords(username string, limit int, offset int) (swapRecord
 	err = tx.Table("pool_pairs").
 		Select("pool_swap_records.id,pool_swap_records.created_at,pool_pairs.token0,pool_pairs.token1,pool_swap_records.pair_id,pool_swap_records.username,pool_swap_records.token_in,pool_swap_records.token_out,pool_swap_records.amount_in,pool_swap_records.amount_out,pool_swap_records.reserve_in,pool_swap_records.reserve_out,pool_swap_records.swap_fee,pool_swap_records.swap_fee_type,pool_swap_records.swap_record_type").
 		Joins("join pool_swap_records on pool_pairs.id = pool_swap_records.pair_id").
-		Where("pool_pairs.token0 = ? and pool_pairs.token1 = ? and pool_swap_records.username = ?", username).
+		Where("pool_swap_records.username = ?", username).
 		Order("pool_swap_records.id desc").
 		Limit(limit).
 		Offset(offset).
