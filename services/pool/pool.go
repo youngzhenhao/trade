@@ -2822,6 +2822,67 @@ func QueryUserSwapRecords(tokenA string, tokenB string, username string, limit i
 	return swapRecordInfos, nil
 }
 
+func QueryUserAllSwapRecordsCount(username string) (count int64, err error) {
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_pairs").
+		Joins("join pool_swap_records on pool_pairs.id = pool_swap_records.pair_id").
+		Where("pool_swap_records.username = ?", username).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select SwapRecordInfoIncludeToken count")
+	}
+
+	tx.Rollback()
+	return count, nil
+}
+
+type SwapRecordInfoIncludeToken struct {
+	ID             uint           `json:"id"`
+	Token0         string         `json:"token0"`
+	Token1         string         `json:"token1"`
+	PairId         uint           `json:"pair_id"`
+	Username       string         `json:"username"`
+	TokenIn        string         `json:"token_in"`
+	TokenOut       string         `json:"token_out"`
+	AmountIn       string         `json:"amount_in"`
+	AmountOut      string         `json:"amount_out"`
+	ReserveIn      string         `json:"reserve_in"`
+	ReserveOut     string         `json:"reserve_out"`
+	SwapFee        string         `json:"swap_fee"`
+	SwapFeeType    SwapFeeType    `json:"swap_fee_type"`
+	SwapRecordType SwapRecordType `json:"swap_record_type"`
+}
+
+func QueryUserAllSwapRecords(username string, limit int, offset int) (swapRecordInfos *[]SwapRecordInfoIncludeToken, err error) {
+	tx := middleware.DB.Begin()
+
+	var _swapRecordInfos []SwapRecordInfoIncludeToken
+
+	err = tx.Table("pool_pairs").
+		Select("pool_swap_records.id,pool_pairs.token0,pool_pairs.token1,pool_swap_records.pair_id,pool_swap_records.username,pool_swap_records.token_in,pool_swap_records.token_out,pool_swap_records.amount_in,pool_swap_records.amount_out,pool_swap_records.reserve_in,pool_swap_records.reserve_out,pool_swap_records.swap_fee,pool_swap_records.swap_fee_type,pool_swap_records.swap_record_type").
+		Joins("join pool_swap_records on pool_pairs.id = pool_swap_records.pair_id").
+		Where("pool_pairs.token0 = ? and pool_pairs.token1 = ? and pool_swap_records.username = ?", username).
+		Order("pool_swap_records.id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&_swapRecordInfos).
+		Error
+	if err != nil {
+		return new([]SwapRecordInfoIncludeToken), utils.AppendErrorInfo(err, "select SwapRecordInfoIncludeToken")
+	}
+
+	tx.Rollback()
+
+	if _swapRecordInfos == nil {
+		_swapRecordInfos = make([]SwapRecordInfoIncludeToken, 0)
+	}
+
+	swapRecordInfos = &_swapRecordInfos
+	return swapRecordInfos, nil
+}
+
 type LpAwardBalanceInfo struct {
 	ID      uint   `json:"id"`
 	Balance string `json:"balance"`

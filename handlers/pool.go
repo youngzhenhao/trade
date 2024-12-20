@@ -423,6 +423,107 @@ func QuerySwapRecords(c *gin.Context) {
 	})
 }
 
+func QueryUserAllSwapRecordsCount(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	var count int64
+	var err error
+	count, err = pool.QueryUserAllSwapRecordsCount(username)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryUserAllSwapRecordsCountErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   count,
+	})
+
+}
+
+func QueryUserAllSwapRecords(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	limit := c.Query("limit")
+	offset := c.Query("offset")
+
+	if limit == "" {
+		err := errors.New("limit is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.SwapRecordInfoIncludeToken{},
+		})
+		return
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.SwapRecordInfoIncludeToken{},
+		})
+		return
+	}
+	if limitInt < 0 {
+		err := errors.New("limit is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.SwapRecordInfoIncludeToken{},
+		})
+		return
+	}
+
+	if offset == "" {
+		err := errors.New("offset is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.SwapRecordInfoIncludeToken{},
+		})
+		return
+	}
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.SwapRecordInfoIncludeToken{},
+		})
+		return
+	}
+	if offsetInt < 0 {
+		err := errors.New("offset is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.SwapRecordInfoIncludeToken{},
+		})
+		return
+	}
+
+	var swapRecords *[]pool.SwapRecordInfoIncludeToken
+
+	swapRecords, err = pool.QueryUserAllSwapRecords(username, limitInt, offsetInt)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryUserAllSwapRecordsErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.SwapRecordInfoIncludeToken{},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   swapRecords,
+	})
+}
+
 func QueryUserLpAwardBalance(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	if username == "" {

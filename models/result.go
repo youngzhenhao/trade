@@ -303,6 +303,8 @@ const (
 	UpdateNftPresaleOfflinePurchaseDataErr
 	CalcBurnLiquidityErr
 	QueryUserAllShareRecordsCountErr
+	QueryUserAllSwapRecordsCountErr
+	QueryUserAllSwapRecordsErr
 )
 
 // Err type:CustodyAccount
