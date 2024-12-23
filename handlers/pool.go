@@ -1029,7 +1029,7 @@ func CalcAmountOut(c *gin.Context) {
 		return
 	}
 
-	amountOut, err := pool.CalcAmountOut(tokenIn, tokenOut, amountIn)
+	amountOut, err := pool.CalcAmountOut2(tokenIn, tokenOut, amountIn)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.CalcAmountOutErr.Code(),
@@ -1060,7 +1060,7 @@ func CalcAmountIn(c *gin.Context) {
 		return
 	}
 
-	amountIn, err := pool.CalcAmountIn(tokenIn, tokenOut, amountOut)
+	amountIn, err := pool.CalcAmountIn2(tokenIn, tokenOut, amountOut)
 	if err != nil {
 		c.JSON(http.StatusOK, Result2{
 			Errno:  models.CalcAmountInErr.Code(),
