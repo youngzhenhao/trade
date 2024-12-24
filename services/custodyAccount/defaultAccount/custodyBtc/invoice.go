@@ -12,6 +12,8 @@ import (
 	"trade/models"
 	"trade/models/custodyModels"
 	caccount "trade/services/custodyAccount/account"
+	"trade/services/custodyAccount/defaultAccount/custodyBtc/mempool"
+	"trade/services/servicesrpc"
 	"trade/utils"
 )
 
@@ -47,8 +49,8 @@ func (s *SubscribeInvoiceServer) runServer(ctx context.Context) {
 		if invoice != nil {
 			if invoice.State == lnrpc.Invoice_SETTLED {
 				dealSettledInvoice(invoice)
-			}
-			if invoice.State == lnrpc.Invoice_CANCELED {
+				go subscriptionReceiveBtcBalance(float64(invoice.Value))
+			} else if invoice.State == lnrpc.Invoice_CANCELED {
 				DealCanceledInvoice(invoice)
 			}
 		}
@@ -119,5 +121,27 @@ func DealCanceledInvoice(invoice *lnrpc.Invoice) {
 	}
 	if err = tx.Commit().Error; err != nil {
 		btlLog.CUST.Error("invoice server Error")
+	}
+}
+
+func subscriptionReceiveBtcBalance(amount float64) {
+	if config.GetLoadConfig().NetWork == "regtest" {
+		return
+	}
+	d := mempool.NewDingding()
+	channels, err := servicesrpc.GetChannelInfo()
+	if err != nil {
+		btlLog.CUST.Error("GetChannelInfo error:%s", err)
+		return
+	}
+	var balances []float64
+	for _, c := range channels {
+		if c.LocalBalance >= 0 {
+			balances = append(balances, float64(c.LocalBalance))
+		}
+	}
+	err = d.ReceiveBtcChannel(amount, balances)
+	if err != nil {
+		btlLog.CUST.Error("SendBtcPayOutChange error:%s", err)
 	}
 }
