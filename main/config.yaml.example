@@ -59,6 +59,9 @@ router_disable:
     download: false
     asset_balance_backup: false
     asset_balance_history: false
+    asset_meta: false
+    pool: false
+    btc_utxo: false
 api_config:
     lnd:
         host: ""

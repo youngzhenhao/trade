@@ -130,6 +130,9 @@ func SetupRouter() *gin.Engine {
 	if !config.GetLoadConfig().RouterDisable.Pool {
 		SetupPoolRouter(r)
 	}
+	if !config.GetLoadConfig().RouterDisable.BtcUtxo {
+		SetupBtcUtxoRouter(r)
+	}
 	SetupWsRouter(r)
 	return r
 }

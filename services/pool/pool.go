@@ -2964,6 +2964,7 @@ func QueryPoolInfo(tokenA string, tokenB string) (poolInfo *PoolInfo, err error)
 
 type ShareRecordInfo struct {
 	ID          uint            `json:"id"`
+	Time        int64           `json:"time"`
 	ShareId     uint            `json:"share_id"`
 	Username    string          `json:"username"`
 	Liquidity   string          `json:"liquidity"`
@@ -2977,6 +2978,40 @@ type ShareRecordInfo struct {
 	RecordType  ShareRecordType `json:"record_type"`
 }
 
+type ShareRecordInfoScan struct {
+	ID          uint            `json:"id"`
+	CreatedAt   time.Time       `json:"created_at"`
+	ShareId     uint            `json:"share_id"`
+	Username    string          `json:"username"`
+	Liquidity   string          `json:"liquidity"`
+	Reserve0    string          `json:"reserve0"`
+	Reserve1    string          `json:"reserve1"`
+	Amount0     string          `json:"amount0"`
+	Amount1     string          `json:"amount1"`
+	ShareSupply string          `json:"share_supply"`
+	ShareAmt    string          `json:"share_amt"`
+	IsFirstMint bool            `json:"is_first_mint"`
+	RecordType  ShareRecordType `json:"record_type"`
+}
+
+func ProcessShareRecordInfoScan(record ShareRecordInfoScan) ShareRecordInfo {
+	return ShareRecordInfo{
+		ID:          record.ID,
+		Time:        record.CreatedAt.Unix(),
+		ShareId:     record.ShareId,
+		Username:    record.Username,
+		Liquidity:   record.Liquidity,
+		Reserve0:    record.Reserve0,
+		Reserve1:    record.Reserve1,
+		Amount0:     record.Amount0,
+		Amount1:     record.Amount1,
+		ShareSupply: record.ShareSupply,
+		ShareAmt:    record.ShareAmt,
+		IsFirstMint: record.IsFirstMint,
+		RecordType:  record.RecordType,
+	}
+}
+
 func QueryShareRecords(tokenA string, tokenB string, limit int, offset int) (shareRecordInfos *[]ShareRecordInfo, err error) {
 
 	token0, token1, err := sortTokens(tokenA, tokenB)
@@ -2987,16 +3022,17 @@ func QueryShareRecords(tokenA string, tokenB string, limit int, offset int) (sha
 	tx := middleware.DB.Begin()
 
 	var _shareRecordInfos []ShareRecordInfo
+	var _shareRecordInfosScan []ShareRecordInfoScan
 
 	err = tx.Table("pool_pairs").
-		Select("pool_share_records.id,pool_share_records.share_id,pool_share_records.username,pool_share_records.liquidity,pool_share_records.reserve0,pool_share_records.reserve1,pool_share_records.amount0,pool_share_records.amount1,pool_share_records.share_supply,pool_share_records.share_amt,pool_share_records.is_first_mint,pool_share_records.record_type").
+		Select("pool_share_records.id,pool_share_records.created_at,pool_share_records.share_id,pool_share_records.username,pool_share_records.liquidity,pool_share_records.reserve0,pool_share_records.reserve1,pool_share_records.amount0,pool_share_records.amount1,pool_share_records.share_supply,pool_share_records.share_amt,pool_share_records.is_first_mint,pool_share_records.record_type").
 		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
 		Joins("join pool_share_records on pool_shares.id = pool_share_records.share_id").
 		Where("pool_pairs.token0 = ? AND pool_pairs.token1 = ?", token0, token1).
 		Order("pool_share_records.id desc").
 		Limit(limit).
 		Offset(offset).
-		Scan(&_shareRecordInfos).
+		Scan(&_shareRecordInfosScan).
 		Error
 	if err != nil {
 		return new([]ShareRecordInfo), utils.AppendErrorInfo(err, "select ShareRecordInfo")
@@ -3004,8 +3040,12 @@ func QueryShareRecords(tokenA string, tokenB string, limit int, offset int) (sha
 
 	tx.Rollback()
 
-	if _shareRecordInfos == nil {
+	if _shareRecordInfosScan == nil {
 		_shareRecordInfos = make([]ShareRecordInfo, 0)
+	} else {
+		for _, record := range _shareRecordInfosScan {
+			_shareRecordInfos = append(_shareRecordInfos, ProcessShareRecordInfoScan(record))
+		}
 	}
 
 	shareRecordInfos = &_shareRecordInfos
@@ -3022,16 +3062,17 @@ func QueryUserShareRecords(tokenA string, tokenB string, username string, limit 
 	tx := middleware.DB.Begin()
 
 	var _shareRecordInfos []ShareRecordInfo
+	var _shareRecordInfosScan []ShareRecordInfoScan
 
 	err = tx.Table("pool_pairs").
-		Select("pool_share_records.id,pool_share_records.share_id,pool_share_records.username,pool_share_records.liquidity,pool_share_records.reserve0,pool_share_records.reserve1,pool_share_records.amount0,pool_share_records.amount1,pool_share_records.share_supply,pool_share_records.share_amt,pool_share_records.is_first_mint,pool_share_records.record_type").
+		Select("pool_share_records.id,pool_share_records.created_at,pool_share_records.share_id,pool_share_records.username,pool_share_records.liquidity,pool_share_records.reserve0,pool_share_records.reserve1,pool_share_records.amount0,pool_share_records.amount1,pool_share_records.share_supply,pool_share_records.share_amt,pool_share_records.is_first_mint,pool_share_records.record_type").
 		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
 		Joins("join pool_share_records on pool_shares.id = pool_share_records.share_id").
 		Where("pool_pairs.token0 = ? and pool_pairs.token1 = ? and pool_share_records.username = ?", token0, token1, username).
 		Order("pool_share_records.id desc").
 		Limit(limit).
 		Offset(offset).
-		Scan(&_shareRecordInfos).
+		Scan(&_shareRecordInfosScan).
 		Error
 	if err != nil {
 		return new([]ShareRecordInfo), utils.AppendErrorInfo(err, "select ShareRecordInfo")
@@ -3039,10 +3080,13 @@ func QueryUserShareRecords(tokenA string, tokenB string, username string, limit 
 
 	tx.Rollback()
 
-	if _shareRecordInfos == nil {
+	if _shareRecordInfosScan == nil {
 		_shareRecordInfos = make([]ShareRecordInfo, 0)
+	} else {
+		for _, record := range _shareRecordInfosScan {
+			_shareRecordInfos = append(_shareRecordInfos, ProcessShareRecordInfoScan(record))
+		}
 	}
-
 	shareRecordInfos = &_shareRecordInfos
 
 	return shareRecordInfos, nil
@@ -3050,6 +3094,7 @@ func QueryUserShareRecords(tokenA string, tokenB string, username string, limit 
 
 type ShareRecordInfoIncludeToken struct {
 	ID          uint            `json:"id"`
+	Time        int64           `json:"time"`
 	Token0      string          `json:"token0"`
 	Token1      string          `json:"token1"`
 	ShareId     uint            `json:"share_id"`
@@ -3063,6 +3108,44 @@ type ShareRecordInfoIncludeToken struct {
 	ShareAmt    string          `json:"share_amt"`
 	IsFirstMint bool            `json:"is_first_mint"`
 	RecordType  ShareRecordType `json:"record_type"`
+}
+
+type ShareRecordInfoIncludeTokenScan struct {
+	ID          uint            `json:"id"`
+	CreatedAt   time.Time       `json:"created_at"`
+	Token0      string          `json:"token0"`
+	Token1      string          `json:"token1"`
+	ShareId     uint            `json:"share_id"`
+	Username    string          `json:"username"`
+	Liquidity   string          `json:"liquidity"`
+	Reserve0    string          `json:"reserve0"`
+	Reserve1    string          `json:"reserve1"`
+	Amount0     string          `json:"amount0"`
+	Amount1     string          `json:"amount1"`
+	ShareSupply string          `json:"share_supply"`
+	ShareAmt    string          `json:"share_amt"`
+	IsFirstMint bool            `json:"is_first_mint"`
+	RecordType  ShareRecordType `json:"record_type"`
+}
+
+func ProcessShareRecordInfoIncludeTokenScan(record ShareRecordInfoIncludeTokenScan) ShareRecordInfoIncludeToken {
+	return ShareRecordInfoIncludeToken{
+		ID:          record.ID,
+		Time:        record.CreatedAt.Unix(),
+		Token0:      record.Token0,
+		Token1:      record.Token1,
+		ShareId:     record.ShareId,
+		Username:    record.Username,
+		Liquidity:   record.Liquidity,
+		Reserve0:    record.Reserve0,
+		Reserve1:    record.Reserve1,
+		Amount0:     record.Amount0,
+		Amount1:     record.Amount1,
+		ShareSupply: record.ShareSupply,
+		ShareAmt:    record.ShareAmt,
+		IsFirstMint: record.IsFirstMint,
+		RecordType:  record.RecordType,
+	}
 }
 
 func QueryUserAllShareRecordsCount(username string) (count int64, err error) {
@@ -3089,16 +3172,17 @@ func QueryUserAllShareRecords(username string, limit int, offset int) (shareReco
 	tx := middleware.DB.Begin()
 
 	var _shareRecordInfos []ShareRecordInfoIncludeToken
+	var _shareRecordInfosScan []ShareRecordInfoIncludeTokenScan
 
 	err = tx.Table("pool_pairs").
-		Select("pool_share_records.id,pool_pairs.token0,pool_pairs.token1,pool_share_records.share_id,pool_share_records.username,pool_share_records.liquidity,pool_share_records.reserve0,pool_share_records.reserve1,pool_share_records.amount0,pool_share_records.amount1,pool_share_records.share_supply,pool_share_records.share_amt,pool_share_records.is_first_mint,pool_share_records.record_type").
+		Select("pool_share_records.id,pool_share_records.created_at,pool_pairs.token0,pool_pairs.token1,pool_share_records.share_id,pool_share_records.username,pool_share_records.liquidity,pool_share_records.reserve0,pool_share_records.reserve1,pool_share_records.amount0,pool_share_records.amount1,pool_share_records.share_supply,pool_share_records.share_amt,pool_share_records.is_first_mint,pool_share_records.record_type").
 		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
 		Joins("join pool_share_records on pool_shares.id = pool_share_records.share_id").
 		Where("pool_share_records.username = ?", username).
 		Order("pool_share_records.id desc").
 		Limit(limit).
 		Offset(offset).
-		Scan(&_shareRecordInfos).
+		Scan(&_shareRecordInfosScan).
 		Error
 	if err != nil {
 		return new([]ShareRecordInfoIncludeToken), utils.AppendErrorInfo(err, "select ShareRecordInfo")
@@ -3106,8 +3190,12 @@ func QueryUserAllShareRecords(username string, limit int, offset int) (shareReco
 
 	tx.Rollback()
 
-	if _shareRecordInfos == nil {
+	if _shareRecordInfosScan == nil {
 		_shareRecordInfos = make([]ShareRecordInfoIncludeToken, 0)
+	} else {
+		for _, record := range _shareRecordInfosScan {
+			_shareRecordInfos = append(_shareRecordInfos, ProcessShareRecordInfoIncludeTokenScan(record))
+		}
 	}
 
 	shareRecordInfos = &_shareRecordInfos
@@ -3117,6 +3205,7 @@ func QueryUserAllShareRecords(username string, limit int, offset int) (shareReco
 
 type SwapRecordInfo struct {
 	ID             uint           `json:"id"`
+	Time           int64          `json:"time"`
 	PairId         uint           `json:"pair_id"`
 	Username       string         `json:"username"`
 	TokenIn        string         `json:"token_in"`
@@ -3130,6 +3219,41 @@ type SwapRecordInfo struct {
 	SwapRecordType SwapRecordType `json:"swap_record_type"`
 }
 
+type SwapRecordInfoScan struct {
+	ID             uint           `json:"id"`
+	CreatedAt      time.Time      `json:"created_at"`
+	PairId         uint           `json:"pair_id"`
+	Username       string         `json:"username"`
+	TokenIn        string         `json:"token_in"`
+	TokenOut       string         `json:"token_out"`
+	AmountIn       string         `json:"amount_in"`
+	AmountOut      string         `json:"amount_out"`
+	ReserveIn      string         `json:"reserve_in"`
+	ReserveOut     string         `json:"reserve_out"`
+	SwapFee        string         `json:"swap_fee"`
+	SwapFeeType    SwapFeeType    `json:"swap_fee_type"`
+	SwapRecordType SwapRecordType `json:"swap_record_type"`
+}
+
+func PrecessSwapRecordInfoScan(record SwapRecordInfoScan) SwapRecordInfo {
+	return SwapRecordInfo{
+		ID:             record.ID,
+		Time:           record.CreatedAt.Unix(),
+		PairId:         record.PairId,
+		Username:       record.Username,
+		TokenIn:        record.TokenIn,
+		TokenOut:       record.TokenOut,
+		AmountIn:       record.AmountIn,
+		AmountOut:      record.AmountOut,
+		ReserveIn:      record.ReserveIn,
+		ReserveOut:     record.ReserveOut,
+		SwapFee:        record.SwapFee,
+		SwapFeeType:    record.SwapFeeType,
+		SwapRecordType: record.SwapRecordType,
+	}
+
+}
+
 func QuerySwapRecords(tokenA string, tokenB string, limit int, offset int) (swapRecordInfos *[]SwapRecordInfo, err error) {
 	token0, token1, err := sortTokens(tokenA, tokenB)
 	if err != nil {
@@ -3139,15 +3263,16 @@ func QuerySwapRecords(tokenA string, tokenB string, limit int, offset int) (swap
 	tx := middleware.DB.Begin()
 
 	var _swapRecordInfos []SwapRecordInfo
+	var _swapRecordInfosScan []SwapRecordInfoScan
 
 	err = tx.Table("pool_pairs").
-		Select("pool_swap_records.id,pool_swap_records.pair_id,pool_swap_records.username,pool_swap_records.token_in,pool_swap_records.token_out,pool_swap_records.amount_in,pool_swap_records.amount_out,pool_swap_records.reserve_in,pool_swap_records.reserve_out,pool_swap_records.swap_fee,pool_swap_records.swap_fee_type,pool_swap_records.swap_record_type").
+		Select("pool_swap_records.id,pool_swap_records.created_at,pool_swap_records.pair_id,pool_swap_records.username,pool_swap_records.token_in,pool_swap_records.token_out,pool_swap_records.amount_in,pool_swap_records.amount_out,pool_swap_records.reserve_in,pool_swap_records.reserve_out,pool_swap_records.swap_fee,pool_swap_records.swap_fee_type,pool_swap_records.swap_record_type").
 		Joins("join pool_swap_records on pool_pairs.id = pool_swap_records.pair_id").
 		Where("pool_pairs.token0 = ? AND pool_pairs.token1 = ?", token0, token1).
 		Order("pool_swap_records.id desc").
 		Limit(limit).
 		Offset(offset).
-		Scan(&_swapRecordInfos).
+		Scan(&_swapRecordInfosScan).
 		Error
 	if err != nil {
 		return new([]SwapRecordInfo), utils.AppendErrorInfo(err, "select SwapRecordInfo")
@@ -3155,8 +3280,12 @@ func QuerySwapRecords(tokenA string, tokenB string, limit int, offset int) (swap
 
 	tx.Rollback()
 
-	if _swapRecordInfos == nil {
+	if _swapRecordInfosScan == nil {
 		_swapRecordInfos = make([]SwapRecordInfo, 0)
+	} else {
+		for _, record := range _swapRecordInfosScan {
+			_swapRecordInfos = append(_swapRecordInfos, PrecessSwapRecordInfoScan(record))
+		}
 	}
 
 	swapRecordInfos = &_swapRecordInfos
@@ -3172,15 +3301,16 @@ func QueryUserSwapRecords(tokenA string, tokenB string, username string, limit i
 	tx := middleware.DB.Begin()
 
 	var _swapRecordInfos []SwapRecordInfo
+	var _swapRecordInfosScan []SwapRecordInfoScan
 
 	err = tx.Table("pool_pairs").
-		Select("pool_swap_records.id,pool_swap_records.pair_id,pool_swap_records.username,pool_swap_records.token_in,pool_swap_records.token_out,pool_swap_records.amount_in,pool_swap_records.amount_out,pool_swap_records.reserve_in,pool_swap_records.reserve_out,pool_swap_records.swap_fee,pool_swap_records.swap_fee_type,pool_swap_records.swap_record_type").
+		Select("pool_swap_records.id,pool_swap_records.created_at,pool_swap_records.pair_id,pool_swap_records.username,pool_swap_records.token_in,pool_swap_records.token_out,pool_swap_records.amount_in,pool_swap_records.amount_out,pool_swap_records.reserve_in,pool_swap_records.reserve_out,pool_swap_records.swap_fee,pool_swap_records.swap_fee_type,pool_swap_records.swap_record_type").
 		Joins("join pool_swap_records on pool_pairs.id = pool_swap_records.pair_id").
 		Where("pool_pairs.token0 = ? and pool_pairs.token1 = ? and pool_swap_records.username = ?", token0, token1, username).
 		Order("pool_swap_records.id desc").
 		Limit(limit).
 		Offset(offset).
-		Scan(&_swapRecordInfos).
+		Scan(&_swapRecordInfosScan).
 		Error
 	if err != nil {
 		return new([]SwapRecordInfo), utils.AppendErrorInfo(err, "select SwapRecordInfo")
@@ -3188,10 +3318,13 @@ func QueryUserSwapRecords(tokenA string, tokenB string, username string, limit i
 
 	tx.Rollback()
 
-	if _swapRecordInfos == nil {
+	if _swapRecordInfosScan == nil {
 		_swapRecordInfos = make([]SwapRecordInfo, 0)
+	} else {
+		for _, record := range _swapRecordInfosScan {
+			_swapRecordInfos = append(_swapRecordInfos, PrecessSwapRecordInfoScan(record))
+		}
 	}
-
 	swapRecordInfos = &_swapRecordInfos
 	return swapRecordInfos, nil
 }
@@ -3335,9 +3468,28 @@ func QueryUserLpAwardBalance(username string) (lpAwardBalanceInfo *LpAwardBalanc
 
 type WithdrawAwardRecordInfo struct {
 	ID           uint   `json:"id"`
+	Time         int64  `json:"time"`
 	Username     string `json:"username"`
 	Amount       string `json:"amount"`
 	AwardBalance string `json:"award_balance"`
+}
+
+type WithdrawAwardRecordInfoScan struct {
+	ID           uint      `json:"id"`
+	CreatedAt    time.Time `json:"created_at"`
+	Username     string    `json:"username"`
+	Amount       string    `json:"amount"`
+	AwardBalance string    `json:"award_balance"`
+}
+
+func ProcessWithdrawAwardRecordInfoScan(record WithdrawAwardRecordInfoScan) WithdrawAwardRecordInfo {
+	return WithdrawAwardRecordInfo{
+		ID:           record.ID,
+		Time:         record.CreatedAt.Unix(),
+		Username:     record.Username,
+		Amount:       record.Amount,
+		AwardBalance: record.AwardBalance,
+	}
 }
 
 // not used
@@ -3366,14 +3518,15 @@ func QueryUserWithdrawAwardRecords(username string, limit int, offset int) (with
 	tx := middleware.DB.Begin()
 
 	var _withdrawAwardRecords []WithdrawAwardRecordInfo
+	var _withdrawAwardRecordsScan []WithdrawAwardRecordInfoScan
 
 	err = tx.Table("pool_withdraw_award_records").
-		Select("id,username,amount,award_balance").
+		Select("id,created_at,username,amount,award_balance").
 		Where("username = ?", username).
 		Order("id desc").
 		Limit(limit).
 		Offset(offset).
-		Scan(&_withdrawAwardRecords).
+		Scan(&_withdrawAwardRecordsScan).
 		Error
 	if err != nil {
 		return new([]WithdrawAwardRecordInfo), utils.AppendErrorInfo(err, "select PoolWithdrawAwardRecord")
@@ -3381,8 +3534,12 @@ func QueryUserWithdrawAwardRecords(username string, limit int, offset int) (with
 
 	tx.Rollback()
 
-	if _withdrawAwardRecords == nil {
+	if _withdrawAwardRecordsScan == nil {
 		_withdrawAwardRecords = make([]WithdrawAwardRecordInfo, 0)
+	} else {
+		for _, record := range _withdrawAwardRecordsScan {
+			_withdrawAwardRecords = append(_withdrawAwardRecords, ProcessWithdrawAwardRecordInfoScan(record))
+		}
 	}
 
 	withdrawAwardRecords = &_withdrawAwardRecords

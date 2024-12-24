@@ -74,6 +74,7 @@ type Config struct {
 		AssetBalanceHistory   bool `yaml:"asset_balance_history" json:"asset_balance_history"`
 		AssetMeta             bool `yaml:"asset_meta" json:"asset_meta"`
 		Pool                  bool `yaml:"pool" json:"pool"`
+		BtcUtxo               bool `yaml:"btc_utxo" json:"btc_utxo"`
 	} `yaml:"router_disable" json:"router_disable"`
 	ApiConfig struct {
 		Lnd struct {
