@@ -12,6 +12,7 @@ import (
 	"github.com/lightningnetwork/lnd/lnwallet"
 	"github.com/lightningnetwork/lnd/lnwire"
 	"strconv"
+	"time"
 	"trade/config"
 	"trade/utils"
 )
@@ -122,10 +123,11 @@ func InvoicePay(invoice string, amt, feeLimit int64) (*lnrpc.Payment, error) {
 	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonFile)
 	defer connClose()
 
+	var paymentTimeout = time.Second * 60
 	request := &routerrpc.SendPaymentRequest{
 		PaymentRequest: invoice,
 		//FeeLimitSat:    feeLimit,
-		//TimeoutSeconds: 60,
+		TimeoutSeconds: int32(paymentTimeout.Seconds()),
 	}
 	if feeLimit > 1 {
 		request.FeeLimitSat = feeLimit
