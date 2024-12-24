@@ -309,6 +309,7 @@ const (
 	QueryLiquidityAndAwardRecordsErr
 	QueryLpAwardRecordsCountErr
 	QueryLpAwardRecordsErr
+	SetBtcUtxoErr
 )
 
 // Err type:CustodyAccount
