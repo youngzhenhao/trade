@@ -3791,3 +3791,91 @@ func QueryLiquidityAndAwardRecords(username string, limit int, offset int) (reco
 
 	return &_liquidityAndAwardRecordInfo, nil
 }
+
+func QueryLpAwardRecordsCount(username string) (count int64, err error) {
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_lp_award_records").
+		Where("username = ?", username).
+		Count(&count).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select LpAwardRecordInfo count")
+	}
+
+	tx.Rollback()
+	return count, nil
+}
+
+type LpAwardRecordInfo struct {
+	ID           uint      `json:"id"`
+	Time         int64     `json:"time"`
+	ShareId      uint      `json:"share_id" gorm:"index"`
+	Amount       string    `json:"amount" gorm:"type:varchar(255);index"`
+	Fee          string    `json:"fee" gorm:"type:varchar(255);index"`
+	AwardBalance string    `json:"award_balance" gorm:"type:varchar(255);index"`
+	ShareBalance string    `json:"share_balance" gorm:"type:varchar(255);index"`
+	TotalSupply  string    `json:"total_supply" gorm:"type:varchar(255);index"`
+	SwapRecordId uint      `json:"swap_record_id" gorm:"index"`
+	AwardType    AwardType `json:"award_type" gorm:"index"`
+}
+
+type LpAwardRecordInfoScan struct {
+	ID           uint      `json:"id"`
+	CreatedAt    time.Time `json:"created_at"`
+	ShareId      uint      `json:"share_id" gorm:"index"`
+	Amount       string    `json:"amount" gorm:"type:varchar(255);index"`
+	Fee          string    `json:"fee" gorm:"type:varchar(255);index"`
+	AwardBalance string    `json:"award_balance" gorm:"type:varchar(255);index"`
+	ShareBalance string    `json:"share_balance" gorm:"type:varchar(255);index"`
+	TotalSupply  string    `json:"total_supply" gorm:"type:varchar(255);index"`
+	SwapRecordId uint      `json:"swap_record_id" gorm:"index"`
+	AwardType    AwardType `json:"award_type" gorm:"index"`
+}
+
+func ProcessLpAwardRecordInfoScan(record LpAwardRecordInfoScan) LpAwardRecordInfo {
+	return LpAwardRecordInfo{
+		ID:           record.ID,
+		Time:         record.CreatedAt.Unix(),
+		ShareId:      record.ShareId,
+		Amount:       record.Amount,
+		Fee:          record.Fee,
+		AwardBalance: record.AwardBalance,
+		ShareBalance: record.ShareBalance,
+		TotalSupply:  record.TotalSupply,
+		SwapRecordId: record.SwapRecordId,
+		AwardType:    record.AwardType,
+	}
+}
+
+func QueryLpAwardRecords(username string, limit int, offset int) (lpAwardRecords *[]LpAwardRecordInfo, err error) {
+	tx := middleware.DB.Begin()
+
+	var _lpAwardRecords []LpAwardRecordInfo
+	var _lpAwardRecordsScan []LpAwardRecordInfoScan
+
+	err = tx.Table("pool_lp_award_records").
+		Select("id,created_at,share_id,amount,fee,award_balance,share_balance,total_supply,swap_record_id,award_type").
+		Where("username = ?", username).
+		Order("id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&_lpAwardRecordsScan).
+		Error
+	if err != nil {
+		return new([]LpAwardRecordInfo), utils.AppendErrorInfo(err, "select LpAwardRecordInfo")
+	}
+
+	tx.Rollback()
+
+	if _lpAwardRecordsScan == nil {
+		_lpAwardRecords = make([]LpAwardRecordInfo, 0)
+	} else {
+		for _, record := range _lpAwardRecordsScan {
+			_lpAwardRecords = append(_lpAwardRecords, ProcessLpAwardRecordInfoScan(record))
+		}
+	}
+
+	lpAwardRecords = &_lpAwardRecords
+	return lpAwardRecords, nil
+}
