@@ -125,9 +125,11 @@ func InvoicePay(invoice string, amt, feeLimit int64) (*lnrpc.Payment, error) {
 
 	var paymentTimeout = time.Second * 60
 	request := &routerrpc.SendPaymentRequest{
-		PaymentRequest: invoice,
+		PaymentRequest:    invoice,
+		DestCustomRecords: make(map[uint64][]byte),
 		//FeeLimitSat:    feeLimit,
 		TimeoutSeconds: int32(paymentTimeout.Seconds()),
+		MaxParts:       16,
 	}
 	if feeLimit > 1 {
 		request.FeeLimitSat = feeLimit
