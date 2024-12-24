@@ -666,6 +666,121 @@ func QueryWithdrawAwardRecords(c *gin.Context) {
 	})
 }
 
+func QueryLiquidityAndAwardRecordsCount(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	if username == "" {
+		err := errors.New("username is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UsernameEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+	count, err := pool.QueryLiquidityAndAwardRecordsCount(username)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryLiquidityAndAwardRecordsCountErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   0,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   count,
+	})
+}
+
+func QueryLiquidityAndAwardRecords(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	if username == "" {
+		err := errors.New("username is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.UsernameEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.LiquidityAndAwardRecordInfo{},
+		})
+		return
+	}
+	limit := c.Query("limit")
+	offset := c.Query("offset")
+
+	if limit == "" {
+		err := errors.New("limit is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.LiquidityAndAwardRecordInfo{},
+		})
+		return
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.LiquidityAndAwardRecordInfo{},
+		})
+		return
+	}
+	if limitInt < 0 {
+		err := errors.New("limit is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.LimitLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.LiquidityAndAwardRecordInfo{},
+		})
+		return
+	}
+
+	if offset == "" {
+		err := errors.New("offset is empty")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetEmptyErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.LiquidityAndAwardRecordInfo{},
+		})
+		return
+	}
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.AtoiErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.LiquidityAndAwardRecordInfo{},
+		})
+		return
+	}
+	if offsetInt < 0 {
+		err := errors.New("offset is less than 0")
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.OffsetLessThanZeroErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.LiquidityAndAwardRecordInfo{},
+		})
+		return
+	}
+
+	var liquidityAndAwardRecords *[]pool.LiquidityAndAwardRecordInfo
+
+	liquidityAndAwardRecords, err = pool.QueryLiquidityAndAwardRecords(username, limitInt, offsetInt)
+	if err != nil {
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryLiquidityAndAwardRecordsErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   &[]pool.LiquidityAndAwardRecordInfo{},
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   liquidityAndAwardRecords,
+	})
+}
+
 // calc
 
 func CalcAddLiquidity(c *gin.Context) {

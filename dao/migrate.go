@@ -207,6 +207,12 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&pool.PoolLpAwardCumulative{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&pool.PoolShareLpAwardBalance{}); err != nil {
+		return err
+	}
+	if err = middleware.DB.AutoMigrate(&pool.PoolShareLpAwardCumulative{}); err != nil {
+		return err
+	}
 
 	return err
 }

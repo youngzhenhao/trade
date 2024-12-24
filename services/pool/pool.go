@@ -2,6 +2,7 @@ package pool
 
 import (
 	"errors"
+	"gorm.io/gorm"
 	"math/big"
 	"strconv"
 	"sync"
@@ -1130,7 +1131,7 @@ func swapTokenForExactTokenNoPath(tokenIn string, tokenOut string, amountOut str
 	return amountIn, err
 }
 
-func withdrawAward(username string, amount string) (newBalance string, err error) {
+func withdrawAward(tokenA string, tokenB string, username string, amount string) (newBalance string, err error) {
 
 	// @dev: lock user's lp award balance
 	if LockLpA == nil {
@@ -1153,6 +1154,11 @@ func withdrawAward(username string, amount string) (newBalance string, err error
 		}
 	}()
 
+	shareId, err := QueryShareId(tx, tokenA, tokenB)
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "QueryShareId")
+	}
+
 	_amount, success := new(big.Int).SetString(amount, 10)
 	if !success {
 		return ZeroValue, errors.New("amount SetString(" + amount + ") " + strconv.FormatBool(success))
@@ -1163,14 +1169,21 @@ func withdrawAward(username string, amount string) (newBalance string, err error
 	}
 
 	var oldBalance string
-	oldBalance, newBalance, err = _withdrawAward(tx, username, _amount)
+
+	oldBalance, newBalance, err = _withdrawAward2(tx, shareId, username, _amount)
+	if err != nil {
+		return ZeroValue, utils.AppendErrorInfo(err, "_withdrawAward2")
+	}
+
+	// @dev: previous
+	_, _, err = _withdrawAward(tx, username, _amount)
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "_withdrawAward")
 	}
 
 	var withdrawTransferRecordId uint
 
-	// TODO: Transfer _amount of tokenSat from pool to user
+	// @dev: Transfer _amount of tokenSat from pool to user
 	withdrawTransferRecordId, err = TransferWithdrawReward(username, _amount, "withdrawAward")
 	if err != nil {
 		return ZeroValue, utils.AppendErrorInfo(err, "TransferWithdrawReward")
@@ -1403,10 +1416,12 @@ func WithdrawAward(request *PoolWithdrawAwardRequest) (result *WithdrawAwardResu
 		return new(WithdrawAwardResult), err
 	}
 
+	tokenA := request.TokenA
+	tokenB := request.TokenB
 	username := request.Username
 	amount := request.Amount
 
-	newBalance, err := withdrawAward(username, amount)
+	newBalance, err := withdrawAward(tokenA, tokenB, username, amount)
 	return &WithdrawAwardResult{
 		NewBalance: newBalance,
 	}, err
@@ -3666,6 +3681,113 @@ func QueryUserWithdrawAwardRecordsCount(username string) (count int64, err error
 	return count, nil
 }
 
-// TODO: Encapsulate API
+// @dev: Tokens to share id
 
-// @dev: Scheduled Task Do Not Use Now
+func QueryShareId(tx *gorm.DB, tokenA string, tokenB string) (shareId uint, err error) {
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	err = tx.Table("pool_pairs").
+		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
+		Where("pool_pairs.token0 = ? AND pool_pairs.token1 = ?", token0, token1).
+		Select("pool_shares.id").
+		Scan(&shareId).
+		Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select share id")
+	}
+
+	return shareId, nil
+}
+
+func QueryPairAndShareId(tx *gorm.DB, tokenA string, tokenB string) (pairId uint, shareId uint, err error) {
+	token0, token1, err := sortTokens(tokenA, tokenB)
+	if err != nil {
+		return 0, 0, utils.AppendErrorInfo(err, "sortTokens")
+	}
+
+	// @dev: get pair
+	var _pair PoolPair
+	err = tx.Model(&PoolPair{}).Where("token0 = ? AND token1 = ?", token0, token1).First(&_pair).Error
+	if err != nil {
+		//@dev: pair does not exist
+		return 0, 0, utils.AppendErrorInfo(err, "pair does not exist")
+	}
+
+	pairId = _pair.ID
+	if pairId <= 0 {
+		return 0, 0, errors.New("invalid pairId(" + strconv.FormatUint(uint64(pairId), 10) + ")")
+	}
+
+	// get share
+	var share PoolShare
+	err = tx.Model(&PoolShare{}).Where("pair_id = ?", pairId).First(&share).Error
+	if err != nil {
+		return 0, 0, utils.AppendErrorInfo(err, "share does not exist")
+	}
+
+	shareId = share.ID
+	if shareId <= 0 {
+		return 0, 0, errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
+	}
+
+	return pairId, shareId, nil
+}
+
+// @dev: Query liquidity, lp_award_balance, lp_award_cumulative
+
+func QueryLiquidityAndAwardRecordsCount(username string) (count int64, err error) {
+	tx := middleware.DB.Begin()
+
+	err = tx.Table("pool_pairs").
+		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
+		Joins("join pool_share_balances on pool_shares.id = pool_share_balances.share_id").
+		Joins("join pool_share_lp_award_balances on pool_share_balances.username = pool_share_lp_award_balances.username").
+		Joins("join pool_share_lp_award_cumulatives on pool_share_balances.username = pool_share_lp_award_cumulatives.username").
+		Where("pool_share_balances.username = ?", username).
+		Count(&count).Error
+	if err != nil {
+		return 0, utils.AppendErrorInfo(err, "select liquidity, lp_award_balance, lp_award_cumulative count")
+	}
+	tx.Rollback()
+
+	return count, nil
+}
+
+type LiquidityAndAwardRecordInfo struct {
+	Token0            string `json:"token_0"`
+	Token1            string `json:"token_1"`
+	Liquidity         string `json:"liquidity"`
+	LpAwardBalance    string `json:"lp_award_balance"`
+	LpAwardCumulative string `json:"lp_award_cumulative"`
+}
+
+func QueryLiquidityAndAwardRecords(username string, limit int, offset int) (records *[]LiquidityAndAwardRecordInfo, err error) {
+	tx := middleware.DB.Begin()
+
+	var _liquidityAndAwardRecordInfo []LiquidityAndAwardRecordInfo
+
+	err = tx.Table("pool_pairs").
+		Joins("join pool_shares on pool_pairs.id = pool_shares.pair_id").
+		Joins("join pool_share_balances on pool_shares.id = pool_share_balances.share_id").
+		Joins("join pool_share_lp_award_balances on pool_share_balances.username = pool_share_lp_award_balances.username").
+		Joins("join pool_share_lp_award_cumulatives on pool_share_balances.username = pool_share_lp_award_cumulatives.username").
+		Select("pool_pairs.token0, pool_pairs.token1, pool_share_balances.balance as liquidity, pool_share_lp_award_balances.balance as lp_award_balance, pool_share_lp_award_cumulatives.amount as lp_award_cumulative").
+		Where("pool_share_balances.username = ?", username).
+		Order("pool_share_balances.id desc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&_liquidityAndAwardRecordInfo).Error
+	if err != nil {
+		return nil, utils.AppendErrorInfo(err, "select liquidity, lp_award_balance, lp_award_cumulative")
+	}
+
+	if _liquidityAndAwardRecordInfo == nil {
+		_liquidityAndAwardRecordInfo = make([]LiquidityAndAwardRecordInfo, 0)
+	}
+	tx.Rollback()
+
+	return &_liquidityAndAwardRecordInfo, nil
+}

@@ -305,6 +305,8 @@ const (
 	QueryUserAllShareRecordsCountErr
 	QueryUserAllSwapRecordsCountErr
 	QueryUserAllSwapRecordsErr
+	QueryLiquidityAndAwardRecordsCountErr
+	QueryLiquidityAndAwardRecordsErr
 )
 
 // Err type:CustodyAccount

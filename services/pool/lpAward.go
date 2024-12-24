@@ -11,6 +11,112 @@ import (
 
 var LockLpA map[string]*sync.Mutex
 
+type PoolShareLpAwardBalance struct {
+	gorm.Model
+	ShareId  uint   `json:"share_id" gorm:"uniqueIndex:idx_share_id_username"`
+	Username string `json:"username" gorm:"type:varchar(255);uniqueIndex:idx_share_id_username"`
+	Balance  string `json:"balance" gorm:"type:varchar(255);index"`
+}
+
+func newShareLpAwardBalance(shareId uint, username string, balance string) (shareLpAwardBalance *PoolShareLpAwardBalance, err error) {
+	_balanceFloat, success := new(big.Float).SetString(balance)
+	if !success {
+		return new(PoolShareLpAwardBalance), errors.New("balance SetString(" + balance + ") " + strconv.FormatBool(success))
+	}
+	if _balanceFloat.Sign() < 0 {
+		return new(PoolShareLpAwardBalance), errors.New("invalid balance(" + _balanceFloat.String() + ")")
+	}
+	_shareLpAwardBalance := PoolShareLpAwardBalance{
+		ShareId:  shareId,
+		Username: username,
+		Balance:  balance,
+	}
+	return &_shareLpAwardBalance, nil
+}
+
+func createOrUpdateShareLpAwardBalance(tx *gorm.DB, shareId uint, username string, balance *big.Float) (previousBalance string, err error) {
+	var shareLpAwardBalance *PoolShareLpAwardBalance
+	err = tx.Model(&PoolShareLpAwardBalance{}).Where("share_id = ? AND username = ?", shareId, username).First(&shareLpAwardBalance).Error
+	if err != nil {
+		// @dev: no shareLpAwardBalance
+		shareLpAwardBalance, err = newShareLpAwardBalance(shareId, username, balance.String())
+		if err != nil {
+			return ZeroValue, utils.AppendErrorInfo(err, "newShareLpAwardBalance")
+		}
+		err = tx.Model(&PoolShareLpAwardBalance{}).Create(&shareLpAwardBalance).Error
+		if err != nil {
+			return ZeroValue, utils.AppendErrorInfo(err, "create shareLpAwardBalance")
+		}
+		previousBalance = big.NewFloat(0).String()
+	} else {
+		oldBalance, success := new(big.Float).SetString(shareLpAwardBalance.Balance)
+		if !success {
+			return ZeroValue, errors.New("shareLpAwardBalance SetString(" + shareLpAwardBalance.Balance + ") " + strconv.FormatBool(success))
+		}
+		newBalance := new(big.Float).Add(oldBalance, balance)
+		err = tx.Model(&PoolShareLpAwardBalance{}).Where("share_id = ? AND username = ?", shareId, username).
+			Update("balance", newBalance.String()).Error
+		if err != nil {
+			return ZeroValue, utils.AppendErrorInfo(err, "update shareLpAwardBalance")
+		}
+		previousBalance = oldBalance.String()
+	}
+	return previousBalance, nil
+}
+
+type PoolShareLpAwardCumulative struct {
+	gorm.Model
+	ShareId  uint   `json:"share_id" gorm:"uniqueIndex:idx_share_id_username"`
+	Username string `json:"username" gorm:"type:varchar(255);uniqueIndex:idx_share_id_username"`
+	Amount   string `json:"amount" gorm:"type:varchar(255);index"`
+}
+
+func newShareLpAwardCumulative(shareId uint, username string, amount string) (shareLpAwardCumulative *PoolShareLpAwardCumulative, err error) {
+	_amountFloat, success := new(big.Float).SetString(amount)
+	if !success {
+		return new(PoolShareLpAwardCumulative), errors.New("amount SetString(" + amount + ") " + strconv.FormatBool(success))
+	}
+	if _amountFloat.Sign() < 0 {
+		return new(PoolShareLpAwardCumulative), errors.New("invalid balance(" + _amountFloat.String() + ")")
+	}
+	_shareLpAwardCumulative := PoolShareLpAwardCumulative{
+		ShareId:  shareId,
+		Username: username,
+		Amount:   amount,
+	}
+	return &_shareLpAwardCumulative, nil
+}
+
+func createOrUpdateShareLpAwardCumulative(tx *gorm.DB, shareId uint, username string, amount *big.Float) (previousAmount string, err error) {
+	var shareLpAwardCumulative *PoolShareLpAwardCumulative
+	err = tx.Model(&PoolShareLpAwardCumulative{}).Where("share_id = ? AND username = ?", shareId, username).First(&shareLpAwardCumulative).Error
+	if err != nil {
+		// @dev: no shareLpAwardCumulative
+		shareLpAwardCumulative, err = newShareLpAwardCumulative(shareId, username, amount.String())
+		if err != nil {
+			return ZeroValue, utils.AppendErrorInfo(err, "newShareLpAwardCumulative")
+		}
+		err = tx.Model(&PoolShareLpAwardCumulative{}).Create(&shareLpAwardCumulative).Error
+		if err != nil {
+			return ZeroValue, utils.AppendErrorInfo(err, "create shareLpAwardCumulative")
+		}
+		previousAmount = big.NewFloat(0).String()
+	} else {
+		oldAmount, success := new(big.Float).SetString(shareLpAwardCumulative.Amount)
+		if !success {
+			return ZeroValue, errors.New("shareLpAwardCumulative SetString(" + shareLpAwardCumulative.Amount + ") " + strconv.FormatBool(success))
+		}
+		newAmount := new(big.Float).Add(oldAmount, amount)
+		err = tx.Model(&PoolShareLpAwardCumulative{}).Where("share_id = ? AND username = ?", shareId, username).
+			Update("amount", newAmount.String()).Error
+		if err != nil {
+			return ZeroValue, utils.AppendErrorInfo(err, "update shareLpAwardCumulative")
+		}
+		previousAmount = oldAmount.String()
+	}
+	return previousAmount, nil
+}
+
 type PoolLpAwardBalance struct {
 	gorm.Model
 	Username string `json:"username" gorm:"type:varchar(255);uniqueIndex"`
@@ -169,12 +275,26 @@ func updateLpAwardBalanceAndRecordSwap(tx *gorm.DB, shareId uint, username strin
 	if shareId <= 0 {
 		return errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
 	}
+
 	var previousAwardBalance string
-	previousAwardBalance, err = createOrUpdateLpAwardBalance(tx, username, amount)
+
+	previousAwardBalance, err = createOrUpdateShareLpAwardBalance(tx, shareId, username, amount)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "createOrUpdateShareLpAwardBalance")
+	}
+
+	_, err = createOrUpdateShareLpAwardCumulative(tx, shareId, username, amount)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "createOrUpdateShareLpAwardCumulative")
+	}
+
+	// @dev: previous
+	_, err = createOrUpdateLpAwardBalance(tx, username, amount)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "createOrUpdateLpAwardBalance")
 	}
 
+	// @dev: previous
 	_, err = createOrUpdatePoolLpAwardCumulative(tx, username, amount)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "createOrUpdatePoolLpAwardCumulative")
@@ -244,6 +364,40 @@ func _withdrawAward(tx *gorm.DB, username string, amount *big.Int) (oldBalance s
 			Update("balance", _newBalance.String()).Error
 		if err != nil {
 			return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "update lpAwardBalance")
+		}
+		newBalance = _newBalance.String()
+		oldBalance = _oldBalance.String()
+	}
+	return oldBalance, newBalance, nil
+}
+
+func _withdrawAward2(tx *gorm.DB, shareId uint, username string, amount *big.Int) (oldBalance string, newBalance string, err error) {
+	var shareLpAwardBalance *PoolShareLpAwardBalance
+	err = tx.Model(&PoolShareLpAwardBalance{}).Where("share_id = ? and username = ?", shareId, username).First(&shareLpAwardBalance).Error
+	if err != nil {
+		// @dev: no shareLpAwardBalance
+		return ZeroValue, ZeroValue, errors.New("shareLpAwardBalance of " + username + " not found")
+	} else {
+		_oldBalance, success := new(big.Float).SetString(shareLpAwardBalance.Balance)
+		if !success {
+			return ZeroValue, ZeroValue, errors.New("shareLpAwardBalance SetString(" + shareLpAwardBalance.Balance + ") " + strconv.FormatBool(success))
+		}
+		_amountFloat := new(big.Float).SetInt(amount)
+		_minWithdrawAwardSat := new(big.Float).SetUint64(uint64(MinWithdrawAwardSat))
+
+		if _amountFloat.Cmp(_minWithdrawAwardSat) < 0 {
+			return ZeroValue, ZeroValue, errors.New("insufficient _amountFloat(" + _amountFloat.String() + "), need ge " + _minWithdrawAwardSat.String())
+		}
+
+		_newBalance := new(big.Float).Sub(_oldBalance, _amountFloat)
+		if _newBalance.Sign() < 0 {
+			return ZeroValue, ZeroValue, errors.New("insufficient _newBalance(" + _newBalance.String() + "), _oldBalance(" + _oldBalance.String() + ") _amountFloat(" + _amountFloat.String() + ")")
+		}
+
+		err = tx.Model(&PoolShareLpAwardBalance{}).Where("share_id = ? and username = ?", shareId, username).
+			Update("balance", _newBalance.String()).Error
+		if err != nil {
+			return ZeroValue, ZeroValue, utils.AppendErrorInfo(err, "update shareLpAwardBalance")
 		}
 		newBalance = _newBalance.String()
 		oldBalance = _oldBalance.String()

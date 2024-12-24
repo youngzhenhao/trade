@@ -139,6 +139,8 @@ type PoolSwapTokenForExactTokenNoPathRequest struct {
 }
 
 type PoolWithdrawAwardRequest struct {
+	TokenA   string `json:"token_a"`
+	TokenB   string `json:"token_b"`
 	Username string `json:"username" gorm:"type:varchar(255);index"`
 	Amount   string `json:"amount" gorm:"type:varchar(255);index"`
 }
