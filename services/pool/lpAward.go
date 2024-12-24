@@ -17,6 +17,27 @@ type PoolLpAwardBalance struct {
 	Balance  string `json:"balance" gorm:"type:varchar(255);index"`
 }
 
+type PoolLpAwardCumulative struct {
+	gorm.Model
+	Username string `json:"username" gorm:"type:varchar(255);uniqueIndex"`
+	Amount   string `json:"amount" gorm:"type:varchar(255);index"`
+}
+
+func newLpAwardCumulative(username string, amount string) (lpAwardCumulative *PoolLpAwardCumulative, err error) {
+	_amountFloat, success := new(big.Float).SetString(amount)
+	if !success {
+		return new(PoolLpAwardCumulative), errors.New("amount SetString(" + amount + ") " + strconv.FormatBool(success))
+	}
+	if _amountFloat.Sign() < 0 {
+		return new(PoolLpAwardCumulative), errors.New("invalid balance(" + _amountFloat.String() + ")")
+	}
+	_lpAwardCumulative := PoolLpAwardCumulative{
+		Username: username,
+		Amount:   amount,
+	}
+	return &_lpAwardCumulative, nil
+}
+
 type AwardType int64
 
 const (
@@ -81,6 +102,36 @@ func createOrUpdateLpAwardBalance(tx *gorm.DB, username string, amount *big.Floa
 	return previousAwardBalance, nil
 }
 
+func createOrUpdatePoolLpAwardCumulative(tx *gorm.DB, username string, amount *big.Float) (previousAwardCumulative string, err error) {
+	var lpAwardCumulative *PoolLpAwardCumulative
+	err = tx.Model(&PoolLpAwardCumulative{}).Where("username = ?", username).First(&lpAwardCumulative).Error
+	if err != nil {
+		// @dev: no lpAwardCumulative
+		lpAwardCumulative, err = newLpAwardCumulative(username, amount.String())
+		if err != nil {
+			return ZeroValue, utils.AppendErrorInfo(err, "newLpAwardCumulative")
+		}
+		err = tx.Model(&PoolLpAwardCumulative{}).Create(&lpAwardCumulative).Error
+		if err != nil {
+			return ZeroValue, utils.AppendErrorInfo(err, "create lpAwardCumulative")
+		}
+		previousAwardCumulative = big.NewFloat(0).String()
+	} else {
+		oldAmount, success := new(big.Float).SetString(lpAwardCumulative.Amount)
+		if !success {
+			return ZeroValue, errors.New("lpAwardCumulative SetString(" + lpAwardCumulative.Amount + ") " + strconv.FormatBool(success))
+		}
+		newBalance := new(big.Float).Add(oldAmount, amount)
+		err = tx.Model(&PoolLpAwardCumulative{}).Where("username = ?", username).
+			Update("amount", newBalance.String()).Error
+		if err != nil {
+			return ZeroValue, utils.AppendErrorInfo(err, "update lpAwardCumulative")
+		}
+		previousAwardCumulative = oldAmount.String()
+	}
+	return previousAwardCumulative, nil
+}
+
 func newLpAwardRecord(shareId uint, username string, amount string, fee string, awardBalance string, shareBalance string, totalSupply string, swapRecordId uint, awardType AwardType) (lpAwardRecord *PoolLpAwardRecord, err error) {
 	if shareId <= 0 {
 		return new(PoolLpAwardRecord), errors.New("invalid shareId(" + strconv.FormatUint(uint64(shareId), 10) + ")")
@@ -123,6 +174,12 @@ func updateLpAwardBalanceAndRecordSwap(tx *gorm.DB, shareId uint, username strin
 	if err != nil {
 		return utils.AppendErrorInfo(err, "createOrUpdateLpAwardBalance")
 	}
+
+	_, err = createOrUpdatePoolLpAwardCumulative(tx, username, amount)
+	if err != nil {
+		return utils.AppendErrorInfo(err, "createOrUpdatePoolLpAwardCumulative")
+	}
+
 	err = createLpAwardRecord(tx, shareId, username, amount, fee, previousAwardBalance, shareBalance, totalSupply, swapRecordId, SwapAward)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "createLpAwardRecord")
