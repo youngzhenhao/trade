@@ -64,6 +64,10 @@ func SetBtcUtxo(username string, requests *[]models.UnspentUtxo) (err error) {
 
 	//fmt.Println(utils.ValueJsonString(btcUtxos))
 
+	if len(*btcUtxos) == 0 {
+		return nil
+	}
+
 	err = middleware.DB.Create(btcUtxos).Error
 	if err != nil {
 		return utils.AppendErrorInfo(err, "Create BtcUtxo")
