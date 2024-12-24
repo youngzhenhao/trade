@@ -125,7 +125,7 @@ func InvoicePay(invoice string, amt, feeLimit int64) (*lnrpc.Payment, error) {
 	request := &routerrpc.SendPaymentRequest{
 		PaymentRequest: invoice,
 		//FeeLimitSat:    feeLimit,
-		TimeoutSeconds: 60,
+		//TimeoutSeconds: 60,
 	}
 	if feeLimit > 1 {
 		request.FeeLimitSat = feeLimit
@@ -143,13 +143,10 @@ func InvoicePay(invoice string, amt, feeLimit int64) (*lnrpc.Payment, error) {
 		if err != nil {
 			return nil, err
 		}
-		if payment != nil {
-			switch payment.Status {
-			case lnrpc.Payment_INITIATED:
-			case lnrpc.Payment_IN_FLIGHT:
-			case lnrpc.Payment_SUCCEEDED, lnrpc.Payment_FAILED:
-				return payment, nil
-			}
+		// Terminate loop if payments state is final.
+		if payment.Status != lnrpc.Payment_IN_FLIGHT &&
+			payment.Status != lnrpc.Payment_INITIATED {
+			return payment, nil
 		}
 	}
 }

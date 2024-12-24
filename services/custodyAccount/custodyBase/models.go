@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	Timeout = 20 * time.Second
+	Timeout = 60 * time.Second
 )
 
 type BtcChannel error
