@@ -49,7 +49,6 @@ func (s *SubscribeInvoiceServer) runServer(ctx context.Context) {
 		if invoice != nil {
 			if invoice.State == lnrpc.Invoice_SETTLED {
 				dealSettledInvoice(invoice)
-				go subscriptionReceiveBtcBalance(float64(invoice.Value))
 			} else if invoice.State == lnrpc.Invoice_CANCELED {
 				DealCanceledInvoice(invoice)
 			}
@@ -101,6 +100,7 @@ func dealSettledInvoice(invoice *lnrpc.Invoice) {
 	if err = tx.Commit().Error; err != nil {
 		btlLog.CUST.Error("invoice server Error %s", err.Error())
 	}
+	go subscriptionReceiveBtcBalance(float64(invoice.Value))
 }
 func DealCanceledInvoice(invoice *lnrpc.Invoice) {
 	tx := middleware.DB.Begin()

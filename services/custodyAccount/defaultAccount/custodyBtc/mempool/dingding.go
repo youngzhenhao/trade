@@ -68,7 +68,7 @@ func (d Dingding) ReceiveBtcChannel(Amount float64, balances []float64) error {
 	// 获取设备信息
 	var msg string
 
-	msg = strings.Replace(dingdingMsgOut, "{amount}", fmt.Sprintf("%.2f", Amount), 1)
+	msg = strings.Replace(dingdingMsgIn, "{amount}", fmt.Sprintf("%.2f", Amount), 1)
 	msg = strings.Replace(msg, "{time}", time.Now().Format("2006-01-02 15:04:05"), 1)
 
 	// 生成余额信息部分
