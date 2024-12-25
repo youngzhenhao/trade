@@ -65,9 +65,9 @@ func (pool *UserPool) RemoveUser(userName string) {
 
 	if _, exists := pool.users[userName]; exists {
 		delete(pool.users, userName)
-		btlLog.CUST.Info("用户 %s 已被删除\n", userName)
+		btlLog.CACC.Info("用户 %s 已被删除\n", userName)
 	} else {
-		btlLog.CUST.Warning("警告: 用户 %s 不存在，无法删除\n", userName)
+		btlLog.CACC.Warning("警告: 用户 %s 不存在，无法删除\n", userName)
 	}
 }
 
@@ -106,7 +106,7 @@ func (pool *UserPool) CreateUser(userName string) (*UserInfo, error) {
 	}
 
 	pool.users[userName] = newUser
-	btlLog.CUST.Info("用户 %s 已被添加到用户池\n,%d/%d", userName, len(pool.users), pool.maxCapacity)
+	btlLog.CACC.Info("用户 %s 已被添加到用户池\n,%d/%d", userName, len(pool.users), pool.maxCapacity)
 	return newUser, nil
 }
 
@@ -134,7 +134,7 @@ func (pool *UserPool) CleanupInactiveUsers() {
 		}
 		if now.Sub(user.LastActive) > pool.inactiveDuration {
 			delete(pool.users, userName)
-			btlLog.CUST.Info("用户 %s 因为不活跃被清理\n", userName)
+			btlLog.CACC.Info("用户 %s 因为不活跃被清理\n", userName)
 		}
 	}
 }
@@ -156,9 +156,9 @@ func (pool *UserPool) UpdateUserActivity(userName string) {
 
 	if user, exists := pool.users[userName]; exists {
 		user.LastActive = time.Now()
-		btlLog.CUST.Info("用户 %s 的活跃时间已更新为 %s\n", userName, user.LastActive)
+		btlLog.CACC.Info("用户 %s 的活跃时间已更新为 %s\n", userName, user.LastActive)
 	} else {
-		btlLog.CUST.Warning("警告: 用户 %s 不存在，无法更新活动时间\n", userName)
+		btlLog.CACC.Warning("警告: 用户 %s 不存在，无法更新活动时间\n", userName)
 	}
 }
 

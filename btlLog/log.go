@@ -34,7 +34,7 @@ type ServicesLogger struct {
 	level       LogLevel
 }
 
-func NewLogger(logName string, level LogLevel, hasStdout bool, Writer ...io.Writer) *ServicesLogger {
+func NewLogger(logName string, level LogLevel, otherErrorWriter io.Writer, hasStdout bool, Writer ...io.Writer) *ServicesLogger {
 	var multiWriter io.Writer
 
 	if hasStdout {
@@ -47,11 +47,16 @@ func NewLogger(logName string, level LogLevel, hasStdout bool, Writer ...io.Writ
 		}
 		multiWriter = io.MultiWriter(multiWriter, Writer[i])
 	}
-	return &ServicesLogger{
-		logger:      log.New(multiWriter, "["+logName+"]: ", log.Ldate|log.Ltime),
-		errorLogger: log.New(io.MultiWriter(multiWriter, defaultErrorLogFile), "["+logName+"]: ", log.Ldate|log.Ltime),
-		level:       level,
+	logger := ServicesLogger{
+		logger: log.New(multiWriter, "["+logName+"]: ", log.Ldate|log.Ltime),
+		level:  level,
 	}
+	if otherErrorWriter != nil {
+		otherErrorWriter = io.MultiWriter(multiWriter, otherErrorWriter)
+	}
+	logger.errorLogger = log.New(io.MultiWriter(otherErrorWriter, defaultErrorLogFile), "["+logName+"]: ", log.Ldate|log.Ltime)
+
+	return &logger
 }
 
 func (ml *ServicesLogger) Debug(format string, v ...interface{}) {
@@ -89,14 +94,28 @@ func (ml *ServicesLogger) Error(format string, v ...any) {
 var (
 	defaultLogFile      *os.File
 	defaultErrorLogFile *os.File
-	presaleLogFile      *os.File
-	mintNftFile         *os.File
-	userDataLogFile     *os.File
-	userStatsLogFile    *os.File
-	cpAmmLogFile        *os.File
-	dateIpLoginLogFile  *os.File
-	pushQueueLogFile    *os.File
+
+	custErrorLogFile *os.File
+	CaccountLogFile  *os.File
+
+	presaleLogFile     *os.File
+	mintNftFile        *os.File
+	userDataLogFile    *os.File
+	userStatsLogFile   *os.File
+	cpAmmLogFile       *os.File
+	dateIpLoginLogFile *os.File
+	pushQueueLogFile   *os.File
 )
+
+func getLogFile(dirPath string, fileName string) (*os.File, error) {
+	filePath := filepath.Join(dirPath, fileName)
+	backupLogFile(filePath)
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
+}
 
 func openLogFile() error {
 	var err error
@@ -109,18 +128,27 @@ func openLogFile() error {
 		}
 		fmt.Println("目录已创建:", dirPath)
 	}
-	filePath := filepath.Join(dirPath, "output.log")
-	backupLogFile(filePath)
-	defaultLogFile, err = os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	//defaultLogFile
+	defaultLogFile, err = getLogFile(dirPath, "output.log")
 	if err != nil {
 		return err
 	}
-	ErrorFilePath := filepath.Join(dirPath, "error.log")
-	backupLogFile(ErrorFilePath)
-	defaultErrorLogFile, err = os.OpenFile(ErrorFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	defaultErrorLogFile, err = getLogFile(dirPath, "error.log")
 	if err != nil {
 		return err
 	}
+
+	//CUSTLogFiles
+	custErrorLogFile, err = getLogFile(dirPath, "cust_error.log")
+	if err != nil {
+		return err
+	}
+	CaccountLogFile, err = getLogFile(dirPath, "caccount.log")
+	if err != nil {
+		return err
+	}
+
+	//OtherLogFiles
 	presaleLogFile, err = utils.GetLogFile("./logs/trade.presale.log")
 	if err != nil {
 		return err
@@ -168,6 +196,7 @@ func backupLogFile(filePath string) {
 
 var (
 	CUST                  *ServicesLogger
+	CACC                  *ServicesLogger
 	FairLaunchDebugLogger *ServicesLogger
 	FEE                   *ServicesLogger
 	ScheduledTask         *ServicesLogger
@@ -182,15 +211,22 @@ var (
 
 func loadDefaultLog() {
 	Level := INFO
-	CUST = NewLogger("CUST", Level, true, defaultLogFile)
-	FairLaunchDebugLogger = NewLogger("FLDL", Level, true, defaultLogFile)
-	FEE = NewLogger("FEE", Level, true, defaultLogFile)
-	ScheduledTask = NewLogger("CRON", Level, true, defaultLogFile)
-	PreSale = NewLogger("PRSL", Level, true, defaultLogFile, presaleLogFile)
-	MintNft = NewLogger("MINT", Level, false, mintNftFile)
-	UserData = NewLogger("URDT", Level, true, defaultLogFile, userDataLogFile)
-	UserStats = NewLogger("USTS", Level, true, defaultLogFile, userStatsLogFile)
-	CPAmm = NewLogger("CPAM", Level, true, defaultLogFile, cpAmmLogFile)
-	DateIpLogin = NewLogger("DILR", Level, true, defaultLogFile, dateIpLoginLogFile)
-	PushQueue = NewLogger("PUSH", Level, true, defaultLogFile, pushQueueLogFile)
+
+	{
+		CUST = NewLogger("CUST", Level, custErrorLogFile, true, defaultLogFile)
+		CACC = NewLogger("CACC", Level, custErrorLogFile, false, CaccountLogFile)
+	}
+	{
+		FairLaunchDebugLogger = NewLogger("FLDL", Level, nil, true, defaultLogFile)
+		FEE = NewLogger("FEE", Level, nil, true, defaultLogFile)
+		ScheduledTask = NewLogger("CRON", Level, nil, true, defaultLogFile)
+		PreSale = NewLogger("PRSL", Level, nil, true, defaultLogFile, presaleLogFile)
+		MintNft = NewLogger("MINT", Level, nil, false, mintNftFile)
+		UserData = NewLogger("URDT", Level, nil, true, defaultLogFile, userDataLogFile)
+		UserStats = NewLogger("USTS", Level, nil, true, defaultLogFile, userStatsLogFile)
+		CPAmm = NewLogger("CPAM", Level, nil, true, defaultLogFile, cpAmmLogFile)
+		DateIpLogin = NewLogger("DILR", Level, nil, true, defaultLogFile, dateIpLoginLogFile)
+		PushQueue = NewLogger("PUSH", Level, nil, true, defaultLogFile, pushQueueLogFile)
+	}
+
 }

@@ -2,7 +2,9 @@ package custodyAssets
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"trade/btlLog"
 	"trade/middleware"
 	"trade/models"
@@ -34,6 +36,9 @@ func RunInsideStep(usr *account.UserInfo, mission *custodyModels.AccountInsideMi
 	//获取发票信息
 	invoice := models.Invoice{}
 	if err := db.Where("id =?", mission.InvoiceId).First(&invoice).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
 		btlLog.CUST.Error("GetInvoice error:%s", err)
 		return err
 	}

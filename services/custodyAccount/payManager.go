@@ -102,15 +102,10 @@ func checkAdminAccount() bool {
 		btlLog.CUST.Error("CheckAdminAccount failed:%s", err)
 		return false
 	}
-	if adminAccount.Account.UserAccountCode == "admin" {
-		btlLog.CUST.Error("admin user is old : admin")
-		return false
-	}
 	AdminUserInfo = adminAccount
 
 	btlLog.CUST.Info("admin user id:%d", AdminUserInfo.User.ID)
 	btlLog.CUST.Info("admin account id:%d", AdminUserInfo.Account.ID)
-	btlLog.CUST.Info("admin account lit id:%s", AdminUserInfo.Account.UserAccountCode)
 	btlLog.CUST.Info("admin lockAccount id:%d", AdminUserInfo.LockAccount.ID)
 	return true
 }
