@@ -92,13 +92,15 @@ func GetBalanceList(c *gin.Context) {
 	}
 	creds.Page = creds.Page - 1
 
-	a, count := localQuery.GetAssetList(creds)
+	a, count, total := localQuery.GetAssetList(creds)
 	list := struct {
 		Count int64                          `json:"count"`
 		List  *[]localQuery.GetAssetListResp `json:"list"`
+		Total float64                        `json:"total"`
 	}{
 		Count: count,
 		List:  a,
+		Total: total,
 	}
 	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: list})
 }

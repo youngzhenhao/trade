@@ -280,19 +280,26 @@ type GetAssetListResp struct {
 	Amount   float64 `json:"amount" gorm:"column:amount"`
 }
 
-func GetAssetList(quest GetAssetListQuest) (*[]GetAssetListResp, int64) {
+func GetAssetList(quest GetAssetListQuest) (*[]GetAssetListResp, int64, float64) {
 	db := middleware.DB
 	var assetList []GetAssetListResp
-	var total int64
+	var count int64
+	var total float64
 	if quest.AssetId == "" {
-		return &assetList, 0
+		return &assetList, 0, 0
 	} else if quest.AssetId != "00" {
 		q := db.Where("asset_id =?", quest.AssetId)
 
-		// 查询总记录数
-		err := q.Model(&custodyModels.AccountBalance{}).Count(&total).Error
+		// 查询总金额
+		err := q.Model(&custodyModels.AccountBalance{}).Select("SUM(amount) as total").Scan(&total).Error
 		if err != nil || total == 0 {
-			return nil, 0
+			return nil, 0, 0
+		}
+
+		// 查询总记录数
+		err = q.Model(&custodyModels.AccountBalance{}).Count(&count).Error
+		if err != nil || count == 0 {
+			return nil, 0, 0
 		}
 
 		q.Table("user_account_balance").
@@ -302,21 +309,25 @@ func GetAssetList(quest GetAssetListQuest) (*[]GetAssetListResp, int64) {
 			Order("user_account_balance.amount DESC").
 			Scan(&assetList)
 	} else {
-		err := db.Model(custodyModels.AccountBtcBalance{}).Count(&total).Error
-
+		// 查询总金额
+		err := db.Model(&custodyModels.AccountBtcBalance{}).Select("SUM(amount) as total").Scan(&total).Error
 		if err != nil || total == 0 {
-			return nil, 0
+			return nil, 0, 0
 		}
+
+		err = db.Model(custodyModels.AccountBtcBalance{}).Count(&count).Error
+		if err != nil || count == 0 {
+			return nil, 0, 0
+		}
+
 		db.Table("user_account_balance_btc").
 			Joins("LEFT JOIN user_account ON user_account.id = user_account_balance_btc.account_id").
 			Limit(quest.PageSize).Offset((quest.Page) * quest.PageSize).
 			Select("user_account_balance_btc.amount, '00' as asset_id,user_account.user_name").
 			Order("user_account_balance_btc.amount DESC").
 			Scan(&assetList)
-		return &assetList, total
 	}
-
-	return &assetList, total
+	return &assetList, count, total
 }
 
 type TotalBillListQuest struct {
