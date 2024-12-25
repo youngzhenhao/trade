@@ -51,10 +51,11 @@ func NewLogger(logName string, level LogLevel, otherErrorWriter io.Writer, hasSt
 		logger: log.New(multiWriter, "["+logName+"]: ", log.Ldate|log.Ltime),
 		level:  level,
 	}
+
 	if otherErrorWriter != nil {
-		otherErrorWriter = io.MultiWriter(multiWriter, otherErrorWriter)
+		multiWriter = io.MultiWriter(multiWriter, otherErrorWriter)
 	}
-	logger.errorLogger = log.New(io.MultiWriter(otherErrorWriter, defaultErrorLogFile), "["+logName+"]: ", log.Ldate|log.Ltime)
+	logger.errorLogger = log.New(io.MultiWriter(multiWriter, defaultErrorLogFile), "["+logName+"]: ", log.Ldate|log.Ltime)
 
 	return &logger
 }
