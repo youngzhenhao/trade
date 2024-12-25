@@ -7,13 +7,16 @@ import (
 	"trade/utils"
 )
 
-func UnspentUtxosToBtcUtxos(username string, requests *[]models.UnspentUtxo, opExists map[string]bool) (btcUtxos *[]models.BtcUtxo, err error) {
+func UnspentUtxosToBtcUtxos(username string, requests *[]models.UnspentUtxo, opExists map[string]bool) (btcUtxos *[]models.BtcUtxo, opDelete map[string]bool, err error) {
 	if requests == nil {
-		return nil, errors.New("requests is nil")
+		return nil, nil, errors.New("requests is nil")
 	}
 	var _btcUtxos []models.BtcUtxo
 
+	requestOp := make(map[string]bool)
+
 	for _, request := range *requests {
+		requestOp[request.Outpoint] = true
 		if opExists[request.Outpoint] {
 			continue
 		}
@@ -31,7 +34,41 @@ func UnspentUtxosToBtcUtxos(username string, requests *[]models.UnspentUtxo, opE
 		_btcUtxos = append(_btcUtxos, btcUtxo)
 	}
 
-	return &_btcUtxos, nil
+	opDelete = make(map[string]bool)
+
+	for opExist := range opExists {
+		if !requestOp[opExist] {
+			opDelete[opExist] = true
+		}
+	}
+
+	return &_btcUtxos, opDelete, nil
+
+}
+
+func BtcUtxosToBtcUtxoHistories(btcUtxos *[]models.BtcUtxo) (btcUtxoHistories *[]models.BtcUtxoHistory) {
+	if btcUtxos == nil {
+		return nil
+	}
+
+	var _btcUtxoHistories []models.BtcUtxoHistory
+
+	for _, btcUtxo := range *btcUtxos {
+		btcUtxoHistory := models.BtcUtxoHistory{
+			Username: btcUtxo.Username,
+			UnspentUtxo: models.UnspentUtxo{
+				AddressType:   btcUtxo.AddressType,
+				Address:       btcUtxo.Address,
+				AmountSat:     btcUtxo.AmountSat,
+				PkScript:      btcUtxo.PkScript,
+				Outpoint:      btcUtxo.Outpoint,
+				Confirmations: btcUtxo.Confirmations,
+			},
+		}
+		_btcUtxoHistories = append(_btcUtxoHistories, btcUtxoHistory)
+	}
+
+	return &_btcUtxoHistories
 
 }
 
@@ -46,31 +83,50 @@ func SetBtcUtxo(username string, requests *[]models.UnspentUtxo) (err error) {
 		allOps = append(allOps, request.Outpoint)
 	}
 
-	var existOps []string
+	var dbExistOps []string
 
 	err = middleware.DB.Table("btc_utxos").
-		Where("outpoint IN (?)", allOps).
-		Pluck("outpoint", &existOps).Error
+		Where("username = ?", username).
+		Pluck("outpoint", &dbExistOps).Error
 
 	opExists := make(map[string]bool)
-	for _, op := range existOps {
+	for _, op := range dbExistOps {
 		opExists[op] = true
 	}
 
-	btcUtxos, err := UnspentUtxosToBtcUtxos(username, requests, opExists)
+	btcUtxos, opDeleteMap, err := UnspentUtxosToBtcUtxos(username, requests, opExists)
 	if err != nil {
 		return utils.AppendErrorInfo(err, "UnspentUtxosToBtcUtxos")
 	}
 
-	//fmt.Println(utils.ValueJsonString(btcUtxos))
+	//fmt.Printf("btcUtxos: %v\n", utils.ValueJsonString(btcUtxos))
+
+	var opDelete []string
+	for op := range opDeleteMap {
+		opDelete = append(opDelete, op)
+	}
+
+	err = middleware.DB.Where("outpoint IN (?)", opDelete).Delete(&models.BtcUtxo{}).Error
+	if err != nil {
+		return utils.AppendErrorInfo(err, "Delete BtcUtxo")
+	}
 
 	if len(*btcUtxos) == 0 {
 		return nil
 	}
 
+	//fmt.Printf("opDelete: %v\n", utils.ValueJsonString(opDelete))
+
+	btcUtxoHistories := BtcUtxosToBtcUtxoHistories(btcUtxos)
+
 	err = middleware.DB.Create(btcUtxos).Error
 	if err != nil {
 		return utils.AppendErrorInfo(err, "Create BtcUtxo")
+	}
+
+	err = middleware.DB.Create(btcUtxoHistories).Error
+	if err != nil {
+		return utils.AppendErrorInfo(err, "Create BtcUtxoHistory")
 	}
 
 	return nil

@@ -204,6 +204,9 @@ func Migrate() error {
 	if err = middleware.DB.AutoMigrate(&models.BtcUtxo{}); err != nil {
 		return err
 	}
+	if err = middleware.DB.AutoMigrate(&models.BtcUtxoHistory{}); err != nil {
+		return err
+	}
 	if err = middleware.DB.AutoMigrate(&pool.PoolLpAwardCumulative{}); err != nil {
 		return err
 	}

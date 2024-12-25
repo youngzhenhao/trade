@@ -16,3 +16,9 @@ type BtcUtxo struct {
 	Username string `json:"username" gorm:"type:varchar(255);index"`
 	UnspentUtxo
 }
+
+type BtcUtxoHistory struct {
+	gorm.Model
+	Username string `json:"username" gorm:"type:varchar(255);index"`
+	UnspentUtxo
+}
