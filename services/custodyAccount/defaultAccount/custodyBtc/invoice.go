@@ -128,6 +128,7 @@ func subscriptionReceiveBtcBalance(amount float64) {
 	if config.GetLoadConfig().NetWork == "regtest" {
 		return
 	}
+	time.Sleep(time.Second * 10)
 	d := mempool.NewDingding()
 	channels, err := servicesrpc.GetChannelInfo()
 	if err != nil {

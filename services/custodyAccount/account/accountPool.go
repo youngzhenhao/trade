@@ -202,3 +202,8 @@ func GetUserInfoFromDb(username string) (*models.User, *models.Account, *cModels
 
 	return user, account, lockAccount, nil
 }
+
+func GetLockedUser(username string) (*UserInfo, error) {
+
+	return nil, nil
+}
