@@ -157,3 +157,22 @@ func QueryLockedBills(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: Bill})
 }
+
+func QueryChannelAssetInfo(c *gin.Context) {
+	var creds localQuery.ChannelQueryQuest
+	if err := c.ShouldBindJSON(&creds); err != nil {
+		btlLog.CUST.Error("%v", err)
+		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+	if creds.AssetId == "" {
+		c.JSON(http.StatusBadRequest, Result{Errno: 400, ErrMsg: "AssetId must not be empty", Data: nil})
+		return
+	}
+	assetIdInfo, err := localQuery.QueryChannelAssetInfo(&creds)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Result{Errno: 500, ErrMsg: err.Error(), Data: nil})
+		return
+	}
+	c.JSON(http.StatusOK, Result{Errno: 0, ErrMsg: "", Data: assetIdInfo})
+}

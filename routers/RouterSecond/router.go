@@ -43,6 +43,11 @@ func SetupRouter() *gin.Engine {
 			query.POST("/QueryBalancesChange", SecondHandler.QueryBalancesChange)
 			query.POST("/QueryBalanceList", SecondHandler.GetBalanceList)
 			query.POST("/TotalBillList", SecondHandler.TotalBillList)
+
+			custodyInfo := query.Group("/custody_info")
+			{
+				custodyInfo.POST("/QueryChannelAssetInfo", SecondHandler.QueryChannelAssetInfo)
+			}
 		}
 
 		limit := query.Group("/limit")

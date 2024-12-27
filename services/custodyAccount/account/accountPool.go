@@ -204,6 +204,35 @@ func GetUserInfoFromDb(username string) (*models.User, *models.Account, *cModels
 }
 
 func GetLockedUser(username string) (*UserInfo, error) {
-
-	return nil, nil
+	// 获取用户信息
+	user, err := btldb.ReadUserByUsername(username)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("用户 %s 不存在", username)
+		}
+		return nil, fmt.Errorf("%w: %w", models.ReadDbErr, err)
+	}
+	if user.Status == 0 {
+		return nil, fmt.Errorf("用户 %s 未被冻结", username)
+	}
+	userInfo := UserInfo{
+		User: user,
+	}
+	// 获取Lit账户信息
+	account := &models.Account{}
+	account, err = GetAccountByUserName(username)
+	if err != nil {
+		userInfo.Account = nil
+	} else {
+		userInfo.Account = account
+	}
+	// 获取冻结账户信息
+	lockAccount := &cModels.LockAccount{}
+	lockAccount, err = GetLockAccountByUserName(username)
+	if err != nil {
+		userInfo.LockAccount = nil
+	} else {
+		userInfo.LockAccount = lockAccount
+	}
+	return &userInfo, nil
 }
