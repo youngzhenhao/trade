@@ -2192,3 +2192,32 @@ func WithdrawAward(c *gin.Context) {
 		Data:   result,
 	})
 }
+
+func QueryPoolInfo2(c *gin.Context) {
+	tokenA := c.Query("token_a")
+	tokenB := c.Query("token_b")
+	poolInfo, err := pool.QueryPoolInfo(tokenA, tokenB)
+	if err != nil {
+
+		if errors.Is(err, pool.PoolDoesNotExistErr) {
+			c.JSON(http.StatusOK, Result2{
+				Errno:  models.PoolDoesNotExistErr.Code(),
+				ErrMsg: err.Error(),
+				Data:   poolInfo,
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, Result2{
+			Errno:  models.QueryPoolInfoErr.Code(),
+			ErrMsg: err.Error(),
+			Data:   poolInfo,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, Result2{
+		Errno:  0,
+		ErrMsg: models.SUCCESS.Error(),
+		Data:   poolInfo,
+	})
+}
