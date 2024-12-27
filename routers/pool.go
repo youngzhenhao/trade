@@ -2,6 +2,7 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
+	"trade/config"
 	"trade/handlers"
 	"trade/middleware"
 )
@@ -85,6 +86,13 @@ func SetupPoolRouter(router *gin.Engine) *gin.Engine {
 		sync.POST("/swap_token_for_exact_token_no_path", handlers.SwapTokenForExactTokenNoPath)
 		sync.POST("/withdraw_award", handlers.WithdrawAward)
 	}
+
+	username := config.GetLoadConfig().AdminUser.Username
+	password := config.GetLoadConfig().AdminUser.Password
+	authorized := router.Group("/pool/auth_op", gin.BasicAuth(gin.Accounts{
+		username: password,
+	}))
+	authorized.GET("/pool_info", handlers.QueryPoolInfo2)
 
 	return router
 }
