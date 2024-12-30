@@ -74,7 +74,7 @@ func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 		custodyAssets.LoadAIMMission()
 	}
 	if cfg.CustodyConfig.ClearBlockAccountBalance {
-		ClearLockUserBalance()
+		go ClearLockUserBalance()
 	}
 	return true
 }
