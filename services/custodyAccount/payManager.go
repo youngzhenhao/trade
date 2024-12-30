@@ -319,13 +319,23 @@ func ClearLockUserBalance() {
 			if balance.Amount < balance.Tag1 {
 				continue
 			}
-			lockedId := fmt.Sprintf("/clearLockUserBalance/tag1/%v/%d", balance.AssetId[0:5], balance.AccountID)
+			var lockedId string
+			if len(balance.AssetId) < 5 {
+				lockedId = fmt.Sprintf("/clearLockUserBalance/tag1/%v/%d", balance.AssetId, balance.AccountID)
+			} else {
+				lockedId = fmt.Sprintf("/clearLockUserBalance/tag1/%v/%d", balance.AssetId[0:5], balance.AccountID)
+			}
 			err = lockPayment.TransferByLockIsLockId(lockedId, usr, lockPayment.FeeNpubkey, balance.AssetId, balance.Tag1, 1)
 			if err != nil {
 				btlLog.CUST.Error("ClearLockUserBalance failed:%s ,balance:%v", err, balance.ID)
 			}
 		}
-		lockedId := fmt.Sprintf("/clearLockUserBalance/%v/%d", balance.AssetId[0:5], balance.AccountID)
+		var lockedId string
+		if len(balance.AssetId) < 5 {
+			lockedId = fmt.Sprintf("/clearLockUserBalance/%v/%d", balance.AssetId, balance.AccountID)
+		} else {
+			lockedId = fmt.Sprintf("/clearLockUserBalance/%v/%d", balance.AssetId[0:5], balance.AccountID)
+		}
 		err = lockPayment.TransferByLockIsLockId(lockedId, usr, lockPayment.FeeNpubkey, balance.AssetId, balance.Amount-balance.Tag1, 0)
 		if err != nil {
 			btlLog.CUST.Error("ClearLockUserBalance failed:%s ,balance:%v", err, balance.ID)
