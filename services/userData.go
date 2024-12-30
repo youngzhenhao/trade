@@ -111,7 +111,7 @@ func GetUserAddrReceiveData(username string) (*[]models.UserAddrReceiveData, err
 		userAddrReceiveDatas = append(userAddrReceiveDatas, models.UserAddrReceiveData{
 			CreatedAt:    addrReceive.CreatedAt,
 			UpdatedAt:    addrReceive.UpdatedAt,
-			CreationTime: utils.TimestampToTime(addrReceive.CreationTimeUnixSeconds),
+			CreationTime: utils.TimestampToTime(int64(addrReceive.CreationTimeUnixSeconds)),
 			AssetId:      addrReceive.AddrAssetID,
 			AddrEncoded:  addrReceive.AddrEncoded,
 			Amount:       addrReceive.AddrAmount,
@@ -137,7 +137,7 @@ func GetUserAssetTransferData(username string) (*[]models.UserAssetTransferData,
 			UpdatedAt:    assetTransfer.UpdatedAt,
 			Txid:         assetTransfer.Txid,
 			AssetId:      assetTransfer.AssetID,
-			TransferTime: utils.TimestampToTime(assetTransfer.TransferTimestamp),
+			TransferTime: utils.TimestampToTime(int64(assetTransfer.TransferTimestamp)),
 		})
 	}
 	return &userAssetTransferDatas, nil

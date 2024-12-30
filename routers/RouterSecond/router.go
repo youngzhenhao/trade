@@ -108,6 +108,8 @@ func SetupRouter() *gin.Engine {
 	query := pool.Group("/query")
 	{
 		query.GET("/pool_info", handlers.QueryPoolInfo2)
+		query.GET("/swap_trs/count", handlers.QuerySwapTrsCount)
+		query.GET("/swap_trs", handlers.QuerySwapTrs)
 	}
 
 	return r

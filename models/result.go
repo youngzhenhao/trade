@@ -310,6 +310,8 @@ const (
 	QueryLpAwardRecordsCountErr
 	QueryLpAwardRecordsErr
 	SetBtcUtxoErr
+	QuerySwapTrsScanCountErr
+	QuerySwapTrsErr
 )
 
 // Err type:CustodyAccount

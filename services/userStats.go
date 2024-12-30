@@ -28,7 +28,7 @@ func GetTotalUserNumber() (uint64, error) {
 }
 
 func userToUserInfo(user models.User) models.StatsUserInfo {
-	loginTime := utils.TimestampToTime(user.RecentLoginTime)
+	loginTime := utils.TimestampToTime(int64(user.RecentLoginTime))
 	var status string
 	if user.Status == 0 {
 		status = "正常"

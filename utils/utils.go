@@ -611,8 +611,8 @@ func WriteToLogFile(filename string, prefix string, content string) error {
 	return nil
 }
 
-func TimestampToTime(timestamp int) time.Time {
-	return time.Unix(int64(timestamp), 0)
+func TimestampToTime(timestamp int64) time.Time {
+	return time.Unix(timestamp, 0)
 }
 
 func DateTimeStringToTime(dateTime string) (time.Time, error) {
