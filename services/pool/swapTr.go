@@ -20,7 +20,13 @@ type SwapTr struct {
 	// microsecond
 	TrUnixtimeMs int64  `json:"tr_unixtime_ms"`
 	AssetsID     string `json:"assets_id"`
+	Type         string `json:"type"`
 }
+
+const (
+	SwapTrTypeBuy  = "buy"
+	SwapTrTypeSell = "sell"
+)
 
 func SwapRecordInfoToSwapTr(swapRecordInfo SwapRecordInfo) (swapTr SwapTr, err error) {
 
@@ -165,17 +171,19 @@ func SwapTrsScanToSwapTr(swapTrsScan SwapTrsScan) (swapTr SwapTr, err error) {
 
 	if isTokenZeroSat {
 
-		var AmountSat, AmountAsset string
+		var AmountSat, AmountAsset, _type string
 
 		if token0 == swapTrsScan.TokenIn {
 			// sat In, asset Out
 			AmountSat = swapTrsScan.AmountIn
 			AmountAsset = swapTrsScan.AmountOut
+			_type = SwapTrTypeBuy
 
 		} else {
 			//	sat Out, asset In
 			AmountSat = swapTrsScan.AmountOut
 			AmountAsset = swapTrsScan.AmountIn
+			_type = SwapTrTypeSell
 		}
 
 		var satFloat, assetFloat, price *big.Float
@@ -200,6 +208,7 @@ func SwapTrsScanToSwapTr(swapTrsScan SwapTrsScan) (swapTr SwapTr, err error) {
 			NpubKey:      swapTrsScan.Username,
 			TrUnixtimeMs: swapTrsScan.CreatedAt.UnixMilli(),
 			AssetsID:     token1,
+			Type:         _type,
 		}, nil
 
 	} else {
