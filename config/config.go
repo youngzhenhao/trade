@@ -14,6 +14,9 @@ type Config struct {
 		Mode      string `yaml:"mode" json:"mode"`
 		LocalPort string `yaml:"local_port" json:"local_port"`
 	} `yaml:"gin_config" json:"gin_config"`
+	CustodyConfig struct {
+		ClearBlockAccountBalance bool `yaml:"clear_block_account_balance" json:"clear_block_account_balance"`
+	} `yaml:"custody_config" json:"custody_config"`
 	GormConfig struct {
 		Mysql struct {
 			Host     string `yaml:"host" json:"host"`

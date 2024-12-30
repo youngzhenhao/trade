@@ -259,6 +259,49 @@ func TransferByLock(lockedId, npubkey, toNpubkey, assetId string, amount float64
 	return nil
 }
 
+func TransferByLockIsLockId(lockedId string, usr *caccount.UserInfo, toNpubkey, assetId string, amount float64, tag int) error {
+	if usr.User.Status == 0 {
+		return errors.New("用户已被冻结.请使用正确的接口")
+	}
+
+	var err error
+	mutex := GetLockPaymentMutex(usr.User.ID)
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	err = CheckLockId(lockedId)
+	if err != nil {
+		return err
+	}
+
+	if toNpubkey == FeeNpubkey {
+		toNpubkey = "admin"
+	}
+	toUsr, err := caccount.GetUserInfo(toNpubkey)
+	if err != nil {
+		return RevNpubKeyNotFound
+	}
+	mutexTo := GetLockPaymentMutex(toUsr.User.ID)
+	mutexTo.Lock()
+	defer mutexTo.Unlock()
+	if amount <= 0 {
+		btlLog.CUST.Error("amount <= 0,lockedId:%s,assetId:%s,amount:%f", lockedId, assetId, amount)
+		return BadRequest
+	}
+	if assetId != btcId {
+		err := transferLockedAsset(usr, lockedId, assetId, amount, toUsr, tag)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := transferLockedBTC(usr, lockedId, amount, toUsr, tag)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func CheckLockId(lockedId string) error {
 	bill := cModels.LockBill{}
 	err := middleware.DB.Where("lock_id = ?", lockedId).First(&bill).Error

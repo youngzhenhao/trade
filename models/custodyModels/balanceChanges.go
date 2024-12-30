@@ -49,4 +49,6 @@ const (
 	ChangeTypeLock           = "lock"
 	ChangeTypeUnlock         = "unlock"
 	ChangeTypeLockedTransfer = "locked_transfer"
+
+	ClearLimitUser = "clear_limit_user"
 )

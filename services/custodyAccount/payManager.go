@@ -73,6 +73,9 @@ func CustodyStart(ctx context.Context, cfg *config.Config) bool {
 		// 加载pending mission
 		custodyAssets.LoadAIMMission()
 	}
+	if cfg.CustodyConfig.ClearBlockAccountBalance {
+		ClearLockUserBalance()
+	}
 	return true
 }
 
@@ -239,4 +242,94 @@ func AutoMargeBalance() error {
 		}
 	}
 	return nil
+}
+
+func ClearLockUserBalance() {
+	db := middleware.DB
+
+	getUser := func(accountId uint) (*account.UserInfo, error) {
+		var acc models.Account
+		err := db.Where("id =?", accountId).First(&acc).Error
+		if err != nil {
+			return nil, err
+		}
+		return account.GetLockedUser(acc.UserName)
+	}
+
+	var assetAalances []custodyModels.AccountBalance
+	err := db.Where("amount > 0").Find(&assetAalances).Error
+	if err != nil {
+		return
+	}
+	for _, balance := range assetAalances {
+		usr, err := getUser(balance.AccountID)
+		if err != nil {
+			continue
+		}
+		tx, back := middleware.GetTx()
+		_, err = custodyAssets.LessAssetBalance(tx, usr, balance.Amount, 0, balance.AssetId, custodyModels.ClearLimitUser)
+		if err != nil {
+			btlLog.CUST.Error("ClearLockUserBalance Asset failed:%s ,balance:%v", err, balance.ID)
+			back()
+			continue
+		}
+		tx.Commit()
+	}
+
+	var btcAalances []custodyModels.AccountBtcBalance
+	err = db.Where("amount > 0").Find(&btcAalances).Error
+	if err != nil {
+		return
+	}
+	for _, balance := range btcAalances {
+		usr, err := getUser(balance.AccountId)
+		if err != nil {
+			continue
+		}
+		tx, back := middleware.GetTx()
+		_, err = custodyBtc.LessBtcBalance(tx, usr, balance.Amount, 0, custodyModels.ClearLimitUser)
+		if err != nil {
+			btlLog.CUST.Error("ClearLockUserBalance btc failed:%s ,balance:%v", err, balance.ID)
+			back()
+			continue
+		}
+		tx.Commit()
+	}
+
+	getUserByLock := func(accountId uint) (*account.UserInfo, error) {
+		var acc custodyModels.LockAccount
+		err := db.Where("id =?", accountId).First(&acc).Error
+		if err != nil {
+			return nil, err
+		}
+		return account.GetLockedUser(acc.UserName)
+	}
+
+	var lockBalances []custodyModels.LockBalance
+	err = db.Where("amount > 0").Find(&lockBalances).Error
+	if err != nil {
+		return
+	}
+	for _, balance := range lockBalances {
+		usr, err := getUserByLock(balance.AccountID)
+		if err != nil {
+			continue
+		}
+		if balance.Tag1 > 0 {
+			if balance.Amount < balance.Tag1 {
+				continue
+			}
+			lockedId := fmt.Sprintf("/clearLockUserBalance/tag1/%v/%d", balance.AssetId[0:5], balance.AccountID)
+			err = lockPayment.TransferByLockIsLockId(lockedId, usr, lockPayment.FeeNpubkey, balance.AssetId, balance.Tag1, 1)
+			if err != nil {
+				btlLog.CUST.Error("ClearLockUserBalance failed:%s ,balance:%v", err, balance.ID)
+			}
+		}
+		lockedId := fmt.Sprintf("/clearLockUserBalance/%v/%d", balance.AssetId[0:5], balance.AccountID)
+		err = lockPayment.TransferByLockIsLockId(lockedId, usr, lockPayment.FeeNpubkey, balance.AssetId, balance.Amount-balance.Tag1, 0)
+		if err != nil {
+			btlLog.CUST.Error("ClearLockUserBalance failed:%s ,balance:%v", err, balance.ID)
+		}
+	}
+	return
 }
