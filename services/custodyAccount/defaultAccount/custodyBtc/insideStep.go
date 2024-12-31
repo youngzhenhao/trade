@@ -178,7 +178,7 @@ func InsideSteps(usr *account.UserInfo, mission *custodyModels.AccountInsideMiss
 			h, _ := hex.DecodeString(i.Hash)
 			err = rpc.InvoiceCancel(h)
 			if err != nil {
-				btlLog.CUST.Error("取消发票失败 %s", i.Hash)
+				btlLog.CUST.Error("取消发票失败 %s", i.Invoice)
 			}
 		}()
 		return

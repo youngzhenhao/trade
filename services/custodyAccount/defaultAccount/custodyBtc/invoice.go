@@ -141,8 +141,5 @@ func subscriptionReceiveBtcBalance(amount float64) {
 			balances = append(balances, float64(c.LocalBalance))
 		}
 	}
-	err = d.ReceiveBtcChannel(amount, balances)
-	if err != nil {
-		btlLog.CUST.Error("SendBtcPayOutChange error:%s", err)
-	}
+	_ = d.ReceiveBtcChannel(amount, balances)
 }
