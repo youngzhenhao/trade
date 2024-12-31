@@ -7,8 +7,8 @@ const (
 	MinLiquidity uint = 1e1
 
 	MinAddLiquiditySat uint = 1e3
-	// TODO: ?
-	MinRemoveLiquiditySat uint = 1e3
+
+	MinRemoveLiquiditySat uint = 1
 
 	MinWithdrawAwardSat uint = 1e2
 
