@@ -37,6 +37,7 @@ type PoolSwapRecord struct {
 	SwapFee                  string         `json:"swap_fee" gorm:"type:varchar(255);index"`
 	SwapFeeType              SwapFeeType    `json:"swap_fee_type" gorm:"index"`
 	SwapRecordType           SwapRecordType `json:"swap_record_type" gorm:"index"`
+	IsPushedQueue            bool           `json:"is_pushed_queue"`
 }
 
 func newSwapRecord(pairId uint, username string, tokenIn string, tokenOut string, amountIn string, amountOut string, reserveIn string, reserveOut string, tokenInTransferRecordId uint, tokenOutTransferRecordId uint, swapFee string, swapFeeType SwapFeeType, swapRecordType SwapRecordType) (swapRecord *PoolSwapRecord, err error) {

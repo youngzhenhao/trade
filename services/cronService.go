@@ -372,6 +372,12 @@ func CreatePushQueueProcessions() (err error) {
 			FunctionName:   "GetAndPushPurchasePresaleNFT",
 			Package:        "services",
 		},
+		{
+			Name:           "GetAndPushSwapTrs",
+			CronExpression: "*/30 * * * * *",
+			FunctionName:   "GetAndPushSwapTrs",
+			Package:        "services",
+		},
 	})
 }
 
@@ -381,4 +387,8 @@ func (cs *CronService) GetAndPushClaimAsset() {
 
 func (cs *CronService) GetAndPushPurchasePresaleNFT() {
 	satBackQueue.GetAndPushPurchasePresaleNFT()
+}
+
+func (cs *CronService) GetAndPushSwapTrs() {
+	satBackQueue.GetAndPushSwapTrs()
 }

@@ -19,6 +19,7 @@ type queueTopic string
 const (
 	claimAsset         queueTopic = "claimAsset"
 	purchasePresaleNFT queueTopic = "purchasePresaleNFT"
+	swap_tr            queueTopic = "swap_tr"
 )
 
 func (q queueTopic) String() string {
@@ -189,6 +190,26 @@ func PushPurchasePresaleNFT(info FeeInfo) (string, string, Response, error) {
 	return qid, string(data), response, err
 }
 
+func PushSwapTr(info SwapTr) (qid string, data string, response Response, err error) {
+	topic := swap_tr
+
+	qid, err = utils.Sha256(TopicAndInfoId{
+		Topic:  topic,
+		InfoID: info.ID,
+	})
+
+	_data, err := json.Marshal(info)
+	if err != nil {
+		return "", "", Response{}, err
+	}
+	request := Request{
+		Data: string(_data),
+	}
+	response, err = Push(topic, qid, request)
+
+	return qid, string(_data), response, err
+}
+
 type fairLaunchMintedInfoRecord struct {
 	Id           uint   `json:"id"`
 	AssetID      string `json:"asset_id"`
@@ -251,6 +272,10 @@ func GetNotPushedPurchasePresaleNFT() ([]FeeInfo, error) {
 		feeInfos = append(feeInfos, feeInfo)
 	}
 	return feeInfos, nil
+}
+
+func GetNotPushedSwapTrs() (swapTrs []SwapTr, err error) {
+	return QueryNotPushedSwapTrs()
 }
 
 type PushQueueRecord struct {
@@ -399,6 +424,105 @@ func GetAndPushPurchasePresaleNFT() {
 				Update("is_pushed_queue", true).Error
 			if _err != nil {
 				btlLog.PushQueue.Error("Update NftPresale _err:\n%v\nid:\n%v", _err, feeInfo.ID)
+				tx.Rollback()
+				continue
+			}
+		}
+		err = tx.Commit().Error
+		if err != nil {
+			btlLog.PushQueue.Error("Commit err:\n%v", err)
+		}
+	}
+	return
+}
+
+type SwapTrPushQueueRecord struct {
+	gorm.Model
+	SwapTrID     uint       `json:"swap_tr_id"`
+	Price        string     `json:"price"`
+	Number       string     `json:"number"`
+	TotalPrice   string     `json:"total_price"`
+	NpubKey      string     `json:"npub_key"`
+	TrUnixtimeMs int64      `json:"tr_unixtime_ms"`
+	AssetsID     string     `json:"assets_id"`
+	Type         string     `json:"type"`
+	Topic        queueTopic `json:"topic" gorm:"type:varchar(255);index"`
+	Qid          string     `json:"qid" gorm:"type:varchar(255);index"`
+	Data         string     `json:"data" gorm:"type:varchar(255);index"`
+	IsSuccess    bool       `json:"is_success" gorm:"index"`
+	ResponseBody string     `json:"response_body" gorm:"index"`
+	Rid          string     `json:"rid" gorm:"type:varchar(255);index"`
+	Error        string     `json:"error" gorm:"type:varchar(255);index"`
+}
+
+func GetAndPushSwapTrs() {
+	topic := swap_tr
+	swapTrs, err := GetNotPushedSwapTrs()
+	if err != nil {
+		btlLog.PushQueue.Error("%v", utils.AppendErrorInfo(err, "GetNotPushedSwapTrs"))
+	}
+	for _, swapTr := range swapTrs {
+
+		tx := middleware.DB.Begin()
+
+		var response Response
+		var qid, data string
+		qid, data, response, err = PushSwapTr(swapTr)
+		responseBody, _ := json.Marshal(response)
+
+		if err != nil {
+			var pushQueueRecord = SwapTrPushQueueRecord{
+				SwapTrID:     swapTr.ID,
+				Price:        swapTr.Price,
+				Number:       swapTr.Number,
+				TotalPrice:   swapTr.TotalPrice,
+				NpubKey:      swapTr.NpubKey,
+				TrUnixtimeMs: swapTr.TrUnixtimeMs,
+				AssetsID:     swapTr.AssetsID,
+				Type:         swapTr.Type,
+				Topic:        topic,
+				Qid:          qid,
+				Data:         data,
+				IsSuccess:    false,
+				ResponseBody: "",
+				Rid:          "",
+				Error:        err.Error(),
+			}
+			_err := tx.Model(&SwapTrPushQueueRecord{}).Create(&pushQueueRecord)
+			if _err != nil {
+				btlLog.PushQueue.Error("Create _err:\n%v\nPQR:\n%v", _err.Error, utils.ValueJsonString(pushQueueRecord))
+				tx.Rollback()
+				continue
+			}
+		} else {
+			var pushQueueRecord = SwapTrPushQueueRecord{
+				SwapTrID:     swapTr.ID,
+				Price:        swapTr.Price,
+				Number:       swapTr.Number,
+				TotalPrice:   swapTr.TotalPrice,
+				NpubKey:      swapTr.NpubKey,
+				TrUnixtimeMs: swapTr.TrUnixtimeMs,
+				AssetsID:     swapTr.AssetsID,
+				Type:         swapTr.Type,
+				Topic:        topic,
+				Qid:          qid,
+				Data:         data,
+				IsSuccess:    true,
+				ResponseBody: string(responseBody),
+				Rid:          response.Data.Rid,
+				Error:        "",
+			}
+			_err := tx.Model(&SwapTrPushQueueRecord{}).Create(&pushQueueRecord).Error
+			if _err != nil {
+				btlLog.PushQueue.Error("Create _err:\n%v\nPQR:\n%v", _err, utils.ValueJsonString(pushQueueRecord))
+				tx.Rollback()
+				continue
+			}
+			_err = tx.Table("pool_swap_records").
+				Where("id = ?", swapTr.ID).
+				Update("is_pushed_queue", true).Error
+			if _err != nil {
+				btlLog.PushQueue.Error("Update NftPresale _err:\n%v\nid:\n%v", _err, swapTr.ID)
 				tx.Rollback()
 				continue
 			}
