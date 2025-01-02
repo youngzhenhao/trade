@@ -438,19 +438,19 @@ func GetAndPushPurchasePresaleNFT() {
 
 type SwapTrPushQueueRecord struct {
 	gorm.Model
-	SwapTrID     uint       `json:"swap_tr_id"`
-	Price        string     `json:"price"`
-	Number       string     `json:"number"`
-	TotalPrice   string     `json:"total_price"`
-	NpubKey      string     `json:"npub_key"`
-	TrUnixtimeMs int64      `json:"tr_unixtime_ms"`
-	AssetsID     string     `json:"assets_id"`
-	Type         string     `json:"type"`
+	SwapTrID     uint       `json:"swap_tr_id" gorm:"index"`
+	Price        string     `json:"price"  gorm:"type:varchar(255);index"`
+	Number       string     `json:"number"  gorm:"type:varchar(255);index"`
+	TotalPrice   string     `json:"total_price"  gorm:"type:varchar(255);index"`
+	NpubKey      string     `json:"npub_key"  gorm:"type:varchar(255);index"`
+	TrUnixtimeMs int64      `json:"tr_unixtime_ms"  gorm:"index"`
+	AssetsID     string     `json:"assets_id"  gorm:"type:varchar(255);index"`
+	Type         string     `json:"type"  gorm:"type:varchar(255);index"`
 	Topic        queueTopic `json:"topic" gorm:"type:varchar(255);index"`
 	Qid          string     `json:"qid" gorm:"type:varchar(255);index"`
-	Data         string     `json:"data" gorm:"index"`
+	Data         string     `json:"data"`
 	IsSuccess    bool       `json:"is_success" gorm:"index"`
-	ResponseBody string     `json:"response_body" gorm:"index"`
+	ResponseBody string     `json:"response_body"`
 	Rid          string     `json:"rid" gorm:"type:varchar(255);index"`
 	Error        string     `json:"error" gorm:"type:varchar(255);index"`
 }
