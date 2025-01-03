@@ -372,6 +372,9 @@ func ListAssetsBalance() (*taprpc.ListBalancesResponse, error) {
 
 	client := taprpc.NewTaprootAssetsClient(conn)
 	request := &taprpc.ListBalancesRequest{}
+	request.GroupBy = &taprpc.ListBalancesRequest_AssetId{
+		AssetId: true,
+	}
 	response, err := client.ListBalances(context.Background(), request)
 	if err != nil {
 		return nil, err
