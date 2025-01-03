@@ -361,3 +361,20 @@ func SubscribeReceiveEvents() (*taprpc.ReceiveEvent, error) {
 		fmt.Println(event)
 	}
 }
+
+func ListAssetsBalance() (*taprpc.ListBalancesResponse, error) {
+	tapdconf := config.GetConfig().ApiConfig.Tapd
+	grpcHost := tapdconf.Host + ":" + strconv.Itoa(tapdconf.Port)
+	tlsCertPath := tapdconf.TlsCertPath
+	macaroonPath := tapdconf.MacaroonPath
+	conn, connClose := utils.GetConn(grpcHost, tlsCertPath, macaroonPath)
+	defer connClose()
+
+	client := taprpc.NewTaprootAssetsClient(conn)
+	request := &taprpc.ListBalancesRequest{}
+	response, err := client.ListBalances(context.Background(), request)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}

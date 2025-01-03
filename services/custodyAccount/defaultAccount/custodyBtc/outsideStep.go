@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"gorm.io/gorm"
+	"time"
 	"trade/btlLog"
 	"trade/config"
 	"trade/middleware"
@@ -113,18 +114,57 @@ func subscriptionLndBalance(amount float64) {
 	if config.GetLoadConfig().NetWork == "regtest" {
 		return
 	}
+	time.Sleep(time.Second * 10)
 	d := mempool.NewDingding()
+	var balances []mempool.Balance
+
 	channels, err := servicesrpc.GetChannelInfo()
 	if err != nil {
 		btlLog.CUST.Error("GetChannelInfo error:%s", err)
 		return
 	}
-	var balances []float64
 	for _, c := range channels {
 		if c.LocalBalance >= 0 {
-			balances = append(balances, float64(c.LocalBalance))
+			balances = append(balances, mempool.Balance{
+				Name:  c.PeerAlias,
+				Value: float64(c.LocalBalance),
+			})
 		}
 	}
+
+	balance, err := servicesrpc.GetBalance()
+	if err != nil {
+		btlLog.CUST.Error("GetChannelInfo error:%s", err)
+		return
+	}
+	if balance != nil && len(balance.AccountBalance) > 0 {
+		balances = append(balances, mempool.Balance{
+			Name:  "链上余额",
+			Value: float64(balance.AccountBalance["default"].ConfirmedBalance),
+		})
+		balances = append(balances, mempool.Balance{
+			Name:  "链上未确认余额",
+			Value: float64(balance.AccountBalance["default"].UnconfirmedBalance),
+		})
+	}
+
+	abalance, err := servicesrpc.ListAssetsBalance()
+	if err != nil {
+		btlLog.CUST.Error("ListAssetsBalance error:%s", err)
+		return
+	}
+	if abalance != nil && len(abalance.AssetBalances) > 0 {
+		for _, b := range abalance.AssetBalances {
+			if b.AssetGenesis.Name == "Phenix" {
+				balances = append(balances, mempool.Balance{
+					Name:  "Phenix",
+					Value: float64(b.Balance),
+				})
+				break
+			}
+		}
+	}
+
 	err = d.SendBtcPayOutChange(amount, balances)
 	if err != nil {
 		btlLog.CUST.Error("SendBtcPayOutChange error:%s", err)

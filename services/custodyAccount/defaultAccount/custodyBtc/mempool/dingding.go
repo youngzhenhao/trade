@@ -8,7 +8,14 @@ import (
 	"time"
 )
 
+var accessToken = "1999fdf9b8f932ca9295edd44d329f4c9bd3a32b265aa899833bf10411380aa6"
+var secret = "SEC83ef77bc6f056ebe0a2c93469dc2d7edade724c1bcef9243cb38da9e8a00a42b"
+
 type Dingding struct {
+}
+type Balance struct {
+	Name  string  `json:"name"`
+	Value float64 `json:"value"`
 }
 
 // 发送消息
@@ -23,9 +30,8 @@ var dingdingMsgOut = `
 余额信息: 
 {balances}`
 
-func (d Dingding) SendBtcPayOutChange(Amount float64, balances []float64) error {
-	accessToken := "1999fdf9b8f932ca9295edd44d329f4c9bd3a32b265aa899833bf10411380aa6"
-	secret := "SEC83ef77bc6f056ebe0a2c93469dc2d7edade724c1bcef9243cb38da9e8a00a42b"
+func (d Dingding) SendBtcPayOutChange(Amount float64, balances []Balance) error {
+
 	client := dingtalk.NewClient(accessToken, secret)
 
 	// 获取设备信息
@@ -36,8 +42,8 @@ func (d Dingding) SendBtcPayOutChange(Amount float64, balances []float64) error 
 
 	// 生成余额信息部分
 	var balancesInfo string
-	for index, balance := range balances {
-		balancesInfo += fmt.Sprintf("通道%d: %.2f\n", index, balance)
+	for _, balance := range balances {
+		balancesInfo += fmt.Sprintf("%s: %.2f\n", balance.Name, balance.Value)
 	}
 	msg = strings.Replace(msg, "{balances}", balancesInfo, 1)
 
@@ -60,9 +66,7 @@ var dingdingMsgIn = `
 余额信息: 
 {balances}`
 
-func (d Dingding) ReceiveBtcChannel(Amount float64, balances []float64) error {
-	accessToken := "1999fdf9b8f932ca9295edd44d329f4c9bd3a32b265aa899833bf10411380aa6"
-	secret := "SEC83ef77bc6f056ebe0a2c93469dc2d7edade724c1bcef9243cb38da9e8a00a42b"
+func (d Dingding) ReceiveBtcChannel(Amount float64, balances []Balance) error {
 	client := dingtalk.NewClient(accessToken, secret)
 
 	// 获取设备信息
@@ -73,8 +77,8 @@ func (d Dingding) ReceiveBtcChannel(Amount float64, balances []float64) error {
 
 	// 生成余额信息部分
 	var balancesInfo string
-	for index, balance := range balances {
-		balancesInfo += fmt.Sprintf("通道%d: %.2f\n", index, balance)
+	for _, balance := range balances {
+		balancesInfo += fmt.Sprintf("%s: %.2f\n", balance.Name, balance.Value)
 	}
 	msg = strings.Replace(msg, "{balances}", balancesInfo, 1)
 
