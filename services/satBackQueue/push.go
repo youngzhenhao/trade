@@ -448,9 +448,9 @@ type SwapTrPushQueueRecord struct {
 	Type         string     `json:"type"  gorm:"type:varchar(255);index"`
 	Topic        queueTopic `json:"topic" gorm:"type:varchar(255);index"`
 	Qid          string     `json:"qid" gorm:"type:varchar(255);index"`
-	Data         string     `json:"data" gorm:"index"`
+	Data         string     `json:"data" `
 	IsSuccess    bool       `json:"is_success" gorm:"index"`
-	ResponseBody string     `json:"response_body" gorm:"index"`
+	ResponseBody string     `json:"response_body"`
 	Rid          string     `json:"rid" gorm:"type:varchar(255);index"`
 	Error        string     `json:"error" gorm:"type:varchar(255);index"`
 }
